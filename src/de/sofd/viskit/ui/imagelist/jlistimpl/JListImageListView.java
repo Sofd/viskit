@@ -21,6 +21,8 @@ import java.awt.event.MouseMotionAdapter;
 import java.awt.event.MouseWheelEvent;
 import java.awt.event.MouseWheelListener;
 import java.awt.geom.Point2D;
+import java.util.ArrayList;
+import java.util.Collection;
 import javax.swing.BorderFactory;
 import javax.swing.DefaultListModel;
 import javax.swing.JList;
@@ -200,6 +202,19 @@ public class JListImageListView extends JImageListView {
             }
         }
     }
+
+    protected static Collection<ScaleMode> supportedScaleModes = new ArrayList<ScaleMode>();
+
+    @Override
+    public Collection<ScaleMode> getSupportedScaleModes() {
+        return supportedScaleModes;
+    }
+
+    @Override
+    protected void doSetScaleMode(ScaleMode oldScaleMode, ScaleMode newScaleMode) {
+        
+    }
+
 
     // mouse interactions
     // TODO: publish per-cell mouse events to outside (addCellMouseListener() etc.),

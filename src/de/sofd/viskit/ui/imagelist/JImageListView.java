@@ -27,6 +27,13 @@ public abstract class JImageListView extends JPanel {
     private ListSelectionModel selectionModel;
     public static final String PROP_SELECTIONMODEL = "selectionModel";
     private String displayName = "";
+    public static final String PROP_SCALEMODE = "scaleMode";
+    private ScaleMode scaleMode;
+
+    public static interface ScaleMode {
+        String getDisplayName();
+    }
+
 
     // TODO: it's probably better to use a map that uses normal (equals()/hashCode()-based)
     //       mapping for the modelElement => cell direction
@@ -174,6 +181,58 @@ public abstract class JImageListView extends JPanel {
             this.displayName = displayName.trim();
         }
     }
+
+    /**
+     * Get the value of scaleMode
+     *
+     * @return the value of scaleMode
+     */
+    public ScaleMode getScaleMode() {
+        return scaleMode;
+    }
+
+    /**
+     * Set the scaleMode ({@link #getScaleMode()}) of this viewer to one of the {@link #getSupportedScaleModes() }
+     * (calling this with an unsupported scale mode will raise an exception). Sets the bean property,
+     * fires the corresponding PropertyChangeEvent, and (before firing, but after setting the property) calls
+     * {@link #doSetScaleMode(de.sofd.viskit.ui.imagelist.JImageListView.ScaleMode, de.sofd.viskit.ui.imagelist.JImageListView.ScaleMode) },
+     * which subclasses should override normally (rather than overriding this method).
+     *
+     * @param scaleMode new value of scaleMode
+     */
+    public void setScaleMode(ScaleMode scaleMode) {
+        if (! getSupportedScaleModes().contains(scaleMode)) {
+            throw new IllegalArgumentException("Unsupported scale mode: " + scaleMode);
+        }
+        ScaleMode oldScaleMode = this.scaleMode;
+        this.scaleMode = scaleMode;
+        propertyChangeSupport.firePropertyChange(PROP_SCALEMODE, oldScaleMode, scaleMode);
+    }
+
+    /**
+     * Actual setter for the {@link #getScaleMode() }. oldScaleMode is the previous scaleMode,
+     * newScale mode is the new one (which will already be in {@link #getScaleMode() } by the time
+     * this method is called, so this parameter is just a convenience). Default impl. ist empty,
+     * which is pretty useless unless the subclass doesn't support any ScaleModes or doesn't want
+     * to do anything when the scaleMode is set (which would be kind of pointless). Thus, subclasses
+     * should normally override this method. Alternatively, they could override
+     * {@link #setScaleMode(de.sofd.viskit.ui.imagelist.JImageListView.ScaleMode) } and
+     * {@link #getScaleMode() } in concert to implement some completely different way of setting the
+     * scale mode; however, in that case, the general contract for the bound bean property getter/setter
+     * (which is adhered to by the default implementations of those methods) must be re-implemented.
+     *
+     * @param oldScaleMode oldScaleMode
+     * @param newScaleMode newScaleMode
+     */
+    protected void doSetScaleMode(ScaleMode oldScaleMode, ScaleMode newScaleMode) {
+        //
+    }
+
+    /**
+     *
+     * @return list off ScaleModes supported by this JImageListView implementation. Subclasses must implement.
+     */
+    public abstract Collection<ScaleMode> getSupportedScaleModes();
 
     /**
      * Factory method for creating the {@link ImageListViewCell} instances
