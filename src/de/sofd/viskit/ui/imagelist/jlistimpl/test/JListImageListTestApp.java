@@ -3,12 +3,16 @@ package de.sofd.viskit.ui.imagelist.jlistimpl.test;
 import de.sofd.draw2d.viewer.tools.EllipseTool;
 import de.sofd.draw2d.viewer.tools.SelectorTool;
 import de.sofd.viskit.ui.imagelist.ImageListViewModelElement;
+import de.sofd.viskit.ui.imagelist.JImageListView;
 import de.sofd.viskit.ui.imagelist.jlistimpl.JListImageListView;
 import java.awt.BorderLayout;
 import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import javax.swing.AbstractAction;
 import javax.swing.DefaultListModel;
+import javax.swing.JComboBox;
 import javax.swing.JFrame;
+import javax.swing.JLabel;
 import javax.swing.JScrollPane;
 import javax.swing.JToolBar;
 import javax.swing.SwingUtilities;
@@ -25,7 +29,7 @@ public class JListImageListTestApp {
             model.addElement(new TestImageModelElement(i));
         }
 
-        final JListImageListView viewer = new JListImageListView();
+        final JImageListView viewer = new JListImageListView();
         viewer.setModel(model);
         for (int i = 0; i < model.size(); i++) {
             viewer.getCell(i).getRoiDrawingViewer().activateTool(new SelectorTool());
@@ -49,6 +53,20 @@ public class JListImageListTestApp {
                 if (elt != null) {
                     model.removeElement(elt);
                 }
+            }
+        });
+        toolbar.add(new JLabel("ScaleMode:"));
+        final JComboBox scaleModeCombo = new JComboBox();
+        for (JImageListView.ScaleMode sm : viewer.getSupportedScaleModes()) {
+            scaleModeCombo.addItem(sm);
+        }
+        toolbar.add(scaleModeCombo);
+        scaleModeCombo.setEditable(false);
+        scaleModeCombo.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                JImageListView.ScaleMode sm = (JImageListView.ScaleMode) scaleModeCombo.getModel().getSelectedItem();
+                viewer.setScaleMode(sm);
             }
         });
 

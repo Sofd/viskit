@@ -1,8 +1,3 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
-
 package de.sofd.viskit.ui.imagelist.jlistimpl;
 
 import de.sofd.viskit.ui.imagelist.DefaultImageListViewCell;
@@ -12,8 +7,12 @@ import de.sofd.viskit.ui.imagelist.JImageListView;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Container;
+import java.awt.Dimension;
 import java.awt.GridLayout;
 import java.awt.Point;
+import java.awt.Rectangle;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
 import java.awt.event.InputEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
@@ -21,6 +20,7 @@ import java.awt.event.MouseMotionAdapter;
 import java.awt.event.MouseWheelEvent;
 import java.awt.event.MouseWheelListener;
 import java.awt.geom.Point2D;
+import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 import java.util.Collection;
 import javax.swing.BorderFactory;
@@ -32,6 +32,7 @@ import javax.swing.ListModel;
 import javax.swing.ListSelectionModel;
 import javax.swing.UIManager;
 import javax.swing.border.Border;
+import javax.swing.event.ListDataEvent;
 
 /**
  *
@@ -55,13 +56,40 @@ public class JListImageListView extends JImageListView {
         wrappedList.setCellRenderer(new WrappedListCellRenderer());
         wrappedList.setLayoutOrientation(JList.HORIZONTAL_WRAP);
         wrappedList.setVisibleRowCount(-1);
+        wrappedList.addComponentListener(new ComponentAdapter() {
+            @Override
+            public void componentResized(ComponentEvent e) {
+                updateCellSizes(false);
+            }
+        });
+        setScaleMode(MyScaleMode.newOneToOneMode());
     }
 
     @Override
     public void setModel(ListModel model) {
         super.setModel(model);
         wrappedList.setModel(model);
+        updateCellSizes(true);
     }
+
+    @Override
+    protected void modelIntervalAdded(ListDataEvent e) {
+        super.modelIntervalAdded(e);
+        updateCellSizes(false);
+    }
+
+    @Override
+    protected void modelIntervalRemoved(ListDataEvent e) {
+        super.modelIntervalRemoved(e);
+        updateCellSizes(false);
+    }
+
+    @Override
+    protected void modelContentsChanged(ListDataEvent e) {
+        super.modelContentsChanged(e);
+        // updateCellSizes(false);  // TODO: test performance...
+    }
+
 
     @Override
     public void setSelectionModel(ListSelectionModel selectionModel) {
@@ -80,6 +108,12 @@ public class JListImageListView extends JImageListView {
         }
         public void setLatestViewer(ImageListViewCellViewer latestViewer) {
             this.latestViewer = latestViewer;
+        }
+
+        public Dimension getUnscaledPreferredSize() {
+            BufferedImage img = getDisplayedModelElement().getImage();
+            return new Dimension(img.getWidth() + 2 * WrappedListCellRenderer.BORDER_WIDTH,
+                                 img.getHeight() + 2 * WrappedListCellRenderer.BORDER_WIDTH);
         }
     }
 
@@ -104,6 +138,8 @@ public class JListImageListView extends JImageListView {
     }
 
     class WrappedListCellRenderer implements ListCellRenderer {
+
+        public static final int BORDER_WIDTH = 2;
 
         @Override
         public Component getListCellRendererComponent(
@@ -203,7 +239,105 @@ public class JListImageListView extends JImageListView {
         }
     }
 
-    protected static Collection<ScaleMode> supportedScaleModes = new ArrayList<ScaleMode>();
+    /**
+     * Class for the ScaleModes that JListImageListView instances support. Either
+     * 1:1 mode (meaning that cells will preferably be scaled such that images are
+     * shown in their original sizes), or "cell grid" mode with n x m cells fitting
+     * into the view.
+     */
+    public static class MyScaleMode implements ScaleMode {
+        private final boolean isCellGridMode;
+        private final int cellRowCount, cellColumnCount; // only used if isCellGridMode
+
+        private MyScaleMode(boolean isCellGridMode, int cellRowCount, int cellColumnCount) {
+            this.isCellGridMode = isCellGridMode;
+            this.cellRowCount = cellRowCount;
+            this.cellColumnCount = cellColumnCount;
+        }
+
+        public static MyScaleMode newOneToOneMode() {
+            return new MyScaleMode(false, -1, -1);
+        }
+
+        public static MyScaleMode newCellGridMode(int rowCount, int columnCount) {
+            return new MyScaleMode(true, rowCount, columnCount);
+        }
+
+        public boolean isIsCellGridMode() {
+            return isCellGridMode;
+        }
+
+        public int getCellColumnCount() {
+            return cellColumnCount;
+        }
+
+        public int getCellRowCount() {
+            return cellRowCount;
+        }
+
+        @Override
+        public String getDisplayName() {
+            if (isCellGridMode) {
+                return "" + cellColumnCount + "x" + cellRowCount;
+            } else {
+                return "1:1";
+            }
+        }
+
+        @Override
+        public String toString() {
+            //return "[JListImageListView.MyScaleMode: " + getDisplayName() + "]";
+            return getDisplayName();
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (obj == null) {
+                return false;
+            }
+            if (getClass() != obj.getClass()) {
+                return false;
+            }
+            final MyScaleMode other = (MyScaleMode) obj;
+            if (this.isCellGridMode != other.isCellGridMode) {
+                return false;
+            }
+            if (this.cellRowCount != other.cellRowCount) {
+                return false;
+            }
+            if (this.cellColumnCount != other.cellColumnCount) {
+                return false;
+            }
+            return true;
+        }
+
+        @Override
+        public int hashCode() {
+            int hash = 7;
+            hash = 71 * hash + (this.isCellGridMode ? 1 : 0);
+            hash = 71 * hash + this.cellRowCount;
+            hash = 71 * hash + this.cellColumnCount;
+            return hash;
+        }
+
+    }
+
+    @Override
+    public MyScaleMode getScaleMode() {
+        return (MyScaleMode) super.getScaleMode();
+    }
+
+
+    protected static Collection<ScaleMode> supportedScaleModes;
+    static {
+        supportedScaleModes = new ArrayList<ScaleMode>();
+        supportedScaleModes.add(MyScaleMode.newOneToOneMode());
+        supportedScaleModes.add(MyScaleMode.newCellGridMode(1, 1));
+        supportedScaleModes.add(MyScaleMode.newCellGridMode(2, 2));
+        supportedScaleModes.add(MyScaleMode.newCellGridMode(3, 3));
+        supportedScaleModes.add(MyScaleMode.newCellGridMode(4, 4));
+        supportedScaleModes.add(MyScaleMode.newCellGridMode(5, 5));
+    }
 
     @Override
     public Collection<ScaleMode> getSupportedScaleModes() {
@@ -212,15 +346,54 @@ public class JListImageListView extends JImageListView {
 
     @Override
     protected void doSetScaleMode(ScaleMode oldScaleMode, ScaleMode newScaleMode) {
-        
+        updateCellSizes(true);
     }
 
+    protected void updateCellSizes(boolean resetImageSizes) {
+        if (getModel() == null || getModel().getSize() == 0) {
+            return;
+        }
+        int count = getModel().getSize();
+        Dimension cellDimension;
+        if (getScaleMode().isIsCellGridMode()) {
+            Rectangle visRect = wrappedList.getVisibleRect();
+            cellDimension = new Dimension(visRect.width / getScaleMode().getCellColumnCount(),
+                                          visRect.height / getScaleMode().getCellRowCount());
+        } else {
+            // scale all cells to the maximum original image size
+            cellDimension = new Dimension(0, 0);
+            for (int i = 0; i < count; i++) {
+                MyImageListViewCell cell = getCell(i);
+                Dimension cz = cell.getUnscaledPreferredSize();
+                if (cz.getWidth() > cellDimension.getWidth()) {
+                    cellDimension.setSize(cz.getWidth(), cellDimension.getHeight());
+                }
+                if (cz.getHeight() > cellDimension.getHeight()) {
+                    cellDimension.setSize(cellDimension.getWidth(), cz.getHeight());
+                }
+            }
+        }
+        wrappedList.setFixedCellWidth(cellDimension.width);
+        wrappedList.setFixedCellHeight(cellDimension.height);
+        if (resetImageSizes) {
+            for (int i = 0; i < count; i++) {
+                MyImageListViewCell cell = getCell(i);
+                cell.setCenterOffset(0, 0);
+                BufferedImage img = cell.getDisplayedModelElement().getImage();
+                double scalex = ((double) wrappedList.getFixedCellWidth() - 2 * WrappedListCellRenderer.BORDER_WIDTH) / img.getWidth();
+                double scaley = ((double) wrappedList.getFixedCellHeight() - 2 * WrappedListCellRenderer.BORDER_WIDTH) / img.getHeight();
+                double scale = Math.min(scalex, scaley);
+                cell.setScale(scale);
+            }
+        }
+    }
 
     // mouse interactions
     // TODO: publish per-cell mouse events to outside (addCellMouseListener() etc.),
     // move below interaction logic to separate controllers
 
     private static final int WINDOWING_MOUSE_BUTTON = MouseEvent.BUTTON3;
+    private static final int WINDOWING_MOUSE_MASK = MouseEvent.BUTTON3_DOWN_MASK;
 
     public void changeScaleAndTranslationOfActiveCell(double scaleChange, Point translationChange) {
         int idx = getSelectedIndex();
@@ -248,11 +421,11 @@ public class JListImageListView extends JImageListView {
     class WrappedListMouseAdapter extends MouseAdapter {
 
         private void debugMouse(String text) {
-            System.err.println(text);
+            //System.err.println(text);
         }
 
         private void debugMouse(MouseEvent e, String text) {
-            System.err.println("" + e + ": " + text);
+            //System.err.println("" + e + ": " + text);
         }
 
         @Override
@@ -404,7 +577,7 @@ public class JListImageListView extends JImageListView {
         public void mouseDragged(MouseEvent evt) {
             if (getModel().getSize() > 0) {
                 int idx = wrappedList.locationToIndex(evt.getPoint());
-                if (idx != -1 && evt.getButton() == WINDOWING_MOUSE_BUTTON || (evt.getModifiers() & WINDOWING_MOUSE_BUTTON) != 0) {
+                if (idx != -1 && evt.getButton() == WINDOWING_MOUSE_BUTTON || (evt.getModifiers() & WINDOWING_MOUSE_MASK) != 0) {
                     if (windowingLastX == -1 || windowingLastY == -1) {
                         windowingLastX = evt.getX();
                         windowingLastY = evt.getY();

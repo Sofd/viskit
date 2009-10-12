@@ -204,8 +204,12 @@ public abstract class JImageListView extends JPanel {
         if (! getSupportedScaleModes().contains(scaleMode)) {
             throw new IllegalArgumentException("Unsupported scale mode: " + scaleMode);
         }
+        if (Misc.equal(scaleMode, getScaleMode())) {
+            return;
+        }
         ScaleMode oldScaleMode = this.scaleMode;
         this.scaleMode = scaleMode;
+        doSetScaleMode(oldScaleMode, this.scaleMode);
         propertyChangeSupport.firePropertyChange(PROP_SCALEMODE, oldScaleMode, scaleMode);
     }
 
