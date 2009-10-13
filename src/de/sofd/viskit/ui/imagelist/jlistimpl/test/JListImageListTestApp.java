@@ -2,6 +2,7 @@ package de.sofd.viskit.ui.imagelist.jlistimpl.test;
 
 import de.sofd.draw2d.viewer.tools.EllipseTool;
 import de.sofd.draw2d.viewer.tools.SelectorTool;
+import de.sofd.viskit.controllers.ImageListViewMouseWindowingController;
 import de.sofd.viskit.ui.imagelist.ImageListViewModelElement;
 import de.sofd.viskit.ui.imagelist.JImageListView;
 import de.sofd.viskit.ui.imagelist.jlistimpl.JListImageListView;
@@ -10,6 +11,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.awt.event.MouseMotionAdapter;
 import javax.swing.AbstractAction;
 import javax.swing.DefaultListModel;
 import javax.swing.JComboBox;
@@ -37,6 +39,20 @@ public class JListImageListTestApp {
             @Override
             public void mouseClicked(MouseEvent e) {
                 System.out.println("cell mouseClicked " + e);
+            }
+            @Override
+            public void mouseEntered(MouseEvent e) {
+                System.out.println("cell mouseEntered " + e);
+            }
+            @Override
+            public void mouseExited(MouseEvent e) {
+                System.out.println("cell mouseExited " + e);
+            }
+        });
+        viewer.addCellMouseMotionListener(new MouseMotionAdapter() {
+            @Override
+            public void mouseMoved(MouseEvent e) {
+                System.out.println("cell mouseMoved " + e);
             }
             @Override
             public void mouseDragged(MouseEvent e) {
@@ -81,6 +97,8 @@ public class JListImageListTestApp {
                 viewer.setScaleMode(sm);
             }
         });
+
+        new ImageListViewMouseWindowingController(viewer);
 
         JScrollPane sp = new JScrollPane(viewer);
         f.getContentPane().add(sp, BorderLayout.CENTER);

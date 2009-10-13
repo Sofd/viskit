@@ -403,9 +403,6 @@ public class JListImageListView extends JImageListView {
     // TODO: publish per-cell mouse events to outside (addCellMouseListener() etc.),
     // move below interaction logic to separate controllers
 
-    private static final int WINDOWING_MOUSE_BUTTON = MouseEvent.BUTTON3;
-    private static final int WINDOWING_MOUSE_MASK = MouseEvent.BUTTON3_DOWN_MASK;
-
     public void changeScaleAndTranslationOfActiveCell(double scaleChange, Point translationChange) {
         int idx = getSelectedIndex();
         if (idx == -1) {
@@ -422,12 +419,8 @@ public class JListImageListView extends JImageListView {
         refreshCellForIndex(idx);
     }
 
-    private int windowingLastX, windowingLastY;
-    boolean startWindowing, doWindowing;
     private int translateLastX, translateLastY;
     boolean startTranslate, doTranslate;
-    int windowWidth;
-    int windowCenter;
 
     class WrappedListMouseAdapter extends MouseAdapter {
 
@@ -463,24 +456,7 @@ public class JListImageListView extends JImageListView {
         public void mousePressed(MouseEvent evt) {
             debugMouse(evt, "mousePressed");
             if (getModel().getSize() > 0) {
-                if (evt.getButton() == WINDOWING_MOUSE_BUTTON) {
-                    if (!startWindowing) {
-                        startWindowing = true;
-                        windowingLastX = -1;
-                        windowingLastY = -1;
-                        doWindowing = false;
-                    }
-
-                } else if (evt.isShiftDown() && evt.getButton() == MouseEvent.BUTTON1) {
-                    if (!startTranslate) {
-                        startTranslate = true;
-                        translateLastX = -1;
-                        translateLastY = -1;
-                        doTranslate = false;
-                    }
-                } else {
-                    dispatchEventToCell(evt);
-                }
+                dispatchEventToCell(evt);
             }
             //invalidate();
             //repaint();
@@ -490,7 +466,7 @@ public class JListImageListView extends JImageListView {
         public void mouseReleased(final MouseEvent evt) {
             debugMouse(evt, "mouseReleased");
             if (getModel().getSize() > 0) {
-                if (evt.getButton() == WINDOWING_MOUSE_BUTTON && doWindowing) {
+                if (false /*evt.getButton() == WINDOWING_MOUSE_BUTTON && doWindowing */) {
                     // TODO: get rid of all this applyToAllImages stuff, only set CellClass#interactiveWindowingInProgress
                     /*
                     if (applyToAllImages) {
@@ -539,34 +515,22 @@ public class JListImageListView extends JImageListView {
             translateLastX = -1;
             translateLastY = -1;
             doTranslate = false;
-            //invalidate();
-            //repaint();
         }
 
         @Override
         public void mouseEntered(MouseEvent evt) {
             debugMouse(evt, "mouseEntered");
             if (getModel().getSize() > 0) {
-                if (evt.getButton() == WINDOWING_MOUSE_BUTTON) {
-                } else {
-                    dispatchEventToCell(evt);
-                }
+                dispatchEventToCell(evt);
             }
-            //invalidate();
-            //repaint();
         }
 
         @Override
         public void mouseExited(MouseEvent evt) {
             debugMouse(evt, "mouseExited");
             if (getModel().getSize() > 0) {
-                if (evt.getButton() == WINDOWING_MOUSE_BUTTON) {
-                } else {
-                    dispatchEventToCell(evt);
-                }
+                dispatchEventToCell(evt);
             }
-            //invalidate();
-            //repaint();
         }
     }
 
@@ -575,56 +539,14 @@ public class JListImageListView extends JImageListView {
         @Override
         public void mouseMoved(MouseEvent evt) {
             if (getModel().getSize() > 0) {
-                if (evt.getButton() == WINDOWING_MOUSE_BUTTON) {
-                } else {
-                    dispatchEventToCell(evt);
-                }
+                dispatchEventToCell(evt);
             }
-            //invalidate();
-            //repaint();
         }
 
         @Override
         public void mouseDragged(MouseEvent evt) {
             if (getModel().getSize() > 0) {
-                int idx = wrappedList.locationToIndex(evt.getPoint());
-                if (idx != -1 && evt.getButton() == WINDOWING_MOUSE_BUTTON || (evt.getModifiers() & WINDOWING_MOUSE_MASK) != 0) {
-                    if (windowingLastX == -1 || windowingLastY == -1) {
-                        windowingLastX = evt.getX();
-                        windowingLastY = evt.getY();
-                        return;
-                    }
-                    MyImageListViewCell cell = getCell(idx);
-                    wrappedList.setSelectedIndex(idx);
-                    wrappedList.requestFocusInWindow();
-                    //ViewerDcmImage dcmImage = viewerJLabel.getDcmImage();
-                    double scale = cell.getScale();
-                    windowWidth = cell.getWindowWidth();
-                    windowCenter = cell.getWindowLocation();
-                    int step = evt.isShiftDown() ? 16 : 2;
-                    if (evt.getX() > windowingLastX + 1) {
-                        windowCenter = windowCenter + step;
-                        doWindowing = true;
-                    }
-                    if (evt.getX() < windowingLastX - 1) {
-                        windowCenter = windowCenter - step;
-                        doWindowing = true;
-                    }
-                    if (evt.getY() > windowingLastY + 1) {
-                        windowWidth = windowWidth + step;
-                        doWindowing = true;
-                    }
-                    if (evt.getY() < windowingLastY - 1) {
-                        windowWidth = windowWidth - step;
-                        doWindowing = true;
-                    }
-                    cell.setWindowLocation(windowCenter);
-                    cell.setWindowWidth(windowWidth);
-                    refreshCellForIndex(idx);
-
-                    windowingLastX = evt.getX();
-                    windowingLastY = evt.getY();
-                } else if (evt.isShiftDown() && (evt.getButton() == MouseEvent.BUTTON2 || (evt.getModifiers() & InputEvent.BUTTON2_MASK) != 0)) {
+                if (evt.isShiftDown() && (evt.getButton() == MouseEvent.BUTTON2 || (evt.getModifiers() & InputEvent.BUTTON2_MASK) != 0)) {
                     if (translateLastX == -1 || translateLastY == -1) {
                         translateLastX = evt.getX();
                         translateLastY = evt.getY();
@@ -637,8 +559,6 @@ public class JListImageListView extends JImageListView {
                     dispatchEventToCell(evt);
                 }
             }
-            //invalidate();
-            //repaint();
         }
     }
 
@@ -659,12 +579,7 @@ public class JListImageListView extends JImageListView {
                     c.dispatchEvent(evt);
                 }
             }
-            //invalidate();
-            //repaint();
         }
     }
 
-    // TODO: avoid arbitrary cell resizing: Set fixed cell sizes depending on
-    //       (to be implemented) current viewer mode
-    
 }
