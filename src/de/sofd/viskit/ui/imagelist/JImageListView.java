@@ -545,7 +545,7 @@ public abstract class JImageListView extends JPanel {
     private Collection<MouseWheelListener> cellMouseWheelListeners =
             new ArrayList<MouseWheelListener>();
 
-    public void addCellMouseMotionListener(MouseWheelListener listener) {
+    public void addCellMouseWheelListener(MouseWheelListener listener) {
         cellMouseWheelListeners.add(listener);
     }
 
