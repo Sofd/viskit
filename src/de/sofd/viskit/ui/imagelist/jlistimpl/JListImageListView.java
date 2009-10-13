@@ -133,7 +133,7 @@ public class JListImageListView extends JImageListView {
     }
 
     @Override
-    protected ImageListViewCell createCell(ImageListViewModelElement modelElement) {
+    protected ImageListViewCell doCreateCell(ImageListViewModelElement modelElement) {
         return new MyImageListViewCell(this, modelElement);
     }
 
