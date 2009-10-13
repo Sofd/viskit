@@ -1,5 +1,6 @@
 package de.sofd.viskit.ui.imagelist.jlistimpl;
 
+import de.sofd.util.Misc;
 import de.sofd.viskit.ui.imagelist.DefaultImageListViewCell;
 import de.sofd.viskit.ui.imagelist.ImageListViewCell;
 import de.sofd.viskit.ui.imagelist.ImageListViewModelElement;
@@ -233,6 +234,16 @@ public class JListImageListView extends JImageListView {
             Point2D imageOffset = cell.getLatestViewer().getImageOffset();
             evt.translatePoint((int) -imageOffset.getX(), (int) -imageOffset.getY());
             cell.getRoiDrawingViewer().processInputEvent(evt);
+            {
+                // for testing purposes (for now)
+                MouseEvent ce = Misc.deepCopy(evt);
+                ce.setSource(cell);
+                if (ce instanceof MouseWheelEvent) {
+                    fireCellMouseWheelEvent((MouseWheelEvent) ce);
+                } else {
+                    fireCellMouseEvent(ce);
+                }
+            }
             if (refreshCell) {
                 refreshCellForIndex(idx);
             }

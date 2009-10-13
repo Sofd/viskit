@@ -8,6 +8,8 @@ import de.sofd.viskit.ui.imagelist.jlistimpl.JListImageListView;
 import java.awt.BorderLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import javax.swing.AbstractAction;
 import javax.swing.DefaultListModel;
 import javax.swing.JComboBox;
@@ -31,6 +33,16 @@ public class JListImageListTestApp {
 
         final JImageListView viewer = new JListImageListView();
         viewer.setModel(model);
+        viewer.addCellMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                System.out.println("cell mouseClicked " + e);
+            }
+            @Override
+            public void mouseDragged(MouseEvent e) {
+                System.out.println("cell mouseDragged " + e);
+            }
+        });
         for (int i = 0; i < model.size(); i++) {
             viewer.getCell(i).getRoiDrawingViewer().activateTool(new SelectorTool());
         }
