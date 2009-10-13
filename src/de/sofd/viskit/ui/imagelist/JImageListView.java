@@ -491,6 +491,10 @@ public abstract class JImageListView extends JPanel {
     }
 
     protected void fireCellMouseEvent(MouseEvent e) {
+        if (e.getID() == MouseEvent.MOUSE_MOVED || e.getID() == MouseEvent.MOUSE_DRAGGED) {
+            fireCellMouseMotionEvent(e);
+            return;
+        }
         for (MouseListener l : cellMouseListeners) {
             switch (e.getID()) {
                 case MouseEvent.MOUSE_CLICKED:
