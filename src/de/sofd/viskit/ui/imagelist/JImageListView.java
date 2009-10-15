@@ -14,6 +14,7 @@ import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 import javax.swing.AbstractListModel;
 import javax.swing.JPanel;
 import javax.swing.ListModel;
@@ -33,6 +34,7 @@ public abstract class JImageListView extends JPanel {
     public static final String PROP_MODEL = "model";
     private ListSelectionModel selectionModel;
     public static final String PROP_SELECTIONMODEL = "selectionModel";
+    private final List<ListSelectionListener> listSelectionListeners = new ArrayList<ListSelectionListener>();
     private String displayName = "";
     public static final String PROP_SCALEMODE = "scaleMode";
     private ScaleMode scaleMode;
@@ -356,10 +358,33 @@ public abstract class JImageListView extends JPanel {
         return getSelectionModel().getLeadSelectionIndex();
     }
 
+    /**
+     * Adds a listener that gets notified if this list's selection changes.
+     * The source of the selection change events will be this list (rather
+     * than the selection model, as would be the case for listeners registered
+     * via getSelectionModel().addListSelectionListener())
+     * 
+     * @param listener
+     */
+    public void addListSelectionListener(ListSelectionListener listener) {
+        listSelectionListeners.add(listener);
+    }
+
+    public void removeListSelectionListener(ListSelectionListener listener) {
+        listSelectionListeners.remove(listener);
+    }
+
+    protected void fireListSelectionEvent(int firstIndex, int lastIndex, boolean isAdjusting) {
+        for (ListSelectionListener l : listSelectionListeners) {
+            l.valueChanged(new ListSelectionEvent(this, firstIndex, lastIndex, isAdjusting));
+        }
+    }
+
     private ListSelectionListener listSelectionListener = new ListSelectionListener() {
         @Override
         public void valueChanged(ListSelectionEvent e) {
             JImageListView.this.selectionChanged(e);
+            fireListSelectionEvent(e.getFirstIndex(), e.getLastIndex(), e.getValueIsAdjusting());
         }
     };
 
