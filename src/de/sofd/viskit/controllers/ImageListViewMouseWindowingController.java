@@ -3,9 +3,8 @@ package de.sofd.viskit.controllers;
 import de.sofd.viskit.ui.imagelist.ImageListViewCell;
 import de.sofd.viskit.ui.imagelist.JImageListView;
 import java.awt.Point;
+import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.awt.event.MouseMotionAdapter;
-import java.awt.event.MouseMotionListener;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 
@@ -48,31 +47,38 @@ public class ImageListViewMouseWindowingController {
         JImageListView oldControlledImageListView = this.controlledImageListView;
         this.controlledImageListView = controlledImageListView;
         if (null != oldControlledImageListView) {
+            oldControlledImageListView.removeCellMouseListener(windowingCellMouseListener);
             oldControlledImageListView.removeCellMouseMotionListener(windowingCellMouseListener);
         }
         if (null != controlledImageListView) {
+            controlledImageListView.addCellMouseListener(windowingCellMouseListener);
             controlledImageListView.addCellMouseMotionListener(windowingCellMouseListener);
         }
         propertyChangeSupport.firePropertyChange(PROP_CONTROLLEDIMAGELISTVIEW, oldControlledImageListView, controlledImageListView);
     }
 
-    // TODO: only change windowing if mouseDown is received first on the same cell
-    
-    private MouseMotionListener windowingCellMouseListener = new MouseMotionAdapter() {
-        private ImageListViewCell lastCell;
+    private MouseAdapter windowingCellMouseListener = new MouseAdapter() {
+        private ImageListViewCell currentCell;
         private Point lastPosition;
+
+        @Override
+        public void mousePressed(MouseEvent e) {
+            if (e.getButton() == WINDOWING_MOUSE_BUTTON || (e.getModifiers() & WINDOWING_MOUSE_MASK) != 0) {
+                currentCell = (ImageListViewCell) e.getSource();
+                lastPosition = e.getPoint();
+            }
+        }
 
         @Override
         public void mouseDragged(MouseEvent e) {
             if (e.getButton() == WINDOWING_MOUSE_BUTTON || (e.getModifiers() & WINDOWING_MOUSE_MASK) != 0) {
                 ImageListViewCell sourceCell = (ImageListViewCell) e.getSource();
-                Point sourcePosition = e.getPoint();
-                if (sourceCell != null && sourceCell == lastCell) {
+                if (sourceCell != null && sourceCell == currentCell) {
+                    Point sourcePosition = e.getPoint();
                     sourceCell.setWindowLocation(sourceCell.getWindowLocation() + sourcePosition.x - lastPosition.x);
                     sourceCell.setWindowWidth(sourceCell.getWindowWidth() + sourcePosition.y - lastPosition.y);
+                    lastPosition = sourcePosition;
                 }
-                lastCell = sourceCell;
-                lastPosition = sourcePosition;
             }
         }
     };

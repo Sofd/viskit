@@ -12,6 +12,8 @@ import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionAdapter;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import javax.swing.AbstractAction;
 import javax.swing.DefaultListModel;
 import javax.swing.JComboBox;
@@ -35,28 +37,10 @@ public class JListImageListTestApp {
 
         final JImageListView viewer = new JListImageListView();
         viewer.setModel(model);
-        viewer.addCellMouseListener(new MouseAdapter() {
+        viewer.addCellPropertyChangeListener(new PropertyChangeListener() {
             @Override
-            public void mouseClicked(MouseEvent e) {
-                System.out.println("cell mouseClicked " + e);
-            }
-            @Override
-            public void mouseEntered(MouseEvent e) {
-                System.out.println("cell mouseEntered " + e);
-            }
-            @Override
-            public void mouseExited(MouseEvent e) {
-                System.out.println("cell mouseExited " + e);
-            }
-        });
-        viewer.addCellMouseMotionListener(new MouseMotionAdapter() {
-            @Override
-            public void mouseMoved(MouseEvent e) {
-                System.out.println("cell mouseMoved " + e);
-            }
-            @Override
-            public void mouseDragged(MouseEvent e) {
-                System.out.println("cell mouseDragged " + e);
+            public void propertyChange(PropertyChangeEvent evt) {
+                System.out.println("cell propChanged " + evt.getPropertyName() + " => " + evt.getNewValue() + " in cell " + evt.getSource());
             }
         });
         for (int i = 0; i < model.size(); i++) {
