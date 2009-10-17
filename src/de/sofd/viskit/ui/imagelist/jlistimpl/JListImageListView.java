@@ -36,6 +36,7 @@ import javax.swing.border.Border;
 import javax.swing.event.ListDataEvent;
 
 /**
+ * JImageListView implementation that uses an aggreagated {@link JList}.
  *
  * @author Sofd GmbH
  */

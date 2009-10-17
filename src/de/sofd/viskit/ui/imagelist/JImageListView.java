@@ -27,7 +27,7 @@ import javax.swing.event.ListSelectionListener;
 /**
  * Base class for GUI components displaying a list of elements, which are objects implementing {@link ImageListViewModelElement}.
  * <p>
- * The elements must be fed to the JImageList via a {@link ListModel} that contains them.
+ * The elements must be fed to the JImageListView via a {@link ListModel} that contains them.
  * <p>
  * A selection of elements is maintained via a {@link ListSelectionModel}.
  * <p>
@@ -261,6 +261,8 @@ public abstract class JImageListView extends JPanel {
     /**
      * Creates a new ImageListViewCell (using doCreateCell()), ensures the cell's
      * PropertyChangeEvents are exposed to {@link #addCellPropertyChangeListener(java.beans.PropertyChangeListener) }.
+     * Not normally called by subclasses (and never called by users). Never overridden;
+     * override {@link #doCreateCell(de.sofd.viskit.ui.imagelist.ImageListViewModelElement) } instead.
      *
      * @param modelElement
      * @return
@@ -273,12 +275,16 @@ public abstract class JImageListView extends JPanel {
 
     /**
      * Factory method for creating the {@link ImageListViewCell} instances
-     * to associate with model elements. Default implementation instantiates
+     * to associate with model elements. Called whenever a new cell must
+     * be created to be associated with a model element (either during initialization,
+     * or whenever a new element is added to this list later).
+     * <p>
+     * Default implementation instantiates
      * a {@link DefaultImageListViewCell}. Subclasses may override. Don't call
      * this method; call createCell() instead (if you really think you must).
      *
-     * @param modelElement
-     * @return
+     * @param modelElement the model element to create the cell for
+     * @return the newly created cell
      */
     protected ImageListViewCell doCreateCell(ImageListViewModelElement modelElement) {
         return new DefaultImageListViewCell(this, modelElement);
@@ -477,7 +483,8 @@ public abstract class JImageListView extends JPanel {
     // bound property support? Investigate. Add super calls if deemed necessary.
 
     /**
-     * Add PropertyChangeListener.
+     * Add a PropertyChangeListener that receives property change events for this
+     * list's properties.
      *
      * @param listener
      */
@@ -500,6 +507,16 @@ public abstract class JImageListView extends JPanel {
     private Collection<PropertyChangeListener> cellPropertyChangeListeners =
             new ArrayList<PropertyChangeListener>();
 
+    /**
+     * Add a PropertyChangeListener that receives property change events for all
+     * properties of all cells of this list. This is a convenient way to be
+     * informed of all such property changes without having to manually add
+     * listeners to all cells (and track elements and corresponding cells being
+     * added/removed to the list, and correctly add/remove the listeners to them).
+     * This method takes care of all that internally.
+     *
+     * @param listener
+     */
     public void addCellPropertyChangeListener(PropertyChangeListener listener) {
         cellPropertyChangeListeners.add(listener);
     }
@@ -519,6 +536,16 @@ public abstract class JImageListView extends JPanel {
     private Collection<MouseListener> cellMouseListeners =
             new ArrayList<MouseListener>();
 
+    /**
+     * Add a MouseListener that receives mouse events for all cells of this list.
+     * This is a convenient way to be
+     * informed of all such mouse events without having to manually add
+     * listeners to all cells (and track elements and corresponding cells being
+     * added/removed to the list, and correctly add/remove the listeners to them).
+     * This method takes care of all that internally.
+     *
+     * @param listener
+     */
     public void addCellMouseListener(MouseListener listener) {
         cellMouseListeners.add(listener);
     }
@@ -557,6 +584,12 @@ public abstract class JImageListView extends JPanel {
     private Collection<MouseMotionListener> cellMouseMotionListeners =
             new ArrayList<MouseMotionListener>();
 
+    /**
+     * Like {@link #addCellMouseListener(java.awt.event.MouseListener) }, but for
+     * MouseMotionListeners.
+     *
+     * @param listener
+     */
     public void addCellMouseMotionListener(MouseMotionListener listener) {
         cellMouseMotionListeners.add(listener);
     }
@@ -582,6 +615,12 @@ public abstract class JImageListView extends JPanel {
     private Collection<MouseWheelListener> cellMouseWheelListeners =
             new ArrayList<MouseWheelListener>();
 
+    /**
+     * Like {@link #addCellMouseListener(java.awt.event.MouseListener) }, but for
+     * MouseWheelListener.
+     *
+     * @param listener
+     */
     public void addCellMouseWheelListener(MouseWheelListener listener) {
         cellMouseWheelListeners.add(listener);
     }
