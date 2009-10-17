@@ -25,6 +25,18 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 
 /**
+ * Base class for GUI components displaying a list of elements, which are objects implementing {@link ImageListViewModelElement}.
+ * <p>
+ * The elements must be fed to the JImageList via a {@link ListModel} that contains them.
+ * <p>
+ * A selection of elements is maintained via a {@link ListSelectionModel}.
+ * <p>
+ * The list automatically maintains a list of "cell" objects, implementing {@link ImageListViewCell},
+ * that will always be associated 1:1 to the current elements (i.e. each element is associated
+ * to exactly one cell, and vice versa). A cell is used to hold data that should be associated
+ * with a model element in this list, but not elsewhere, i.e. if a model element is displayed
+ * simultaneously in more than one JImageListView, each one has separate cell data associated with
+ * the element.
  *
  * @author olaf
  */
