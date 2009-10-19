@@ -6,6 +6,7 @@
 
 package de.sofd.viskit.test.singleframe;
 
+import de.sofd.viskit.controllers.ImageListViewMouseWindowingController;
 import de.sofd.viskit.ui.imagelist.JImageListView;
 import de.sofd.viskit.ui.imagelist.jlistimpl.JListImageListView;
 import java.awt.GridLayout;
@@ -26,12 +27,13 @@ public class SingleFrame extends javax.swing.JFrame {
 
     public SingleFrame(List<ListModel> listModels) {
         initComponents();
-        listsPanel.setLayout(new GridLayout(1, listModels.size()));
+        listsPanel.setLayout(new GridLayout(1, listModels.size(), 10, 0));
         // TODO: separate, probably designed, JPanel for each list
         List<JImageListView> lists = new ArrayList<JImageListView>();
         for (ListModel lm : listModels) {
             JImageListView listView = new JListImageListView();
             listView.setModel(lm);
+            new ImageListViewMouseWindowingController(listView);
             JScrollPane sp = new JScrollPane(listView);
             listsPanel.add(sp);
             lists.add(listView);
