@@ -5,6 +5,8 @@ import de.sofd.draw2d.viewer.tools.SelectorTool;
 import de.sofd.viskit.controllers.ImageListViewMouseWindowingController;
 import de.sofd.viskit.ui.imagelist.ImageListViewModelElement;
 import de.sofd.viskit.ui.imagelist.JImageListView;
+import de.sofd.viskit.ui.imagelist.event.ImageListViewEvent;
+import de.sofd.viskit.ui.imagelist.event.ImageListViewListener;
 import de.sofd.viskit.ui.imagelist.jlistimpl.JListImageListView;
 import java.awt.BorderLayout;
 import java.awt.event.ActionEvent;
@@ -38,6 +40,12 @@ public class JListImageListTestApp {
         }
 
         final JImageListView viewer = new JListImageListView();
+        viewer.addImageListViewListener(new ImageListViewListener() {
+            @Override
+            public void onImageListViewEvent(ImageListViewEvent e) {
+                System.out.println("ImageListViewEvent: " + e);
+            }
+        });
         viewer.setModel(model);
         viewer.addCellPropertyChangeListener(new PropertyChangeListener() {
             @Override

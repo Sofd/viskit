@@ -4,6 +4,10 @@ import de.sofd.util.BiIdentityHashMap;
 import de.sofd.util.BiMap;
 import de.sofd.util.IdentityHashSet;
 import de.sofd.util.Misc;
+import de.sofd.viskit.ui.imagelist.event.ImageListViewCellAddEvent;
+import de.sofd.viskit.ui.imagelist.event.ImageListViewCellRemoveEvent;
+import de.sofd.viskit.ui.imagelist.event.ImageListViewEvent;
+import de.sofd.viskit.ui.imagelist.event.ImageListViewListener;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.event.ContainerAdapter;
@@ -279,6 +283,7 @@ public abstract class JImageListView extends JPanel {
     protected final ImageListViewCell createCell(ImageListViewModelElement modelElement) {
         ImageListViewCell cell = doCreateCell(modelElement);
         cell.addPropertyChangeListener(cellPropertyChangeEventForwarder);
+        fireImageListViewEvent(new ImageListViewCellAddEvent(this, cell));
         return cell;
     }
 
@@ -325,6 +330,7 @@ public abstract class JImageListView extends JPanel {
     private void clearCellsByElementMap() {
         for (ImageListViewModelElement elt: cellsByElementMap.keySet()) {
             ImageListViewCell cell = cellsByElementMap.get(elt);
+            fireImageListViewEvent(new ImageListViewCellRemoveEvent(this, cell));
             beforeCellRemoval(cell, elt);
         }
         cellsByElementMap.clear();
@@ -562,6 +568,24 @@ public abstract class JImageListView extends JPanel {
     @Override
     public void removePropertyChangeListener(PropertyChangeListener listener) {
         propertyChangeSupport.removePropertyChangeListener(listener);
+    }
+
+
+    private Collection<ImageListViewListener> imageListViewListeners =
+            new ArrayList<ImageListViewListener>();
+
+    public void addImageListViewListener(ImageListViewListener listener) {
+        imageListViewListeners.add(listener);
+    }
+
+    public void removeImageListViewListener(ImageListViewListener listener) {
+        imageListViewListeners.remove(listener);
+    }
+
+    protected void fireImageListViewEvent(ImageListViewEvent e) {
+        for (ImageListViewListener l : imageListViewListeners) {
+            l.onImageListViewEvent(e);
+        }
     }
 
 
