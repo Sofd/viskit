@@ -9,6 +9,7 @@ package de.sofd.viskit.test.singleframe;
 import de.sofd.viskit.controllers.ImageListViewMouseWindowingController;
 import de.sofd.viskit.ui.imagelist.JImageListView;
 import de.sofd.viskit.ui.imagelist.jlistimpl.JListImageListView;
+import java.awt.Color;
 import java.awt.GridLayout;
 import java.util.ArrayList;
 import java.util.List;
@@ -32,6 +33,7 @@ public class SingleFrame extends javax.swing.JFrame {
         List<JImageListView> lists = new ArrayList<JImageListView>();
         for (ListModel lm : listModels) {
             JImageListView listView = new JListImageListView();
+            listView.setBackground(Color.black);
             listView.setModel(lm);
             new ImageListViewMouseWindowingController(listView);
             JScrollPane sp = new JScrollPane(listView);
