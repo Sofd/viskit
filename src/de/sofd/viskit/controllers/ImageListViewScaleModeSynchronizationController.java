@@ -1,12 +1,11 @@
 package de.sofd.viskit.controllers;
 
 import de.sofd.viskit.ui.imagelist.JImageListView;
+import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.util.ArrayList;
 import java.util.List;
-import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.ListSelectionListener;
 
 /**
  * Controller that maintains a list of references to {@link JImageListView} objects
@@ -45,12 +44,12 @@ public class ImageListViewScaleModeSynchronizationController {
     public void setLists(JImageListView[] lists) {
         // TODO: deal with selection model changes on the lists?
         for (JImageListView lv : this.lists) {
-            lv.removeListSelectionListener(selectionHandler);
+            lv.removePropertyChangeListener(scaleModeChangeHandler);
         }
         this.lists.clear();
         for (JImageListView lv : lists) {
             this.lists.add(lv);
-            lv.addListSelectionListener(selectionHandler);
+            lv.addPropertyChangeListener(scaleModeChangeHandler);
         }
     }
 
@@ -85,17 +84,20 @@ public class ImageListViewScaleModeSynchronizationController {
     }
 
 
-    private ListSelectionListener selectionHandler = new ListSelectionListener() {
+    private PropertyChangeListener scaleModeChangeHandler = new PropertyChangeListener() {
         private boolean inProgrammedChange = false;
         @Override
-        public void valueChanged(ListSelectionEvent e) {
+        public void propertyChange(PropertyChangeEvent evt) {
             if (!isEnabled()) {
+                return;
+            }
+            if (! JImageListView.PROP_SCALEMODE.equals(evt.getPropertyName())) {
                 return;
             }
             if (inProgrammedChange) {
                 return;
             }
-            JImageListView source = (JImageListView) e.getSource();
+            JImageListView source = (JImageListView) evt.getSource();
             for (JImageListView l : getLists()) {
                 if (l != source) {
                     inProgrammedChange = true;
