@@ -12,6 +12,7 @@ import javax.imageio.ImageIO;
 import javax.imageio.ImageReader;
 import javax.imageio.stream.ImageInputStream;
 import org.dcm4che2.data.DicomObject;
+import org.dcm4che2.data.Tag;
 import org.dcm4che2.data.UID;
 import org.dcm4che2.io.DicomOutputStream;
 
@@ -60,7 +61,12 @@ public abstract class CachingDicomImageListViewModelElement implements DicomImag
         ByteArrayOutputStream bos = new ByteArrayOutputStream(200000);
         DicomOutputStream dos = new DicomOutputStream(bos);
         try {
-            dos.writeDataset(dcmObj, UID.ImplicitVRLittleEndian);
+            // TODO: doesn't work for "JPEGLossless" tsuid (and maybe others) (NPE in reader.read(0) below)
+            String tsuid = dcmObj.getString(Tag.TransferSyntaxUID);
+            if (null == tsuid) {
+                tsuid = UID.ImplicitVRLittleEndian;
+            }
+            dos.writeDataset(dcmObj, tsuid);
             dos.close();
 
             ImageReader reader = (ImageReader) it.next();
