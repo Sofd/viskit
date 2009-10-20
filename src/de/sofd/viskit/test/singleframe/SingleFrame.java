@@ -32,13 +32,10 @@ public class SingleFrame extends javax.swing.JFrame {
         // TODO: separate, probably designed, JPanel for each list
         List<JImageListView> lists = new ArrayList<JImageListView>();
         for (ListModel lm : listModels) {
-            JImageListView listView = new JListImageListView();
-            listView.setBackground(Color.black);
-            listView.setModel(lm);
-            new ImageListViewMouseWindowingController(listView);
-            JScrollPane sp = new JScrollPane(listView);
-            listsPanel.add(sp);
-            lists.add(listView);
+            ListViewPanel lvp = new ListViewPanel();
+            lvp.getListView().setModel(lm);
+            listsPanel.add(lvp);
+            lists.add(lvp.getListView());
         }
         selectionSynchronizationController.setLists(lists.toArray(new JImageListView[listModels.size()]));
     }
