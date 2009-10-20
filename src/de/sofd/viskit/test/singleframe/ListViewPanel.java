@@ -39,10 +39,14 @@ public class ListViewPanel extends javax.swing.JPanel {
     private void initComponents() {
         bindingGroup = new org.jdesktop.beansbinding.BindingGroup();
 
+        mouseWindowingController = new de.sofd.viskit.controllers.ImageListViewMouseWindowingController();
         scaleModesComboBox = new javax.swing.JComboBox();
         jLabel1 = new javax.swing.JLabel();
         jScrollPane1 = new javax.swing.JScrollPane();
         listView = new de.sofd.viskit.ui.imagelist.jlistimpl.JListImageListView();
+
+        org.jdesktop.beansbinding.Binding binding = org.jdesktop.beansbinding.Bindings.createAutoBinding(org.jdesktop.beansbinding.AutoBinding.UpdateStrategy.READ_WRITE, listView, org.jdesktop.beansbinding.ObjectProperty.create(), mouseWindowingController, org.jdesktop.beansbinding.BeanProperty.create("controlledImageListView"));
+        bindingGroup.addBinding(binding);
 
         org.jdesktop.beansbinding.ELProperty eLProperty = org.jdesktop.beansbinding.ELProperty.create("${supportedScaleModes}");
         org.jdesktop.swingbinding.JComboBoxBinding jComboBoxBinding = org.jdesktop.swingbinding.SwingBindings.createJComboBoxBinding(org.jdesktop.beansbinding.AutoBinding.UpdateStrategy.READ_WRITE, listView, eLProperty, scaleModesComboBox);
@@ -52,7 +56,7 @@ public class ListViewPanel extends javax.swing.JPanel {
 
         listView.setBackground(new java.awt.Color(0, 0, 0));
 
-        org.jdesktop.beansbinding.Binding binding = org.jdesktop.beansbinding.Bindings.createAutoBinding(org.jdesktop.beansbinding.AutoBinding.UpdateStrategy.READ_WRITE, scaleModesComboBox, org.jdesktop.beansbinding.ELProperty.create("${selectedItem}"), listView, org.jdesktop.beansbinding.BeanProperty.create("scaleMode"));
+        binding = org.jdesktop.beansbinding.Bindings.createAutoBinding(org.jdesktop.beansbinding.AutoBinding.UpdateStrategy.READ_WRITE, scaleModesComboBox, org.jdesktop.beansbinding.ELProperty.create("${selectedItem}"), listView, org.jdesktop.beansbinding.BeanProperty.create("scaleMode"));
         bindingGroup.addBinding(binding);
 
         jScrollPane1.setViewportView(listView);
@@ -87,6 +91,7 @@ public class ListViewPanel extends javax.swing.JPanel {
     private javax.swing.JLabel jLabel1;
     private javax.swing.JScrollPane jScrollPane1;
     private de.sofd.viskit.ui.imagelist.jlistimpl.JListImageListView listView;
+    private de.sofd.viskit.controllers.ImageListViewMouseWindowingController mouseWindowingController;
     private javax.swing.JComboBox scaleModesComboBox;
     private org.jdesktop.beansbinding.BindingGroup bindingGroup;
     // End of variables declaration//GEN-END:variables
