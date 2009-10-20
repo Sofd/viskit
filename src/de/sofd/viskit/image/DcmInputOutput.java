@@ -14,9 +14,6 @@ import org.dcm4che2.io.StopTagInputHandler;
  */
 public class DcmInputOutput {
 
-    // http://pacs.sofd.local:8080/wado/?requestType=WADO&studyUID=1.2.840.113619.2.25.4.1207014.1228146104.835&seriesUID=1.2.840.113619.2.25.4.1207014.1228146105.98&objectUID=1.2.840.113619.2.25.4.1207014.1228146105.99
-    // ...
-    // file:///C:/Dokumente%20und%20Einstellungen/fokko/Desktop/123.dcm
     static final Logger log4jLogger = Logger.getLogger(DcmInputOutput.class);
 
     public static Dcm read(URL url) {
@@ -25,6 +22,9 @@ public class DcmInputOutput {
 
     /**
      * TODO add implementation for reading from PACS, HTTP, ...
+     *
+     * file:///C:/Dokumente und Einstellungen/fokko/Desktop/123.dcm
+     * http://pacs.sofd.local:8080/wado/?requestType=WADO&studyUID=1.2.840.113619.2.25.4.1207014.1228146104.835&seriesUID=1.2.840.113619.2.25.4.1207014.1228146105.98&objectUID=1.2.840.113619.2.25.4.1207014.1228146105.99
      *
      * @param url
      * @param stopTagInputHandler
@@ -40,7 +40,7 @@ public class DcmInputOutput {
             }
             dicomInputStream.readDicomObject(basicDicomObject, -1);
             dicomInputStream.close();
-            // TODO isEmpty() OK?
+            // TODO isEmpty() OK? Additional check for null needed?
             if (!basicDicomObject.isEmpty()) {
                 Dcm dcm = new Dcm();
                 dcm.setUrl(url);
