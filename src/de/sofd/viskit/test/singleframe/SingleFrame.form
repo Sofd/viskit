@@ -4,6 +4,8 @@
   <NonVisualComponents>
     <Component class="de.sofd.viskit.controllers.ImageListViewSelectionSynchronizationController" name="selectionSynchronizationController">
     </Component>
+    <Component class="de.sofd.viskit.controllers.ImageListViewScaleModeSynchronizationController" name="scaleModeSynchronizationController">
+    </Component>
   </NonVisualComponents>
   <Properties>
     <Property name="defaultCloseOperation" type="int" value="3"/>
@@ -73,7 +75,9 @@
               <Group type="102" alignment="0" attributes="0">
                   <EmptySpace max="-2" attributes="0"/>
                   <Component id="syncSelectionsCheckbox" min="-2" max="-2" attributes="0"/>
-                  <EmptySpace pref="801" max="32767" attributes="0"/>
+                  <EmptySpace type="separate" max="-2" attributes="0"/>
+                  <Component id="syncScaleModesCheckbox" min="-2" max="-2" attributes="0"/>
+                  <EmptySpace pref="602" max="32767" attributes="0"/>
               </Group>
           </Group>
         </DimensionLayout>
@@ -81,7 +85,10 @@
           <Group type="103" groupAlignment="0" attributes="0">
               <Group type="102" alignment="0" attributes="0">
                   <EmptySpace max="-2" attributes="0"/>
-                  <Component id="syncSelectionsCheckbox" min="-2" max="-2" attributes="0"/>
+                  <Group type="103" groupAlignment="3" attributes="0">
+                      <Component id="syncSelectionsCheckbox" alignment="3" min="-2" max="-2" attributes="0"/>
+                      <Component id="syncScaleModesCheckbox" alignment="3" min="-2" max="-2" attributes="0"/>
+                  </Group>
                   <EmptySpace pref="91" max="32767" attributes="0"/>
               </Group>
           </Group>
@@ -94,6 +101,14 @@
           </Properties>
           <BindingProperties>
             <BindingProperty name="selected" source="selectionSynchronizationController" sourcePath="${enabled}" target="syncSelectionsCheckbox" targetPath="selected" updateStrategy="0" immediately="false"/>
+          </BindingProperties>
+        </Component>
+        <Component class="javax.swing.JCheckBox" name="syncScaleModesCheckbox">
+          <Properties>
+            <Property name="text" type="java.lang.String" value="synchronize scale modes"/>
+          </Properties>
+          <BindingProperties>
+            <BindingProperty name="selected" source="scaleModeSynchronizationController" sourcePath="${enabled}" target="syncScaleModesCheckbox" targetPath="selected" updateStrategy="0" immediately="false"/>
           </BindingProperties>
         </Component>
       </SubComponents>

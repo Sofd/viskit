@@ -6,14 +6,10 @@
 
 package de.sofd.viskit.test.singleframe;
 
-import de.sofd.viskit.controllers.ImageListViewMouseWindowingController;
 import de.sofd.viskit.ui.imagelist.JImageListView;
-import de.sofd.viskit.ui.imagelist.jlistimpl.JListImageListView;
-import java.awt.Color;
 import java.awt.GridLayout;
 import java.util.ArrayList;
 import java.util.List;
-import javax.swing.JScrollPane;
 import javax.swing.ListModel;
 
 /**
@@ -38,6 +34,7 @@ public class SingleFrame extends javax.swing.JFrame {
             lists.add(lvp.getListView());
         }
         selectionSynchronizationController.setLists(lists.toArray(new JImageListView[listModels.size()]));
+        scaleModeSynchronizationController.setLists(lists.toArray(new JImageListView[listModels.size()]));
     }
 
     /** This method is called from within the constructor to
@@ -51,9 +48,11 @@ public class SingleFrame extends javax.swing.JFrame {
         bindingGroup = new org.jdesktop.beansbinding.BindingGroup();
 
         selectionSynchronizationController = new de.sofd.viskit.controllers.ImageListViewSelectionSynchronizationController();
+        scaleModeSynchronizationController = new de.sofd.viskit.controllers.ImageListViewScaleModeSynchronizationController();
         listsPanel = new javax.swing.JPanel();
         controlsPanel = new javax.swing.JPanel();
         syncSelectionsCheckbox = new javax.swing.JCheckBox();
+        syncScaleModesCheckbox = new javax.swing.JCheckBox();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         setTitle("Single Frame Test");
@@ -74,6 +73,11 @@ public class SingleFrame extends javax.swing.JFrame {
         org.jdesktop.beansbinding.Binding binding = org.jdesktop.beansbinding.Bindings.createAutoBinding(org.jdesktop.beansbinding.AutoBinding.UpdateStrategy.READ_WRITE, selectionSynchronizationController, org.jdesktop.beansbinding.ELProperty.create("${enabled}"), syncSelectionsCheckbox, org.jdesktop.beansbinding.BeanProperty.create("selected"));
         bindingGroup.addBinding(binding);
 
+        syncScaleModesCheckbox.setText("synchronize scale modes");
+
+        binding = org.jdesktop.beansbinding.Bindings.createAutoBinding(org.jdesktop.beansbinding.AutoBinding.UpdateStrategy.READ_WRITE, scaleModeSynchronizationController, org.jdesktop.beansbinding.ELProperty.create("${enabled}"), syncScaleModesCheckbox, org.jdesktop.beansbinding.BeanProperty.create("selected"));
+        bindingGroup.addBinding(binding);
+
         javax.swing.GroupLayout controlsPanelLayout = new javax.swing.GroupLayout(controlsPanel);
         controlsPanel.setLayout(controlsPanelLayout);
         controlsPanelLayout.setHorizontalGroup(
@@ -81,13 +85,17 @@ public class SingleFrame extends javax.swing.JFrame {
             .addGroup(controlsPanelLayout.createSequentialGroup()
                 .addContainerGap()
                 .addComponent(syncSelectionsCheckbox)
-                .addContainerGap(801, Short.MAX_VALUE))
+                .addGap(18, 18, 18)
+                .addComponent(syncScaleModesCheckbox)
+                .addContainerGap(602, Short.MAX_VALUE))
         );
         controlsPanelLayout.setVerticalGroup(
             controlsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(controlsPanelLayout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(syncSelectionsCheckbox)
+                .addGroup(controlsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(syncSelectionsCheckbox)
+                    .addComponent(syncScaleModesCheckbox))
                 .addContainerGap(91, Short.MAX_VALUE))
         );
 
@@ -120,7 +128,9 @@ public class SingleFrame extends javax.swing.JFrame {
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JPanel controlsPanel;
     private javax.swing.JPanel listsPanel;
+    private de.sofd.viskit.controllers.ImageListViewScaleModeSynchronizationController scaleModeSynchronizationController;
     private de.sofd.viskit.controllers.ImageListViewSelectionSynchronizationController selectionSynchronizationController;
+    private javax.swing.JCheckBox syncScaleModesCheckbox;
     private javax.swing.JCheckBox syncSelectionsCheckbox;
     private org.jdesktop.beansbinding.BindingGroup bindingGroup;
     // End of variables declaration//GEN-END:variables
