@@ -46,7 +46,7 @@ public abstract class CachingDicomImageListViewModelElement implements DicomImag
 
     /**
      * Same as {@link #getBackendDicomObject() }, but for the image. Default implementation
-     * extracts the image from the getDicomObject().
+     * extracts the image from the getBackendDicomObject().
      *
      * @return
      */
