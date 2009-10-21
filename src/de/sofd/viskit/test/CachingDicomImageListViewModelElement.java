@@ -56,7 +56,7 @@ public abstract class CachingDicomImageListViewModelElement implements DicomImag
             throw new IllegalStateException("The DICOM image I/O filter (from dcm4che1) must be available to read images.");
         }
 
-        DicomObject dcmObj = getDicomObject();
+        DicomObject dcmObj = getBackendDicomObject();
 
         // extract the BufferedImage from the received imageDicomObject
         ByteArrayOutputStream bos = new ByteArrayOutputStream(200000);
