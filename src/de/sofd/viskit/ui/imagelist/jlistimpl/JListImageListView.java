@@ -99,6 +99,15 @@ public class JListImageListView extends JImageListView {
         wrappedList.setSelectionModel(selectionModel);
     }
 
+    public void setSelectionForeground(Color selectionForeground) {
+        wrappedList.setSelectionForeground(selectionForeground);
+    }
+
+    public void setSelectionBackground(Color selectionBackground) {
+        wrappedList.setSelectionBackground(selectionBackground);
+    }
+
+
     public static class MyImageListViewCell extends DefaultImageListViewCell {
         private ImageListViewCellViewer latestViewer;
         public MyImageListViewCell(JImageListView owner, ImageListViewModelElement displayedModelElement) {

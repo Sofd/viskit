@@ -55,6 +55,7 @@ public class ListViewPanel extends javax.swing.JPanel {
         jLabel1.setText("Scale Mode:");
 
         listView.setBackground(new java.awt.Color(0, 0, 0));
+        listView.setSelectionBackground(java.awt.Color.darkGray);
 
         binding = org.jdesktop.beansbinding.Bindings.createAutoBinding(org.jdesktop.beansbinding.AutoBinding.UpdateStrategy.READ_WRITE, scaleModesComboBox, org.jdesktop.beansbinding.ELProperty.create("${selectedItem}"), listView, org.jdesktop.beansbinding.BeanProperty.create("scaleMode"));
         bindingGroup.addBinding(binding);
