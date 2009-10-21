@@ -18,6 +18,7 @@ import org.dcm4che2.data.Tag;
 import org.dcm4che2.data.UID;
 import org.dcm4che2.imageio.plugins.dcm.DicomImageReadParam;
 import org.dcm4che2.io.DicomOutputStream;
+import org.dcm4che2.media.FileMetaInformation;
 
 /**
  *
@@ -79,7 +80,14 @@ public class DcmImageListViewModelElement implements ImageListViewModelElement {
             try {
                 ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream(200000);
                 DicomOutputStream dicomOutputStream = new DicomOutputStream(byteArrayOutputStream);
-                dicomOutputStream.writeDataset(dcm.getDicomObject(), UID.ImplicitVRLittleEndian);
+                System.out.println("#### 1: " + dcm.getDicomObject().getString(Tag.TransferSyntaxUID));
+                FileMetaInformation fmi = new FileMetaInformation(dcm.getDicomObject());
+                //JPEGLossless
+                fmi = new FileMetaInformation(fmi.getMediaStorageSOPClassUID(), fmi.getMediaStorageSOPInstanceUID(), "1.2.840.10008.1.2.4.70");
+                dicomOutputStream.writeFileMetaInformation(fmi.getDicomObject());
+                dicomOutputStream.writeDataset(dcm.getDicomObject(), dcm.getDicomObject().getString(Tag.TransferSyntaxUID));
+                //dicomOutputStream.setTransferSyntax(dcm.getDicomObject().getString(Tag.TransferSyntaxUID));
+                
                 dicomOutputStream.close();
                 ImageInputStream imageInputStream = ImageIO.createImageInputStream(new ByteArrayInputStream(byteArrayOutputStream.toByteArray()));
                 imageReader.setInput(imageInputStream, false);
