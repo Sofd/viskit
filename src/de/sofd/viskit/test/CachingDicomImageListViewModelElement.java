@@ -15,6 +15,7 @@ import org.dcm4che2.data.DicomObject;
 import org.dcm4che2.data.Tag;
 import org.dcm4che2.data.UID;
 import org.dcm4che2.io.DicomOutputStream;
+import org.dcm4che2.media.FileMetaInformation;
 
 /**
  * Implements getDicomObject(), getImage() as caching delegators to the (subclass-provided)
@@ -61,11 +62,13 @@ public abstract class CachingDicomImageListViewModelElement implements DicomImag
         ByteArrayOutputStream bos = new ByteArrayOutputStream(200000);
         DicomOutputStream dos = new DicomOutputStream(bos);
         try {
-            // TODO: doesn't work for "JPEGLossless" tsuid (and maybe others) (NPE in reader.read(0) below)
             String tsuid = dcmObj.getString(Tag.TransferSyntaxUID);
             if (null == tsuid) {
                 tsuid = UID.ImplicitVRLittleEndian;
             }
+            FileMetaInformation fmi = new FileMetaInformation(dcmObj);
+            fmi = new FileMetaInformation(fmi.getMediaStorageSOPClassUID(), fmi.getMediaStorageSOPInstanceUID(), tsuid);
+            dos.writeFileMetaInformation(fmi.getDicomObject());
             dos.writeDataset(dcmObj, tsuid);
             dos.close();
 
