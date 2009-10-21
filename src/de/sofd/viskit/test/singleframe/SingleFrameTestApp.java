@@ -39,7 +39,9 @@ public class SingleFrameTestApp {
             throw new IllegalArgumentException("series base directory "+seriesBaseDirName+" not found");
         }
         List<ListModel> listModels = new ArrayList<ListModel>();
-        for (File seriesDir: seriesBaseDir.listFiles()) {
+        File[] seriesDirs = seriesBaseDir.listFiles();
+        Arrays.sort(seriesDirs);
+        for (File seriesDir: seriesDirs) {
             if (!seriesDir.isDirectory()) { continue; }
             ListModel dirListModel = getViewerListModelForDirectory(seriesDir);
             listModels.add(dirListModel);
@@ -60,14 +62,16 @@ public class SingleFrameTestApp {
         return result;
     }
 
-    public static void main(String[] args) throws Exception {
+    public static void main(String[] args) {
         SwingUtilities.invokeLater(new Runnable() {
             @Override
             public void run() {
                 try {
                     new SingleFrameTestApp();
                 } catch (Exception e) {
-                    throw new RuntimeException(e);
+                    System.err.println("Exception during UI initialization (before event loop start). Exiting.");
+                    e.printStackTrace();
+                    System.exit(-1);
                 }
             }
         });
