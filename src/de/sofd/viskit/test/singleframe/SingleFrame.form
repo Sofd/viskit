@@ -77,19 +77,24 @@
                   <Component id="syncSelectionsCheckbox" min="-2" max="-2" attributes="0"/>
                   <EmptySpace type="separate" max="-2" attributes="0"/>
                   <Component id="syncScaleModesCheckbox" min="-2" max="-2" attributes="0"/>
-                  <EmptySpace pref="602" max="32767" attributes="0"/>
+                  <EmptySpace type="separate" max="-2" attributes="0"/>
+                  <Component id="roiToolPanel1" min="-2" max="-2" attributes="0"/>
+                  <EmptySpace pref="368" max="32767" attributes="0"/>
               </Group>
           </Group>
         </DimensionLayout>
         <DimensionLayout dim="1">
           <Group type="103" groupAlignment="0" attributes="0">
-              <Group type="102" alignment="0" attributes="0">
+              <Group type="102" attributes="0">
                   <EmptySpace max="-2" attributes="0"/>
-                  <Group type="103" groupAlignment="3" attributes="0">
-                      <Component id="syncSelectionsCheckbox" alignment="3" min="-2" max="-2" attributes="0"/>
-                      <Component id="syncScaleModesCheckbox" alignment="3" min="-2" max="-2" attributes="0"/>
+                  <Group type="103" groupAlignment="0" attributes="0">
+                      <Group type="103" alignment="0" groupAlignment="3" attributes="0">
+                          <Component id="syncSelectionsCheckbox" alignment="3" min="-2" max="-2" attributes="0"/>
+                          <Component id="syncScaleModesCheckbox" alignment="3" min="-2" max="-2" attributes="0"/>
+                      </Group>
+                      <Component id="roiToolPanel1" alignment="0" min="-2" max="-2" attributes="0"/>
                   </Group>
-                  <EmptySpace pref="91" max="32767" attributes="0"/>
+                  <EmptySpace pref="75" max="32767" attributes="0"/>
               </Group>
           </Group>
         </DimensionLayout>
@@ -110,6 +115,8 @@
           <BindingProperties>
             <BindingProperty name="selected" source="scaleModeSynchronizationController" sourcePath="${enabled}" target="syncScaleModesCheckbox" targetPath="selected" updateStrategy="0" immediately="false"/>
           </BindingProperties>
+        </Component>
+        <Component class="de.sofd.viskit.ui.RoiToolPanel" name="roiToolPanel1">
         </Component>
       </SubComponents>
     </Container>
