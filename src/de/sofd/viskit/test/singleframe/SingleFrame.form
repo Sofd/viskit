@@ -6,6 +6,11 @@
     </Component>
     <Component class="de.sofd.viskit.controllers.ImageListViewScaleModeSynchronizationController" name="scaleModeSynchronizationController">
     </Component>
+    <Component class="de.sofd.viskit.controllers.ImageListViewRoiToolApplicationController" name="roiToolApplicationController">
+      <BindingProperties>
+        <BindingProperty name="roiToolPanel" source="roiToolPanel" target="roiToolApplicationController" targetPath="roiToolPanel" updateStrategy="0" immediately="false"/>
+      </BindingProperties>
+    </Component>
   </NonVisualComponents>
   <Properties>
     <Property name="defaultCloseOperation" type="int" value="3"/>
@@ -78,7 +83,7 @@
                   <EmptySpace type="separate" max="-2" attributes="0"/>
                   <Component id="syncScaleModesCheckbox" min="-2" max="-2" attributes="0"/>
                   <EmptySpace type="separate" max="-2" attributes="0"/>
-                  <Component id="roiToolPanel1" min="-2" max="-2" attributes="0"/>
+                  <Component id="roiToolPanel" min="-2" max="-2" attributes="0"/>
                   <EmptySpace pref="368" max="32767" attributes="0"/>
               </Group>
           </Group>
@@ -92,7 +97,7 @@
                           <Component id="syncSelectionsCheckbox" alignment="3" min="-2" max="-2" attributes="0"/>
                           <Component id="syncScaleModesCheckbox" alignment="3" min="-2" max="-2" attributes="0"/>
                       </Group>
-                      <Component id="roiToolPanel1" alignment="0" min="-2" max="-2" attributes="0"/>
+                      <Component id="roiToolPanel" alignment="0" min="-2" max="-2" attributes="0"/>
                   </Group>
                   <EmptySpace pref="75" max="32767" attributes="0"/>
               </Group>
@@ -116,7 +121,7 @@
             <BindingProperty name="selected" source="scaleModeSynchronizationController" sourcePath="${enabled}" target="syncScaleModesCheckbox" targetPath="selected" updateStrategy="0" immediately="false"/>
           </BindingProperties>
         </Component>
-        <Component class="de.sofd.viskit.ui.RoiToolPanel" name="roiToolPanel1">
+        <Component class="de.sofd.viskit.ui.RoiToolPanel" name="roiToolPanel">
         </Component>
       </SubComponents>
     </Container>

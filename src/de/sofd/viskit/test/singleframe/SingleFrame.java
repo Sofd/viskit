@@ -35,6 +35,7 @@ public class SingleFrame extends javax.swing.JFrame {
         }
         selectionSynchronizationController.setLists(lists.toArray(new JImageListView[listModels.size()]));
         scaleModeSynchronizationController.setLists(lists.toArray(new JImageListView[listModels.size()]));
+        roiToolApplicationController.setLists(lists.toArray(new JImageListView[listModels.size()]));
     }
 
     /** This method is called from within the constructor to
@@ -49,11 +50,15 @@ public class SingleFrame extends javax.swing.JFrame {
 
         selectionSynchronizationController = new de.sofd.viskit.controllers.ImageListViewSelectionSynchronizationController();
         scaleModeSynchronizationController = new de.sofd.viskit.controllers.ImageListViewScaleModeSynchronizationController();
+        roiToolApplicationController = new de.sofd.viskit.controllers.ImageListViewRoiToolApplicationController();
         listsPanel = new javax.swing.JPanel();
         controlsPanel = new javax.swing.JPanel();
         syncSelectionsCheckbox = new javax.swing.JCheckBox();
         syncScaleModesCheckbox = new javax.swing.JCheckBox();
-        roiToolPanel1 = new de.sofd.viskit.ui.RoiToolPanel();
+        roiToolPanel = new de.sofd.viskit.ui.RoiToolPanel();
+
+        org.jdesktop.beansbinding.Binding binding = org.jdesktop.beansbinding.Bindings.createAutoBinding(org.jdesktop.beansbinding.AutoBinding.UpdateStrategy.READ_WRITE, roiToolPanel, org.jdesktop.beansbinding.ObjectProperty.create(), roiToolApplicationController, org.jdesktop.beansbinding.BeanProperty.create("roiToolPanel"));
+        bindingGroup.addBinding(binding);
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         setTitle("Single Frame Test");
@@ -71,7 +76,7 @@ public class SingleFrame extends javax.swing.JFrame {
 
         syncSelectionsCheckbox.setText("synchronize selections");
 
-        org.jdesktop.beansbinding.Binding binding = org.jdesktop.beansbinding.Bindings.createAutoBinding(org.jdesktop.beansbinding.AutoBinding.UpdateStrategy.READ_WRITE, selectionSynchronizationController, org.jdesktop.beansbinding.ELProperty.create("${enabled}"), syncSelectionsCheckbox, org.jdesktop.beansbinding.BeanProperty.create("selected"));
+        binding = org.jdesktop.beansbinding.Bindings.createAutoBinding(org.jdesktop.beansbinding.AutoBinding.UpdateStrategy.READ_WRITE, selectionSynchronizationController, org.jdesktop.beansbinding.ELProperty.create("${enabled}"), syncSelectionsCheckbox, org.jdesktop.beansbinding.BeanProperty.create("selected"));
         bindingGroup.addBinding(binding);
 
         syncScaleModesCheckbox.setText("synchronize scale modes");
@@ -89,7 +94,7 @@ public class SingleFrame extends javax.swing.JFrame {
                 .addGap(18, 18, 18)
                 .addComponent(syncScaleModesCheckbox)
                 .addGap(18, 18, 18)
-                .addComponent(roiToolPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(roiToolPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addContainerGap(368, Short.MAX_VALUE))
         );
         controlsPanelLayout.setVerticalGroup(
@@ -100,7 +105,7 @@ public class SingleFrame extends javax.swing.JFrame {
                     .addGroup(controlsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                         .addComponent(syncSelectionsCheckbox)
                         .addComponent(syncScaleModesCheckbox))
-                    .addComponent(roiToolPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(roiToolPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addContainerGap(75, Short.MAX_VALUE))
         );
 
@@ -133,7 +138,8 @@ public class SingleFrame extends javax.swing.JFrame {
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JPanel controlsPanel;
     private javax.swing.JPanel listsPanel;
-    private de.sofd.viskit.ui.RoiToolPanel roiToolPanel1;
+    private de.sofd.viskit.controllers.ImageListViewRoiToolApplicationController roiToolApplicationController;
+    private de.sofd.viskit.ui.RoiToolPanel roiToolPanel;
     private de.sofd.viskit.controllers.ImageListViewScaleModeSynchronizationController scaleModeSynchronizationController;
     private de.sofd.viskit.controllers.ImageListViewSelectionSynchronizationController selectionSynchronizationController;
     private javax.swing.JCheckBox syncScaleModesCheckbox;

@@ -146,6 +146,18 @@ public abstract class JImageListView extends JPanel {
         }
     };
 
+    public int getLength() {
+        if (null == getModel()) {
+            return 0;
+        } else {
+            return getModel().getSize();
+        }
+    }
+
+    public ImageListViewModelElement getElementAt(int index) {
+        return (ImageListViewModelElement) (getModel().getElementAt(index));
+    }
+
     public ImageListViewCell getCellForElement(ImageListViewModelElement elt) {
         return cellsByElementMap.get(elt);
     }
