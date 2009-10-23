@@ -134,7 +134,17 @@ public class ImageListViewRoiToolApplicationController {
     }
 
     protected void disconnectUiElements() {
-
+        if (this.roiToolPanel == null || this.lists.isEmpty()) {
+            return;
+        }
+        this.roiToolPanel.removePropertyChangeListener(roiToolChangeHandler);
+        for (JImageListView lv : this.lists) {
+            for (int i = 0; i < lv.getLength(); i++) {
+                lv.getElementAt(i).getRoiDrawing().removeDrawingListener(drawingEventHandler);
+            }
+            lv.removePropertyChangeListener(listModelChangeHandler);
+            lv.removeImageListViewListener(listCellAddRemoveHandler);
+        }
     }
 
     private PropertyChangeListener roiToolChangeHandler = new PropertyChangeListener() {
