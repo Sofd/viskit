@@ -9,13 +9,11 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.Iterator;
 import java.util.Random;
-import java.util.logging.Level;
 import javax.imageio.ImageIO;
 import javax.imageio.ImageReader;
 import javax.imageio.stream.ImageInputStream;
 import org.apache.log4j.Logger;
 import org.dcm4che2.data.Tag;
-import org.dcm4che2.data.UID;
 import org.dcm4che2.imageio.plugins.dcm.DicomImageReadParam;
 import org.dcm4che2.io.DicomOutputStream;
 import org.dcm4che2.media.FileMetaInformation;
@@ -32,14 +30,16 @@ public class DcmImageListViewModelElement implements ImageListViewModelElement {
     private String uniqueKey = String.valueOf(System.currentTimeMillis()) + String.valueOf(random.nextLong());
     /** windowCenter aka level or brightness */
     private Integer windowCenter = -1;
-    // TODO private Integer renderedWindowCenter = -1;
+    //private Integer renderedWindowCenter = -1;
     /** windowWidth aka window or contrast */
     private Integer windowWidth = -1;
-    //TODO private Integer renderedWindowWidth = -1;
+    //private Integer renderedWindowWidth = -1;
     private String label;
     private boolean error;
     private BufferedImage bufferedImage;
+    private final Drawing roiDrawing;
     private BufferedImage errorImage;
+    //private boolean autoWindowing = true;
 
     static {
         ImageIO.scanForPlugins();
@@ -49,59 +49,52 @@ public class DcmImageListViewModelElement implements ImageListViewModelElement {
 
     public DcmImageListViewModelElement(Dcm dcm) {
         this.dcm = dcm;
+        roiDrawing = new Drawing();
     }
 
     @Override
     public BufferedImage getImage() {
         if (bufferedImage == null) {
-            if (getWindowWidth() == null || getWindowWidth() < 0) {
-                try {
-                    setWindowWidth((int) dcm.getDicomObject().getFloat(Tag.WindowWidth));
-                } catch (Exception ex) {
-                    log4jLogger.error("getImage setWindowWidth", ex);
-                    setWindowWidth(255);
-                    // TODO or setAutoWindowing true
+            if (windowWidth == null || windowWidth < 0) {
+                windowWidth = dcm.getWindowWidthTag();
+                if (windowWidth == null) {
+                    windowWidth = 255;
+                    // TODO or setAutoWindowing true - but how can i get windowCenter/windowWidth then?
                 }
             }
-            if (getWindowCenter() == null || getWindowCenter() < 0) {
-                try {
-                    setWindowCenter((int) dcm.getDicomObject().getFloat(Tag.WindowCenter));
-                } catch (Exception ex) {
-                    log4jLogger.error("getImage setWindowCenter", ex);
-                    setWindowCenter(255);
-                    // TODO or setAutoWindowing true
+            if (windowCenter == null || windowCenter < 0) {
+                windowCenter = dcm.getDicomWindowCenterTag();
+                if (windowCenter == null) {
+                    windowCenter = 255;
+                    // TODO or setAutoWindowing true - but how can i get windowCenter/windowWidth then?
                 }
             }
             DicomImageReadParam param = new DicomImageReadParam();
             param.setAutoWindowing(false);
-            param.setWindowWidth(getWindowWidth());
-            param.setWindowCenter(getWindowCenter());
+            param.setWindowWidth(windowWidth);
+            param.setWindowCenter(windowCenter);
             param.setPresentationState(dcm.getDicomObject());
             try {
                 ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream(200000);
                 DicomOutputStream dicomOutputStream = new DicomOutputStream(byteArrayOutputStream);
-                System.out.println("#### 1: " + dcm.getDicomObject().getString(Tag.TransferSyntaxUID));
-                FileMetaInformation fmi = new FileMetaInformation(dcm.getDicomObject());
-                //JPEGLossless
-                fmi = new FileMetaInformation(fmi.getMediaStorageSOPClassUID(), fmi.getMediaStorageSOPInstanceUID(), "1.2.840.10008.1.2.4.70");
-                dicomOutputStream.writeFileMetaInformation(fmi.getDicomObject());
+                FileMetaInformation fileMetaInformation = new FileMetaInformation(dcm.getDicomObject());
+                fileMetaInformation = new FileMetaInformation(fileMetaInformation.getMediaStorageSOPClassUID(), fileMetaInformation.getMediaStorageSOPInstanceUID(), dcm.getDicomObject().getString(Tag.TransferSyntaxUID));
+                dicomOutputStream.writeFileMetaInformation(fileMetaInformation.getDicomObject());
                 dicomOutputStream.writeDataset(dcm.getDicomObject(), dcm.getDicomObject().getString(Tag.TransferSyntaxUID));
-                //dicomOutputStream.setTransferSyntax(dcm.getDicomObject().getString(Tag.TransferSyntaxUID));
-                
                 dicomOutputStream.close();
                 ImageInputStream imageInputStream = ImageIO.createImageInputStream(new ByteArrayInputStream(byteArrayOutputStream.toByteArray()));
                 imageReader.setInput(imageInputStream, false);
-                bufferedImage = imageReader.read(0);
+                bufferedImage = imageReader.read(0, param);
                 imageInputStream.close();
-            } catch (IOException ex) {
+            } catch (Exception ex) {
                 log4jLogger.error("getImage " + dcm.getUrl().toExternalForm(), ex);
                 ex.printStackTrace();
             }
             if (bufferedImage == null) {
                 error = true;
                 bufferedImage = getErrorImage();
-                setWindowWidth(0);
-                setWindowCenter(0);
+                windowWidth = 0;
+                windowCenter = 0;
             }
         }
         return bufferedImage;
@@ -109,7 +102,7 @@ public class DcmImageListViewModelElement implements ImageListViewModelElement {
 
     @Override
     public Drawing getRoiDrawing() {
-        return new Drawing();
+        return roiDrawing;
     }
 
     public Dcm getDcm() {
@@ -156,7 +149,7 @@ public class DcmImageListViewModelElement implements ImageListViewModelElement {
         if (errorImage == null) {
             try {
                 errorImage = ImageIO.read(getClass().getResource("/de/sofd/viskit/resources/image-missing.png"));
-            } catch (Exception ex) {
+            } catch (IOException ex) {
                 log4jLogger.error("getErrorImage", ex);
             }
         }
