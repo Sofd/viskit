@@ -240,22 +240,24 @@ public class JListImageListView extends JImageListView {
         int idx = wrappedList.locationToIndex(evt.getPoint());
         if (idx != -1) {
             MyImageListViewCell cell = getCell(idx);
-            evt.translatePoint(-wrappedList.indexToLocation(idx).x, -wrappedList.indexToLocation(idx).y);
-            Point2D imageOffset = cell.getLatestViewer().getImageOffset();
-            evt.translatePoint((int) -imageOffset.getX(), (int) -imageOffset.getY());
-            cell.getRoiDrawingViewer().processInputEvent(evt);
-            {
-                // for testing purposes (for now)
-                MouseEvent ce = Misc.deepCopy(evt);
-                ce.setSource(cell);
-                if (ce instanceof MouseWheelEvent) {
-                    fireCellMouseWheelEvent((MouseWheelEvent) ce);
-                } else {
-                    fireCellMouseEvent(ce);
+            if (null != cell.getLatestViewer()) {
+                evt.translatePoint(-wrappedList.indexToLocation(idx).x, -wrappedList.indexToLocation(idx).y);
+                Point2D imageOffset = cell.getLatestViewer().getImageOffset();
+                evt.translatePoint((int) -imageOffset.getX(), (int) -imageOffset.getY());
+                cell.getRoiDrawingViewer().processInputEvent(evt);
+                {
+                    // for testing purposes (for now)
+                    MouseEvent ce = Misc.deepCopy(evt);
+                    ce.setSource(cell);
+                    if (ce instanceof MouseWheelEvent) {
+                        fireCellMouseWheelEvent((MouseWheelEvent) ce);
+                    } else {
+                        fireCellMouseEvent(ce);
+                    }
                 }
-            }
-            if (refreshCell) {
-                refreshCellForIndex(idx);
+                if (refreshCell) {
+                    refreshCellForIndex(idx);
+                }
             }
         }
     }
