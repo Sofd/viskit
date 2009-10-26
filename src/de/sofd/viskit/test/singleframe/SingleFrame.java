@@ -55,6 +55,8 @@ public class SingleFrame extends javax.swing.JFrame {
         controlsPanel = new javax.swing.JPanel();
         syncSelectionsCheckbox = new javax.swing.JCheckBox();
         syncScaleModesCheckbox = new javax.swing.JCheckBox();
+        keepRelativeSelIndicesCheckbox = new javax.swing.JCheckBox();
+        jPanel1 = new javax.swing.JPanel();
         roiToolPanel = new de.sofd.viskit.ui.RoiToolPanel();
 
         org.jdesktop.beansbinding.Binding binding = org.jdesktop.beansbinding.Bindings.createAutoBinding(org.jdesktop.beansbinding.AutoBinding.UpdateStrategy.READ_WRITE, roiToolPanel, org.jdesktop.beansbinding.ObjectProperty.create(), roiToolApplicationController, org.jdesktop.beansbinding.BeanProperty.create("roiToolPanel"));
@@ -71,7 +73,7 @@ public class SingleFrame extends javax.swing.JFrame {
         );
         listsPanelLayout.setVerticalGroup(
             listsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 443, Short.MAX_VALUE)
+            .addGap(0, 406, Short.MAX_VALUE)
         );
 
         syncSelectionsCheckbox.setText("synchronize selections");
@@ -84,29 +86,63 @@ public class SingleFrame extends javax.swing.JFrame {
         binding = org.jdesktop.beansbinding.Bindings.createAutoBinding(org.jdesktop.beansbinding.AutoBinding.UpdateStrategy.READ_WRITE, scaleModeSynchronizationController, org.jdesktop.beansbinding.ELProperty.create("${enabled}"), syncScaleModesCheckbox, org.jdesktop.beansbinding.BeanProperty.create("selected"));
         bindingGroup.addBinding(binding);
 
+        keepRelativeSelIndicesCheckbox.setText("keep relative indices");
+
+        binding = org.jdesktop.beansbinding.Bindings.createAutoBinding(org.jdesktop.beansbinding.AutoBinding.UpdateStrategy.READ_WRITE, selectionSynchronizationController, org.jdesktop.beansbinding.ELProperty.create("${keepRelativeSelectionIndices}"), keepRelativeSelIndicesCheckbox, org.jdesktop.beansbinding.BeanProperty.create("selected"));
+        bindingGroup.addBinding(binding);
+        binding = org.jdesktop.beansbinding.Bindings.createAutoBinding(org.jdesktop.beansbinding.AutoBinding.UpdateStrategy.READ_WRITE, syncSelectionsCheckbox, org.jdesktop.beansbinding.ELProperty.create("${selected}"), keepRelativeSelIndicesCheckbox, org.jdesktop.beansbinding.BeanProperty.create("enabled"));
+        bindingGroup.addBinding(binding);
+
+        jPanel1.setBorder(javax.swing.BorderFactory.createTitledBorder("ROI"));
+
+        javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
+        jPanel1.setLayout(jPanel1Layout);
+        jPanel1Layout.setHorizontalGroup(
+            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel1Layout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(roiToolPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap())
+        );
+        jPanel1Layout.setVerticalGroup(
+            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel1Layout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(roiToolPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap())
+        );
+
         javax.swing.GroupLayout controlsPanelLayout = new javax.swing.GroupLayout(controlsPanel);
         controlsPanel.setLayout(controlsPanelLayout);
         controlsPanelLayout.setHorizontalGroup(
             controlsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(controlsPanelLayout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(syncSelectionsCheckbox)
+                .addGroup(controlsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(controlsPanelLayout.createSequentialGroup()
+                        .addComponent(syncSelectionsCheckbox)
+                        .addGap(18, 18, 18)
+                        .addComponent(syncScaleModesCheckbox))
+                    .addGroup(controlsPanelLayout.createSequentialGroup()
+                        .addGap(21, 21, 21)
+                        .addComponent(keepRelativeSelIndicesCheckbox)))
                 .addGap(18, 18, 18)
-                .addComponent(syncScaleModesCheckbox)
-                .addGap(18, 18, 18)
-                .addComponent(roiToolPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(368, Short.MAX_VALUE))
+                .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap(334, Short.MAX_VALUE))
         );
         controlsPanelLayout.setVerticalGroup(
             controlsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(controlsPanelLayout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(controlsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(controlsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                        .addComponent(syncSelectionsCheckbox)
-                        .addComponent(syncScaleModesCheckbox))
-                    .addComponent(roiToolPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addContainerGap(75, Short.MAX_VALUE))
+                    .addGroup(controlsPanelLayout.createSequentialGroup()
+                        .addGroup(controlsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                            .addComponent(syncSelectionsCheckbox)
+                            .addComponent(syncScaleModesCheckbox))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(keepRelativeSelIndicesCheckbox))
+                    .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addContainerGap(64, Short.MAX_VALUE))
         );
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
@@ -137,6 +173,8 @@ public class SingleFrame extends javax.swing.JFrame {
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JPanel controlsPanel;
+    private javax.swing.JPanel jPanel1;
+    private javax.swing.JCheckBox keepRelativeSelIndicesCheckbox;
     private javax.swing.JPanel listsPanel;
     private de.sofd.viskit.controllers.ImageListViewRoiToolApplicationController roiToolApplicationController;
     private de.sofd.viskit.ui.RoiToolPanel roiToolPanel;
