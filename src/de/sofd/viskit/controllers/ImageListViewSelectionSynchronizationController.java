@@ -20,6 +20,8 @@ public class ImageListViewSelectionSynchronizationController {
     private final List<JImageListView> lists = new ArrayList<JImageListView>();
     private boolean enabled;
     public static final String PROP_ENABLED = "enabled";
+    private boolean keepRelativeSelectionIndices;
+    public static final String PROP_KEEPRELATIVESELECTIONINDICES = "keepRelativeSelectionIndices";
 
     public ImageListViewSelectionSynchronizationController() {
     }
@@ -82,6 +84,26 @@ public class ImageListViewSelectionSynchronizationController {
         boolean oldEnabled = this.enabled;
         this.enabled = enabled;
         propertyChangeSupport.firePropertyChange(PROP_ENABLED, oldEnabled, enabled);
+    }
+
+    /**
+     * Get the value of keepRelativeSelectionIndices
+     *
+     * @return the value of keepRelativeSelectionIndices
+     */
+    public boolean isKeepRelativeSelectionIndices() {
+        return keepRelativeSelectionIndices;
+    }
+
+    /**
+     * Set the value of keepRelativeSelectionIndices
+     *
+     * @param keepRelativeSelectionIndices new value of keepRelativeSelectionIndices
+     */
+    public void setKeepRelativeSelectionIndices(boolean keepRelativeSelectionIndices) {
+        boolean oldKeepRelativeSelectionIndices = this.keepRelativeSelectionIndices;
+        this.keepRelativeSelectionIndices = keepRelativeSelectionIndices;
+        propertyChangeSupport.firePropertyChange(PROP_KEEPRELATIVESELECTIONINDICES, oldKeepRelativeSelectionIndices, keepRelativeSelectionIndices);
     }
 
 
