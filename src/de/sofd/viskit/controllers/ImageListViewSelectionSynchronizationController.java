@@ -24,9 +24,6 @@ public class ImageListViewSelectionSynchronizationController {
     public static final String PROP_KEEPRELATIVESELECTIONINDICES = "keepRelativeSelectionIndices";
     private int[] lastSelectionIndices;
 
-    private int[] relativeSelectionIndices;
-    private int absolute2relative = Integer.MAX_VALUE;
-
     public ImageListViewSelectionSynchronizationController() {
     }
 
