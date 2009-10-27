@@ -17,13 +17,13 @@ import javax.swing.event.ListSelectionListener;
  */
 public class ImageListViewSelectionSynchronizationController {
 
-    // TODO: keepRelativeSelectionIndices mode is totally buggy at this point
-
     private final List<JImageListView> lists = new ArrayList<JImageListView>();
     private boolean enabled;
     public static final String PROP_ENABLED = "enabled";
     private boolean keepRelativeSelectionIndices;
     public static final String PROP_KEEPRELATIVESELECTIONINDICES = "keepRelativeSelectionIndices";
+    private int[] lastSelectionIndices;
+
     private int[] relativeSelectionIndices;
     private int absolute2relative = Integer.MAX_VALUE;
 
@@ -58,7 +58,7 @@ public class ImageListViewSelectionSynchronizationController {
             this.lists.add(lv);
             lv.addListSelectionListener(selectionHandler);
         }
-        updateRelativeSelectionIndices();
+        recordLastSelectionIndices();
     }
 
     /**
@@ -71,46 +71,11 @@ public class ImageListViewSelectionSynchronizationController {
         return this.lists.get(index);
     }
 
-    private void updateRelativeSelectionIndices() {
+    private void recordLastSelectionIndices() {
         int size = lists.size();
-        relativeSelectionIndices = new int[size];
-        absolute2relative = Integer.MAX_VALUE;
+        lastSelectionIndices = new int[size];
         for (int i = 0; i < size; i++) {
-            int selIdx = lists.get(i).getSelectedIndex();
-            if (-1 == selIdx) {
-                relativeSelectionIndices[i] = Integer.MAX_VALUE;
-            } else {
-                if (absolute2relative == Integer.MAX_VALUE) {
-                    absolute2relative = -selIdx;
-                }
-                relativeSelectionIndices[i] = selIdx + absolute2relative;
-            }
-        }
-    }
-
-    private void updateRelativeSelectionIndices(ListSelectionEvent evt) {
-        JImageListView sourceList = (JImageListView) evt.getSource();
-        int sourceListIdx = lists.indexOf(sourceList);
-        assert(sourceListIdx != -1);
-        int selIdx = sourceList.getSelectedIndex();
-        if (selIdx == -1) {
-            // selection of sourceList was emptied => delete corresponding relative index
-            relativeSelectionIndices[sourceListIdx] = Integer.MAX_VALUE;
-        } else {
-            absolute2relative = -selIdx;
-            int size = lists.size();
-            for (int i = 0; i < size; i++) {
-                JImageListView list = lists.get(i);
-                int listSelIdx = list.getSelectedIndex();
-                if (listSelIdx != -1) {
-                    if (relativeSelectionIndices[i] == Integer.MAX_VALUE) {
-                        relativeSelectionIndices[i] = listSelIdx + absolute2relative;
-                    }
-                    int newSelIdx = relativeSelectionIndices[i] - absolute2relative;
-                    // TODO: clamp
-                    list.getSelectionModel().setSelectionInterval(newSelIdx, newSelIdx);
-                }
-            }
+            lastSelectionIndices[i] = lists.get(i).getLeadSelectionIndex();
         }
     }
 
@@ -131,7 +96,7 @@ public class ImageListViewSelectionSynchronizationController {
     public void setEnabled(boolean enabled) {
         boolean oldEnabled = this.enabled;
         this.enabled = enabled;
-        updateRelativeSelectionIndices();
+        recordLastSelectionIndices();
         propertyChangeSupport.firePropertyChange(PROP_ENABLED, oldEnabled, enabled);
     }
 
@@ -152,7 +117,7 @@ public class ImageListViewSelectionSynchronizationController {
     public void setKeepRelativeSelectionIndices(boolean keepRelativeSelectionIndices) {
         boolean oldKeepRelativeSelectionIndices = this.keepRelativeSelectionIndices;
         this.keepRelativeSelectionIndices = keepRelativeSelectionIndices;
-        updateRelativeSelectionIndices();
+        recordLastSelectionIndices();
         propertyChangeSupport.firePropertyChange(PROP_KEEPRELATIVESELECTIONINDICES, oldKeepRelativeSelectionIndices, keepRelativeSelectionIndices);
     }
 
@@ -169,12 +134,34 @@ public class ImageListViewSelectionSynchronizationController {
             }
             inProgrammedSelectionChange = true;
             try {
-                if (keepRelativeSelectionIndices) {
-                    updateRelativeSelectionIndices(e);
-                } else {
-                    JImageListView source = (JImageListView) e.getSource();
-                    int selIndex = source.getSelectedIndex();
-                    if (selIndex != -1) {
+                JImageListView source = (JImageListView) e.getSource();
+                int selIndex = source.getSelectedIndex();
+                if (selIndex >= 0) {
+                    if (keepRelativeSelectionIndices) {
+                        int sourceListIdx = lists.indexOf(source);
+                        assert(sourceListIdx >= 0);
+                        int lastSourceSelIdx = lastSelectionIndices[sourceListIdx];
+                        if (lastSourceSelIdx >= 0) {
+                            int change = selIndex - lastSourceSelIdx;
+                            int nLists = lists.size();
+                            for (int i = 0; i < nLists; i++) {
+                                if (i != sourceListIdx) {
+                                    JImageListView l = lists.get(i);
+                                    int si = l.getLeadSelectionIndex();
+                                    if (si >= 0) {
+                                        int newsi = si + change;
+                                        if (newsi >= l.getLength()) {
+                                            newsi = l.getLength() - 1;
+                                        }
+                                        if (newsi < 0) {
+                                            newsi = 0;
+                                        }
+                                        l.getSelectionModel().setSelectionInterval(newsi, newsi);
+                                    }
+                                }
+                            }
+                        }
+                    } else {
                         for (JImageListView l : getLists()) {
                             if (l != source) {
                                 l.getSelectionModel().setSelectionInterval(selIndex, selIndex);
@@ -184,6 +171,7 @@ public class ImageListViewSelectionSynchronizationController {
                 }
             } finally {
                 inProgrammedSelectionChange = false;
+                recordLastSelectionIndices();
             }
         }
     };
@@ -208,10 +196,5 @@ public class ImageListViewSelectionSynchronizationController {
     public void removePropertyChangeListener(PropertyChangeListener listener) {
         propertyChangeSupport.removePropertyChangeListener(listener);
     }
-
-
-    // TODO: consider different approach for keepRelativeSelectionIndices:
-    //   get rid of relativeSelectionIndices, use pre-/post-selectionChange indices
-    //   directly instead somehow
 
 }
