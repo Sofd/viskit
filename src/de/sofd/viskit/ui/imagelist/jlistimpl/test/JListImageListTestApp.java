@@ -3,6 +3,9 @@ package de.sofd.viskit.ui.imagelist.jlistimpl.test;
 import de.sofd.draw2d.viewer.tools.EllipseTool;
 import de.sofd.draw2d.viewer.tools.SelectorTool;
 import de.sofd.viskit.controllers.ImageListViewMouseWindowingController;
+import de.sofd.viskit.image.Dcm;
+import de.sofd.viskit.image.DcmImageListViewModelElement;
+import de.sofd.viskit.image.DicomInputOutput;
 import de.sofd.viskit.ui.imagelist.ImageListViewModelElement;
 import de.sofd.viskit.ui.imagelist.JImageListView;
 import de.sofd.viskit.ui.imagelist.event.ImageListViewEvent;
@@ -11,11 +14,10 @@ import de.sofd.viskit.ui.imagelist.jlistimpl.JListImageListView;
 import java.awt.BorderLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseMotionAdapter;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.net.MalformedURLException;
+import java.net.URL;
 import javax.swing.AbstractAction;
 import javax.swing.DefaultListModel;
 import javax.swing.JComboBox;
@@ -26,6 +28,7 @@ import javax.swing.JToolBar;
 import javax.swing.SwingUtilities;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
+import org.dcm4che2.data.BasicDicomObject;
 
 /**
  *
@@ -38,6 +41,18 @@ public class JListImageListTestApp {
         for (int i = 0; i < 10; i++) {
             model.addElement(new TestImageModelElement(i));
         }
+
+
+        URL url = null;
+        try {
+            url = new URL("file:///I:/DICOM/dcm4che-2.0.18-bin/dcm4che-2.0.18/bin/67010");
+        } catch (MalformedURLException ex) {
+
+        }
+        BasicDicomObject basicDicomObject = DicomInputOutput.read(url);
+        Dcm dcm = new Dcm(url, basicDicomObject);
+        DcmImageListViewModelElement dcmImageListViewModelElement = new DcmImageListViewModelElement(dcm);
+        model.addElement(dcmImageListViewModelElement);
 
         final JImageListView viewer = new JListImageListView();
         viewer.addImageListViewListener(new ImageListViewListener() {

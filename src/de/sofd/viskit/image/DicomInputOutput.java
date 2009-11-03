@@ -6,17 +6,27 @@ import java.net.URL;
 import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
 import org.dcm4che2.data.BasicDicomObject;
+import org.dcm4che2.data.DicomObject;
 import org.dcm4che2.io.DicomInputStream;
 import org.dcm4che2.io.StopTagInputHandler;
 
 /**
  *
+ *      URL url= null;
+try {
+url = new URL("file:///I:/DICOM/dcm4che-2.0.18-bin/dcm4che-2.0.18/bin/67010");
+} catch (MalformedURLException ex) {
+Logger.getLogger(JListImageListTestApp.class.getName()).log(Level.SEVERE, null, ex);
+}
+Dcm dcm = DcmInputOutput.read(url);
+DcmImageListViewModelElement dcmImageListViewModelElement = new DcmImageListViewModelElement(dcm);
+model.addElement(dcmImageListViewModelElement);
  */
-public class DcmInputOutput {
+public class DicomInputOutput {
 
-    static final Logger log4jLogger = Logger.getLogger(DcmInputOutput.class);
+    static final Logger log4jLogger = Logger.getLogger(DicomInputOutput.class);
 
-    public static Dcm read(URL url) {
+    public static BasicDicomObject read(URL url) {
         return read(url, null);
     }
 
@@ -27,10 +37,10 @@ public class DcmInputOutput {
      * http://pacs.sofd.local:8080/wado/?requestType=WADO&studyUID=1.2.840.113619.2.25.4.1207014.1228146104.835&seriesUID=1.2.840.113619.2.25.4.1207014.1228146105.98&objectUID=1.2.840.113619.2.25.4.1207014.1228146105.99
      *
      * @param url
-     * @param stopTagInputHandler
-     * @return Dcm or <code>null</code>
+     * @param stopTagInputHandler if <code>null</code>, whole DICOM is loaded
+     * @return BasicDicomObject or <code>null</code>
      */
-    public static Dcm read(URL url, StopTagInputHandler stopTagInputHandler) {
+    public static BasicDicomObject read(URL url, StopTagInputHandler stopTagInputHandler) {
         DicomInputStream dicomInputStream = null;
         try {
             BasicDicomObject basicDicomObject = new BasicDicomObject();
@@ -42,10 +52,10 @@ public class DcmInputOutput {
             dicomInputStream.close();
             // TODO isEmpty() OK? Additional check for null needed?
             if (!basicDicomObject.isEmpty()) {
-                Dcm dcm = new Dcm();
-                dcm.setUrl(url);
-                dcm.setDicomObject(basicDicomObject);
-                return dcm;
+                //Dcm dcm = new Dcm();
+                //dcm.setUrl(url);
+                //dcm.setDicomObject(basicDicomObject);
+                return basicDicomObject;
             }
         } catch (IOException ex) {
             log4jLogger.error("read " + url, ex);
