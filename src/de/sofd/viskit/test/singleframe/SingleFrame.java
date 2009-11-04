@@ -9,6 +9,7 @@ package de.sofd.viskit.test.singleframe;
 import de.sofd.viskit.ui.imagelist.JImageListView;
 import java.awt.GridLayout;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import javax.swing.ListModel;
 
@@ -18,6 +19,8 @@ import javax.swing.ListModel;
  */
 public class SingleFrame extends javax.swing.JFrame {
 
+    private final List<JImageListView> lists;
+
     public SingleFrame() {
         this(new ArrayList<ListModel>());
     }
@@ -25,8 +28,7 @@ public class SingleFrame extends javax.swing.JFrame {
     public SingleFrame(List<ListModel> listModels) {
         initComponents();
         listsPanel.setLayout(new GridLayout(1, listModels.size(), 10, 0));
-        // TODO: separate, probably designed, JPanel for each list
-        List<JImageListView> lists = new ArrayList<JImageListView>();
+        lists = new ArrayList<JImageListView>();
         for (ListModel lm : listModels) {
             ListViewPanel lvp = new ListViewPanel();
             lvp.getListView().setModel(lm);
@@ -36,6 +38,10 @@ public class SingleFrame extends javax.swing.JFrame {
         selectionSynchronizationController.setLists(lists.toArray(new JImageListView[listModels.size()]));
         scaleModeSynchronizationController.setLists(lists.toArray(new JImageListView[listModels.size()]));
         roiToolApplicationController.setLists(lists.toArray(new JImageListView[listModels.size()]));
+    }
+
+    public List<JImageListView> getEmbeddedImageListViews() {
+        return Collections.unmodifiableList(lists);
     }
 
     /** This method is called from within the constructor to

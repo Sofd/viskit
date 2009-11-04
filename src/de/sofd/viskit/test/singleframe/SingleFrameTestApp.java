@@ -1,6 +1,12 @@
 package de.sofd.viskit.test.singleframe;
 
+import de.sofd.viskit.test.DicomImageListViewModelElement;
 import de.sofd.viskit.test.FileBasedDicomImageListViewModelElement;
+import de.sofd.viskit.ui.imagelist.ImageListViewCell;
+import de.sofd.viskit.ui.imagelist.JImageListView;
+import de.sofd.viskit.ui.imagelist.event.ImageListViewCellAddEvent;
+import de.sofd.viskit.ui.imagelist.event.ImageListViewEvent;
+import de.sofd.viskit.ui.imagelist.event.ImageListViewListener;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -9,6 +15,8 @@ import java.util.Properties;
 import javax.swing.DefaultListModel;
 import javax.swing.ListModel;
 import javax.swing.SwingUtilities;
+import org.dcm4che2.data.DicomObject;
+import org.dcm4che2.data.Tag;
 
 /**
  *
@@ -47,9 +55,30 @@ public class SingleFrameTestApp {
             listModels.add(dirListModel);
         }
         SingleFrame f = new SingleFrame(listModels);
+        for (JImageListView listView: f.getEmbeddedImageListViews()) {
+            for (int i = 0; i < listView.getLength(); i++) {
+                setWindowingToDcm(listView.getCell(i));
+            }
+            listView.addImageListViewListener(new ImageListViewListener() {
+                @Override
+                public void onImageListViewEvent(ImageListViewEvent e) {
+                    if (e instanceof ImageListViewCellAddEvent) {
+                        setWindowingToDcm(((ImageListViewCellAddEvent)e).getCell());
+                    }
+                }
+            });
+        }
         f.setVisible(true);
     }
 
+    private static void setWindowingToDcm(ImageListViewCell cell) {
+        DicomImageListViewModelElement elt = (DicomImageListViewModelElement) cell.getDisplayedModelElement();
+        DicomObject dobj = elt.getDicomObject();
+        if (dobj.contains(Tag.WindowCenter) && dobj.contains(Tag.WindowWidth)) {
+            cell.setWindowLocation((int) dobj.getFloat(Tag.WindowCenter));
+            cell.setWindowWidth((int) dobj.getFloat(Tag.WindowWidth));
+        }
+    }
 
     protected static ListModel getViewerListModelForDirectory(File dir) {
         DefaultListModel result = new DefaultListModel();
