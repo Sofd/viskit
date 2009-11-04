@@ -75,6 +75,10 @@ public class ImageListViewCellViewer extends JPanel {
         //       the lines of n2g JDicomObjectImageViewer.
         //       Maybe expose the DicomObject (containing the image UID) in the cell class after all.
         BufferedImage srcImg = displayedCell.getDisplayedModelElement().getImage();
+        if (srcImg.getRaster().getNumBands() > 1) {
+            // apparently a colored image => return as-is, no windowing
+            return srcImg;
+        }
         BufferedImage windowedImage = new BufferedImage(srcImg.getWidth(), srcImg.getHeight(),
                                                         BufferedImage.TYPE_INT_RGB);
         final int windowedImageGrayscalesCount = 256;  // for BufferedImage.TYPE_INT_RGB
