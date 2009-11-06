@@ -34,6 +34,8 @@ import javax.swing.ListSelectionModel;
 import javax.swing.UIManager;
 import javax.swing.border.Border;
 import javax.swing.event.ListDataEvent;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
 
 /**
  * JImageListView implementation that uses an aggreagated {@link JList}.
@@ -65,6 +67,17 @@ public class JListImageListView extends JImageListView {
             }
         });
         setScaleMode(MyScaleMode.newOneToOneMode());
+        // ensure selection is always kept visible.
+        // TODO: ensure reverse direction too?
+        // TODO: use dedicated controller for this?
+        addListSelectionListener(new ListSelectionListener() {
+            @Override
+            public void valueChanged(ListSelectionEvent e) {
+                if (e.getValueIsAdjusting()) { return; }
+                if (wrappedList.getLeadSelectionIndex() < 0) { return; }
+                wrappedList.ensureIndexIsVisible(wrappedList.getLeadSelectionIndex());
+            }
+        });
     }
 
     @Override
@@ -370,6 +383,9 @@ public class JListImageListView extends JImageListView {
     @Override
     protected void doSetScaleMode(ScaleMode oldScaleMode, ScaleMode newScaleMode) {
         updateCellSizes(true);
+        if (wrappedList.getLeadSelectionIndex() >= 0) {
+            wrappedList.ensureIndexIsVisible(wrappedList.getLeadSelectionIndex());
+        }
     }
 
     protected void updateCellSizes(boolean resetImageSizes) {
