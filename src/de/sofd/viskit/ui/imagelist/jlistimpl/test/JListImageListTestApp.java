@@ -42,13 +42,8 @@ public class JListImageListTestApp {
             model.addElement(new TestImageModelElement(i));
         }
 
-
-        URL url = null;
-        try {
-            url = new URL("file:///I:/DICOM/dcm4che-2.0.18-bin/dcm4che-2.0.18/bin/67010");
-        } catch (MalformedURLException ex) {
-
-        }
+        URL url = this.getClass().getResource("67010.dcm");
+        //url = new URL("file:///I:/DICOM/dcm4che-2.0.18-bin/dcm4che-2.0.18/bin/67010");
         BasicDicomObject basicDicomObject = DicomInputOutput.read(url);
         Dcm dcm = new Dcm(url, basicDicomObject);
         DcmImageListViewModelElement dcmImageListViewModelElement = new DcmImageListViewModelElement(dcm);
