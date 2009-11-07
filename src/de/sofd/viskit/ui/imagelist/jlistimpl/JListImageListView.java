@@ -45,12 +45,14 @@ import javax.swing.event.ListSelectionListener;
 public class JListImageListView extends JImageListView {
 
     protected final JList wrappedList;
+    protected final JScrollPane wrappedListScrollPane;
 
     public JListImageListView() {
         setLayout(new GridLayout(1, 1));
         wrappedList = new JList();
         wrappedList.setVisible(true);
-        this.add(wrappedList);
+        wrappedListScrollPane = new JScrollPane(wrappedList);
+        this.add(wrappedListScrollPane);
         setModel(new DefaultListModel());
         setSelectionModel(wrappedList.getSelectionModel());
         //wrappedList.addKeyListener(new ViewerJlistKeyAdapter());  // TODO
@@ -118,6 +120,15 @@ public class JListImageListView extends JImageListView {
 
     public void setSelectionBackground(Color selectionBackground) {
         wrappedList.setSelectionBackground(selectionBackground);
+    }
+
+    @Override
+    protected void copyUiStateToSubComponent(Component c) {
+        if (c == wrappedListScrollPane) {
+            copyUiStateToSubComponent(wrappedList);
+        } else {
+            super.copyUiStateToSubComponent(c);
+        }
     }
 
 

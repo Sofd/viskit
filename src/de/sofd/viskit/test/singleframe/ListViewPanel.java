@@ -42,7 +42,6 @@ public class ListViewPanel extends javax.swing.JPanel {
         mouseWindowingController = new de.sofd.viskit.controllers.ImageListViewMouseWindowingController();
         scaleModesComboBox = new javax.swing.JComboBox();
         jLabel1 = new javax.swing.JLabel();
-        jScrollPane1 = new javax.swing.JScrollPane();
         listView = new de.sofd.viskit.ui.imagelist.jlistimpl.JListImageListView();
 
         org.jdesktop.beansbinding.Binding binding = org.jdesktop.beansbinding.Bindings.createAutoBinding(org.jdesktop.beansbinding.AutoBinding.UpdateStrategy.READ_WRITE, listView, org.jdesktop.beansbinding.ObjectProperty.create(), mouseWindowingController, org.jdesktop.beansbinding.BeanProperty.create("controlledImageListView"));
@@ -60,8 +59,6 @@ public class ListViewPanel extends javax.swing.JPanel {
         binding = org.jdesktop.beansbinding.Bindings.createAutoBinding(org.jdesktop.beansbinding.AutoBinding.UpdateStrategy.READ_WRITE, scaleModesComboBox, org.jdesktop.beansbinding.ELProperty.create("${selectedItem}"), listView, org.jdesktop.beansbinding.BeanProperty.create("scaleMode"));
         bindingGroup.addBinding(binding);
 
-        jScrollPane1.setViewportView(listView);
-
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
@@ -70,8 +67,8 @@ public class ListViewPanel extends javax.swing.JPanel {
                 .addComponent(jLabel1)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(scaleModesComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, 129, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(180, Short.MAX_VALUE))
-            .addComponent(jScrollPane1, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, 393, Short.MAX_VALUE)
+                .addContainerGap(189, Short.MAX_VALUE))
+            .addComponent(listView, javax.swing.GroupLayout.DEFAULT_SIZE, 402, Short.MAX_VALUE)
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -80,8 +77,8 @@ public class ListViewPanel extends javax.swing.JPanel {
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jLabel1)
                     .addComponent(scaleModesComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 416, Short.MAX_VALUE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 9, Short.MAX_VALUE)
+                .addComponent(listView, javax.swing.GroupLayout.PREFERRED_SIZE, 413, javax.swing.GroupLayout.PREFERRED_SIZE))
         );
 
         bindingGroup.bind();
@@ -90,7 +87,6 @@ public class ListViewPanel extends javax.swing.JPanel {
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JLabel jLabel1;
-    private javax.swing.JScrollPane jScrollPane1;
     private de.sofd.viskit.ui.imagelist.jlistimpl.JListImageListView listView;
     private de.sofd.viskit.controllers.ImageListViewMouseWindowingController mouseWindowingController;
     private javax.swing.JComboBox scaleModesComboBox;
