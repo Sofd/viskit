@@ -110,6 +110,25 @@ public class ImageListViewMouseZoomPanController {
                 e.consume();
             }
         }
+
+        @Override
+        public void mouseClicked(MouseEvent evt) {
+            if (controlledImageListView.getModel().getSize() > 0) {
+                if (evt.getClickCount() == 2 && evt.isShiftDown() && (evt.getButton() == MOUSE_BUTTON || (evt.getModifiers() & MOUSE_MASK) != 0)) {
+                    int idx = controlledImageListView.getSelectedIndex();
+                    if (idx == -1) {
+                        return;
+                    }
+                    ImageListViewCell cell = controlledImageListView.getCell(idx);
+                    if (cell != null) {
+                        cell.setCenterOffset(new Point2D.Double(0, 0));
+                        controlledImageListView.refreshCellForIndex(idx);
+                        evt.consume();
+                    }
+                }
+            }
+        }
+
     };
 
     private PropertyChangeSupport propertyChangeSupport = new PropertyChangeSupport(this);
