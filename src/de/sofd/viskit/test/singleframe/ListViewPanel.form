@@ -40,8 +40,8 @@
                   <Component id="jLabel1" alignment="3" min="-2" max="-2" attributes="0"/>
                   <Component id="scaleModesComboBox" alignment="3" min="-2" max="-2" attributes="0"/>
               </Group>
-              <EmptySpace pref="9" max="32767" attributes="0"/>
-              <Component id="listView" min="-2" pref="413" max="-2" attributes="0"/>
+              <EmptySpace max="-2" attributes="0"/>
+              <Component id="listView" pref="416" max="32767" attributes="0"/>
           </Group>
       </Group>
     </DimensionLayout>
