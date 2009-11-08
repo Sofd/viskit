@@ -98,6 +98,14 @@ public interface ImageListViewCell {
     void setCenterOffset(Point2D centerOffset);
 
     /**
+     * Set the value of centerOffset
+     *
+     * @param x
+     * @param y
+     */
+    public void setCenterOffset(double x, double y);
+
+    /**
      * Set the value of scale
      *
      * @param scale new value of scale

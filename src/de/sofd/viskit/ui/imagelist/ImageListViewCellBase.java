@@ -165,6 +165,7 @@ public class ImageListViewCellBase implements ImageListViewCell {
         setCenterOffset(centerOffset.getX(), centerOffset.getY());
     }
 
+    @Override
     public void setCenterOffset(double x, double y) {
         Point2D oldCenterOffset = this.centerOffset;
         this.centerOffset = new Point2D.Double(x, y);
