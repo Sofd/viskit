@@ -7,7 +7,6 @@ import de.sofd.viskit.ui.imagelist.ImageListViewModelElement;
 import de.sofd.viskit.ui.imagelist.JImageListView;
 import java.awt.Color;
 import java.awt.Component;
-import java.awt.Container;
 import java.awt.Dimension;
 import java.awt.GridLayout;
 import java.awt.Point;
@@ -137,14 +136,7 @@ public class JListImageListView extends JImageListView {
         public MyImageListViewCell(JImageListView owner, ImageListViewModelElement displayedModelElement) {
             super(owner, displayedModelElement);
         }
-        // TODO: possibly pull these up into the superclass and get rid of MyImageListViewCell
-        public ImageListViewCellViewer getLatestViewer() {
-            return latestViewer;
-        }
-        public void setLatestViewer(ImageListViewCellViewer latestViewer) {
-            this.latestViewer = latestViewer;
-        }
-
+        // TODO: possibly pull this up into the superclass and get rid of MyImageListViewCell
         public Dimension getUnscaledPreferredSize() {
             BufferedImage img = getDisplayedModelElement().getImage();
             return new Dimension(img.getWidth() + 2 * WrappedListCellRenderer.BORDER_WIDTH,
@@ -187,7 +179,6 @@ public class JListImageListView extends JImageListView {
             ImageListViewModelElement elt = (ImageListViewModelElement) value;
             MyImageListViewCell cell = getCellForElement(elt);
             ImageListViewCellViewer resultComponent = new ImageListViewCellViewer(cell);
-            cell.setLatestViewer(resultComponent);
 
             resultComponent.setComponentOrientation(list.getComponentOrientation());
             Color bg = null;
@@ -263,10 +254,20 @@ public class JListImageListView extends JImageListView {
     protected void dispatchEventToCell(MouseEvent evt, boolean refreshCell) {
         int idx = wrappedList.locationToIndex(evt.getPoint());
         if (idx != -1) {
-            MyImageListViewCell cell = getCell(idx);
-            if (null != cell.getLatestViewer()) {
+            ImageListViewCell cell = getCell(idx);
+            if (null != cell.getLatestSize()) {
                 evt.translatePoint(-wrappedList.indexToLocation(idx).x, -wrappedList.indexToLocation(idx).y);
-                Point2D imageOffset = cell.getLatestViewer().getImageOffset();
+                // TODO: generalized cell -> image AffineTransformation instead of this zoom/pan vector hackery? But one
+                //       would have to update that whenever cell.getLatestSize() changes...
+
+                Point2D imgSize = new Point2D.Double(cell.getScale() * cell.getDisplayedModelElement().getImage().getWidth(),
+                                                     cell.getScale() * cell.getDisplayedModelElement().getImage().getHeight());
+                Dimension latestSize = cell.getLatestSize();
+                Point2D imageOffset = new Point2D.Double((latestSize.width + 2 * cell.getCenterOffset().getX() - (int) imgSize.getX()) / 2,
+                                                         (latestSize.height + 2 * cell.getCenterOffset().getY() - (int) imgSize.getY()) / 2);
+
+
+                //Point2D imgSize = getScaledImageSize();
                 evt.translatePoint((int) -imageOffset.getX(), (int) -imageOffset.getY());
                 cell.getRoiDrawingViewer().processInputEvent(evt);
                 {
@@ -608,15 +609,9 @@ public class JListImageListView extends JImageListView {
                 double scaleChange = (evt.getWheelRotation() < 0 ? 110.0/100.0 : 100.0/110.0);
                 changeScaleAndTranslationOfActiveCell(scaleChange, new Point(0, 0));
             } else {
-                // hack: if we're part of a scrollpane, have the scrollpane do its job in case the event wasn't for us
+                // hack: let the scrollpane do its job in case the event wasn't for us
                 //       (this parent dispatch was disabled by us registering the MouseWheelListener on the JList)
-                Container c = JListImageListView.this.getParent();
-                while (c != null && !(c instanceof JScrollPane)) {
-                    c = c.getParent();
-                }
-                if (c instanceof JScrollPane) {
-                    c.dispatchEvent(evt);
-                }
+                wrappedListScrollPane.dispatchEvent(evt);
             }
         }
     }
