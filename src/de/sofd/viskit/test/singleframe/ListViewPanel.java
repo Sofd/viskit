@@ -40,11 +40,19 @@ public class ListViewPanel extends javax.swing.JPanel {
         bindingGroup = new org.jdesktop.beansbinding.BindingGroup();
 
         mouseWindowingController = new de.sofd.viskit.controllers.ImageListViewMouseWindowingController();
+        mouseZoomPanController = new de.sofd.viskit.controllers.ImageListViewMouseZoomPanController();
+        roiInputEventController = new de.sofd.viskit.controllers.ImageListViewRoiInputEventController();
         scaleModesComboBox = new javax.swing.JComboBox();
         jLabel1 = new javax.swing.JLabel();
         listView = new de.sofd.viskit.ui.imagelist.jlistimpl.JListImageListView();
 
         org.jdesktop.beansbinding.Binding binding = org.jdesktop.beansbinding.Bindings.createAutoBinding(org.jdesktop.beansbinding.AutoBinding.UpdateStrategy.READ_WRITE, listView, org.jdesktop.beansbinding.ObjectProperty.create(), mouseWindowingController, org.jdesktop.beansbinding.BeanProperty.create("controlledImageListView"));
+        bindingGroup.addBinding(binding);
+
+        binding = org.jdesktop.beansbinding.Bindings.createAutoBinding(org.jdesktop.beansbinding.AutoBinding.UpdateStrategy.READ_WRITE, listView, org.jdesktop.beansbinding.ObjectProperty.create(), mouseZoomPanController, org.jdesktop.beansbinding.BeanProperty.create("controlledImageListView"));
+        bindingGroup.addBinding(binding);
+
+        binding = org.jdesktop.beansbinding.Bindings.createAutoBinding(org.jdesktop.beansbinding.AutoBinding.UpdateStrategy.READ_WRITE, listView, org.jdesktop.beansbinding.ObjectProperty.create(), roiInputEventController, org.jdesktop.beansbinding.BeanProperty.create("controlledImageListView"));
         bindingGroup.addBinding(binding);
 
         org.jdesktop.beansbinding.ELProperty eLProperty = org.jdesktop.beansbinding.ELProperty.create("${supportedScaleModes}");
@@ -89,6 +97,8 @@ public class ListViewPanel extends javax.swing.JPanel {
     private javax.swing.JLabel jLabel1;
     private de.sofd.viskit.ui.imagelist.jlistimpl.JListImageListView listView;
     private de.sofd.viskit.controllers.ImageListViewMouseWindowingController mouseWindowingController;
+    private de.sofd.viskit.controllers.ImageListViewMouseZoomPanController mouseZoomPanController;
+    private de.sofd.viskit.controllers.ImageListViewRoiInputEventController roiInputEventController;
     private javax.swing.JComboBox scaleModesComboBox;
     private org.jdesktop.beansbinding.BindingGroup bindingGroup;
     // End of variables declaration//GEN-END:variables

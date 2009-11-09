@@ -7,6 +7,16 @@
         <BindingProperty name="controlledImageListView" source="listView" target="mouseWindowingController" targetPath="controlledImageListView" updateStrategy="0" immediately="false"/>
       </BindingProperties>
     </Component>
+    <Component class="de.sofd.viskit.controllers.ImageListViewMouseZoomPanController" name="mouseZoomPanController">
+      <BindingProperties>
+        <BindingProperty name="controlledImageListView" source="listView" target="mouseZoomPanController" targetPath="controlledImageListView" updateStrategy="0" immediately="false"/>
+      </BindingProperties>
+    </Component>
+    <Component class="de.sofd.viskit.controllers.ImageListViewRoiInputEventController" name="roiInputEventController">
+      <BindingProperties>
+        <BindingProperty name="controlledImageListView" source="listView" target="roiInputEventController" targetPath="controlledImageListView" updateStrategy="0" immediately="false"/>
+      </BindingProperties>
+    </Component>
   </NonVisualComponents>
   <AuxValues>
     <AuxValue name="FormSettings_autoResourcing" type="java.lang.Integer" value="0"/>

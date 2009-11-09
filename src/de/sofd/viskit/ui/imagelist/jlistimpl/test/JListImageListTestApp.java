@@ -3,6 +3,8 @@ package de.sofd.viskit.ui.imagelist.jlistimpl.test;
 import de.sofd.draw2d.viewer.tools.EllipseTool;
 import de.sofd.draw2d.viewer.tools.SelectorTool;
 import de.sofd.viskit.controllers.ImageListViewMouseWindowingController;
+import de.sofd.viskit.controllers.ImageListViewMouseZoomPanController;
+import de.sofd.viskit.controllers.ImageListViewRoiInputEventController;
 import de.sofd.viskit.image.Dcm;
 import de.sofd.viskit.image.DcmImageListViewModelElement;
 import de.sofd.viskit.image.DicomInputOutput;
@@ -107,6 +109,8 @@ public class JListImageListTestApp {
         });
 
         new ImageListViewMouseWindowingController(viewer);
+        new ImageListViewMouseZoomPanController(viewer);
+        new ImageListViewRoiInputEventController(viewer);
 
         f.getContentPane().add(viewer, BorderLayout.CENTER);
         f.getContentPane().add(toolbar, BorderLayout.PAGE_START);

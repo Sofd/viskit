@@ -487,7 +487,8 @@ public abstract class JImageListView extends JPanel {
      * called internally by subclasses if they determine the need to refresh a cell,
      * but may also be called explicitly from the outside.
      * <p>
-     * Uses the same special casing hack as {@link #refreshCellForIndex(int) }.
+     * Default implementation finds elt in the list of model elements of this list,
+     * then calls {@link #refreshCellForIndex(int) }.
      *
      * @param elt model element corresponding to the cell
      */
@@ -496,6 +497,27 @@ public abstract class JImageListView extends JPanel {
         int eltCount = getModel().getSize();
         for (int i = 0; i < eltCount; i++) {
             if (Misc.equal(elt, getModel().getElementAt(i))) {
+                refreshCellForIndex(i);
+                return;
+            }
+        }
+    }
+
+    /**
+     * Called if a specific cell of this viewer needs to be refreshed. Normally
+     * called internally by subclasses if they determine the need to refresh a cell,
+     * but may also be called explicitly from the outside.
+     * <p>
+     * Default implementation finds cell in the list of cells of this list,
+     * then calls {@link #refreshCellForIndex(int) }.
+     *
+     * @param cell the cell
+     */
+    public void refreshCell(ImageListViewCell cell) {
+        if (null == getModel()) { return; }
+        int eltCount = getModel().getSize();
+        for (int i = 0; i < eltCount; i++) {
+            if (cell == getCell(i)) {
                 refreshCellForIndex(i);
                 return;
             }
@@ -674,6 +696,9 @@ public abstract class JImageListView extends JPanel {
                     l.mouseExited(e);
                     break;
             }
+            if (e.isConsumed()) {
+                break;
+            }
         }
     }
 
@@ -705,6 +730,9 @@ public abstract class JImageListView extends JPanel {
                     l.mouseDragged(e);
                     break;
             }
+            if (e.isConsumed()) {
+                break;
+            }
         }
     }
 
@@ -729,8 +757,10 @@ public abstract class JImageListView extends JPanel {
     protected void fireCellMouseWheelEvent(MouseWheelEvent e) {
         for (MouseWheelListener l : cellMouseWheelListeners) {
             l.mouseWheelMoved(e);
+            if (e.isConsumed()) {
+                break;
+            }
         }
     }
-
 
 }

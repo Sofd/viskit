@@ -9,7 +9,6 @@ import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.GridLayout;
-import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
@@ -259,26 +258,12 @@ public class JListImageListView extends JImageListView {
                 evt.translatePoint(-wrappedList.indexToLocation(idx).x, -wrappedList.indexToLocation(idx).y);
                 // TODO: generalized cell -> image AffineTransformation instead of this zoom/pan vector hackery? But one
                 //       would have to update that whenever cell.getLatestSize() changes...
-
-                Point2D imgSize = new Point2D.Double(cell.getScale() * cell.getDisplayedModelElement().getImage().getWidth(),
-                                                     cell.getScale() * cell.getDisplayedModelElement().getImage().getHeight());
-                Dimension latestSize = cell.getLatestSize();
-                Point2D imageOffset = new Point2D.Double((latestSize.width + 2 * cell.getCenterOffset().getX() - (int) imgSize.getX()) / 2,
-                                                         (latestSize.height + 2 * cell.getCenterOffset().getY() - (int) imgSize.getY()) / 2);
-
-
-                //Point2D imgSize = getScaledImageSize();
-                evt.translatePoint((int) -imageOffset.getX(), (int) -imageOffset.getY());
-                cell.getRoiDrawingViewer().processInputEvent(evt);
-                {
-                    // for testing purposes (for now)
-                    MouseEvent ce = Misc.deepCopy(evt);
-                    ce.setSource(cell);
-                    if (ce instanceof MouseWheelEvent) {
-                        fireCellMouseWheelEvent((MouseWheelEvent) ce);
-                    } else {
-                        fireCellMouseEvent(ce);
-                    }
+                MouseEvent ce = Misc.deepCopy(evt);
+                ce.setSource(cell);
+                if (ce instanceof MouseWheelEvent) {
+                    fireCellMouseWheelEvent((MouseWheelEvent) ce);
+                } else {
+                    fireCellMouseEvent(ce);
                 }
                 if (refreshCell) {
                     refreshCellForIndex(idx);
@@ -439,138 +424,31 @@ public class JListImageListView extends JImageListView {
         }
     }
 
-    // mouse interactions
-    // TODO: publish per-cell mouse events to outside (addCellMouseListener() etc.),
-    // move below interaction logic to separate controllers
-
-    public void changeScaleAndTranslationOfActiveCell(double scaleChange, Point translationChange) {
-        int idx = getSelectedIndex();
-        if (idx == -1) {
-            return;
-        }
-        MyImageListViewCell cell = getCell(idx);
-        double newScale = cell.getScale() * scaleChange;
-        if (newScale > 0.1 && newScale < 10) {
-            cell.setScale(newScale);
-        }
-        Point2D centerOffset = cell.getCenterOffset();
-        cell.setCenterOffset(centerOffset.getX() + translationChange.x,
-                             centerOffset.getY() + translationChange.y);
-        refreshCellForIndex(idx);
-    }
-
-    private int translateLastX, translateLastY;
-    boolean startTranslate, doTranslate;
-
     class WrappedListMouseAdapter extends MouseAdapter {
-
-        private void debugMouse(String text) {
-            //System.err.println(text);
-        }
-
-        private void debugMouse(MouseEvent e, String text) {
-            //System.err.println("" + e + ": " + text);
-        }
 
         @Override
         public void mouseClicked(MouseEvent evt) {
-            if (getModel().getSize() > 0) {
-                if (evt.getClickCount() == 2 && evt.isShiftDown() && (evt.getButton() == MouseEvent.BUTTON2 || (evt.getModifiers() & InputEvent.BUTTON2_MASK) != 0)) {
-                    int index = wrappedList.locationToIndex(evt.getPoint());
-                    if (index != -1) {
-                        ImageListViewCell cell = getCell(index);
-                        if (cell != null) {
-                            cell.setCenterOffset(new Point2D.Double(0, 0));
-                            refreshCellForIndex(index);
-                        }
-                    }
-                } else {
-                    dispatchEventToCell(evt);
-                }
-            }
-            //invalidate();
-            //repaint();
+            dispatchEventToCell(evt);
         }
 
         @Override
         public void mousePressed(MouseEvent evt) {
-            debugMouse(evt, "mousePressed");
-            if (getModel().getSize() > 0) {
-                dispatchEventToCell(evt);
-            }
-            //invalidate();
-            //repaint();
+            dispatchEventToCell(evt);
         }
 
         @Override
         public void mouseReleased(final MouseEvent evt) {
-            debugMouse(evt, "mouseReleased");
-            if (getModel().getSize() > 0) {
-                if (false /*evt.getButton() == WINDOWING_MOUSE_BUTTON && doWindowing */) {
-                    // TODO: get rid of all this applyToAllImages stuff, only set CellClass#interactiveWindowingInProgress
-                    /*
-                    if (applyToAllImages) {
-                        ViewerContext.activateDisabledGlassPane("", true, 0);
-                    }
-                    java.awt.EventQueue.invokeLater(new Runnable() {
-
-                        @Override
-                        public void run() {
-                            if (applyToAllImages) {
-                                int i = 0;
-                                for (ViewerDcmImage dcmImage : imageList) {
-                                    dcmImage.setWindowCenter(windowCenter);
-                                    dcmImage.setWindowWidth(windowWidth);
-                                    //viewerJLabel.setIcon(dcmImage.getBufferedImage(viewerJLabel.getScale(), windowWidth, windowCenter));
-                                    i++;
-                                }
-                            }
-                            for (ViewerJList viewerJListOther : ((ViewerCellRenderer) getCellRenderer()).getViewerJlistList()) {
-                                if (!viewerJList.equals(viewerJListOther)) {
-                                    viewerJListOther.setWindowing((int) windowWidth, (int) windowCenter, ViewerJlistWindowingMode.GLOBAL_SETTING, false, false, null);
-                                }
-                            }
-                            if (evt.getButton() == MouseEvent.BUTTON3) {
-                                startWindowing = false;
-                                windowingLastX = -1;
-                                windowingLastY = -1;
-                                doWindowing = false;
-                            } else if (evt.getButton() == MouseEvent.BUTTON3) {
-                                translateLastX = -1;
-                                translateLastY = -1;
-                            }
-                            if (applyToAllImages) {
-                                ViewerContext.deactivateDisabledGlassPane();
-                            }
-                            invalidate();
-                            repaint();
-                        }
-                    });
-                    */
-                } else {
-                    dispatchEventToCell(evt);
-                }
-            }
-            startTranslate = false;
-            translateLastX = -1;
-            translateLastY = -1;
-            doTranslate = false;
+            dispatchEventToCell(evt);
         }
 
         @Override
         public void mouseEntered(MouseEvent evt) {
-            debugMouse(evt, "mouseEntered");
-            if (getModel().getSize() > 0) {
-                dispatchEventToCell(evt);
-            }
+            dispatchEventToCell(evt);
         }
 
         @Override
         public void mouseExited(MouseEvent evt) {
-            debugMouse(evt, "mouseExited");
-            if (getModel().getSize() > 0) {
-                dispatchEventToCell(evt);
-            }
+            dispatchEventToCell(evt);
         }
     }
 
@@ -578,41 +456,19 @@ public class JListImageListView extends JImageListView {
 
         @Override
         public void mouseMoved(MouseEvent evt) {
-            if (getModel().getSize() > 0) {
-                dispatchEventToCell(evt);
-            }
+            dispatchEventToCell(evt);
         }
 
         @Override
         public void mouseDragged(MouseEvent evt) {
-            if (getModel().getSize() > 0) {
-                if (evt.isShiftDown() && (evt.getButton() == MouseEvent.BUTTON2 || (evt.getModifiers() & InputEvent.BUTTON2_MASK) != 0)) {
-                    if (translateLastX == -1 || translateLastY == -1) {
-                        translateLastX = evt.getX();
-                        translateLastY = evt.getY();
-                        return;
-                    }
-                    changeScaleAndTranslationOfActiveCell(1.0, new Point(evt.getX() - translateLastX, evt.getY() - translateLastY));
-                    translateLastX = evt.getX();
-                    translateLastY = evt.getY();
-                } else {
-                    dispatchEventToCell(evt);
-                }
-            }
+            dispatchEventToCell(evt);
         }
     }
 
     class WrappedListMouseWheelAdapter implements MouseWheelListener {
         @Override
         public void mouseWheelMoved(MouseWheelEvent evt) {
-            if (evt.isShiftDown()) {
-                double scaleChange = (evt.getWheelRotation() < 0 ? 110.0/100.0 : 100.0/110.0);
-                changeScaleAndTranslationOfActiveCell(scaleChange, new Point(0, 0));
-            } else {
-                // hack: let the scrollpane do its job in case the event wasn't for us
-                //       (this parent dispatch was disabled by us registering the MouseWheelListener on the JList)
-                wrappedListScrollPane.dispatchEvent(evt);
-            }
+            dispatchEventToCell(evt);
         }
     }
 

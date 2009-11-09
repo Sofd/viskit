@@ -66,6 +66,7 @@ public class ImageListViewMouseWindowingController {
             if (e.getButton() == WINDOWING_MOUSE_BUTTON || (e.getModifiers() & WINDOWING_MOUSE_MASK) != 0) {
                 currentCell = (ImageListViewCell) e.getSource();
                 lastPosition = e.getPoint();
+                e.consume();
             }
         }
 
@@ -78,6 +79,7 @@ public class ImageListViewMouseWindowingController {
                     sourceCell.setWindowLocation(sourceCell.getWindowLocation() + sourcePosition.x - lastPosition.x);
                     sourceCell.setWindowWidth(sourceCell.getWindowWidth() + sourcePosition.y - lastPosition.y);
                     lastPosition = sourcePosition;
+                    e.consume();
                 }
             }
         }
