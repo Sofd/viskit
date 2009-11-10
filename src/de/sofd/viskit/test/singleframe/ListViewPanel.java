@@ -42,9 +42,11 @@ public class ListViewPanel extends javax.swing.JPanel {
         mouseWindowingController = new de.sofd.viskit.controllers.ImageListViewMouseWindowingController();
         mouseZoomPanController = new de.sofd.viskit.controllers.ImageListViewMouseZoomPanController();
         roiInputEventController = new de.sofd.viskit.controllers.ImageListViewRoiInputEventController();
+        windowingApplyToAllController = new de.sofd.viskit.controllers.ImageListViewWindowingApplyToAllController();
         scaleModesComboBox = new javax.swing.JComboBox();
         jLabel1 = new javax.swing.JLabel();
         listView = new de.sofd.viskit.ui.imagelist.jlistimpl.JListImageListView();
+        windowAllCheckbox = new javax.swing.JCheckBox();
 
         org.jdesktop.beansbinding.Binding binding = org.jdesktop.beansbinding.Bindings.createAutoBinding(org.jdesktop.beansbinding.AutoBinding.UpdateStrategy.READ_WRITE, listView, org.jdesktop.beansbinding.ObjectProperty.create(), mouseWindowingController, org.jdesktop.beansbinding.BeanProperty.create("controlledImageListView"));
         bindingGroup.addBinding(binding);
@@ -53,6 +55,11 @@ public class ListViewPanel extends javax.swing.JPanel {
         bindingGroup.addBinding(binding);
 
         binding = org.jdesktop.beansbinding.Bindings.createAutoBinding(org.jdesktop.beansbinding.AutoBinding.UpdateStrategy.READ_WRITE, listView, org.jdesktop.beansbinding.ObjectProperty.create(), roiInputEventController, org.jdesktop.beansbinding.BeanProperty.create("controlledImageListView"));
+        bindingGroup.addBinding(binding);
+
+        binding = org.jdesktop.beansbinding.Bindings.createAutoBinding(org.jdesktop.beansbinding.AutoBinding.UpdateStrategy.READ_WRITE, listView, org.jdesktop.beansbinding.ObjectProperty.create(), windowingApplyToAllController, org.jdesktop.beansbinding.BeanProperty.create("controlledImageListView"));
+        bindingGroup.addBinding(binding);
+        binding = org.jdesktop.beansbinding.Bindings.createAutoBinding(org.jdesktop.beansbinding.AutoBinding.UpdateStrategy.READ_WRITE, windowAllCheckbox, org.jdesktop.beansbinding.ELProperty.create("${selected}"), windowingApplyToAllController, org.jdesktop.beansbinding.BeanProperty.create("enabled"));
         bindingGroup.addBinding(binding);
 
         org.jdesktop.beansbinding.ELProperty eLProperty = org.jdesktop.beansbinding.ELProperty.create("${supportedScaleModes}");
@@ -67,6 +74,8 @@ public class ListViewPanel extends javax.swing.JPanel {
         binding = org.jdesktop.beansbinding.Bindings.createAutoBinding(org.jdesktop.beansbinding.AutoBinding.UpdateStrategy.READ_WRITE, scaleModesComboBox, org.jdesktop.beansbinding.ELProperty.create("${selectedItem}"), listView, org.jdesktop.beansbinding.BeanProperty.create("scaleMode"));
         bindingGroup.addBinding(binding);
 
+        windowAllCheckbox.setText("window all");
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
@@ -75,7 +84,9 @@ public class ListViewPanel extends javax.swing.JPanel {
                 .addComponent(jLabel1)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(scaleModesComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, 129, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(189, Short.MAX_VALUE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(windowAllCheckbox)
+                .addContainerGap(87, Short.MAX_VALUE))
             .addComponent(listView, javax.swing.GroupLayout.DEFAULT_SIZE, 402, Short.MAX_VALUE)
         );
         layout.setVerticalGroup(
@@ -84,7 +95,8 @@ public class ListViewPanel extends javax.swing.JPanel {
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jLabel1)
-                    .addComponent(scaleModesComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(scaleModesComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(windowAllCheckbox))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(listView, javax.swing.GroupLayout.DEFAULT_SIZE, 416, Short.MAX_VALUE))
         );
@@ -100,6 +112,8 @@ public class ListViewPanel extends javax.swing.JPanel {
     private de.sofd.viskit.controllers.ImageListViewMouseZoomPanController mouseZoomPanController;
     private de.sofd.viskit.controllers.ImageListViewRoiInputEventController roiInputEventController;
     private javax.swing.JComboBox scaleModesComboBox;
+    private javax.swing.JCheckBox windowAllCheckbox;
+    private de.sofd.viskit.controllers.ImageListViewWindowingApplyToAllController windowingApplyToAllController;
     private org.jdesktop.beansbinding.BindingGroup bindingGroup;
     // End of variables declaration//GEN-END:variables
 

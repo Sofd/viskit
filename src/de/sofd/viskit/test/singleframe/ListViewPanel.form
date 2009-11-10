@@ -17,6 +17,12 @@
         <BindingProperty name="controlledImageListView" source="listView" target="roiInputEventController" targetPath="controlledImageListView" updateStrategy="0" immediately="false"/>
       </BindingProperties>
     </Component>
+    <Component class="de.sofd.viskit.controllers.ImageListViewWindowingApplyToAllController" name="windowingApplyToAllController">
+      <BindingProperties>
+        <BindingProperty name="controlledImageListView" source="listView" target="windowingApplyToAllController" targetPath="controlledImageListView" updateStrategy="0" immediately="false"/>
+        <BindingProperty name="enabled" source="windowAllCheckbox" sourcePath="${selected}" target="windowingApplyToAllController" targetPath="enabled" updateStrategy="0" immediately="false"/>
+      </BindingProperties>
+    </Component>
   </NonVisualComponents>
   <AuxValues>
     <AuxValue name="FormSettings_autoResourcing" type="java.lang.Integer" value="0"/>
@@ -37,7 +43,9 @@
               <Component id="jLabel1" min="-2" max="-2" attributes="0"/>
               <EmptySpace max="-2" attributes="0"/>
               <Component id="scaleModesComboBox" min="-2" pref="129" max="-2" attributes="0"/>
-              <EmptySpace pref="189" max="32767" attributes="0"/>
+              <EmptySpace type="unrelated" max="-2" attributes="0"/>
+              <Component id="windowAllCheckbox" min="-2" max="-2" attributes="0"/>
+              <EmptySpace pref="87" max="32767" attributes="0"/>
           </Group>
           <Component id="listView" alignment="0" pref="402" max="32767" attributes="0"/>
       </Group>
@@ -49,6 +57,7 @@
               <Group type="103" groupAlignment="3" attributes="0">
                   <Component id="jLabel1" alignment="3" min="-2" max="-2" attributes="0"/>
                   <Component id="scaleModesComboBox" alignment="3" min="-2" max="-2" attributes="0"/>
+                  <Component id="windowAllCheckbox" alignment="3" min="-2" max="-2" attributes="0"/>
               </Group>
               <EmptySpace max="-2" attributes="0"/>
               <Component id="listView" pref="416" max="32767" attributes="0"/>
@@ -79,6 +88,11 @@
       <BindingProperties>
         <BindingProperty name="scaleMode" source="scaleModesComboBox" sourcePath="${selectedItem}" target="listView" targetPath="scaleMode" updateStrategy="0" immediately="false"/>
       </BindingProperties>
+    </Component>
+    <Component class="javax.swing.JCheckBox" name="windowAllCheckbox">
+      <Properties>
+        <Property name="text" type="java.lang.String" value="window all"/>
+      </Properties>
     </Component>
   </SubComponents>
 </Form>
