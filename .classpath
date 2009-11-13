@@ -1,26 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
-	<classpathentry kind="src" path="src"/>
+	<classpathentry excluding="**/.svn|**/.svn/**|**/_svn|**/_svn/**" kind="src" path="src"/>
 	<classpathentry kind="src" path="properties"/>
-	<classpathentry kind="lib" path="dist/de.sofd.viskit.jar"/>
-	<classpathentry kind="lib" path="dist/lib/beansbinding-1.2.1.jar"/>
-	<classpathentry kind="lib" path="dist/lib/commons-cli-1.2.jar"/>
-	<classpathentry kind="lib" path="dist/lib/commons-lang.jar"/>
-	<classpathentry kind="lib" path="dist/lib/dcm4che-audit-2.0.20.jar"/>
-	<classpathentry kind="lib" path="dist/lib/dcm4che-core-2.0.20.jar"/>
-	<classpathentry kind="lib" path="dist/lib/dcm4che-filecache-2.0.20.jar"/>
-	<classpathentry kind="lib" path="dist/lib/dcm4che-hp-2.0.20.jar"/>
-	<classpathentry kind="lib" path="dist/lib/dcm4che-image-2.0.20.jar"/>
-	<classpathentry kind="lib" path="dist/lib/dcm4che-imageio-2.0.20.jar"/>
-	<classpathentry kind="lib" path="dist/lib/dcm4che-imageio-rle-2.0.20.jar"/>
-	<classpathentry kind="lib" path="dist/lib/dcm4che-iod-2.0.20.jar"/>
-	<classpathentry kind="lib" path="dist/lib/dcm4che-net-2.0.20.jar"/>
-	<classpathentry kind="lib" path="dist/lib/de.sofd.draw2d.jar"/>
-	<classpathentry kind="lib" path="dist/lib/de.sofd.util.jar"/>
-	<classpathentry kind="lib" path="dist/lib/jai_imageio.jar"/>
-	<classpathentry kind="lib" path="dist/lib/log4j-1.2.15.jar"/>
-	<classpathentry kind="lib" path="dist/lib/slf4j-api-1.5.0.jar"/>
-	<classpathentry kind="lib" path="dist/lib/slf4j-log4j12-1.5.0.jar"/>
 	<classpathentry kind="lib" path="ext-src/dcm4che-2.0.20-src.jar"/>
 	<classpathentry kind="lib" path="lib/beans-binding/beansbinding-1.2.1.jar"/>
 	<classpathentry kind="lib" path="lib/commons-cli-1.2.jar"/>
@@ -42,10 +23,11 @@
 	<classpathentry kind="lib" path="lib/log4j-1.2.15.jar"/>
 	<classpathentry kind="lib" path="lib/slf4j-api-1.5.0.jar"/>
 	<classpathentry kind="lib" path="lib/slf4j-log4j12-1.5.0.jar"/>
-	<classpathentry kind="lib" path="lib/vtk.jar"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/de.sofd.draw2d"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/de.sofd.util"/>
-	<classpathentry kind="lib" path="lib/concurrent.jar"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/de.sofd.swing"/>
+	<classpathentry kind="lib" path="lib/vtk/concurrent.jar"/>
+	<classpathentry kind="lib" path="lib/vtk/vtk.jar"/>
 	<classpathentry kind="output" path="build/classes"/>
 </classpath>

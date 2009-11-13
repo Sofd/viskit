@@ -4,12 +4,13 @@ import org.apache.log4j.*;
 
 import de.sofd.viskit.image3D.controller.*;
 import vtk.*;
+import vtk.vtkPanel;
 
 @SuppressWarnings("serial")
 /**
  * Vtk panel with camera, light and controller ( mouse and keyboard ).
  */
-public class VtkScenePanel extends VtkPanel {
+public class VtkScenePanel extends vtkPanel {
     static final Logger logger = Logger.getLogger(VtkScenePanel.class);
     
     protected boolean isLightSet = false;

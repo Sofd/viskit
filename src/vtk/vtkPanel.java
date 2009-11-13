@@ -1,4 +1,4 @@
-package de.sofd.viskit.image3D.view;
+package vtk;
 
 import java.awt.*;
 import java.io.*;
@@ -6,13 +6,12 @@ import java.util.*;
 import javax.swing.SwingUtilities;
 
 import de.sofd.viskit.image3D.util.*;
-import vtk.*;
 
 @SuppressWarnings("serial")
 /**
  * Basic panel for vtk application. Without controllers.
  */
-public class VtkPanel extends Canvas {
+public class vtkPanel extends Canvas {
     protected boolean isWindowSet = false;
     protected boolean isRendering = false;
     
@@ -25,30 +24,11 @@ public class VtkPanel extends Canvas {
 
     protected WindowObservable windowSetObservable = new WindowObservable();
     
-    static { 
-        System.loadLibrary("vtkCommonJava"); 
-        System.loadLibrary("vtkFilteringJava"); 
-        System.loadLibrary("vtkIOJava"); 
-        System.loadLibrary("vtkImagingJava"); 
-        System.loadLibrary("vtkGraphicsJava"); 
-        System.loadLibrary("vtkRenderingJava"); 
-        try {
-          System.loadLibrary("vtkHybridJava");
-        } catch (Throwable e) {
-          System.out.println("cannot load vtkHybrid, skipping...");
-        }
-        try {
-          System.loadLibrary("vtkVolumeRenderingJava");
-        } catch (Throwable e) {
-          System.out.println("cannot load vtkVolumeRendering, skipping...");
-        }
-      }
-    
     protected native int RenderCreate(vtkRenderWindow id0);
     protected native int Lock();
     protected native int UnLock();
     
-    public VtkPanel( int width, int height ) {
+    public vtkPanel( int width, int height ) {
         super.setSize(width, height);
         
         renderWindow.AddRenderer(renderer);

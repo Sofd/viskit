@@ -6,7 +6,6 @@ import org.apache.log4j.*;
 
 import vtk.*;
 
-import de.sofd.viskit.image3D.*;
 import de.sofd.viskit.image3D.view.*;
 
 import java.awt.*;
@@ -77,8 +76,6 @@ public class Dicom3DViewer extends JFrame {
         // is the root name of the file: quarter.)
         vtkDICOMImageReader vDicom = new vtkDICOMImageReader();
         vDicom.SetDataByteOrderToLittleEndian();
-        
-        logger.debug(rootDirName + "/de/sofd/viskit/test/resources/series/series2");
         
         //vDicom.SetDirectoryName(rootDirName + "/de/sofd/viskit/test/resources/series/series4");
         vDicom.SetDirectoryName("D:/dicom/serie1");
