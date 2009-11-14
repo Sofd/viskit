@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<Form version="1.5" maxVersion="1.7" type="org.netbeans.modules.form.forminfo.JPanelFormInfo">
+  <NonVisualComponents>
+    <Component class="de.sofd.viskit.controllers.ImageListViewMouseWindowingController" name="mouseWindowingController">
+      <BindingProperties>
+        <BindingProperty name="controlledImageListView" source="listView" target="mouseWindowingController" targetPath="controlledImageListView" updateStrategy="0" immediately="false"/>
+      </BindingProperties>
+    </Component>
+    <Component class="de.sofd.viskit.controllers.ImageListViewMouseZoomPanController" name="mouseZoomPanController">
+      <BindingProperties>
+        <BindingProperty name="controlledImageListView" source="listView" target="mouseZoomPanController" targetPath="controlledImageListView" updateStrategy="0" immediately="false"/>
+      </BindingProperties>
+    </Component>
+    <Component class="de.sofd.viskit.controllers.ImageListViewRoiInputEventController" name="roiInputEventController">
+      <BindingProperties>
+        <BindingProperty name="controlledImageListView" source="listView" target="roiInputEventController" targetPath="controlledImageListView" updateStrategy="0" immediately="false"/>
+      </BindingProperties>
+    </Component>
+    <Component class="de.sofd.viskit.controllers.ImageListViewWindowingApplyToAllController" name="windowingApplyToAllController">
+      <BindingProperties>
+        <BindingProperty name="controlledImageListView" source="listView" target="windowingApplyToAllController" targetPath="controlledImageListView" updateStrategy="0" immediately="false"/>
+        <BindingProperty name="enabled" source="windowAllCheckbox" sourcePath="${selected}" target="windowingApplyToAllController" targetPath="enabled" updateStrategy="0" immediately="false"/>
+      </BindingProperties>
+    </Component>
+  </NonVisualComponents>
+  <AuxValues>
+    <AuxValue name="FormSettings_autoResourcing" type="java.lang.Integer" value="0"/>
+    <AuxValue name="FormSettings_autoSetComponentName" type="java.lang.Boolean" value="false"/>
+    <AuxValue name="FormSettings_generateFQN" type="java.lang.Boolean" value="true"/>
+    <AuxValue name="FormSettings_generateMnemonicsCode" type="java.lang.Boolean" value="false"/>
+    <AuxValue name="FormSettings_i18nAutoMode" type="java.lang.Boolean" value="false"/>
+    <AuxValue name="FormSettings_layoutCodeTarget" type="java.lang.Integer" value="1"/>
+    <AuxValue name="FormSettings_listenerGenerationStyle" type="java.lang.Integer" value="0"/>
+    <AuxValue name="FormSettings_variablesLocal" type="java.lang.Boolean" value="false"/>
+    <AuxValue name="FormSettings_variablesModifier" type="java.lang.Integer" value="2"/>
+  </AuxValues>
+
+  <Layout>
+    <DimensionLayout dim="0">
+      <Group type="103" groupAlignment="0" attributes="0">
+          <Group type="102" attributes="0">
+              <Component id="jLabel1" min="-2" max="-2" attributes="0"/>
+              <EmptySpace max="-2" attributes="0"/>
+              <Component id="scaleModesComboBox" min="-2" pref="129" max="-2" attributes="0"/>
+              <EmptySpace type="unrelated" max="-2" attributes="0"/>
+              <Component id="windowAllCheckbox" min="-2" max="-2" attributes="0"/>
+              <EmptySpace pref="87" max="32767" attributes="0"/>
+          </Group>
+          <Component id="listView" alignment="0" pref="402" max="32767" attributes="0"/>
+      </Group>
+    </DimensionLayout>
+    <DimensionLayout dim="1">
+      <Group type="103" groupAlignment="0" attributes="0">
+          <Group type="102" alignment="0" attributes="0">
+              <EmptySpace max="-2" attributes="0"/>
+              <Group type="103" groupAlignment="3" attributes="0">
+                  <Component id="jLabel1" alignment="3" min="-2" max="-2" attributes="0"/>
+                  <Component id="scaleModesComboBox" alignment="3" min="-2" max="-2" attributes="0"/>
+                  <Component id="windowAllCheckbox" alignment="3" min="-2" max="-2" attributes="0"/>
+              </Group>
+              <EmptySpace max="-2" attributes="0"/>
+              <Component id="listView" pref="416" max="32767" attributes="0"/>
+          </Group>
+      </Group>
+    </DimensionLayout>
+  </Layout>
+  <SubComponents>
+    <Component class="javax.swing.JComboBox" name="scaleModesComboBox">
+      <BindingProperties>
+        <BindingProperty name="elements" source="listView" sourcePath="${supportedScaleModes}" target="scaleModesComboBox" targetPath="elements" updateStrategy="0" immediately="false"/>
+      </BindingProperties>
+    </Component>
+    <Component class="javax.swing.JLabel" name="jLabel1">
+      <Properties>
+        <Property name="text" type="java.lang.String" value="Scale Mode:"/>
+      </Properties>
+    </Component>
+    <Component class="de.sofd.viskit.ui.imagelist.jlistimpl.JListImageListView" name="listView">
+      <Properties>
+        <Property name="background" type="java.awt.Color" editor="org.netbeans.beaninfo.editors.ColorEditor">
+          <Color blue="0" green="0" red="0" type="rgb"/>
+        </Property>
+        <Property name="selectionBackground" type="java.awt.Color" editor="org.netbeans.beaninfo.editors.ColorEditor">
+          <Color blue="40" green="40" id="darkGray" palette="1" red="40" type="palette"/>
+        </Property>
+      </Properties>
+      <BindingProperties>
+        <BindingProperty name="scaleMode" source="scaleModesComboBox" sourcePath="${selectedItem}" target="listView" targetPath="scaleMode" updateStrategy="0" immediately="false"/>
+      </BindingProperties>
+    </Component>
+    <Component class="javax.swing.JCheckBox" name="windowAllCheckbox">
+      <Properties>
+        <Property name="text" type="java.lang.String" value="window all"/>
+      </Properties>
+    </Component>
+  </SubComponents>
+</Form>
