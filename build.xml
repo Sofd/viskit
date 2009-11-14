@@ -9,8 +9,8 @@
 <!-- in the project's Project Properties dialog box.-->
 <project name="de.sofd.viskit" default="default" basedir=".">
     <description>Builds, tests, and runs the project de.sofd.viskit.</description>
-	<defaultexcludes remove="**/.svn"/>
-	<defaultexcludes remove="**/.svn/**"/>
+	<defaultexcludes add="**/.svn"/>
+	<defaultexcludes add="**/.svn/**"/>
 	<defaultexcludes add="**/_svn"/>
 	<defaultexcludes add="**/_svn/**"/>
 
