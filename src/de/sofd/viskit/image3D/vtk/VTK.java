@@ -1,4 +1,4 @@
-package de.sofd.viskit.image3D;
+package de.sofd.viskit.image3D.vtk;
 
 public class VTK
 {

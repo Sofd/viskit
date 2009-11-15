@@ -1,12 +1,15 @@
 package de.sofd.viskit.test.image3D;
 
 import javax.swing.*;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 
 import org.apache.log4j.*;
 
 import vtk.*;
 
 import de.sofd.viskit.image3D.vtk.VTK;
+import de.sofd.viskit.image3D.vtk.model.ImagePlane;
 import de.sofd.viskit.image3D.vtk.view.*;
 
 import java.awt.*;
@@ -18,14 +21,16 @@ import java.util.*;
  * represent the skin and bone, and then displays them.
  */
 @SuppressWarnings("serial")
-public class Dicom3DViewer extends JFrame {
-    static final Logger logger = Logger.getLogger(Dicom3DViewer.class);
+public class SliceViewer extends JFrame implements ChangeListener {
+    static final Logger logger = Logger.getLogger(SliceViewer.class);
     
-    Dicom3DView dicom3DView;
+    SliceView sliceView;
     
-    public Dicom3DViewer() throws Exception
+    public SliceViewer(ImagePlane imagePlane) throws Exception
     {
-        super("Dicom3D");
+        super("SliceViewer");
+        
+        
   
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         
@@ -34,10 +39,20 @@ public class Dicom3DViewer extends JFrame {
         int dim[] =  imageData.GetDimensions();
         
         logger.debug("image dimension : " + dim[0] + " " + dim[1] + " " + dim[2] + " " + imageData.GetPointData().GetScalars().GetSize());
-        dicom3DView = new Dicom3DView(imageData);
+        sliceView = new SliceView(imageData, imagePlane);
         
         JPanel panel = new JPanel(new BorderLayout());
-        panel.add(dicom3DView, BorderLayout.CENTER);
+        panel.add(sliceView, BorderLayout.CENTER);
+        
+        JSlider slider = new JSlider(0, ( imagePlane == ImagePlane.PLANE_TRANSVERSE ? dim[2]-1 : dim[1]-1 ));
+        slider.setMajorTickSpacing(10);
+        slider.setMinorTickSpacing(1);
+        //slider.setPaintLabels(true);
+        //slider.setPaintTicks(true);
+        slider.setSnapToTicks(true);
+        slider.addChangeListener(this);
+        slider.setValue(sliceView.getCurrentSliceNr());
+        panel.add(slider, BorderLayout.SOUTH);
         getContentPane().add("Center", panel);
         pack();
     }
@@ -63,57 +78,79 @@ public class Dicom3DViewer extends JFrame {
         vDicom.SetDataByteOrderToLittleEndian();
         
         //vDicom.SetDirectoryName(rootDirName + "/de/sofd/viskit/test/resources/series/series4");
-        vDicom.SetDirectoryName("D:/dicom/serie1");
+        vDicom.SetDirectoryName("D:/dicom/serie4");
         //vDicom.SetDataSpacing(3.2, 3.2, 1.5);
        
         return vDicom.GetOutput();
     }
-    
+
     public void startTimers()
     {
-        dicom3DView.startTimer();
+        sliceView.startTimer();
     }
-
+    
+    @Override
+    public void stateChanged(ChangeEvent e) {
+        JSlider source = (JSlider)e.getSource();
+        int sliceNr = (int)source.getValue();
+        sliceView.showSlice(sliceNr);
+     }
+    
     public static void main(String s[]) {
+        JFrame.setDefaultLookAndFeelDecorated(true);
+        JDialog.setDefaultLookAndFeelDecorated(true);
+        
+        SwingUtilities.invokeLater(
+            new Runnable(){
+                public void run()
+                {
+                    try
+                    {
+                        
+                        UIManager.setLookAndFeel( UIManager.getSystemLookAndFeelClassName() );
+                            
+                    } catch ( Exception e )
+                    {
+                        e.printStackTrace();
+                    }
+                }
+            }
+        );
+
         try {
             VTK.init();
             
             PropertyConfigurator.configureAndWatch("log4j.properties", 6000);
             
-            final Dicom3DViewer viewer = new Dicom3DViewer();
-            viewer.setLocationRelativeTo(null);
-            viewer.setVisible(true);
+            final SliceViewer viewer1 = new SliceViewer(ImagePlane.PLANE_TRANSVERSE);
+            //viewer1.setLocation(300, 100);
+            viewer1.setLocationRelativeTo(null);
+            viewer1.setVisible(true);
+            
+            /*final SliceViewer viewer2 = new SliceViewer(ImagePlane.PLANE_CORONAL);
+            viewer2.setLocation(300, 500);
+            viewer2.setVisible(true);
+            
+            final SliceViewer viewer3 = new SliceViewer(ImagePlane.PLANE_SAGITTAL);
+            viewer3.setLocation(700, 500);
+            viewer3.setVisible(true);*/
             
             SwingUtilities.invokeLater(new Runnable()
             {
                 public void run()
                 {
-                    viewer.startTimers();
+                    viewer1.startTimers();
+                    //viewer2.startTimers();
+                    //viewer3.startTimers();
                 }
             });
-            
         } catch (Exception e) {
             logger.error(e.getMessage());
             e.printStackTrace();
         }
-        
-        
-
-        
-        /*SwingUtilities.invokeLater(new Runnable() { 
-            @Override 
-            public void run () { 
-                try {
-                    Dicom3DViewer viewer = new Dicom3DViewer();
-                    viewer.setVisible(true); 
-                } catch (Exception e) {
-                    logger.error(e.getMessage());
-                    e.printStackTrace();
-                }
-                    
-            } 
-        }); */
   }
+
+    
 }
 
 
