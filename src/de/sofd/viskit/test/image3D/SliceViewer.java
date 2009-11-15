@@ -8,9 +8,9 @@ import org.apache.log4j.*;
 
 import vtk.*;
 
-import de.sofd.viskit.image3D.vtkk.VTK;
-import de.sofd.viskit.image3D.vtkk.model.ImagePlane;
-import de.sofd.viskit.image3D.vtkk.view.*;
+import de.sofd.viskit.image3D.vtk.VTK;
+import de.sofd.viskit.image3D.vtk.model.ImagePlane;
+import de.sofd.viskit.image3D.vtk.view.*;
 
 import java.awt.*;
 import java.io.*;
