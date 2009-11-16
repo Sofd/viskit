@@ -147,7 +147,7 @@ public class SliceView extends vtkPanel {
     public void showSlice(int sliceNr) {
         currentSliceNr = sliceNr;
         planeActor.SetTexture(tex[currentSliceNr]);
-        sliceText.SetInput("Image " + currentSliceNr + "/" + tex.length);
+        sliceText.SetInput("Image " + ( currentSliceNr + 1 ) + "/" + tex.length);
         //update();
     }
     
