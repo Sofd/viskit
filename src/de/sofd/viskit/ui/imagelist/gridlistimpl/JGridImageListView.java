@@ -1,11 +1,19 @@
 package de.sofd.viskit.ui.imagelist.gridlistimpl;
 
+import de.sofd.swing.AbstractFramedSelectionGridListComponentFactory;
 import de.sofd.swing.JGridList;
+import de.sofd.viskit.ui.imagelist.ImageListViewCell;
+import de.sofd.viskit.ui.imagelist.ImageListViewModelElement;
 import de.sofd.viskit.ui.imagelist.JImageListView;
+import de.sofd.viskit.ui.imagelist.jlistimpl.ImageListViewCellViewer;
 import java.awt.GridLayout;
 import java.util.ArrayList;
 import java.util.Collection;
 import javax.swing.DefaultListModel;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import javax.swing.ListModel;
+import javax.swing.event.ListDataEvent;
 
 /**
  * JImageListView implementation that uses an aggreagated {@link JGridList}.
@@ -22,9 +30,30 @@ public class JGridImageListView extends JImageListView {
         wrappedGridList.setVisible(true);
         this.add(wrappedGridList);
         setModel(new DefaultListModel());
+        wrappedGridList.setComponentFactory(new WrappedGridListComponentFactory());
         setSelectionModel(wrappedGridList.getSelectionModel());
     }
 
+    @Override
+    public void setModel(ListModel model) {
+        super.setModel(model);
+        wrappedGridList.setModel(model);
+    }
+
+    @Override
+    protected void modelIntervalAdded(ListDataEvent e) {
+        super.modelIntervalAdded(e);
+    }
+
+    @Override
+    protected void modelIntervalRemoved(ListDataEvent e) {
+        super.modelIntervalRemoved(e);
+    }
+
+    @Override
+    protected void modelContentsChanged(ListDataEvent e) {
+        super.modelContentsChanged(e);
+    }
 
     /**
      * Class for the ScaleModes that JGridImageListView instances support. Any
@@ -108,6 +137,41 @@ public class JGridImageListView extends JImageListView {
     @Override
     public Collection<ScaleMode> getSupportedScaleModes() {
         return supportedScaleModes;
+    }
+
+    @Override
+    protected void doSetScaleMode(ScaleMode oldScaleMode, ScaleMode newScaleMode) {
+        MyScaleMode sm = (MyScaleMode) newScaleMode;
+        wrappedGridList.setGridSizes(sm.getCellColumnCount(), sm.getCellRowCount());
+        int count = getModel().getSize();
+        for (int i = 0; i < count; i++) {
+            ImageListViewCell cell = getCell(i);
+            cell.setCenterOffset(0, 0);
+            //BufferedImage img = cell.getDisplayedModelElement().getImage();
+            //double scalex = ((double) wrappedList.getFixedCellWidth() - 2 * WrappedListCellRenderer.BORDER_WIDTH) / img.getWidth();
+            //double scaley = ((double) wrappedList.getFixedCellHeight() - 2 * WrappedListCellRenderer.BORDER_WIDTH) / img.getHeight();
+            //double scale = Math.min(scalex, scaley);
+            //cell.setScale(scale);
+        }
+    }
+
+    @Override
+    public void refreshCellForIndex(int idx) {
+        //super.refreshCellForIndex(idx);
+    }
+
+    class WrappedGridListComponentFactory extends AbstractFramedSelectionGridListComponentFactory {
+
+        @Override
+        public JComponent createComponent(JGridList source, JPanel parent, Object modelItem) {
+            ImageListViewModelElement elt = (ImageListViewModelElement) modelItem;
+            ImageListViewCell cell = getCellForElement(elt);
+            ImageListViewCellViewer resultComponent = new ImageListViewCellViewer(cell);
+            resultComponent.setVisible(true);
+            parent.add(resultComponent);
+            return resultComponent;
+        }
+
     }
 
 }

@@ -18,7 +18,6 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionAdapter;
 import java.awt.event.MouseWheelEvent;
 import java.awt.event.MouseWheelListener;
-import java.awt.geom.Point2D;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -131,7 +130,6 @@ public class JListImageListView extends JImageListView {
 
 
     public static class MyImageListViewCell extends DefaultImageListViewCell {
-        private ImageListViewCellViewer latestViewer;
         public MyImageListViewCell(JImageListView owner, ImageListViewModelElement displayedModelElement) {
             super(owner, displayedModelElement);
         }
