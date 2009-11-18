@@ -29,10 +29,13 @@ public class SliceView extends vtkPanel {
         super(imageData.GetDimensions()[0], imageData.GetDimensions()[1]);
         
         int dim[] =  imageData.GetDimensions();
+        double[] range = imageData.GetScalarRange();
+        double rangeDist = range[1] - range[0];
         
         vtkLookupTable colorMap = new vtkLookupTable();
         colorMap.SetNumberOfColors(256);
-        colorMap.SetTableRange(0, 255);
+        colorMap.SetTableRange(range[0], range[1]);
+        //colorMap.SetValueRange(0, 1);
         for ( int i = 0; i < 256; ++i )
         {
             double v = i/255.0;

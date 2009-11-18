@@ -7,6 +7,7 @@ import org.apache.log4j.*;
 import vtk.*;
 
 import de.sofd.viskit.image3D.vtk.VTK;
+import de.sofd.viskit.image3D.vtk.util.*;
 import de.sofd.viskit.image3D.vtk.view.*;
 
 import java.awt.*;
@@ -29,7 +30,7 @@ public class Dicom3DViewer extends JFrame {
   
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         
-        vtkImageData imageData = readImageData();
+        vtkImageData imageData = DicomReader.readImageData("D:/dicom/serie1");
         imageData.Update();
         int dim[] =  imageData.GetDimensions();
         
@@ -40,33 +41,6 @@ public class Dicom3DViewer extends JFrame {
         panel.add(dicom3DView, BorderLayout.CENTER);
         getContentPane().add("Center", panel);
         pack();
-    }
-    
-    protected vtkImageData readImageData() throws IOException {
-        Properties props = new Properties();
-        props.load(
-            this.getClass().getResourceAsStream("/de/sofd/viskit/test/singleframe/SingleFrameTestApp.properties")
-        );
-        
-        String rootDirName = props.getProperty("rootDir");
-        if (null == rootDirName) {
-            throw new IllegalStateException("SingleFrameTestApp.properties file does not contain a rootDir property");
-        }
-    
-        // The following reader is used to read a series of 2D slices (images)
-        // that compose the volume. The slice dimensions are set, and the
-        // pixel spacing. The data Endianness must also be specified. The reader
-        // usese the FilePrefix in combination with the slice number to construct
-        // filenames using the format FilePrefix.%d. (In this case the FilePrefix
-        // is the root name of the file: quarter.)
-        vtkDICOMImageReader vDicom = new vtkDICOMImageReader();
-        vDicom.SetDataByteOrderToLittleEndian();
-        
-        //vDicom.SetDirectoryName(rootDirName + "/de/sofd/viskit/test/resources/series/series4");
-        vDicom.SetDirectoryName("D:/dicom/serie1");
-        //vDicom.SetDataSpacing(3.2, 3.2, 1.5);
-       
-        return vDicom.GetOutput();
     }
     
     public void startTimers()
