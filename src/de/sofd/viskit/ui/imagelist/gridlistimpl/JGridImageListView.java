@@ -23,6 +23,16 @@ import javax.swing.event.ListDataEvent;
 public class JGridImageListView extends JImageListView {
 
     protected final JGridList wrappedGridList;
+    /**
+     * use for the wrapped grid list a separate model that always tracks
+     * (via shallow copying) our #getModel(). This is so we can
+     * better control who sees changes when, e.g. we can more easily
+     * ensure that if the model changes and the wrappedGridList calls
+     * back into us (e.g. into the component factory), the corresponding
+     * changes in this object (e.g. cellcreation for new model elements)
+     * will already have been done.
+     */
+    protected DefaultListModel wrappedGridListModel;
 
     public JGridImageListView() {
         setLayout(new GridLayout(1, 1));
@@ -36,23 +46,38 @@ public class JGridImageListView extends JImageListView {
 
     @Override
     public void setModel(ListModel model) {
+        wrappedGridList.setModel(null);
         super.setModel(model);
-        wrappedGridList.setModel(model);
+        wrappedGridList.setModel(wrappedGridListModel = copyModel(model));
+    }
+
+    private static DefaultListModel copyModel(ListModel m) {
+        DefaultListModel result = new DefaultListModel();
+        int size = m.getSize();
+        for (int i = 0; i < size; i++) {
+            result.addElement(m.getElementAt(i));
+        }
+        return result;
     }
 
     @Override
     protected void modelIntervalAdded(ListDataEvent e) {
         super.modelIntervalAdded(e);
+        for (int i = e.getIndex0(); i <= e.getIndex1(); i++) {
+            wrappedGridListModel.add(i, getModel().getElementAt(i));
+        }
     }
 
     @Override
     protected void modelIntervalRemoved(ListDataEvent e) {
         super.modelIntervalRemoved(e);
+        wrappedGridListModel.removeRange(e.getIndex0(), e.getIndex1());
     }
 
     @Override
     protected void modelContentsChanged(ListDataEvent e) {
         super.modelContentsChanged(e);
+        wrappedGridList.setModel(wrappedGridListModel = copyModel(getModel()));
     }
 
     /**
