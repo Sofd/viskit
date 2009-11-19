@@ -191,7 +191,10 @@ public class JGridImageListView extends JImageListView {
 
     @Override
     public void refreshCellForIndex(int idx) {
-        //super.refreshCellForIndex(idx);
+        JComponent comp = wrappedGridList.getComponentFor(idx);
+        if (null != comp) {
+            comp.repaint();
+        }
     }
 
     class WrappedGridListComponentFactory extends AbstractFramedSelectionGridListComponentFactory {
@@ -218,6 +221,11 @@ public class JGridImageListView extends JImageListView {
         }
 
     }
+
+    // TODO: the mouse listeners eat the events so they're no longer received by
+    //       the wrappedGridList, so e.g. selecting using the mouse no longer works.
+    //       Figure out how to avoid this. Maybe use just one listener (per type) on the
+    //       whole wrappedGridList? (as we do in JGridList's own mouse event handling)
 
     private MouseListener gridComponentMouseHandler = new MouseAdapter() {
 
@@ -290,6 +298,7 @@ public class JGridImageListView extends JImageListView {
             } else {
                 fireCellMouseEvent(ce);
             }
+            refreshCell(cell);
         }
     }
 
