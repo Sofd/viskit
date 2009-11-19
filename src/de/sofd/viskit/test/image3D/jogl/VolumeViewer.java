@@ -5,7 +5,6 @@ import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.*;
 
-import javax.media.opengl.*;
 import javax.swing.JFrame;
 
 import org.apache.log4j.*;
@@ -14,7 +13,6 @@ import vtk.*;
 
 import com.sun.opengl.util.Animator;
 
-import de.sofd.viskit.image3D.jogl.*;
 import de.sofd.viskit.image3D.jogl.view.*;
 import de.sofd.viskit.image3D.vtk.*;
 import de.sofd.viskit.image3D.vtk.util.*;
