@@ -32,6 +32,10 @@ public class ImageListViewCellViewer extends JPanel {
         this.displayedCell = cell;
     }
 
+    public ImageListViewCell getDisplayedCell() {
+        return displayedCell;
+    }
+
     public int getOriginalImageWidth() {
         return displayedCell.getDisplayedModelElement().getImage().getWidth();
     }

@@ -662,6 +662,9 @@ public abstract class JImageListView extends JPanel {
      * listeners to all cells (and track elements and corresponding cells being
      * added/removed to the list, and correctly add/remove the listeners to them).
      * This method takes care of all that internally.
+     * <p>
+     * The event's source will be the cell, the mouse coordinates will be relative
+     * to the cell's upper-left border.
      *
      * @param listener
      */

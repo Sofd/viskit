@@ -2,11 +2,20 @@ package de.sofd.viskit.ui.imagelist.gridlistimpl;
 
 import de.sofd.swing.AbstractFramedSelectionGridListComponentFactory;
 import de.sofd.swing.JGridList;
+import de.sofd.util.Misc;
 import de.sofd.viskit.ui.imagelist.ImageListViewCell;
 import de.sofd.viskit.ui.imagelist.ImageListViewModelElement;
 import de.sofd.viskit.ui.imagelist.JImageListView;
 import de.sofd.viskit.ui.imagelist.jlistimpl.ImageListViewCellViewer;
 import java.awt.GridLayout;
+import java.awt.event.InputEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
+import java.awt.event.MouseMotionAdapter;
+import java.awt.event.MouseMotionListener;
+import java.awt.event.MouseWheelEvent;
+import java.awt.event.MouseWheelListener;
 import java.util.ArrayList;
 import java.util.Collection;
 import javax.swing.DefaultListModel;
@@ -194,9 +203,94 @@ public class JGridImageListView extends JImageListView {
             ImageListViewCellViewer resultComponent = new ImageListViewCellViewer(cell);
             resultComponent.setVisible(true);
             parent.add(resultComponent);
+            resultComponent.addMouseListener(gridComponentMouseHandler);
+            resultComponent.addMouseMotionListener(gridComponentMouseMotionHandler);
+            resultComponent.addMouseWheelListener(gridComponentMouseWheelHandler);
             return resultComponent;
         }
 
+        @Override
+        public void deleteComponent(JGridList source, JPanel parent, Object modelItem, JComponent component) {
+            component.removeMouseListener(gridComponentMouseHandler);
+            component.removeMouseMotionListener(gridComponentMouseMotionHandler);
+            component.removeMouseWheelListener(gridComponentMouseWheelHandler);
+            super.deleteComponent(source, parent, modelItem, component);
+        }
+
+    }
+
+    private MouseListener gridComponentMouseHandler = new MouseAdapter() {
+
+        @Override
+        public void mouseClicked(MouseEvent evt) {
+            dispatchEventToCell(evt);
+        }
+
+        @Override
+        public void mousePressed(MouseEvent evt) {
+            dispatchEventToCell(evt);
+        }
+
+        @Override
+        public void mouseReleased(final MouseEvent evt) {
+            dispatchEventToCell(evt);
+        }
+
+        @Override
+        public void mouseEntered(MouseEvent evt) {
+            dispatchEventToCell(evt);
+        }
+
+        @Override
+        public void mouseExited(MouseEvent evt) {
+            dispatchEventToCell(evt);
+        }
+    };
+
+    private MouseMotionListener gridComponentMouseMotionHandler = new MouseMotionAdapter() {
+
+        @Override
+        public void mouseMoved(MouseEvent evt) {
+            dispatchEventToCell(evt);
+        }
+
+        @Override
+        public void mouseDragged(MouseEvent evt) {
+            dispatchEventToCell(evt);
+        }
+        
+    };
+
+    private MouseWheelListener gridComponentMouseWheelHandler = new MouseWheelListener() {
+        @Override
+        public void mouseWheelMoved(MouseWheelEvent evt) {
+            dispatchEventToCell(evt);
+        }
+    };
+
+
+    protected void dispatchEventToCell(InputEvent evt) {
+        dispatchEventToCell(evt, true);
+    }
+
+    protected void dispatchEventToCell(InputEvent evt, boolean refreshCell) {
+        if (evt instanceof MouseEvent) {
+            dispatchEventToCell((MouseEvent)evt);
+        }
+    }
+
+    protected void dispatchEventToCell(MouseEvent evt) {
+        ImageListViewCellViewer cellViewer = (ImageListViewCellViewer) evt.getSource();
+        ImageListViewCell cell = cellViewer.getDisplayedCell();
+        if (null != cell.getLatestSize()) {
+            MouseEvent ce = Misc.deepCopy(evt);
+            ce.setSource(cell);
+            if (ce instanceof MouseWheelEvent) {
+                fireCellMouseWheelEvent((MouseWheelEvent) ce);
+            } else {
+                fireCellMouseEvent(ce);
+            }
+        }
     }
 
 }
