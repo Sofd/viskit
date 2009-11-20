@@ -111,7 +111,7 @@ public class VolumeViewer extends JFrame implements ChangeListener
         }
         else if ( "alpha".equals(slider.getName()))
         {
-            volumeView.setAlpha(slider.getValue()/100.0f);
+            volumeView.setAlpha(slider.getValue()/5.0f);
         }
             
         

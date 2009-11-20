@@ -2,6 +2,9 @@ package de.sofd.viskit.image3D.jogl.view;
 
 import static javax.media.opengl.GL2.*;
 
+import java.awt.event.*;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
 import java.nio.*;
 
 import javax.media.opengl.*;
@@ -12,7 +15,7 @@ import vtk.*;
 import com.sun.opengl.util.*;
 
 @SuppressWarnings("serial")
-public class VolumeView extends GLJPanel implements GLEventListener
+public class VolumeView extends GLJPanel implements GLEventListener, MouseListener, MouseMotionListener
 {
     protected final int MAX_PLANES = 1000;
     
@@ -26,10 +29,19 @@ public class VolumeView extends GLJPanel implements GLEventListener
     protected static GLCapabilities caps;
     
     protected float phi = 0.0f;
+    protected float phi2 = 0.0f;
     
     protected float alpha = 10.0f;
     
     protected int slices = 100;
+    
+    protected float zoom = 1.5f;
+    
+    protected int lastX;
+    protected int lastY;
+    protected float oldPhi;
+    protected float oldPhi2;
+    
     
     public float getAlpha() {
         return alpha;
@@ -58,6 +70,8 @@ public class VolumeView extends GLJPanel implements GLEventListener
         super(caps);
         this.imageData = imageData;
         addGLEventListener(this);
+        addMouseListener(this);
+        addMouseMotionListener(this);
     }
     
     private void init3DTexture(GL2 gl) {
@@ -121,7 +135,7 @@ public class VolumeView extends GLJPanel implements GLEventListener
     
     protected void idle()
     {
-        phi += 2.0f;
+        //phi += 2.0f;
     }
     
     @Override
@@ -146,7 +160,8 @@ public class VolumeView extends GLJPanel implements GLEventListener
         gl.glMatrixMode(GL_TEXTURE);
         gl.glLoadIdentity();
         gl.glTranslatef( 0.5f,  0.5f,  0.5f);
-        gl.glRotatef(phi, 1.5f, 1.0f, 2.1f);
+        gl.glRotatef(phi, 0.0f, 1.0f, 0.0f);
+        gl.glRotatef(phi2, 1.0f, 0.0f, 0.0f); 
         //gl.glRotatef(90.0f, 1.0f, 0.0f, 0.0f);
         gl.glTranslatef(-0.5f, -0.5f, -0.5f);
         
@@ -157,27 +172,27 @@ public class VolumeView extends GLJPanel implements GLEventListener
         
         gl.glBindTexture(GL_TEXTURE_3D, theTex);
 
-        //float adjAlpha = alpha/slices;
+        float adjAlpha = alpha/slices;
         gl.glAlphaFunc(GL_EQUAL, alpha);
         
         gl.glBegin(GL_QUADS);
-        //for (int i=0; i<slices; ++i)
-        for (int i=slices-1; i>=0; --i)
+        for (int i=0; i<slices; ++i)
+        //for (int i=slices-1; i>=0; --i)
         {
-            double z = (-depth/maxDim + (depth*2.0f/maxDim)*i/(slices-1))*2.0f;
-            double u = (1.0f - i*1.0f/(slices - 1))*2.0f-0.5f;
-            float adjAlpha = i*1.0f/(slices-1);
+            double z = (-depth/maxDim + (depth*2.0f/maxDim)*i/(slices-1))*zoom;
+            double u = (1.0f - i*1.0f/(slices - 1))*zoom+0.5-zoom/2;
+            //float adjAlpha = i*1.0f/(slices-1);
             //System.out.println("z : "+ z + ", u : " + u);
             gl.glColor4f(1.0f, 1.0f, 1.0f, adjAlpha);
             //gl.glColor4f(1.0f, 1.0f, 1.0f, 0.5f);
-            gl.glTexCoord4d(-0.5f, -0.5f, u, 1.0f);
-            gl.glVertex3d(-width/maxDim*2.0f, -height/maxDim*2.0f, z);
-            gl.glTexCoord4d(1.5f, -0.5f, u, 1.0f);
-            gl.glVertex3d( width/maxDim*2.0f, -height/maxDim*2.0f, z);
-            gl.glTexCoord4d(1.5f, 1.5f, u, 1.0f);
-            gl.glVertex3d( width/maxDim*2.0f, height/maxDim*2.0f, z);
-            gl.glTexCoord4d(-0.5f, 1.5f, u, 1.0f);
-            gl.glVertex3d(-width/maxDim*2.0f, height/maxDim*2.0f, z);
+            gl.glTexCoord4d(0.5f-0.5f*zoom, 0.5f-0.5f*zoom, u, 1.0f);
+            gl.glVertex3d(-width/maxDim*zoom, -height/maxDim*zoom, z);
+            gl.glTexCoord4d(0.5f+0.5f*zoom, 0.5f-0.5f*zoom, u, 1.0f);
+            gl.glVertex3d( width/maxDim*zoom, -height/maxDim*zoom, z);
+            gl.glTexCoord4d(0.5f+0.5f*zoom, 0.5f+0.5f*zoom, u, 1.0f);
+            gl.glVertex3d( width/maxDim*zoom, height/maxDim*zoom, z);
+            gl.glTexCoord4d(0.5f-0.5f*zoom, 0.5f+0.5f*zoom, u, 1.0f);
+            gl.glVertex3d(-width/maxDim*zoom, height/maxDim*zoom, z);
         }
         
     gl.glEnd();
@@ -207,14 +222,14 @@ public class VolumeView extends GLJPanel implements GLEventListener
         gl.glShadeModel(GL_SMOOTH);
         gl.glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
         
-        //gl.glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-        //gl.glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+       // gl.glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+       gl.glBlendFunc(GL_SRC_ALPHA, GL_ONE);
         //gl.glBlendColor(1.0f, 1.0f, 1.0f, 1.0f/MAX_PLANES);
         //gl.glBlendEquation(GL_MAX);
-        //gl.glEnable(GL_BLEND);
+        gl.glEnable(GL_BLEND);
         gl.glEnable(GL_DEPTH_TEST);
         gl.glEnable(GL_TEXTURE_3D);
-        gl.glEnable(GL_ALPHA_TEST);
+        //gl.glEnable(GL_ALPHA_TEST);
                 
         init3DTexture(gl);
         initPlanes(gl);
@@ -234,7 +249,7 @@ public class VolumeView extends GLJPanel implements GLEventListener
         System.err.println("GL_VERSION: " + gl.glGetString(GL_VERSION));
         
         gl.glLoadIdentity();
-        gl.glOrtho(-2.0f, 2.0f, -h*2.0f, h*2.0f, -2.0f, 2.0f);
+        gl.glOrtho(-zoom, zoom, -h*zoom, h*zoom, -zoom, zoom);
         //gl.glFrustum(-1.0f, 1.0f, -h, h, 0.1f, 60.0f);
         gl.glMatrixMode(GL_MODELVIEW);
         gl.glLoadIdentity();
@@ -242,5 +257,51 @@ public class VolumeView extends GLJPanel implements GLEventListener
         
     }
     
+    public void mouseClicked(MouseEvent e) {
+        // TODO Auto-generated method stub
+        
+    }
+
+    public void mouseDragged(MouseEvent e) {
+        int x = e.getX();
+        int y = e.getY();
+        
+        phi = oldPhi + (x - lastX);
+        phi2 = oldPhi2 + (y - lastY);
+
+        /*lastX = x;
+        lastY = y;*/
+    }
+
+    public void mouseEntered(MouseEvent e) {
+        
+    }
+
+    public void mouseExited(MouseEvent e) {
+        // TODO Auto-generated method stub
+        
+    }
+    
+    public void mouseMoved(MouseEvent e) {
+        lastX = e.getX();
+        lastY = e.getY();
+        oldPhi = phi;
+        oldPhi2 = phi2;
+        //panel.render();
+    }
+    
+    public void mousePressed(MouseEvent e) {
+
+        oldPhi = phi;
+        oldPhi2 = phi2;
+        lastX = e.getX();
+        lastY = e.getY();
+
+        
+    }
+
+    public void mouseReleased(MouseEvent e) {
+        
+    }
     
 }
