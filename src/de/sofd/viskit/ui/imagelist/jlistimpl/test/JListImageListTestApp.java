@@ -83,12 +83,23 @@ public class JListImageListTestApp {
         toolbar.add(new AbstractAction("+Img") {
             @Override
             public void actionPerformed(ActionEvent e) {
-                ImageListViewModelElement newElt = new TestImageModelElement(99);
+                ImageListViewModelElement newElt = new TestImageModelElement(5);
                 model.addElement(newElt);
                 viewer.getCellForElement(newElt).getRoiDrawingViewer().activateTool(new EllipseTool());
             }
         });
-        toolbar.add(new AbstractAction("-Sel") {
+        toolbar.add(new AbstractAction("InsImg") {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                int idx = viewer.getLeadSelectionIndex();
+                if (idx >= 0) {
+                    ImageListViewModelElement newElt = new TestImageModelElement(7);
+                    model.add(idx, newElt);
+                    viewer.getCellForElement(newElt).getRoiDrawingViewer().activateTool(new EllipseTool());
+                }
+            }
+        });
+        toolbar.add(new AbstractAction("DelImg") {
             @Override
             public void actionPerformed(ActionEvent e) {
                 ImageListViewModelElement elt = viewer.getSelectedValue();
@@ -97,16 +108,16 @@ public class JListImageListTestApp {
                 }
             }
         });
-        toolbar.add(new AbstractAction("1stRoiMv") {
+        toolbar.add(new AbstractAction("RoiMv") {
             @Override
             public void actionPerformed(ActionEvent e) {
                 try {
-                    ImageListViewModelElement elt = viewer.getElementAt(0);
+                    ImageListViewModelElement elt = viewer.getElementAt(3);
                     Drawing roiDrawing = elt.getRoiDrawing();
                     DrawingObject roi = roiDrawing.get(0);
                     roi.moveBy(10, 5);
                 } catch (IndexOutOfBoundsException ex) {
-                    System.out.println("list empty or first element contains no ROIs...");
+                    System.out.println("list has no 4th element or 4th element contains no ROIs...");
                 }
             }
         });
