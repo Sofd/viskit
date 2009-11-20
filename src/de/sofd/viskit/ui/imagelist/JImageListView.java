@@ -1,5 +1,7 @@
 package de.sofd.viskit.ui.imagelist;
 
+import de.sofd.draw2d.viewer.DrawingViewer;
+import de.sofd.draw2d.viewer.backend.DrawingViewerBackend;
 import de.sofd.util.BiIdentityHashMap;
 import de.sofd.util.BiMap;
 import de.sofd.util.IdentityHashSet;
@@ -285,18 +287,48 @@ public abstract class JImageListView extends JPanel {
 
     /**
      * Creates a new ImageListViewCell (using doCreateCell()), ensures the cell's
-     * PropertyChangeEvents are exposed to {@link #addCellPropertyChangeListener(java.beans.PropertyChangeListener) }.
-     * Not normally called by subclasses (and never called by users). Never overridden;
+     * PropertyChangeEvents are exposed to {@link #addCellPropertyChangeListener(java.beans.PropertyChangeListener) },
+     * and calls {@link #ensureCellRepaintsOnRoiDrawingViewerChanges(de.sofd.viskit.ui.imagelist.ImageListViewCell) }.
+     * Not normally called by subclasses (and never called by users). Hardly ever overridden;
      * override {@link #doCreateCell(de.sofd.viskit.ui.imagelist.ImageListViewModelElement) } instead.
      *
      * @param modelElement
      * @return
      */
-    protected final ImageListViewCell createCell(ImageListViewModelElement modelElement) {
+    protected ImageListViewCell createCell(ImageListViewModelElement modelElement) {
         ImageListViewCell cell = doCreateCell(modelElement);
         cell.addPropertyChangeListener(cellPropertyChangeEventForwarder);
         fireImageListViewEvent(new ImageListViewCellAddEvent(this, cell));
+        ensureCellRepaintsOnRoiDrawingViewerChanges(cell);
         return cell;
+    }
+
+    /**
+     * Called by {@link #createCell(de.sofd.viskit.ui.imagelist.ImageListViewModelElement) }
+     * for newly created cells. Ensures that any changes to the cell's ROI drawing viewer
+     * cause the cell to be repainted. Default impl. registers a {@link DrawingViewerBackend}
+     * on the ROI drawing viewer that calls {@link #refreshCell(de.sofd.viskit.ui.imagelist.ImageListViewCell) }
+     * whenever a repaint is requested.
+     *
+     * @param cell
+     */
+    protected void ensureCellRepaintsOnRoiDrawingViewerChanges(final ImageListViewCell cell) {
+        cell.getRoiDrawingViewer().setBackend(new DrawingViewerBackend() {
+            @Override
+            public void connected(DrawingViewer viewer) {
+            }
+            @Override
+            public void repaint() {
+                refreshCell(cell);
+            }
+            @Override
+            public void repaint(double x, double y, double width, double height) {
+                refreshCell(cell);
+            }
+            @Override
+            public void disconnecting() {
+            }
+        });
     }
 
     /**
