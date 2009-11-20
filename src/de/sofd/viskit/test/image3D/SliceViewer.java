@@ -35,7 +35,7 @@ public class SliceViewer extends JFrame implements ChangeListener {
   
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         
-        vtkImageData imageData = DicomReader.readImageData("D:/dicom/serie1");
+        vtkImageData imageData = DicomReader.readImageData("D:/dicom/serie3");
         imageData.Update();
         int dim[] =  imageData.GetDimensions();
         

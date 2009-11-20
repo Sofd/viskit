@@ -12,7 +12,7 @@ import vtk.*;
 import com.sun.opengl.util.*;
 
 @SuppressWarnings("serial")
-public class VolumeView extends GLCanvas implements GLEventListener
+public class VolumeView extends GLJPanel implements GLEventListener
 {
     protected final int MAX_PLANES = 1000;
     
@@ -25,11 +25,32 @@ public class VolumeView extends GLCanvas implements GLEventListener
     
     protected static GLCapabilities caps;
     
-    protected float alpha = 0.0f;
+    protected float phi = 0.0f;
+    
+    protected float alpha = 10.0f;
+    
+    protected int slices = 100;
+    
+    public float getAlpha() {
+        return alpha;
+    }
+
+    public void setAlpha(float alpha) {
+        this.alpha = alpha;
+    }
+
+    public int getSlices() {
+        return slices;
+    }
+
+    public void setSlices(int slices) {
+        this.slices = slices;
+    }
     
     static {
         caps = new GLCapabilities(GLProfile.get(GLProfile.GL2));
         caps.setAlphaBits(8); 
+        
     }
     
     public VolumeView(vtkImageData imageData)
@@ -72,7 +93,7 @@ public class VolumeView extends GLCanvas implements GLEventListener
                          GL_LINEAR );
         gl.glTexParameteri( GL_TEXTURE_3D, GL_TEXTURE_MAG_FILTER, 
                          GL_LINEAR );  
-        
+        gl.glTexEnvf(GL_TEXTURE_ENV , GL_TEXTURE_ENV_MODE, GL_MODULATE);
        
          
 
@@ -94,41 +115,29 @@ public class VolumeView extends GLCanvas implements GLEventListener
         System.out.println("height : " + height);
         System.out.println("depth : " + depth);
          
-        thePlanes = gl.glGenLists(1);
-        gl.glNewList(thePlanes, GL_COMPILE);
         
-        gl.glBegin(GL_QUADS);
-            for (int i=0; i<MAX_PLANES; ++i)
-            {
-                double z = (-depth/maxDim + (depth*2.0f/maxDim)*i/(MAX_PLANES-1))*2.0f;
-                double u = (1.0f - i*1.0f/(MAX_PLANES - 1))*2.0f-0.5f;
-                System.out.println("z : "+ z + ", u : " + u);
-                gl.glColor4f(1.0f, 1.0f, 1.0f, 6.0f/MAX_PLANES);
-                //gl.glColor4f(1.0f, 1.0f, 1.0f, 0.5f);
-                gl.glTexCoord4d(-0.5f, -0.5f, u, 1.0f);
-                gl.glVertex3d(-width/maxDim*2.0f, -height/maxDim*2.0f, z);
-                gl.glTexCoord4d(1.5f, -0.5f, u, 1.0f);
-                gl.glVertex3d( width/maxDim*2.0f, -height/maxDim*2.0f, z);
-                gl.glTexCoord4d(1.5f, 1.5f, u, 1.0f);
-                gl.glVertex3d( width/maxDim*2.0f, height/maxDim*2.0f, z);
-                gl.glTexCoord4d(-0.5f, 1.5f, u, 1.0f);
-                gl.glVertex3d(-width/maxDim*2.0f, height/maxDim*2.0f, z);
-            }
-            
-        gl.glEnd();
-        
-        gl.glEndList();
         
     }
     
     protected void idle()
     {
-        alpha += 1.0f;
+        phi += 2.0f;
     }
     
     @Override
     public void display(GLAutoDrawable drawable) {
         idle();
+        
+        double[] spacing = imageData.GetSpacing();
+        int[] dim = imageData.GetDimensions();
+        double width = dim[0] * spacing[0];
+        double height = dim[1] * spacing[1];
+        double depth = dim[2] * spacing[2];
+        
+        double maxDim = 0;
+        if ( width > maxDim ) maxDim = width;
+        if ( height > maxDim ) maxDim = height;
+        if ( depth > maxDim ) maxDim = depth;
         
         GL2 gl = drawable.getGL().getGL2();
         
@@ -137,7 +146,8 @@ public class VolumeView extends GLCanvas implements GLEventListener
         gl.glMatrixMode(GL_TEXTURE);
         gl.glLoadIdentity();
         gl.glTranslatef( 0.5f,  0.5f,  0.5f);
-        gl.glRotatef(alpha, 0.0f, 1.0f, 0.0f);
+        gl.glRotatef(phi, 1.5f, 1.0f, 2.1f);
+        //gl.glRotatef(90.0f, 1.0f, 0.0f, 0.0f);
         gl.glTranslatef(-0.5f, -0.5f, -0.5f);
         
         gl.glMatrixMode(GL_MODELVIEW);
@@ -146,7 +156,31 @@ public class VolumeView extends GLCanvas implements GLEventListener
         //gl.glTranslatef(0.0f, 0.0f, 4.0f);
         
         gl.glBindTexture(GL_TEXTURE_3D, theTex);
-        gl.glCallList(thePlanes);
+
+        //float adjAlpha = alpha/slices;
+        gl.glAlphaFunc(GL_EQUAL, alpha);
+        
+        gl.glBegin(GL_QUADS);
+        //for (int i=0; i<slices; ++i)
+        for (int i=slices-1; i>=0; --i)
+        {
+            double z = (-depth/maxDim + (depth*2.0f/maxDim)*i/(slices-1))*2.0f;
+            double u = (1.0f - i*1.0f/(slices - 1))*2.0f-0.5f;
+            float adjAlpha = i*1.0f/(slices-1);
+            //System.out.println("z : "+ z + ", u : " + u);
+            gl.glColor4f(1.0f, 1.0f, 1.0f, adjAlpha);
+            //gl.glColor4f(1.0f, 1.0f, 1.0f, 0.5f);
+            gl.glTexCoord4d(-0.5f, -0.5f, u, 1.0f);
+            gl.glVertex3d(-width/maxDim*2.0f, -height/maxDim*2.0f, z);
+            gl.glTexCoord4d(1.5f, -0.5f, u, 1.0f);
+            gl.glVertex3d( width/maxDim*2.0f, -height/maxDim*2.0f, z);
+            gl.glTexCoord4d(1.5f, 1.5f, u, 1.0f);
+            gl.glVertex3d( width/maxDim*2.0f, height/maxDim*2.0f, z);
+            gl.glTexCoord4d(-0.5f, 1.5f, u, 1.0f);
+            gl.glVertex3d(-width/maxDim*2.0f, height/maxDim*2.0f, z);
+        }
+        
+    gl.glEnd();
         
         
         
@@ -171,17 +205,17 @@ public class VolumeView extends GLCanvas implements GLEventListener
         gl.setSwapInterval(1); 
         
         gl.glShadeModel(GL_SMOOTH);
+        gl.glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
         
-        
-        gl.glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+        //gl.glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
         //gl.glBlendFunc(GL_SRC_ALPHA, GL_ONE);
         //gl.glBlendColor(1.0f, 1.0f, 1.0f, 1.0f/MAX_PLANES);
-        
-        gl.glEnable(GL_BLEND);
+        //gl.glBlendEquation(GL_MAX);
+        //gl.glEnable(GL_BLEND);
         gl.glEnable(GL_DEPTH_TEST);
         gl.glEnable(GL_TEXTURE_3D);
-        
-        
+        gl.glEnable(GL_ALPHA_TEST);
+                
         init3DTexture(gl);
         initPlanes(gl);
         

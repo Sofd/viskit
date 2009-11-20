@@ -1,11 +1,12 @@
 package de.sofd.viskit.test.image3D.jogl;
 
-import java.awt.BorderLayout;
+import java.awt.*;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.*;
 
-import javax.swing.JFrame;
+import javax.swing.*;
+import javax.swing.event.*;
 
 import org.apache.log4j.*;
 
@@ -18,11 +19,13 @@ import de.sofd.viskit.image3D.vtk.*;
 import de.sofd.viskit.image3D.vtk.util.*;
 
 @SuppressWarnings("serial")
-public class VolumeViewer extends JFrame 
+public class VolumeViewer extends JFrame implements ChangeListener 
 {
     static final Logger logger = Logger.getLogger(VolumeViewer.class);
     
     protected static Animator animator;
+    
+    protected VolumeView volumeView;
     
     public VolumeViewer() throws IOException
     {
@@ -39,11 +42,28 @@ public class VolumeViewer extends JFrame
         
         logger.debug("image dimension : " + dim[0] + " " + dim[1] + " " + dim[2] + " " + imageData.GetPointData().GetScalars().GetSize());
         
-        VolumeView volumeView = new VolumeView(imageData); 
-        getContentPane().setLayout(new BorderLayout());
-        this.add(volumeView, BorderLayout.CENTER);
+        volumeView = new VolumeView(imageData); 
         
-        setSize(500, 500);
+        getContentPane().setLayout(new BorderLayout());
+        getContentPane().add(volumeView, BorderLayout.CENTER);
+        
+        JPanel panel = new JPanel(new BorderLayout());
+        panel.setPreferredSize(new Dimension(200, 500));
+        panel.setMaximumSize(new Dimension(200, 500));
+        
+        JSlider slider1 = new JSlider(10, 1000, 100);
+        slider1.setName("slices");
+        slider1.addChangeListener(this);
+        panel.add(slider1, BorderLayout.NORTH);
+        
+        JSlider slider2 = new JSlider(0, 100, 50);
+        slider2.setName("alpha");
+        slider2.addChangeListener(this);
+        panel.add(slider2, BorderLayout.SOUTH);
+        
+        getContentPane().add(panel, BorderLayout.EAST);
+        
+        setSize(700, 500);
         setLocationRelativeTo(null);
         
         animator = new Animator(volumeView);
@@ -78,6 +98,22 @@ public class VolumeViewer extends JFrame
             logger.error(e);
             e.printStackTrace();
         } 
+        
+    }
+
+    @Override
+    public void stateChanged(ChangeEvent e) {
+        JSlider slider = (JSlider)e.getSource();
+        
+        if ( "slices".equals(slider.getName()))
+        {
+            volumeView.setSlices(slider.getValue());
+        }
+        else if ( "alpha".equals(slider.getName()))
+        {
+            volumeView.setAlpha(slider.getValue()/100.0f);
+        }
+            
         
     }
 }
