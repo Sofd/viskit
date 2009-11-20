@@ -1,5 +1,7 @@
 package de.sofd.viskit.ui.imagelist.jlistimpl.test;
 
+import de.sofd.draw2d.Drawing;
+import de.sofd.draw2d.DrawingObject;
 import de.sofd.draw2d.viewer.tools.EllipseTool;
 import de.sofd.draw2d.viewer.tools.SelectorTool;
 import de.sofd.viskit.controllers.ImageListViewMouseWindowingController;
@@ -92,6 +94,19 @@ public class JListImageListTestApp {
                 ImageListViewModelElement elt = viewer.getSelectedValue();
                 if (elt != null) {
                     model.removeElement(elt);
+                }
+            }
+        });
+        toolbar.add(new AbstractAction("1stRoiMv") {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                try {
+                    ImageListViewModelElement elt = viewer.getElementAt(0);
+                    Drawing roiDrawing = elt.getRoiDrawing();
+                    DrawingObject roi = roiDrawing.get(0);
+                    roi.moveBy(10, 5);
+                } catch (IndexOutOfBoundsException ex) {
+                    System.out.println("list empty or first element contains no ROIs...");
                 }
             }
         });
