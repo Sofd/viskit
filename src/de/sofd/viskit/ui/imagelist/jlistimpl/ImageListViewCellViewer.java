@@ -15,6 +15,7 @@ import java.awt.geom.Point2D;
 import java.awt.image.AffineTransformOp;
 import java.awt.image.BufferedImage;
 import java.awt.image.BufferedImageOp;
+import java.awt.image.RescaleOp;
 import java.awt.image.WritableRaster;
 import javax.swing.JPanel;
 
@@ -79,32 +80,18 @@ public class ImageListViewCellViewer extends JPanel {
         //       the lines of n2g JDicomObjectImageViewer.
         //       Maybe expose the DicomObject (containing the image UID) in the cell class after all.
         BufferedImage srcImg = displayedCell.getDisplayedModelElement().getImage();
-        if (srcImg.getRaster().getNumBands() > 1) {
-            // apparently a colored image => return as-is, no windowing
-            return srcImg;
-        }
         BufferedImage windowedImage = new BufferedImage(srcImg.getWidth(), srcImg.getHeight(),
                                                         BufferedImage.TYPE_INT_RGB);
-        final int windowedImageGrayscalesCount = 256;  // for BufferedImage.TYPE_INT_RGB
-        float scale = (float) windowedImageGrayscalesCount / displayedCell.getWindowWidth();
-        float offset = (float) (displayedCell.getWindowWidth() / 2 - displayedCell.getWindowLocation())*scale;
-        WritableRaster resultRaster = windowedImage.getRaster();
-        for (int x = 0; x < srcImg.getWidth(); x++) {
-            for (int y = 0; y < srcImg.getHeight(); y++) {
-                int srcGrayValue = srcImg.getRaster().getSample(x, y, 0);
-                float destGrayValue = scale * srcGrayValue + offset;
-                // clamp
-                if (destGrayValue < 0) {
-                    destGrayValue = 0;
-                } else if (destGrayValue >= windowedImageGrayscalesCount) {
-                    destGrayValue = windowedImageGrayscalesCount - 1;
-                }
-                resultRaster.setSample(x, y, 0, destGrayValue);
-                resultRaster.setSample(x, y, 1, destGrayValue);
-                resultRaster.setSample(x, y, 2, destGrayValue);
-            }
-        }
-        return windowedImage;
+        float scale = 256.0F / displayedCell.getWindowWidth();
+        float offset = scale * (displayedCell.getWindowWidth() / 2 - displayedCell.getWindowLocation());
+        RescaleOp rescaleOp = new RescaleOp(scale, offset, null);
+        // TODO: windowedImage after the following filter call is not identical to the
+        // return value, contrary to what the documentation seems to imply. If we get
+        // rid of windowedImage (and supply null instead), the result looks visually
+        // identical *most* of the times, but for some images, e.g. cd846__center4001__39.dcm,
+        // JAI causes a JVM segfault on Linux... With the call as done here, it seems to
+        // work all the time, albeit maybe with unnecessary performance penalties.
+        return rescaleOp.filter(srcImg, windowedImage);
     }
 
     @Override
