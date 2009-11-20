@@ -7,8 +7,6 @@ import de.sofd.draw2d.viewer.tools.RectangleTool;
 import de.sofd.draw2d.viewer.tools.SelectorTool;
 import de.sofd.util.BiHashMap;
 import de.sofd.util.BiMap;
-import java.beans.PropertyChangeListener;
-import java.beans.PropertyChangeSupport;
 import javax.swing.JToggleButton;
 import org.apache.log4j.Logger;
 
@@ -128,31 +126,8 @@ public class RoiToolPanel extends javax.swing.JPanel {
             JToggleButton button = toolClassesByButton.reverseGet(toolClass);
             button.setSelected(true);
             this.toolClass = toolClass;
-            propertyChangeSupport.firePropertyChange(PROP_TOOLCLASS, oldToolClass, toolClass);
+            firePropertyChange(PROP_TOOLCLASS, oldToolClass, toolClass);
         }
-    }
-
-
-    private PropertyChangeSupport propertyChangeSupport = new PropertyChangeSupport(this);
-
-    /**
-     * Add PropertyChangeListener.
-     *
-     * @param listener
-     */
-    @Override
-    public void addPropertyChangeListener(PropertyChangeListener listener) {
-        propertyChangeSupport.addPropertyChangeListener(listener);
-    }
-
-    /**
-     * Remove PropertyChangeListener.
-     *
-     * @param listener
-     */
-    @Override
-    public void removePropertyChangeListener(PropertyChangeListener listener) {
-        propertyChangeSupport.removePropertyChangeListener(listener);
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
