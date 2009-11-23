@@ -64,6 +64,7 @@ public class SingleFrame extends javax.swing.JFrame {
         keepRelativeSelIndicesCheckbox = new javax.swing.JCheckBox();
         jPanel1 = new javax.swing.JPanel();
         roiToolPanel = new de.sofd.viskit.ui.RoiToolPanel();
+        juggleModelsButton = new javax.swing.JButton();
 
         org.jdesktop.beansbinding.Binding binding = org.jdesktop.beansbinding.Bindings.createAutoBinding(org.jdesktop.beansbinding.AutoBinding.UpdateStrategy.READ_WRITE, roiToolPanel, org.jdesktop.beansbinding.ObjectProperty.create(), roiToolApplicationController, org.jdesktop.beansbinding.BeanProperty.create("roiToolPanel"));
         bindingGroup.addBinding(binding);
@@ -79,7 +80,7 @@ public class SingleFrame extends javax.swing.JFrame {
         );
         listsPanelLayout.setVerticalGroup(
             listsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 406, Short.MAX_VALUE)
+            .addGap(0, 407, Short.MAX_VALUE)
         );
 
         syncSelectionsCheckbox.setText("synchronize selections");
@@ -118,6 +119,13 @@ public class SingleFrame extends javax.swing.JFrame {
                 .addContainerGap())
         );
 
+        juggleModelsButton.setText("Juggle Models");
+        juggleModelsButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                juggleModelsButtonActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout controlsPanelLayout = new javax.swing.GroupLayout(controlsPanel);
         controlsPanel.setLayout(controlsPanelLayout);
         controlsPanelLayout.setHorizontalGroup(
@@ -134,13 +142,16 @@ public class SingleFrame extends javax.swing.JFrame {
                         .addComponent(keepRelativeSelIndicesCheckbox)))
                 .addGap(18, 18, 18)
                 .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(334, Short.MAX_VALUE))
+                .addGap(18, 18, 18)
+                .addComponent(juggleModelsButton)
+                .addContainerGap(193, Short.MAX_VALUE))
         );
         controlsPanelLayout.setVerticalGroup(
             controlsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(controlsPanelLayout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(controlsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(juggleModelsButton)
                     .addGroup(controlsPanelLayout.createSequentialGroup()
                         .addGroup(controlsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                             .addComponent(syncSelectionsCheckbox)
@@ -177,9 +188,22 @@ public class SingleFrame extends javax.swing.JFrame {
         pack();
     }// </editor-fold>//GEN-END:initComponents
 
+    private void juggleModelsButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_juggleModelsButtonActionPerformed
+        if (lists.isEmpty()) {
+            return;
+        }
+        ListModel prevModel = lists.get(lists.size() - 1).getModel();
+        for (JImageListView list : lists) {
+            ListModel tmp = prevModel;
+            prevModel = list.getModel();
+            list.setModel(tmp);
+        }
+    }//GEN-LAST:event_juggleModelsButtonActionPerformed
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JPanel controlsPanel;
     private javax.swing.JPanel jPanel1;
+    private javax.swing.JButton juggleModelsButton;
     private javax.swing.JCheckBox keepRelativeSelIndicesCheckbox;
     private javax.swing.JPanel listsPanel;
     private de.sofd.viskit.controllers.ImageListViewRoiToolApplicationController roiToolApplicationController;
