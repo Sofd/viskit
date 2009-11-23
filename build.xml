@@ -13,8 +13,8 @@
 	<defaultexcludes add="**/.svn/**"/>
 	<defaultexcludes add="**/_svn"/>
 	<defaultexcludes add="**/_svn/**"/>
-
-    <import file="nbproject/build-impl.xml"/>
+	
+	<import file="nbproject/build-impl.xml"/>
     <!--
 
     There exist several targets which are by default empty and which can be 
@@ -76,4 +76,12 @@
     nbproject/build-impl.xml file. 
 
     -->
+	<target name="-post-compile">
+		<copy todir="${build.classes.dir}">
+			<fileset dir="properties" includes="*.properties"/>
+        </copy>
+		<!-- copy todir="${build.dir}">
+			<fileset dir="." includes="shader/**/*"/>
+		</copy-->
+    </target>
 </project>

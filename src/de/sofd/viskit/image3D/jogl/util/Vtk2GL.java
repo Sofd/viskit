@@ -1,0 +1,57 @@
+package de.sofd.viskit.image3D.jogl.util;
+
+import static javax.media.opengl.GL.*;
+import static javax.media.opengl.GL2ES1.*;
+import static javax.media.opengl.GL2GL3.*;
+
+import java.nio.*;
+
+import javax.media.opengl.*;
+
+import org.apache.log4j.*;
+
+import vtk.*;
+
+import com.sun.opengl.util.*;
+
+public class Vtk2GL
+{
+    static final Logger logger = Logger.getLogger(Vtk2GL.class);
+        
+    public static int get3DTexture(GL2 gl, vtkImageData imageData) {
+        int[] texId = new int[1];
+        
+        int[] dim = imageData.GetDimensions();
+        double[] range = imageData.GetScalarRange();
+        double rangeDist = range[1] - range[0];
+        rangeDist = ( rangeDist > 0 ? rangeDist : 1 );
+        
+        logger.info("scalar range [" + range[0] + ", " + range[1] + "]");
+        logger.info("dims : " + dim[0] + " " + dim[1] + " " + dim[2] );
+        FloatBuffer dataBuf = BufferUtil.newFloatBuffer(dim[0]*dim[1]*dim[2]);
+        for ( int z = 0; z < dim[2]; ++z)
+            for ( int y = 0; y < dim[1]; ++y)
+                for ( int x = 0; x < dim[0]; ++x)
+                    dataBuf.put((float)(imageData.GetScalarComponentAsFloat(x, y, z, 0)/rangeDist));
+        
+        dataBuf.rewind();
+        
+        gl.glPixelStorei(GL_UNPACK_ALIGNMENT, 1); 
+        
+        gl.glGenTextures(1, texId, 0);
+        gl.glBindTexture(GL_TEXTURE_3D, texId[0]);
+        gl.glTexImage3D(GL_TEXTURE_3D, 0, GL_ALPHA, dim[0], dim[1], dim[2], 0, GL_ALPHA, GL_FLOAT, dataBuf);
+        
+        gl.glTexParameteri( GL_TEXTURE_3D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER );
+        gl.glTexParameteri( GL_TEXTURE_3D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER );
+        gl.glTexParameteri( GL_TEXTURE_3D, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_BORDER );
+              
+        gl.glTexParameteri( GL_TEXTURE_3D, GL_TEXTURE_MIN_FILTER, 
+                         GL_LINEAR );
+        gl.glTexParameteri( GL_TEXTURE_3D, GL_TEXTURE_MAG_FILTER, 
+                         GL_LINEAR );  
+        gl.glTexEnvf(GL_TEXTURE_ENV , GL_TEXTURE_ENV_MODE, GL_MODULATE);
+        
+        return texId[0];
+    }
+}

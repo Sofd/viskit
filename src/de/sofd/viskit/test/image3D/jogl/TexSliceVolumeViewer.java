@@ -19,15 +19,15 @@ import de.sofd.viskit.image3D.vtk.*;
 import de.sofd.viskit.image3D.vtk.util.*;
 
 @SuppressWarnings("serial")
-public class VolumeViewer extends JFrame implements ChangeListener 
+public class TexSliceVolumeViewer extends JFrame implements ChangeListener 
 {
-    static final Logger logger = Logger.getLogger(VolumeViewer.class);
+    static final Logger logger = Logger.getLogger(TexSliceVolumeViewer.class);
     
     protected static Animator animator;
     
-    protected VolumeView volumeView;
+    protected TexSliceVolumeView volumeView;
     
-    public VolumeViewer() throws IOException
+    public TexSliceVolumeViewer() throws IOException
     {
         super("Volume Viewer");
         
@@ -40,9 +40,9 @@ public class VolumeViewer extends JFrame implements ChangeListener
         smooth.Update();
         vtkImageData imageData2 = smooth.GetOutput();
         
-        logger.debug("image dimension : " + dim[0] + " " + dim[1] + " " + dim[2] + " " + imageData.GetPointData().GetScalars().GetSize());
+        logger.debug("image dimension : " + dim[0] + " " + dim[1] + " " + dim[2] + " " + imageData2.GetPointData().GetScalars().GetSize());
         
-        volumeView = new VolumeView(imageData); 
+        volumeView = new TexSliceVolumeView(imageData2); 
         
         getContentPane().setLayout(new BorderLayout());
         getContentPane().add(volumeView, BorderLayout.CENTER);
@@ -87,7 +87,7 @@ public class VolumeViewer extends JFrame implements ChangeListener
         try {
             VTK.init();
             
-            VolumeViewer volumeViewer = new VolumeViewer();
+            TexSliceVolumeViewer volumeViewer = new TexSliceVolumeViewer();
             
             volumeViewer.setVisible(true);
             animator.start();

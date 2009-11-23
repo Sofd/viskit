@@ -1,22 +1,25 @@
 package de.sofd.viskit.image3D.jogl.view;
 
+import static de.sofd.viskit.image3D.jogl.util.Vtk2GL.*;
 import static javax.media.opengl.GL2.*;
 
 import java.awt.event.*;
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
-import java.nio.*;
 
 import javax.media.opengl.*;
 import javax.media.opengl.awt.*;
+
+import org.apache.log4j.*;
 
 import vtk.*;
 
 import com.sun.opengl.util.*;
 
+
 @SuppressWarnings("serial")
-public class VolumeView extends GLJPanel implements GLEventListener, MouseListener, MouseMotionListener
+public class TexSliceVolumeView extends GLJPanel implements GLEventListener, MouseListener, MouseMotionListener
 {
+    static final Logger logger = Logger.getLogger(TexSliceVolumeView.class);
+    
     protected final int MAX_PLANES = 1000;
     
     protected static Animator animator;
@@ -65,52 +68,13 @@ public class VolumeView extends GLJPanel implements GLEventListener, MouseListen
         
     }
     
-    public VolumeView(vtkImageData imageData)
+    public TexSliceVolumeView(vtkImageData imageData)
     {
         super(caps);
         this.imageData = imageData;
         addGLEventListener(this);
         addMouseListener(this);
         addMouseMotionListener(this);
-    }
-    
-    private void init3DTexture(GL2 gl) {
-        int[] texId = new int[1];
-        
-        int[] dim = imageData.GetDimensions();
-        double[] range = imageData.GetScalarRange();
-        double rangeDist = range[1] - range[0];
-        rangeDist = ( rangeDist > 0 ? rangeDist : 1 );
-        
-        System.out.println("scalar range [" + range[0] + ", " + range[1] + "]");
-        
-        FloatBuffer dataBuf = BufferUtil.newFloatBuffer(dim[0]*dim[1]*dim[2]);
-        for ( int z = 0; z < dim[2]; ++z)
-            for ( int y = 0; y < dim[1]; ++y)
-                for ( int x = 0; x < dim[0]; ++x)
-                    dataBuf.put((float)(imageData.GetScalarComponentAsFloat(x, y, z, 0)/rangeDist));
-        
-        dataBuf.rewind();
-        
-        gl.glPixelStorei(GL_UNPACK_ALIGNMENT, 1); 
-        
-        gl.glGenTextures(1, texId, 0);
-        theTex = texId[0];
-        gl.glBindTexture(GL_TEXTURE_3D, theTex);
-        gl.glTexImage3D(GL_TEXTURE_3D, 0, GL_ALPHA, dim[0], dim[1], dim[2], 0, GL_ALPHA, GL_FLOAT, dataBuf);
-        
-        gl.glTexParameteri( GL_TEXTURE_3D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER );
-        gl.glTexParameteri( GL_TEXTURE_3D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER );
-        gl.glTexParameteri( GL_TEXTURE_3D, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_BORDER );
-              
-        gl.glTexParameteri( GL_TEXTURE_3D, GL_TEXTURE_MIN_FILTER, 
-                         GL_LINEAR );
-        gl.glTexParameteri( GL_TEXTURE_3D, GL_TEXTURE_MAG_FILTER, 
-                         GL_LINEAR );  
-        gl.glTexEnvf(GL_TEXTURE_ENV , GL_TEXTURE_ENV_MODE, GL_MODULATE);
-       
-         
-
     }
     
     private void initPlanes(GL2 gl) {
@@ -125,9 +89,9 @@ public class VolumeView extends GLJPanel implements GLEventListener, MouseListen
         if ( height > maxDim ) maxDim = height;
         if ( depth > maxDim ) maxDim = depth;
         
-        System.out.println("width : " + width);
-        System.out.println("height : " + height);
-        System.out.println("depth : " + depth);
+        logger.info("width : " + width);
+        logger.info("height : " + height);
+        logger.info("depth : " + depth);
          
         
         
@@ -182,7 +146,7 @@ public class VolumeView extends GLJPanel implements GLEventListener, MouseListen
             double z = (-depth/maxDim + (depth*2.0f/maxDim)*i/(slices-1))*zoom;
             double u = (1.0f - i*1.0f/(slices - 1))*zoom+0.5-zoom/2;
             //float adjAlpha = i*1.0f/(slices-1);
-            //System.out.println("z : "+ z + ", u : " + u);
+            //logger.info("z : "+ z + ", u : " + u);
             gl.glColor4f(1.0f, 1.0f, 1.0f, adjAlpha);
             //gl.glColor4f(1.0f, 1.0f, 1.0f, 0.5f);
             gl.glTexCoord4d(0.5f-0.5f*zoom, 0.5f-0.5f*zoom, u, 1.0f);
@@ -203,7 +167,7 @@ public class VolumeView extends GLJPanel implements GLEventListener, MouseListen
 
     @Override
     public void dispose(GLAutoDrawable drawable) {
-        System.out.println("dispose: "+drawable); 
+        logger.info("dispose: "+drawable); 
         
     }
 
@@ -213,9 +177,9 @@ public class VolumeView extends GLJPanel implements GLEventListener, MouseListen
 
         drawable.getChosenGLCapabilities().setAlphaBits(8);
         
-        System.err.println("INIT GL IS: " + gl.getClass().getName());
+        logger.info("INIT GL IS: " + gl.getClass().getName());
 
-        System.err.println("Chosen GLCapabilities: " + drawable.getChosenGLCapabilities());
+        logger.info("Chosen GLCapabilities: " + drawable.getChosenGLCapabilities());
 
         gl.setSwapInterval(1); 
         
@@ -231,7 +195,7 @@ public class VolumeView extends GLJPanel implements GLEventListener, MouseListen
         gl.glEnable(GL_TEXTURE_3D);
         //gl.glEnable(GL_ALPHA_TEST);
                 
-        init3DTexture(gl);
+        theTex = get3DTexture(gl, imageData);
         initPlanes(gl);
         
     }
@@ -244,9 +208,9 @@ public class VolumeView extends GLJPanel implements GLEventListener, MouseListen
                 
         gl.glMatrixMode(GL_PROJECTION);
 
-        System.err.println("GL_VENDOR: " + gl.glGetString(GL_VENDOR));
-        System.err.println("GL_RENDERER: " + gl.glGetString(GL_RENDERER));
-        System.err.println("GL_VERSION: " + gl.glGetString(GL_VERSION));
+        logger.info("GL_VENDOR: " + gl.glGetString(GL_VENDOR));
+        logger.info("GL_RENDERER: " + gl.glGetString(GL_RENDERER));
+        logger.info("GL_VERSION: " + gl.glGetString(GL_VERSION));
         
         gl.glLoadIdentity();
         gl.glOrtho(-zoom, zoom, -h*zoom, h*zoom, -zoom, zoom);
