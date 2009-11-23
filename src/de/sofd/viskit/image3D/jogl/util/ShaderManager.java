@@ -45,7 +45,7 @@ public class ShaderManager
     
     public static void readARB( GL2 gl, String fname ) throws Exception
     {
-        Shader shader = new ARBShader( gl, shaderDir + fname + "/" + fname );
+        Shader shader = new ARBShader( gl, shaderDir + "/" + fname + "/" + fname );
         shMap.put(fname + ARB, shader);
     }
     

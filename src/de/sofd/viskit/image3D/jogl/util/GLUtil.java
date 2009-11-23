@@ -96,5 +96,34 @@ public class GLUtil
                 
         logger.info( paramName + " : " + value[0] );
     }
+    
+    public static void texQuad2D( GL2 gl, float xSize, float ySize )
+    {
+        gl.glBegin(GL_QUADS);
+            gl.glTexCoord2f( 0.0f, 0.0f );
+            gl.glVertex3f( -xSize/2.0f, -ySize/2.0f, 0.0f );
+            gl.glTexCoord2f( 1.0f, 0.0f );
+            gl.glVertex3f( +xSize/2.0f, -ySize/2.0f, 0.0f );
+            gl.glTexCoord2f( 1.0f, 1.0f );
+            gl.glVertex3f( +xSize/2.0f, +ySize/2.0f, 0.0f );
+            gl.glTexCoord2f( 0.0f, 1.0f );
+            gl.glVertex3f( -xSize/2.0f, +ySize/2.0f, 0.0f );
+        gl.glEnd();
+    }
+    
+    public static void texQuad3D( GL2 gl, float xSize, float ySize, float tz )
+    {
+        gl.glBegin(GL_QUADS);
+            gl.glTexCoord3f( 0.0f, 1.0f, tz );
+            gl.glVertex3f( -xSize/2.0f, -ySize/2.0f, 0.0f );
+            gl.glTexCoord3f( 1.0f, 1.0f, tz );
+            gl.glVertex3f( +xSize/2.0f, -ySize/2.0f, 0.0f );
+            gl.glTexCoord3f( 1.0f, 0.0f, tz );
+            gl.glVertex3f( +xSize/2.0f, +ySize/2.0f, 0.0f );
+            gl.glTexCoord3f( 0.0f, 0.0f, tz );
+            gl.glVertex3f( -xSize/2.0f, +ySize/2.0f, 0.0f );
+        gl.glEnd();
+    }
+
 
 }

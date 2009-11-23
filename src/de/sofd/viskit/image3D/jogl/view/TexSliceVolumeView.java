@@ -16,7 +16,7 @@ import com.sun.opengl.util.*;
 
 
 @SuppressWarnings("serial")
-public class TexSliceVolumeView extends GLJPanel implements GLEventListener, MouseListener, MouseMotionListener
+public class TexSliceVolumeView extends GLCanvas implements GLEventListener, MouseListener, MouseMotionListener
 {
     static final Logger logger = Logger.getLogger(TexSliceVolumeView.class);
     
@@ -173,6 +173,8 @@ public class TexSliceVolumeView extends GLJPanel implements GLEventListener, Mou
 
     @Override
     public void init(GLAutoDrawable drawable) {
+        drawable.setGL((new DebugGL2(drawable.getGL().getGL2())));
+        
         GL2 gl = drawable.getGL().getGL2();
 
         drawable.getChosenGLCapabilities().setAlphaBits(8);

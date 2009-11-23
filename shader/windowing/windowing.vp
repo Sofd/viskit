@@ -1,0 +1,18 @@
+!!ARBvp1.0
+ 
+ATTRIB iPos = vertex.position;
+ 
+OUTPUT oPos = result.position;
+ 
+PARAM mvp[4] = { state.matrix.mvp };
+ 
+#transform vertex with mvp
+DP4 oPos.x, iPos, mvp[0];
+DP4 oPos.y, iPos, mvp[1];
+DP4 oPos.z, iPos, mvp[2];
+DP4 oPos.w, iPos, mvp[3];
+ 
+#set texcoord for fragment program
+MOV result.texcoord[0], vertex.texcoord[0];
+ 
+END

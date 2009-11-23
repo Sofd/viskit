@@ -14,8 +14,6 @@ import de.sofd.viskit.image3D.vtk.util.*;
 import de.sofd.viskit.image3D.vtk.view.*;
 
 import java.awt.*;
-import java.io.*;
-import java.util.*;
 
 /**
  * This example reads a volume dataset, extracts two isosurfaces that

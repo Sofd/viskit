@@ -66,7 +66,7 @@ public class ARBShader extends Shader
         gl.glGetIntegerv( GL_PROGRAM_ERROR_POSITION_ARB, errorPos, 0 );
         if ( errorPos[0] != -1 )
         {
-            logger.error("Error in vertex shader at position + errorPos[0]" );
+            logger.error("Error in vertex shader at position " + errorPos[0] );
             throw new Exception( gl.glGetString( GL_PROGRAM_ERROR_STRING_ARB ) );
         } 
         
@@ -83,7 +83,7 @@ public class ARBShader extends Shader
         gl.glGetIntegerv( GL_PROGRAM_ERROR_POSITION_ARB, errorPos, 0 );
         if ( errorPos[0] != -1 )
         {
-            logger.error( "Error in fragment shader at position + errorPos[0]" );
+            logger.error( "Error in fragment shader at position " +  errorPos[0] );
             throw new Exception( gl.glGetString( GL_PROGRAM_ERROR_STRING_ARB ) );
         }
         

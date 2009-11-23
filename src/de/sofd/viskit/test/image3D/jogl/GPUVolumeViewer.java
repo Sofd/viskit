@@ -132,6 +132,26 @@ public class GPUVolumeViewer extends JFrame implements ChangeListener
     
     public static void main(String args[])
     {
+        JFrame.setDefaultLookAndFeelDecorated(true);
+        JDialog.setDefaultLookAndFeelDecorated(true);
+        
+        SwingUtilities.invokeLater(
+            new Runnable(){
+                public void run()
+                {
+                    try
+                    {
+                        
+                        UIManager.setLookAndFeel( UIManager.getSystemLookAndFeelClassName() );
+                            
+                    } catch ( Exception e )
+                    {
+                        e.printStackTrace();
+                    }
+                }
+            }
+        );
+        
         try {
             VTK.init();
             
