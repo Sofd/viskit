@@ -62,7 +62,12 @@ public class JListImageListView extends JImageListView {
         wrappedListScrollPane.addComponentListener(new ComponentAdapter() {
             @Override
             public void componentResized(ComponentEvent e) {
-                updateCellSizes(false);
+                updateCellSizes(true, false);
+                // TODO: what you may rather want is to reset scale and translation,
+                //   but only if they weren't changed manually before? But when would
+                //   you reset the scale/translation at all then? By manual user
+                //   request? Shouldn't all this logic be externalized into controllers
+                //   as well?
             }
         });
         setScaleMode(MyScaleMode.newOneToOneMode());
@@ -83,19 +88,19 @@ public class JListImageListView extends JImageListView {
     public void setModel(ListModel model) {
         super.setModel(model);
         wrappedList.setModel(model);
-        updateCellSizes(true);
+        updateCellSizes(true, true);
     }
 
     @Override
     protected void modelIntervalAdded(ListDataEvent e) {
         super.modelIntervalAdded(e);
-        updateCellSizes(false);
+        updateCellSizes(false, false);
     }
 
     @Override
     protected void modelIntervalRemoved(ListDataEvent e) {
         super.modelIntervalRemoved(e);
-        updateCellSizes(false);
+        updateCellSizes(false, false);
     }
 
     @Override
@@ -377,13 +382,13 @@ public class JListImageListView extends JImageListView {
 
     @Override
     protected void doSetScaleMode(ScaleMode oldScaleMode, ScaleMode newScaleMode) {
-        updateCellSizes(true);
+        updateCellSizes(true, true);
         if (wrappedList.getLeadSelectionIndex() >= 0) {
             wrappedList.ensureIndexIsVisible(wrappedList.getLeadSelectionIndex());
         }
     }
 
-    protected void updateCellSizes(boolean resetImageSizes) {
+    protected void updateCellSizes(boolean resetImageSizes, boolean resetImageTranslations) {
         if (getModel() == null || getModel().getSize() == 0) {
             return;
         }
@@ -409,15 +414,19 @@ public class JListImageListView extends JImageListView {
         }
         wrappedList.setFixedCellWidth(cellDimension.width);
         wrappedList.setFixedCellHeight(cellDimension.height);
-        if (resetImageSizes) {
+        if (resetImageSizes || resetImageTranslations) {
             for (int i = 0; i < count; i++) {
                 MyImageListViewCell cell = getCell(i);
-                cell.setCenterOffset(0, 0);
-                BufferedImage img = cell.getDisplayedModelElement().getImage();
-                double scalex = ((double) wrappedList.getFixedCellWidth() - 2 * WrappedListCellRenderer.BORDER_WIDTH) / img.getWidth();
-                double scaley = ((double) wrappedList.getFixedCellHeight() - 2 * WrappedListCellRenderer.BORDER_WIDTH) / img.getHeight();
-                double scale = Math.min(scalex, scaley);
-                cell.setScale(scale);
+                if (resetImageTranslations) {
+                    cell.setCenterOffset(0, 0);
+                }
+                if (resetImageSizes) {
+                    BufferedImage img = cell.getDisplayedModelElement().getImage();
+                    double scalex = ((double) wrappedList.getFixedCellWidth() - 2 * WrappedListCellRenderer.BORDER_WIDTH) / img.getWidth();
+                    double scaley = ((double) wrappedList.getFixedCellHeight() - 2 * WrappedListCellRenderer.BORDER_WIDTH) / img.getHeight();
+                    double scale = Math.min(scalex, scaley);
+                    cell.setScale(scale);
+                }
             }
         }
     }
