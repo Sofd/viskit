@@ -59,7 +59,7 @@ public class JListImageListView extends JImageListView {
         wrappedList.setCellRenderer(new WrappedListCellRenderer());
         wrappedList.setLayoutOrientation(JList.HORIZONTAL_WRAP);
         wrappedList.setVisibleRowCount(-1);
-        wrappedList.addComponentListener(new ComponentAdapter() {
+        wrappedListScrollPane.addComponentListener(new ComponentAdapter() {
             @Override
             public void componentResized(ComponentEvent e) {
                 updateCellSizes(false);
