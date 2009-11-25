@@ -1,8 +1,7 @@
 package de.sofd.viskit.test.image3D.jogl;
 
 import java.awt.*;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
+import java.awt.event.*;
 import java.io.*;
 import java.lang.reflect.*;
 
@@ -20,7 +19,7 @@ import de.sofd.viskit.image3D.vtk.*;
 import de.sofd.viskit.image3D.vtk.util.*;
 
 @SuppressWarnings("serial")
-public class SliceViewer extends JFrame implements ChangeListener 
+public class SliceViewer extends JFrame implements ChangeListener
 {
     static final Logger logger = Logger.getLogger(SliceViewer.class);
     
@@ -28,11 +27,14 @@ public class SliceViewer extends JFrame implements ChangeListener
     
     protected SliceView sliceView;
     
+    protected vtkImageData imageData;
+    protected vtkImageGaussianSmooth smooth;
+    
     public SliceViewer() throws IOException
     {
         super("Slice Viewer");
         
-        vtkImageData imageData = DicomReader.readImageData("D:/dicom/serie2");
+        imageData = DicomReader.readImageData("D:/dicom/serie2");
         imageData.Update();
         int dim[] =  imageData.GetDimensions();
         
@@ -40,14 +42,12 @@ public class SliceViewer extends JFrame implements ChangeListener
         double rangeDist = range[1] - range[0];
         rangeDist = ( rangeDist > 0 ? rangeDist : 1 );
         
-        /*vtkImageGaussianSmooth smooth = new vtkImageGaussianSmooth();
-        smooth.SetInput(imageData);
-        smooth.Update();
-        vtkImageData imageData2 = smooth.GetOutput();*/
-        
         logger.debug("image dimension : " + dim[0] + " " + dim[1] + " " + dim[2] + " " + imageData.GetPointData().GetScalars().GetSize());
         
-        sliceView = new SliceView(imageData); 
+        smooth = new vtkImageGaussianSmooth();
+        smooth.SetInput(imageData);
+        
+        sliceView = new SliceView(smooth.GetOutput()); 
         
         getContentPane().setLayout(new BorderLayout());
         
@@ -102,6 +102,8 @@ public class SliceViewer extends JFrame implements ChangeListener
         
         return panel;
     }
+    
+    
 
     @Override
     public void stateChanged(ChangeEvent e) {
@@ -169,6 +171,8 @@ public class SliceViewer extends JFrame implements ChangeListener
         
         
     }
+
+    
 
     
 }

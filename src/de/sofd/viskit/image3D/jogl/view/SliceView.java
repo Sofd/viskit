@@ -199,6 +199,12 @@ public class SliceView extends GLCanvas implements GLEventListener
         
         gl.glGetIntegerv ( GL_VIEWPORT, viewport, 0 );
     }
+
+
+    public void setInput(vtkImageData imageData) {
+        // TODO Auto-generated method stub
+        
+    }
     
         
     

@@ -16,19 +16,23 @@ public class Dicom3DView extends VtkScenePanel {
 
     static final Logger logger = Logger.getLogger(Dicom3DView.class);
     
+    protected vtkMarchingCubes boneExtractor;
+    
     public Dicom3DView(vtkImageData imageData) throws IOException {
-        super(200, 200);
+        super(500, 500);
+        
+        
+        /*double[] range = smooth.GetOutput().GetScalarRange();
+        logger.info("scalar range : " + range[0] + " " + range[1]);*/
         
         // An isosurface, or contour value of 500 is known to correspond to the
         // skin of the patient. Once generated, a vtkPolyDataNormals filter is
         // is used to create normals for smooth surface shading during rendering.
         // The triangle stripper is used to create triangle strips from the
         // isosurface these render much faster on some systems.
-        vtkContourFilter skinExtractor = new vtkContourFilter();
+        /*vtkContourFilter skinExtractor = new vtkContourFilter();
         skinExtractor.SetInput(imageData);
         
-        /*for ( int i=0; i<5; ++i)
-            skinExtractor.SetValue(i, i*200);*/
         
         skinExtractor.SetValue(0, 500);
         
@@ -44,21 +48,76 @@ public class Dicom3DView extends VtkScenePanel {
         skin.SetMapper(skinMapper);
         skin.GetProperty().SetDiffuseColor(1, .49, .25);
         skin.GetProperty().SetSpecular(.3);
-        skin.GetProperty().SetSpecularPower(20);
+        skin.GetProperty().SetSpecularPower(20);*/
     
         // An isosurface, or contour value of 1150 is known to correspond to the
         // skin of the patient. Once generated, a vtkPolyDataNormals filter is
         // is used to create normals for smooth surface shading during rendering.
         // The triangle stripper is used to create triangle strips from the
         // isosurface these render much faster on some systems.
-        vtkContourFilter boneExtractor = new vtkContourFilter();
+        boneExtractor = new vtkMarchingCubes();
+        //boneExtractor.SetInput(imageData);
         boneExtractor.SetInput(imageData);
-        boneExtractor.SetValue(0, 1150);
-        vtkPolyDataNormals boneNormals = new vtkPolyDataNormals();
-        boneNormals.SetInput(boneExtractor.GetOutput());
-        boneNormals.SetFeatureAngle(60.0);
+        boneExtractor.SetValue(0, 250);
+        boneExtractor.ComputeNormalsOn();
+        
+        double[] spacing = imageData.GetSpacing();
+        
+        double minSpacing = 1000;
+        if ( spacing[0] < minSpacing ) minSpacing = spacing[0];
+        if ( spacing[1] < minSpacing ) minSpacing = spacing[1];
+        if ( spacing[2] < minSpacing ) minSpacing = spacing[2];
+        logger.info("spacing : " + spacing[0] + ", " + spacing[1] + ", " + spacing[2]);
+        
+        /*vtkTransformPolyDataFilter transformPolyDataFilter = new vtkTransformPolyDataFilter();
+        vtkTransform scaling = new vtkTransform();
+        scaling.Scale(spacing[0]/minSpacing, spacing[1]/minSpacing, spacing[2]/minSpacing);
+        transformPolyDataFilter.SetTransform(scaling);
+        transformPolyDataFilter.SetInput(boneExtractor.GetOutput());*/
+        
+        /*vtkPolyDataConnectivityFilter connector = new vtkPolyDataConnectivityFilter();
+        connector.SetInput(boneExtractor.GetOutput());
+        connector.SetExtractionModeToLargestRegion();*/
+        
+        vtkTriangleFilter triangleFilter = new vtkTriangleFilter();
+        triangleFilter.SetInput(boneExtractor.GetOutput());
+        //triangleFilter.SetInput(transformPolyDataFilter.GetOutput());
+        //triangleFilter.SetInput(connector.GetOutput());
+        /*triangleFilter.Update();
+        logger.info("== before decimatePro ==");
+        logger.info("number of cells " + triangleFilter.GetOutput().GetNumberOfCells());
+        logger.info("number of lines " + triangleFilter.GetOutput().GetNumberOfLines());
+        logger.info("number of pieces " + triangleFilter.GetOutput().GetNumberOfPieces());
+        logger.info("number of points " + triangleFilter.GetOutput().GetNumberOfPoints());
+        logger.info("number of polys " + triangleFilter.GetOutput().GetNumberOfPolys());
+        logger.info("number of strips " + triangleFilter.GetOutput().GetNumberOfStrips());
+        logger.info("number of verts " + triangleFilter.GetOutput().GetNumberOfVerts());*/
+        
+        /*vtkDecimatePro decimator = new vtkDecimatePro();
+        decimator.SetInput(triangleFilter.GetOutput());
+        decimator.PreserveTopologyOff();
+        decimator.SplittingOn();
+        decimator.SetSplitAngle(10);
+        decimator.SetMaximumError(0.001);
+        decimator.BoundaryVertexDeletionOn();*/
+        //decimator.SetTargetReduction(0.1);
+        /*decimator.Update();
+        
+        logger.info("== after decimatePro ==");
+        logger.info("number of cells " + decimator.GetOutput().GetNumberOfCells());
+        logger.info("number of lines " + decimator.GetOutput().GetNumberOfLines());
+        logger.info("number of pieces " + decimator.GetOutput().GetNumberOfPieces());
+        logger.info("number of points " + decimator.GetOutput().GetNumberOfPoints());
+        logger.info("number of polys " + decimator.GetOutput().GetNumberOfPolys());
+        logger.info("number of strips " + decimator.GetOutput().GetNumberOfStrips());
+        logger.info("number of verts " + decimator.GetOutput().GetNumberOfVerts());*/
+        
+        /*vtkPolyDataNormals boneNormals = new vtkPolyDataNormals();
+        boneNormals.SetInput(decimator.GetOutput());
+        boneNormals.SetFeatureAngle(60.0);*/
         vtkStripper boneStripper = new vtkStripper();
-        boneStripper.SetInput(boneNormals.GetOutput());
+        //boneStripper.SetInput(decimator.GetOutput());
+        boneStripper.SetInput(triangleFilter.GetOutput());
         vtkPolyDataMapper boneMapper = new vtkPolyDataMapper();
         boneMapper.SetInput(boneStripper.GetOutput());
         boneMapper.ScalarVisibilityOff();
@@ -88,7 +147,7 @@ public class Dicom3DView extends VtkScenePanel {
         // Actors are added to the renderer. An initial camera view is created.
         // The Dolly() method moves the camera towards the FocalPoint,
         // thereby enlarging the image.
-        renderer.AddActor(skin);
+        //renderer.AddActor(skin);
         renderer.AddActor(bone);
         renderer.SetActiveCamera(aCamera);
         renderer.ResetCamera();
@@ -106,8 +165,20 @@ public class Dicom3DView extends VtkScenePanel {
         // between the planes is actually rendered.
         renderer.ResetCameraClippingRange();
         
-        setPanelSize(200, 200);
+        setPanelSize(500, 500);
     }
+    
+    public void setInput(vtkImageData imageData) {
+        boneExtractor.SetInput(imageData);
+    }
+    
+    public void updateContourLevel(int level)
+    {
+        boneExtractor.SetValue(0, level);
+        //boneExtractor.Update();
+    }
+
+    
 
     
 }
