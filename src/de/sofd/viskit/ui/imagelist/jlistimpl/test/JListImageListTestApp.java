@@ -10,8 +10,12 @@ import de.sofd.viskit.controllers.ImageListViewRoiInputEventController;
 import de.sofd.viskit.image.Dcm;
 import de.sofd.viskit.image.DcmImageListViewModelElement;
 import de.sofd.viskit.image.DicomInputOutput;
+import de.sofd.viskit.test.DicomImageListViewModelElement;
+import de.sofd.viskit.test.FileBasedDicomImageListViewModelElement;
+import de.sofd.viskit.ui.imagelist.ImageListViewCell;
 import de.sofd.viskit.ui.imagelist.ImageListViewModelElement;
 import de.sofd.viskit.ui.imagelist.JImageListView;
+import de.sofd.viskit.ui.imagelist.event.ImageListViewCellAddEvent;
 import de.sofd.viskit.ui.imagelist.event.ImageListViewEvent;
 import de.sofd.viskit.ui.imagelist.event.ImageListViewListener;
 import de.sofd.viskit.ui.imagelist.gridlistimpl.JGridImageListView;
@@ -22,6 +26,8 @@ import java.awt.event.ActionListener;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.net.URL;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.swing.AbstractAction;
 import javax.swing.DefaultListModel;
 import javax.swing.JComboBox;
@@ -32,6 +38,8 @@ import javax.swing.SwingUtilities;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import org.dcm4che2.data.BasicDicomObject;
+import org.dcm4che2.data.DicomObject;
+import org.dcm4che2.data.Tag;
 
 /**
  *
@@ -39,7 +47,7 @@ import org.dcm4che2.data.BasicDicomObject;
  */
 public class JListImageListTestApp {
 
-    public JListImageListTestApp() {
+    public JListImageListTestApp() throws Exception {
         final DefaultListModel model = new DefaultListModel();
         for (int i = 0; i < 10; i++) {
             model.addElement(new TestImageModelElement(i));
@@ -51,6 +59,10 @@ public class JListImageListTestApp {
         Dcm dcm = new Dcm(url, basicDicomObject);
         DcmImageListViewModelElement dcmImageListViewModelElement = new DcmImageListViewModelElement(dcm);
         model.addElement(dcmImageListViewModelElement);
+
+        //model.addElement(new FileBasedDicomImageListViewModelElement("/tmp/cd846__center4001__39.dcm"));
+        //model.addElement(new FileBasedDicomImageListViewModelElement("/tmp/series1/cd014__center001__0.dcm"));
+        //model.addElement(new FileBasedDicomImageListViewModelElement("/tmp/series2/cd014__center001__25.dcm"));
 
         final JImageListView viewer = new JListImageListView();
         //final JImageListView viewer = new JGridImageListView();
@@ -75,7 +87,16 @@ public class JListImageListTestApp {
         });
         for (int i = 0; i < model.size(); i++) {
             viewer.getCell(i).getRoiDrawingViewer().activateTool(new SelectorTool());
+            setWindowingToDcm(viewer.getCell(i));
         }
+        viewer.addImageListViewListener(new ImageListViewListener() {
+            @Override
+            public void onImageListViewEvent(ImageListViewEvent e) {
+                if (e instanceof ImageListViewCellAddEvent) {
+                    setWindowingToDcm(((ImageListViewCellAddEvent)e).getCell());
+                }
+            }
+        });
 
         JFrame f = new JFrame("JListImageListView test");
         JToolBar toolbar = new JToolBar("toolbar");
@@ -147,12 +168,26 @@ public class JListImageListTestApp {
         f.setVisible(true);
     }
 
+    private static void setWindowingToDcm(ImageListViewCell cell) {
+        if (!(cell.getDisplayedModelElement() instanceof DicomImageListViewModelElement)) { return; }
+        DicomImageListViewModelElement elt = (DicomImageListViewModelElement) cell.getDisplayedModelElement();
+        DicomObject dobj = elt.getDicomObject();
+        if (dobj.contains(Tag.WindowCenter) && dobj.contains(Tag.WindowWidth)) {
+            cell.setWindowLocation((int) dobj.getFloat(Tag.WindowCenter));
+            cell.setWindowWidth((int) dobj.getFloat(Tag.WindowWidth));
+        }
+    }
 
     public static void main(String[] args) throws Exception {
         SwingUtilities.invokeLater(new Runnable() {
             @Override
             public void run() {
-                new JListImageListTestApp();
+                try {
+                    new JListImageListTestApp();
+                } catch (Exception ex) {
+                    Logger.getLogger(JListImageListTestApp.class.getName()).log(Level.SEVERE, null, ex);
+                    System.exit(1);
+                }
             }
         });
     }
