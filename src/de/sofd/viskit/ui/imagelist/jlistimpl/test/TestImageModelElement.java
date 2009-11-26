@@ -3,7 +3,7 @@ package de.sofd.viskit.ui.imagelist.jlistimpl.test;
 import de.sofd.draw2d.Drawing;
 import de.sofd.draw2d.EllipseObject;
 import de.sofd.draw2d.RectangleObject;
-import de.sofd.viskit.test.FileBasedDicomImageListViewModelElement;
+import de.sofd.viskit.model.FileBasedDicomImageListViewModelElement;
 import java.awt.Color;
 import java.awt.image.BufferedImage;
 

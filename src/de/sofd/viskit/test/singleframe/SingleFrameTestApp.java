@@ -1,7 +1,7 @@
 package de.sofd.viskit.test.singleframe;
 
-import de.sofd.viskit.test.DicomImageListViewModelElement;
-import de.sofd.viskit.test.FileBasedDicomImageListViewModelElement;
+import de.sofd.viskit.model.DicomImageListViewModelElement;
+import de.sofd.viskit.model.FileBasedDicomImageListViewModelElement;
 import de.sofd.viskit.ui.imagelist.ImageListViewCell;
 import de.sofd.viskit.ui.imagelist.JImageListView;
 import de.sofd.viskit.ui.imagelist.event.ImageListViewCellAddEvent;

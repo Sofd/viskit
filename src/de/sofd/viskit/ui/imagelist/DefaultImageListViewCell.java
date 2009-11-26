@@ -1,5 +1,6 @@
 package de.sofd.viskit.ui.imagelist;
 
+import de.sofd.viskit.model.ImageListViewModelElement;
 import java.awt.geom.Point2D;
 
 /**

@@ -1,4 +1,4 @@
-package de.sofd.viskit.ui.imagelist;
+package de.sofd.viskit.model;
 
 import de.sofd.draw2d.Drawing;
 import java.awt.image.BufferedImage;

@@ -1,5 +1,6 @@
 package de.sofd.viskit.ui.imagelist;
 
+import de.sofd.viskit.model.ImageListViewModelElement;
 import de.sofd.draw2d.viewer.DrawingViewer;
 import de.sofd.draw2d.viewer.backend.DrawingViewerBackend;
 import de.sofd.util.BiIdentityHashMap;

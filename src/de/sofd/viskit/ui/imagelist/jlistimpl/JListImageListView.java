@@ -3,7 +3,7 @@ package de.sofd.viskit.ui.imagelist.jlistimpl;
 import de.sofd.util.Misc;
 import de.sofd.viskit.ui.imagelist.DefaultImageListViewCell;
 import de.sofd.viskit.ui.imagelist.ImageListViewCell;
-import de.sofd.viskit.ui.imagelist.ImageListViewModelElement;
+import de.sofd.viskit.model.ImageListViewModelElement;
 import de.sofd.viskit.ui.imagelist.JImageListView;
 import java.awt.Color;
 import java.awt.Component;

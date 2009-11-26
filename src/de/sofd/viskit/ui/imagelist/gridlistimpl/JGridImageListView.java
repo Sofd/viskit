@@ -4,7 +4,7 @@ import de.sofd.swing.AbstractFramedSelectionGridListComponentFactory;
 import de.sofd.swing.JGridList;
 import de.sofd.util.Misc;
 import de.sofd.viskit.ui.imagelist.ImageListViewCell;
-import de.sofd.viskit.ui.imagelist.ImageListViewModelElement;
+import de.sofd.viskit.model.ImageListViewModelElement;
 import de.sofd.viskit.ui.imagelist.JImageListView;
 import de.sofd.viskit.ui.imagelist.jlistimpl.ImageListViewCellViewer;
 import java.awt.GridLayout;
