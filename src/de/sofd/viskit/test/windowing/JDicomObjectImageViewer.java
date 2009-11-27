@@ -69,6 +69,10 @@ public class JDicomObjectImageViewer extends JPanel {
     // it reusable without
     // having to have a component
 
+    static {
+        RawDicomImageReader.registerWithImageIO();
+    }
+
     private DicomObject dicomObject;
     private double zoomFactor = 1.0, dynamicZoomFactor;
     private boolean keepZoomFactor = false;
@@ -196,9 +200,9 @@ public class JDicomObjectImageViewer extends JPanel {
         }
         BufferedImage objectImage = rawImageCache.get(dicomObject.getString(Tag.SOPInstanceUID));
         if (null == objectImage) {
-            Iterator it = ImageIO.getImageReadersByFormatName("DICOM");
+            Iterator it = ImageIO.getImageReadersByFormatName("RAWDICOM");
             if (!it.hasNext()) {
-                throw new IllegalStateException("The DICOM image I/O filter (from dcm4che1) must be available to read images.");
+                throw new IllegalStateException("The raw DICOM image I/O filter must be available to read images.");
             }
             
             // extract the BufferedImage from the received imageDicomObject
