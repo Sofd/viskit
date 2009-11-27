@@ -209,18 +209,7 @@ public class JDicomObjectImageViewer extends JPanel {
             ByteArrayOutputStream bos = new ByteArrayOutputStream(200000);
             DicomOutputStream dos = new DicomOutputStream(bos);
             try {
-                //the dcm4che DicomObject->image converter/reader
-                //already does the windowing internally according to
-                //the WindowCenter/-Width DICOM tags in the DicomObject.
-                //This is unfortunate. Thus we 
-                //create the image from a copy of dicomObject whose window
-                // comprises the full range of greyscales (thus the image will
-                // generally be much too dark). We do this because we do
-                // the windowing calculations ourselves when rendering the image.
-                DicomObject imageSource = Misc.deepCopy(dicomObject);
-                imageSource.putDouble(Tag.WindowCenter, VR.DS, 2048);
-                imageSource.putDouble(Tag.WindowWidth, VR.DS, 4096);
-                dos.writeDataset(imageSource, UID.ImplicitVRLittleEndian);
+                dos.writeDataset(dicomObject, UID.ImplicitVRLittleEndian);
                 dos.close();
                 
                 ImageReader reader = (ImageReader) it.next();
