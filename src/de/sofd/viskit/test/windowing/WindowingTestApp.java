@@ -91,9 +91,10 @@ public class WindowingTestApp {
             public void run() {
                 try {
                     //URL url = this.getClass().getResource("/de/sofd/viskit/ui/imagelist/jlistimpl/test/67010.dcm");
-                    //URL url = new URL("file:///tmp/cd846__center4001__39.dcm");
-                    //URL url = new URL("file:///tmp/series1/cd014__center001__0.dcm");
-                    URL url = new URL("file:///tmp/series2/cd014__center001__25.dcm");
+                    URL url = this.getClass().getResource("/de/sofd/viskit/test/resources/cd846__center4001__39.dcm");
+                    //URL url = this.getClass().getResource("/de/sofd/viskit/test/resources/series/series1/cd014__center001__0.dcm");
+                    //URL url = this.getClass().getResource("/de/sofd/viskit/test/resources/series/series2/cd014__center001__25.dcm");
+                    //URL url = new URL("file:///shares/shared/DICOM-Testbilder/24-bit J2K Lossy Color.dcm");
                     new WindowingTestApp(url);
                 } catch (Exception ex) {
                     Logger.getLogger(WindowingTestApp.class.getName()).log(Level.SEVERE, null, ex);

@@ -32,6 +32,9 @@ import org.dcm4che2.data.VR;
 import org.dcm4che2.io.DicomOutputStream;
 
 import de.sofd.util.Misc;
+import java.awt.color.ColorSpace;
+import java.awt.image.Raster;
+import org.dcm4che2.media.FileMetaInformation;
 
 /**
  * Swing component that displays a DICOM image contained in a dcm4che2
@@ -209,7 +212,14 @@ public class JDicomObjectImageViewer extends JPanel {
             ByteArrayOutputStream bos = new ByteArrayOutputStream(200000);
             DicomOutputStream dos = new DicomOutputStream(bos);
             try {
-                dos.writeDataset(dicomObject, UID.ImplicitVRLittleEndian);
+                String tsuid = dicomObject.getString(Tag.TransferSyntaxUID);
+                if (null == tsuid) {
+                    tsuid = UID.ImplicitVRLittleEndian;
+                }
+                FileMetaInformation fmi = new FileMetaInformation(dicomObject);
+                fmi = new FileMetaInformation(fmi.getMediaStorageSOPClassUID(), fmi.getMediaStorageSOPInstanceUID(), tsuid);
+                dos.writeFileMetaInformation(fmi.getDicomObject());
+                dos.writeDataset(dicomObject, tsuid);
                 dos.close();
                 
                 ImageReader reader = (ImageReader) it.next();
@@ -242,26 +252,83 @@ public class JDicomObjectImageViewer extends JPanel {
             final int windowedImageGrayscalesCount = 256;  // for BufferedImage.TYPE_INT_RGB
             float scale = windowedImageGrayscalesCount/windowWidth;
             float offset = (windowWidth/2-windowLocation)*scale;
-            WritableRaster resultRaster = windowedImage.getRaster();
-            for (int x = 0; x < srcImg.getWidth(); x++) {
-                for (int y = 0; y < srcImg.getHeight(); y++) {
-                    int srcGrayValue = srcImg.getRaster().getSample(x, y, 0);
-                    float destGrayValue = scale * srcGrayValue + offset;
-                    // clamp
-                    if (destGrayValue < 0) {
-                        destGrayValue = 0;
-                    } else if (destGrayValue >= windowedImageGrayscalesCount) {
-                        destGrayValue = windowedImageGrayscalesCount - 1;
-                    }
-                    resultRaster.setSample(x, y, 0, destGrayValue);
-                    resultRaster.setSample(x, y, 1, destGrayValue);
-                    resultRaster.setSample(x, y, 2, destGrayValue);
-                }
+            if (srcImg.getColorModel().getColorSpace().getType() == ColorSpace.TYPE_GRAY) {
+                windowMonochrome(srcImg, windowedImage, scale, offset);
+            } else if (srcImg.getColorModel().getColorSpace().isCS_sRGB()) {
+                windowRGB(srcImg, windowedImage, scale, offset);
+            } else {
+                throw new IllegalStateException("don't know how to window image with color space " + srcImg.getColorModel().getColorSpace());
+                // TODO: do something cleverer here? Like, create windowedImage
+                //    with a color space that's "compatible" to srcImg (using
+                //    some createCompatibleImage() method in BufferedImage or elsewhere),
+                //    window all bands of that, and let the JRE figure out how to draw the result?
             }
             
             windowedImageCache.put(imgKey, windowedImage);
         }
         return windowedImage;
+    }
+
+    /**
+     * @pre destImg is of type BufferedImage.TYPE_INT_RGB
+     */
+    private BufferedImage windowMonochrome(BufferedImage srcImg, BufferedImage destImg, float scale, float offset) {
+        final int windowedImageGrayscalesCount = 256;  // for BufferedImage.TYPE_INT_RGB
+        if (! (srcImg.getColorModel().getColorSpace().getType() == ColorSpace.TYPE_GRAY)) {
+            throw new IllegalArgumentException("source image must be grayscales");
+        }
+        Raster srcRaster = srcImg.getRaster();
+        if (srcRaster.getNumBands() != 1) {
+            throw new IllegalArgumentException("source image must be grayscales");
+        }
+        WritableRaster resultRaster = destImg.getRaster();
+        for (int x = 0; x < srcImg.getWidth(); x++) {
+            for (int y = 0; y < srcImg.getHeight(); y++) {
+                int srcGrayValue = srcRaster.getSample(x, y, 0);
+                float destGrayValue = scale * srcGrayValue + offset;
+                // clamp
+                if (destGrayValue < 0) {
+                    destGrayValue = 0;
+                } else if (destGrayValue >= windowedImageGrayscalesCount) {
+                    destGrayValue = windowedImageGrayscalesCount - 1;
+                }
+                resultRaster.setSample(x, y, 0, destGrayValue);
+                resultRaster.setSample(x, y, 1, destGrayValue);
+                resultRaster.setSample(x, y, 2, destGrayValue);
+            }
+        }
+        return destImg;
+    }
+
+    /**
+     * @pre destImg is of type BufferedImage.TYPE_INT_RGB
+     */
+    private BufferedImage windowRGB(BufferedImage srcImg, BufferedImage destImg, float scale, float offset) {
+        final int windowedImageBandValuesCount = 256;  // for BufferedImage.TYPE_INT_RGB
+        if (! srcImg.getColorModel().getColorSpace().isCS_sRGB()) {
+            throw new IllegalArgumentException("source image must be RGB");
+        }
+        Raster srcRaster = srcImg.getRaster();
+        if (srcRaster.getNumBands() != 3) {
+            throw new IllegalArgumentException("source image must be RGB");
+        }
+        WritableRaster resultRaster = destImg.getRaster();
+        for (int x = 0; x < srcImg.getWidth(); x++) {
+            for (int y = 0; y < srcImg.getHeight(); y++) {
+                for (int band = 0; band < 3; band++) {
+                    int srcGrayValue = srcRaster.getSample(x, y, band);
+                    float destGrayValue = scale * srcGrayValue + offset;
+                    // clamp
+                    if (destGrayValue < 0) {
+                        destGrayValue = 0;
+                    } else if (destGrayValue >= windowedImageBandValuesCount) {
+                        destGrayValue = windowedImageBandValuesCount - 1;
+                    }
+                    resultRaster.setSample(x, y, band, destGrayValue);
+                }
+            }
+        }
+        return destImg;
     }
 
     public float getWindowLocation() {
