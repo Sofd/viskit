@@ -19,22 +19,22 @@ import de.sofd.viskit.image3D.vtk.*;
 import de.sofd.viskit.image3D.vtk.util.*;
 
 @SuppressWarnings("serial")
-public class SliceViewer extends JFrame implements ChangeListener
+public class ARBSliceViewer extends JFrame implements ChangeListener
 {
-    static final Logger logger = Logger.getLogger(SliceViewer.class);
+    static final Logger logger = Logger.getLogger(ARBSliceViewer.class);
     
     protected static Animator animator;
     
-    protected SliceView sliceView;
+    protected ARBSliceView sliceView;
     
     protected vtkImageData imageData;
     protected vtkImageGaussianSmooth smooth;
     
-    public SliceViewer() throws IOException
+    public ARBSliceViewer() throws IOException
     {
         super("Slice Viewer");
         
-        imageData = DicomReader.readImageData("D:/dicom/serie2");
+        imageData = DicomReader.readImageData("D:/dicom/serie3");
         imageData.Update();
         int dim[] =  imageData.GetDimensions();
         
@@ -47,7 +47,7 @@ public class SliceViewer extends JFrame implements ChangeListener
         smooth = new vtkImageGaussianSmooth();
         smooth.SetInput(imageData);
         
-        sliceView = new SliceView(smooth.GetOutput()); 
+        sliceView = new ARBSliceView(smooth.GetOutput()); 
         
         getContentPane().setLayout(new BorderLayout());
         
@@ -84,7 +84,7 @@ public class SliceViewer extends JFrame implements ChangeListener
         return slider;
     }
 
-    public SliceView getSliceView() {
+    public ARBSliceView getSliceView() {
         return sliceView;
     }
     
@@ -143,7 +143,7 @@ public class SliceViewer extends JFrame implements ChangeListener
                         
                         VTK.init();
                         
-                        final SliceViewer sliceViewer = new SliceViewer();
+                        final ARBSliceViewer sliceViewer = new ARBSliceViewer();
                         
                         sliceViewer.setVisible(true);
                         

@@ -230,7 +230,7 @@ public class GPUVolumeView extends GLCanvas implements GLEventListener, MouseLis
         
         ShaderManager.init("shader");
         
-        theTex = get3DTexture(gl, imageData);
+        theTex = get3DTexture(gl, imageData, true);
         
         try {
             ShaderManager.read(gl, "tc2col");

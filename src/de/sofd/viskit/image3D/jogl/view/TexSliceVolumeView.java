@@ -197,7 +197,7 @@ public class TexSliceVolumeView extends GLCanvas implements GLEventListener, Mou
         gl.glEnable(GL_TEXTURE_3D);
         //gl.glEnable(GL_ALPHA_TEST);
                 
-        theTex = get3DTexture(gl, imageData);
+        theTex = get3DTexture(gl, imageData, true);
         initPlanes(gl);
         
     }
