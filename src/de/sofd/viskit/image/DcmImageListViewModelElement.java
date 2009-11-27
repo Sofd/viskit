@@ -1,7 +1,7 @@
 package de.sofd.viskit.image;
 
 import de.sofd.draw2d.Drawing;
-import de.sofd.viskit.ui.imagelist.ImageListViewModelElement;
+import de.sofd.viskit.model.ImageListViewModelElement;
 import java.awt.image.BufferedImage;
 import org.apache.log4j.Logger;
 
