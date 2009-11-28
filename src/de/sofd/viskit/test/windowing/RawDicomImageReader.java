@@ -54,6 +54,13 @@ import javax.imageio.spi.IIORegistry;
  * Copy & paste from org.dcm4che2.imageioimpl.plugins.dcm.DicomImageReader,
  * except for leaving out the windowing stuff from the read(int, ImageReadParam)
  * method.
+ * <p>
+ * DO NOT REFORMAT OR OTHERWISE "BEAUTIFY" THIS CODE in any way (doing so would
+ * make it well-nigh impossible to merge future upstream changes of the
+ * DicomImageReader class into thus class).
+ * <p>
+ * TODO: Move this class (and the accompanying Spi) to the de.sofd.util project
+ * (as soon as that's been checked into the common repo).
  *
  * @author olaf
  */

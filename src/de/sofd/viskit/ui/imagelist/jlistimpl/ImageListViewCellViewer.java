@@ -10,11 +10,13 @@ import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Insets;
+import java.awt.color.ColorSpace;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Point2D;
 import java.awt.image.AffineTransformOp;
 import java.awt.image.BufferedImage;
 import java.awt.image.BufferedImageOp;
+import java.awt.image.Raster;
 import java.awt.image.RescaleOp;
 import java.awt.image.WritableRaster;
 import javax.swing.JPanel;
@@ -84,6 +86,8 @@ public class ImageListViewCellViewer extends JPanel {
                                                         BufferedImage.TYPE_INT_RGB);
         float scale = 256.0F / displayedCell.getWindowWidth();
         float offset = scale * (displayedCell.getWindowWidth() / 2 - displayedCell.getWindowLocation());
+
+        /* windowing using RescaleOp disabled for now -- image too dark (TODO: investigate)
         RescaleOp rescaleOp = new RescaleOp(scale, offset, null);
         // TODO: windowedImage after the following filter call is not identical to the
         // return value, contrary to what the documentation seems to imply. If we get
@@ -92,6 +96,82 @@ public class ImageListViewCellViewer extends JPanel {
         // JAI causes a JVM segfault on Linux... With the call as done here, it seems to
         // work all the time, albeit maybe with unnecessary performance penalties.
         return rescaleOp.filter(srcImg, windowedImage);
+         */
+
+        if (srcImg.getColorModel().getColorSpace().getType() == ColorSpace.TYPE_GRAY) {
+            windowMonochrome(srcImg, windowedImage, scale, offset);
+        } else if (srcImg.getColorModel().getColorSpace().isCS_sRGB()) {
+            windowRGB(srcImg, windowedImage, scale, offset);
+        } else {
+            throw new IllegalStateException("don't know how to window image with color space " + srcImg.getColorModel().getColorSpace());
+            // TODO: do something cleverer here? Like, create windowedImage
+            //    with a color space that's "compatible" to srcImg (using
+            //    some createCompatibleImage() method in BufferedImage or elsewhere),
+            //    window all bands of that, and let the JRE figure out how to draw the result?
+        }
+        return windowedImage;
+    }
+
+    /**
+     * @pre destImg is of type BufferedImage.TYPE_INT_RGB
+     */
+    private BufferedImage windowMonochrome(BufferedImage srcImg, BufferedImage destImg, float scale, float offset) {
+        final int windowedImageGrayscalesCount = 256;  // for BufferedImage.TYPE_INT_RGB
+        if (! (srcImg.getColorModel().getColorSpace().getType() == ColorSpace.TYPE_GRAY)) {
+            throw new IllegalArgumentException("source image must be grayscales");
+        }
+        Raster srcRaster = srcImg.getRaster();
+        if (srcRaster.getNumBands() != 1) {
+            throw new IllegalArgumentException("source image must be grayscales");
+        }
+        WritableRaster resultRaster = destImg.getRaster();
+        for (int x = 0; x < srcImg.getWidth(); x++) {
+            for (int y = 0; y < srcImg.getHeight(); y++) {
+                int srcGrayValue = srcRaster.getSample(x, y, 0);
+                float destGrayValue = scale * srcGrayValue + offset;
+                // clamp
+                if (destGrayValue < 0) {
+                    destGrayValue = 0;
+                } else if (destGrayValue >= windowedImageGrayscalesCount) {
+                    destGrayValue = windowedImageGrayscalesCount - 1;
+                }
+                resultRaster.setSample(x, y, 0, destGrayValue);
+                resultRaster.setSample(x, y, 1, destGrayValue);
+                resultRaster.setSample(x, y, 2, destGrayValue);
+            }
+        }
+        return destImg;
+    }
+
+    /**
+     * @pre destImg is of type BufferedImage.TYPE_INT_RGB
+     */
+    private BufferedImage windowRGB(BufferedImage srcImg, BufferedImage destImg, float scale, float offset) {
+        final int windowedImageBandValuesCount = 256;  // for BufferedImage.TYPE_INT_RGB
+        if (! srcImg.getColorModel().getColorSpace().isCS_sRGB()) {
+            throw new IllegalArgumentException("source image must be RGB");
+        }
+        Raster srcRaster = srcImg.getRaster();
+        if (srcRaster.getNumBands() != 3) {
+            throw new IllegalArgumentException("source image must be RGB");
+        }
+        WritableRaster resultRaster = destImg.getRaster();
+        for (int x = 0; x < srcImg.getWidth(); x++) {
+            for (int y = 0; y < srcImg.getHeight(); y++) {
+                for (int band = 0; band < 3; band++) {
+                    int srcGrayValue = srcRaster.getSample(x, y, band);
+                    float destGrayValue = scale * srcGrayValue + offset;
+                    // clamp
+                    if (destGrayValue < 0) {
+                        destGrayValue = 0;
+                    } else if (destGrayValue >= windowedImageBandValuesCount) {
+                        destGrayValue = windowedImageBandValuesCount - 1;
+                    }
+                    resultRaster.setSample(x, y, band, destGrayValue);
+                }
+            }
+        }
+        return destImg;
     }
 
     @Override

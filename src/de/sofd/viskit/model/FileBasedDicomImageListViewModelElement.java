@@ -83,7 +83,7 @@ public class FileBasedDicomImageListViewModelElement extends CachingDicomImageLi
         // rather than the superclass implementation, which would extract it from
         // #getBackendDicomObject() and thus incur a temporary in-memory DicomObject.
         checkInitialized();
-        Iterator it = ImageIO.getImageReadersByFormatName("DICOM");
+        Iterator it = ImageIO.getImageReadersByFormatName("RAWDICOM");
         if (!it.hasNext()) {
             throw new IllegalStateException("The DICOM image I/O filter (from dcm4che1) must be available to read images.");
         }

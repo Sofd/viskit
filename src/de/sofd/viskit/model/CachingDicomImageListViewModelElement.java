@@ -1,6 +1,7 @@
 package de.sofd.viskit.model;
 
 import de.sofd.draw2d.Drawing;
+import de.sofd.viskit.test.windowing.RawDicomImageReader;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -24,6 +25,10 @@ import org.dcm4che2.media.FileMetaInformation;
  * @author olaf
  */
 public abstract class CachingDicomImageListViewModelElement implements DicomImageListViewModelElement {
+
+    static {
+        RawDicomImageReader.registerWithImageIO();
+    }
 
     /**
      * Returns a key that uniquely identifies the DicomObject returned by getBackendDicomObject().
@@ -51,11 +56,6 @@ public abstract class CachingDicomImageListViewModelElement implements DicomImag
      * @return
      */
     protected BufferedImage getBackendImage() {
-        Iterator it = ImageIO.getImageReadersByFormatName("DICOM");
-        if (!it.hasNext()) {
-            throw new IllegalStateException("The DICOM image I/O filter (from dcm4che1) must be available to read images.");
-        }
-
         DicomObject dcmObj = getBackendDicomObject();
 
         // extract the BufferedImage from the received imageDicomObject
@@ -72,10 +72,14 @@ public abstract class CachingDicomImageListViewModelElement implements DicomImag
             dos.writeDataset(dcmObj, tsuid);
             dos.close();
 
+            Iterator it = ImageIO.getImageReadersByFormatName("RAWDICOM");
+            if (!it.hasNext()) {
+                throw new IllegalStateException("The raw DICOM image I/O filter must be available to read images.");
+            }
             ImageReader reader = (ImageReader) it.next();
             ImageInputStream in = ImageIO.createImageInputStream(new ByteArrayInputStream(bos.toByteArray()));
             if (null == in) {
-                throw new IllegalStateException("The DICOM image I/O filter (from dcm4che1) must be available to read images.");
+                throw new IllegalStateException("The raw DICOM image I/O filter must be available to read images.");
             }
             try {
                 reader.setInput(in);
