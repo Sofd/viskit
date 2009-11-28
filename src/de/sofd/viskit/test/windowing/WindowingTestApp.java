@@ -5,7 +5,6 @@ import java.awt.Point;
 import java.awt.event.ActionEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.awt.event.MouseMotionAdapter;
 import java.net.URL;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -40,16 +39,6 @@ public class WindowingTestApp {
         JFrame f = new JFrame("Windowing Test");
         JToolBar toolbar = new JToolBar("toolbar");
         toolbar.setFloatable(false);
-        toolbar.add(new AbstractAction("Foo") {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-            }
-        });
-        toolbar.add(new AbstractAction("Bar") {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-            }
-        });
         toolbar.add(wlLabel = new JLabel());
         toolbar.add(wwLabel = new JLabel());
         MouseAdapter windowingCellMouseListener = new MouseAdapter() {
@@ -72,6 +61,21 @@ public class WindowingTestApp {
         };
         viewer.addMouseListener(windowingCellMouseListener);
         viewer.addMouseMotionListener(windowingCellMouseListener);
+        toolbar.add(new AbstractAction("Set to DICOM") {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                viewer.setWindowingParamsToDicom();
+                updateWlWwLabels();
+            }
+        });
+        toolbar.add(new AbstractAction("Set to Optimal") {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                viewer.setWindowingParamsToOptimal();
+                updateWlWwLabels();
+            }
+        });
+        viewer.setWindowingParamsToDicom();
         f.getContentPane().add(viewer, BorderLayout.CENTER);
         f.getContentPane().add(toolbar, BorderLayout.PAGE_START);
         f.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -91,9 +95,9 @@ public class WindowingTestApp {
             public void run() {
                 try {
                     //URL url = this.getClass().getResource("/de/sofd/viskit/ui/imagelist/jlistimpl/test/67010.dcm");
-                    URL url = this.getClass().getResource("/de/sofd/viskit/test/resources/cd846__center4001__39.dcm");
+                    //URL url = this.getClass().getResource("/de/sofd/viskit/test/resources/cd846__center4001__39.dcm");
                     //URL url = this.getClass().getResource("/de/sofd/viskit/test/resources/series/series1/cd014__center001__0.dcm");
-                    //URL url = this.getClass().getResource("/de/sofd/viskit/test/resources/series/series2/cd014__center001__25.dcm");
+                    URL url = this.getClass().getResource("/de/sofd/viskit/test/resources/series/series2/cd014__center001__25.dcm");
                     //URL url = new URL("file:///shares/shared/DICOM-Testbilder/24-bit J2K Lossy Color.dcm");
                     new WindowingTestApp(url);
                 } catch (Exception ex) {

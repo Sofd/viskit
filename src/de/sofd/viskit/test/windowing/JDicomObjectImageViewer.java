@@ -28,10 +28,8 @@ import javax.swing.JPanel;
 import org.dcm4che2.data.DicomObject;
 import org.dcm4che2.data.Tag;
 import org.dcm4che2.data.UID;
-import org.dcm4che2.data.VR;
 import org.dcm4che2.io.DicomOutputStream;
 
-import de.sofd.util.Misc;
 import java.awt.color.ColorSpace;
 import java.awt.image.Raster;
 import org.dcm4che2.media.FileMetaInformation;
@@ -146,33 +144,23 @@ public class JDicomObjectImageViewer extends JPanel {
     }
     
     public JDicomObjectImageViewer() {
-        this(null, 1.0, 2048,4096);
+        this(null, 1.0, 300, 500);
     }
     
     public JDicomObjectImageViewer(DicomObject dicomObject) {
-        this(dicomObject, 1.0, -1, -1);
+        this(dicomObject, 1.0, 300, 500);
+        setWindowingParamsToDicom();
     }
     
     public JDicomObjectImageViewer(DicomObject dicomObject, double zoomFactor) {
-        this(dicomObject, zoomFactor, -1, -1);
+        this(dicomObject, zoomFactor, 300, 500);
+        setWindowingParamsToDicom();
     }
     
     public JDicomObjectImageViewer(DicomObject dicomObject, double zoomFactor, float wl, float ww) {
-        if (wl < 0 || ww < 0) {
-            wl = extractWindowLocation(dicomObject);
-            ww = extractWindowWidth(dicomObject);
-        }
         setDicomObject(dicomObject);
         setZoomFactor(zoomFactor);
         setWindowingParams(wl, ww);
-    }
-    
-    protected float extractWindowLocation(DicomObject dobj) {
-        return dobj.getFloat(Tag.WindowCenter, 300.0F);
-    }
-    
-    protected float extractWindowWidth(DicomObject dobj) {
-        return dobj.getFloat(Tag.WindowWidth, 500.0F);
     }
     
     public DicomObject getDicomObject() {
@@ -187,16 +175,39 @@ public class JDicomObjectImageViewer extends JPanel {
     }
 
     public void setWindowingParams(float location, float width) {
-        if (dicomObject != null && (location < 0 || width < 0)) {
-            location = extractWindowLocation(dicomObject);
-            width    = extractWindowWidth(dicomObject);
-        }
         this.windowLocation = location;
         this.windowWidth = width;
         repaint();
     }
+
+    public void setWindowingParamsToDicom() {
+        if (null == dicomObject) {
+            return;
+        }
+        if (dicomObject.contains(Tag.WindowCenter) && dicomObject.contains(Tag.WindowWidth)) {
+            setWindowingParams(dicomObject.getFloat(Tag.WindowCenter), dicomObject.getFloat(Tag.WindowWidth));
+        }
+    }
     
-    
+    public void setWindowingParamsToOptimal() {
+        if (null == dicomObject) {
+            return;
+        }
+        BufferedImage rawImg = getRawObjectImage();
+        int numBands = rawImg.getRaster().getNumBands();
+        int min = Integer.MAX_VALUE, max = Integer.MIN_VALUE;
+        for (int x = 0; x < rawImg.getWidth(); x++) {
+            for (int y = 0; y < rawImg.getHeight(); y++) {
+                for (int band = 0; band < numBands; band++) {
+                    int value = rawImg.getRaster().getSample(x, y, band);
+                    if (value < min) { min = value; }
+                    if (value > max) { max = value; }
+                }
+            }
+        }
+        setWindowingParams((min + max) / 2, max - min);
+    }
+
     protected BufferedImage getRawObjectImage() {
         if (null == dicomObject) {
             return null;
