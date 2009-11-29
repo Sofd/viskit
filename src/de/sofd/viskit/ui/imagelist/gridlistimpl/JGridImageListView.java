@@ -207,16 +207,16 @@ public class JGridImageListView extends JImageListView {
             resultComponent.setVisible(true);
             parent.add(resultComponent);
             resultComponent.addMouseListener(gridComponentMouseHandler);
-            resultComponent.addMouseMotionListener(gridComponentMouseMotionHandler);
-            resultComponent.addMouseWheelListener(gridComponentMouseWheelHandler);
+            resultComponent.addMouseMotionListener(gridComponentMouseHandler);
+            resultComponent.addMouseWheelListener(gridComponentMouseHandler);
             return resultComponent;
         }
 
         @Override
         public void deleteComponent(JGridList source, JPanel parent, Object modelItem, JComponent component) {
             component.removeMouseListener(gridComponentMouseHandler);
-            component.removeMouseMotionListener(gridComponentMouseMotionHandler);
-            component.removeMouseWheelListener(gridComponentMouseWheelHandler);
+            component.removeMouseMotionListener(gridComponentMouseHandler);
+            component.removeMouseWheelListener(gridComponentMouseHandler);
             super.deleteComponent(source, parent, modelItem, component);
         }
 
@@ -227,7 +227,7 @@ public class JGridImageListView extends JImageListView {
     //       Figure out how to avoid this. Maybe use just one listener (per type) on the
     //       whole wrappedGridList? (as we do in JGridList's own mouse event handling)
 
-    private MouseListener gridComponentMouseHandler = new MouseAdapter() {
+    private MouseAdapter gridComponentMouseHandler = new MouseAdapter() {
 
         @Override
         public void mouseClicked(MouseEvent evt) {
@@ -253,9 +253,6 @@ public class JGridImageListView extends JImageListView {
         public void mouseExited(MouseEvent evt) {
             dispatchEventToCell(evt);
         }
-    };
-
-    private MouseMotionListener gridComponentMouseMotionHandler = new MouseMotionAdapter() {
 
         @Override
         public void mouseMoved(MouseEvent evt) {
@@ -266,16 +263,13 @@ public class JGridImageListView extends JImageListView {
         public void mouseDragged(MouseEvent evt) {
             dispatchEventToCell(evt);
         }
-        
-    };
 
-    private MouseWheelListener gridComponentMouseWheelHandler = new MouseWheelListener() {
         @Override
         public void mouseWheelMoved(MouseWheelEvent evt) {
             dispatchEventToCell(evt);
         }
-    };
 
+    };
 
     protected void dispatchEventToCell(InputEvent evt) {
         dispatchEventToCell(evt, true);
@@ -298,7 +292,13 @@ public class JGridImageListView extends JImageListView {
             } else {
                 fireCellMouseEvent(ce);
             }
-            refreshCell(cell);
+            if (ce.isConsumed()) {
+                //System.out.println("refreshing cell. not dispatching event onwards");
+                refreshCell(cell);
+            } else {
+                //System.out.println("dispatching event onwards");
+                //((JComponent) evt.getSource()).dispatchEvent(evt);
+            }
         }
     }
 
