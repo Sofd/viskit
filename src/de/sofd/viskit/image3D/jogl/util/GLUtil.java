@@ -88,6 +88,22 @@ public class GLUtil
 
     }
     
+    public static void lineQuad(GL2 gl, float xBias, float yBias, float sizeX, float sizeY) {
+        float vx1 =  xBias;
+        float vx2 =  xBias + sizeX;
+        float vy1 =  yBias;
+        float vy2 =  yBias + sizeY;
+        
+        gl.glBegin(GL_LINE_STRIP);
+            gl.glVertex2f( vx1, vy1 );
+            gl.glVertex2f( vx2, vy1 );
+            gl.glVertex2f( vx2, vy2 );
+            gl.glVertex2f( vx1, vy2 );
+            gl.glVertex2f( vx1, vy1 );
+        gl.glEnd();
+        
+    }
+    
     public static void logi( GL2 gl, String paramName, int param )
     {
         int value[] = new int[1];
@@ -97,7 +113,7 @@ public class GLUtil
         logger.info( paramName + " : " + value[0] );
     }
     
-    public static void texQuad2D( GL2 gl, float xSize, float ySize )
+    public static void texQuad2DCentered( GL2 gl, float xSize, float ySize )
     {
         gl.glBegin(GL_QUADS);
             gl.glTexCoord2f( 0.0f, 0.0f );
@@ -111,19 +127,66 @@ public class GLUtil
         gl.glEnd();
     }
     
-    public static void texQuad3D( GL2 gl, float xSize, float ySize, float tz )
+    public static void texQuad2D( GL2 gl, 
+                                  float biasX, float biasY, 
+                                  float sizeX, float sizeY, 
+                                  float tBiasX, float tBiasY, 
+                                  float tSizeX, float tSizeY )
     {
+        float vx1 =  biasX;
+        float vx2 =  biasX + sizeX;
+        float vy1 =  biasY;
+        float vy2 =  biasY + sizeY;
+        
+        float tx1 = tBiasX;
+        float tx2 = tBiasX + tSizeX;
+        float ty1 = tBiasY;
+        float ty2 = tBiasY + tSizeY;
+        
         gl.glBegin(GL_QUADS);
-            gl.glTexCoord3f( 0.0f, 1.0f, tz );
-            gl.glVertex3f( -xSize/2.0f, -ySize/2.0f, 0.0f );
-            gl.glTexCoord3f( 1.0f, 1.0f, tz );
-            gl.glVertex3f( +xSize/2.0f, -ySize/2.0f, 0.0f );
-            gl.glTexCoord3f( 1.0f, 0.0f, tz );
-            gl.glVertex3f( +xSize/2.0f, +ySize/2.0f, 0.0f );
-            gl.glTexCoord3f( 0.0f, 0.0f, tz );
-            gl.glVertex3f( -xSize/2.0f, +ySize/2.0f, 0.0f );
+            gl.glNormal3f( 0.0f, 0.0f, 1.0f );
+            gl.glTexCoord2f( tx1, ty1 );
+            gl.glVertex2f( vx1, vy1 );
+            gl.glTexCoord2f( tx2, ty1 );
+            gl.glVertex2f( vx2, vy1 );
+            gl.glTexCoord2f( tx2, ty2 );
+            gl.glVertex2f( vx2, vy2 );
+            gl.glTexCoord2f( tx1, ty2 );
+            gl.glVertex2f( vx1, vy2 );
         gl.glEnd();
     }
+    
+    public static void texQuad3DCentered( GL2 gl, float sizeX, float sizeY, float tz )
+    {
+        texQuad3DCentered(gl, -sizeX/2, -sizeY/2, sizeX, sizeY, 1, 1, tz);
+    }
+    
+    public static void texQuad3DCentered( GL2 gl, float xBias, float yBias, float sizeX, float sizeY, float tSizeX, float tSizeY, float tz )
+    {
+        float vx1 =  xBias;
+        float vx2 =  xBias + sizeX;
+        float vy1 =  yBias;
+        float vy2 =  yBias + sizeY;
+        
+        float tx1 = 0.5f - tSizeX / 2.0f;
+        float tx2 = 0.5f + tSizeX / 2.0f;
+        float ty1 = 0.5f - tSizeY / 2.0f;
+        float ty2 = 0.5f + tSizeY / 2.0f;
+        
+        gl.glBegin(GL_QUADS);
+            gl.glNormal3f( 0.0f, 0.0f, 1.0f );
+            gl.glTexCoord3f( tx1, ty1, tz );
+            gl.glVertex2f( vx1, vy1 );
+            gl.glTexCoord3f( tx2, ty1, tz );
+            gl.glVertex2f( vx2, vy1 );
+            gl.glTexCoord3f( tx2, ty2, tz );
+            gl.glVertex2f( vx2, vy2 );
+            gl.glTexCoord3f( tx1, ty2, tz );
+            gl.glVertex2f( vx1, vy2 );
+        gl.glEnd();
+    }
+
+    
 
 
 }

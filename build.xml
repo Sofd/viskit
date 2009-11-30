@@ -80,8 +80,9 @@
 		<copy todir="${build.classes.dir}">
 			<fileset dir="properties" includes="*.properties"/>
         </copy>
-		<!-- copy todir="${build.dir}">
+		<copy todir="${build.dir}">
 			<fileset dir="." includes="shader/**/*"/>
-		</copy-->
+			<fileset dir="." includes="img/**/*"/>
+		</copy>
     </target>
 </project>

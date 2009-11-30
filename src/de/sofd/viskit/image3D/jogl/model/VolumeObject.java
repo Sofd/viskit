@@ -1,8 +1,11 @@
 package de.sofd.viskit.image3D.jogl.model;
 
+import static de.sofd.viskit.image3D.jogl.util.Vtk2GL.*;
+
+import java.nio.*;
+
 import javax.media.opengl.*;
 
-import de.sofd.viskit.image3D.jogl.util.*;
 import vtk.*;
 
 public class VolumeObject
@@ -11,6 +14,11 @@ public class VolumeObject
      * OpenGL-Id of 3D-Texture.
      */
     protected int texId;
+    
+    /**
+     * Databuffer for 3D-Texture;
+     */
+    protected FloatBuffer dataBuf;
     
     protected int width;
     protected int height;
@@ -38,7 +46,7 @@ public class VolumeObject
     protected double rangeMin;
     protected double rangeMax;
     
-    public VolumeObject(GL2 gl, vtkImageData imageData)
+    public VolumeObject(vtkImageData imageData, FloatBuffer dataBuf )
     {
         int[] dim = imageData.GetDimensions();
         double[] spacing = imageData.GetSpacing();
@@ -61,115 +69,143 @@ public class VolumeObject
         setRangeMin(range[0]);
         setRangeMax(range[1]);
         
-        setTexId(Vtk2GL.get3DTexture(gl, imageData, true));
+        setDataBuf(dataBuf);
+        
     }
 
-    public int getTexId() {
-        return texId;
-    }
-
-    protected void setTexId(int texId) {
-        this.texId = texId;
-    }
-
-    public int getWidth() {
-        return width;
-    }
-
-    protected void setWidth(int width) {
-        this.width = width;
-    }
-
-    public int getHeight() {
-        return height;
-    }
-
-    protected void setHeight(int height) {
-        this.height = height;
+    public FloatBuffer getDataBuf() {
+        return dataBuf;
     }
 
     public int getDepth() {
         return depth;
     }
 
-    protected void setDepth(int depth) {
-        this.depth = depth;
-    }
-
-    public double getSpacingX() {
-        return spacingX;
-    }
-
-    protected void setSpacingX(double spacingX) {
-        this.spacingX = spacingX;
-    }
-
-    public double getSpacingY() {
-        return spacingY;
-    }
-
-    protected void setSpacingY(double spacingY) {
-        this.spacingY = spacingY;
-    }
-
-    public double getSpacingZ() {
-        return spacingZ;
-    }
-
-    protected void setSpacingZ(double spacingZ) {
-        this.spacingZ = spacingZ;
+    public int getHeight() {
+        return height;
     }
 
     public int getMaxDim() {
         return maxDim;
     }
 
-    protected void setMaxDim(int maxDim) {
-        this.maxDim = maxDim;
-    }
-
     public double getMaxSize() {
         return maxSize;
-    }
-
-    protected void setMaxSize(double maxSize) {
-        this.maxSize = maxSize;
     }
 
     public int getMinDim() {
         return minDim;
     }
 
-    protected void setMinDim(int minDim) {
-        this.minDim = minDim;
-    }
-
     public double getMinSize() {
         return minSize;
     }
-
-    protected void setMinSize(double minSize) {
-        this.minSize = minSize;
+    
+    public double getRangeMax() {
+        return rangeMax;
     }
 
     public double getRangeMin() {
         return rangeMin;
     }
 
-    protected void setRangeMin(double rangeMin) {
-        this.rangeMin = rangeMin;
+    protected double getRangeSize()
+    {
+        return ( rangeMax - rangeMin );
     }
 
-    public double getRangeMax() {
-        return rangeMax;
+    public double getSizeX()
+    {
+        return ( width * spacingX );
+    }
+    
+    public double getSizeY()
+    {
+        return ( height * spacingY );
+    }
+    
+    public double getSizeZ()
+    {
+        return ( depth * spacingZ );
+    }
+    
+    public double getSpacingX() {
+        return spacingX;
+    }
+
+    public double getSpacingY() {
+        return spacingY;
+    }
+
+    public double getSpacingZ() {
+        return spacingZ;
+    }
+
+    public int getTexId() {
+        return texId;
+    }
+
+    public int getWidth() {
+        return width;
+    }
+
+    public void loadTexture( GL2 gl ) {
+        setTexId( get3DTexture( gl, dataBuf, getWidth(), getHeight(), getDepth(), true ) );
+    }
+
+    protected void setDataBuf(FloatBuffer dataBuf) {
+        this.dataBuf = dataBuf;
+    }
+
+    protected void setDepth(int depth) {
+        this.depth = depth;
+    }
+
+    protected void setHeight(int height) {
+        this.height = height;
+    }
+
+    protected void setMaxDim(int maxDim) {
+        this.maxDim = maxDim;
+    }
+
+    protected void setMaxSize(double maxSize) {
+        this.maxSize = maxSize;
+    }
+
+    protected void setMinDim(int minDim) {
+        this.minDim = minDim;
+    }
+
+    protected void setMinSize(double minSize) {
+        this.minSize = minSize;
     }
 
     protected void setRangeMax(double rangeMax) {
         this.rangeMax = rangeMax;
     }
+
+    protected void setRangeMin(double rangeMin) {
+        this.rangeMin = rangeMin;
+    }
+
+    protected void setSpacingX(double spacingX) {
+        this.spacingX = spacingX;
+    }
+
+    protected void setSpacingY(double spacingY) {
+        this.spacingY = spacingY;
+    }
+
+    protected void setSpacingZ(double spacingZ) {
+        this.spacingZ = spacingZ;
+    }
     
-    protected double getRangeSize()
-    {
-        return ( rangeMax - rangeMin );
+    public void setTexId(int texId) {
+        this.texId = texId;
+    }
+
+    protected void setWidth(int width) {
+        this.width = width;
     }
 }

@@ -11,27 +11,34 @@ import de.sofd.viskit.image3D.jogl.model.*;
 import de.sofd.viskit.image3D.jogl.util.*;
 import de.sofd.viskit.image3D.model.*;
 
-public class ZSliceViewport extends SliceViewport
+public class XSliceViewport extends SliceViewport
 {
-    public ZSliceViewport( int x, int y, int width, int height, ImagePlaneType planeType, VolumeObject volumeObject ) throws IOException
+    public XSliceViewport( int x, int y, int width, int height, ImagePlaneType planeType, VolumeObject volumeObject ) throws IOException
     {
-        super(x, y, width, height, planeType, volumeObject.getDepth(), volumeObject);
+        super(x, y, width, height, planeType, volumeObject.getWidth(), volumeObject);
     }
     
     @Override
     protected void showTexPlane(GL2 gl)
     {
-        gl.glMatrixMode( GL_MODELVIEW );
-        gl.glLoadIdentity();
-        
         float tSizeX = 1;
         float tSizeY = 1;
         float tz = ( currentSlice - 1 ) * 1.0f / ( maxSlices - 1 );
-        float sizeX = (float)( volumeObject.getSizeX() * getPlaneWidth() / volumeObject.getMaxSize() );
-        float sizeY = (float)( volumeObject.getSizeY() * getPlaneHeight() / volumeObject.getMaxSize() );
+        float sizeX = (float)( volumeObject.getSizeZ() * getPlaneWidth() / volumeObject.getMaxSize());
+        float sizeY = (float)( volumeObject.getSizeY() * getPlaneHeight() / volumeObject.getMaxSize());
         float x = margin[3] + ( getPlaneWidth() - sizeX ) / 2;
         float y = margin[2] + ( getPlaneHeight() - sizeY ) / 2;
         
+        gl.glMatrixMode( GL_TEXTURE );
+        gl.glPushMatrix();
+        gl.glLoadIdentity();
+        gl.glTranslatef(  0.5f,  0.5f,  0.5f );
+        gl.glRotatef( -90.0f, 0.0f, 1.0f, 0.0f );
+        gl.glTranslatef( -0.5f, -0.5f, -0.5f );
+        
+        gl.glMatrixMode( GL_MODELVIEW );
+        gl.glLoadIdentity();
+                
         gl.glEnable(GL_TEXTURE_3D);
         gl.glBindTexture(GL_TEXTURE_3D, volumeObject.getTexId());
         
@@ -44,7 +51,13 @@ public class ZSliceViewport extends SliceViewport
         gl.glDisable(GL_BLEND);
         gl.glDisable(GL_TEXTURE_3D);
         
-        gl.glColor4f( 0.0f, 1.0f, 0.0f, 1.0f );
+        gl.glColor4f( 1.0f, 0.5f, 0.0f, 1.0f );
         GLUtil.lineQuad( gl, x, y, sizeX, sizeY );
+        
+        gl.glMatrixMode( GL_TEXTURE );
+        gl.glPopMatrix();
+        
+        gl.glMatrixMode( GL_MODELVIEW );
+        gl.glLoadIdentity();
     }
 }

@@ -117,7 +117,7 @@ public class ARBSliceView extends GLCanvas implements GLEventListener
         gl.glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
         gl.glBindTexture(GL_TEXTURE_2D, texStack[currentSlice-1]);
         //texQuad3D(gl, (float)(width/maxDim), (float)(height/maxDim), (currentSlice-1)*1.0f/(maxSlices-1));
-        texQuad2D(gl, (float)(width/maxDim)*2.0f, (float)(height/maxDim)*2.0f);
+        texQuad2DCentered(gl, (float)(width/maxDim)*2.0f, (float)(height/maxDim)*2.0f);
         ShaderManager.unbindARB("windowing");
         
         //show fps

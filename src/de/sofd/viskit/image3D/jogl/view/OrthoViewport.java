@@ -22,13 +22,13 @@ public class OrthoViewport
     
     protected void beginViewport(GL2 gl)
     {
-        gl.glViewport( x, y, x + width, y + height ); 
+        gl.glViewport( x, y, width, height ); 
         
         gl.glMatrixMode(GL_PROJECTION);
         gl.glPushMatrix();
         
         gl.glLoadIdentity();
-        gl.glOrtho(-width/2, width/2, -height/2, height/2, -1.0, 1.0);
+        gl.glOrtho(0, width, 0, height, -1.0, 1.0);
         
         gl.glMatrixMode(GL_MODELVIEW);
         gl.glLoadIdentity();
@@ -36,8 +36,6 @@ public class OrthoViewport
     
     protected void endViewport(GL2 gl)
     {
-        gl.glViewport( x, y, x + width, y + height ); 
-        
         gl.glMatrixMode(GL_PROJECTION);
         gl.glPopMatrix();
         
@@ -45,35 +43,68 @@ public class OrthoViewport
         gl.glLoadIdentity();
     }
     
-    public int getX() {
-        return x;
+    public int getHeight() {
+        return height;
     }
-
-    public void setX(int x) {
-        this.x = x;
+    
+    public int getRelativeMouseX( int x )
+    {
+        return x - this.x;
     }
-
-    public int getY() {
-        return y;
-    }
-
-    public void setY(int y) {
-        this.y = y;
+    
+    public int getRelativeMouseY( int y )
+    {
+        return y - this.y;
     }
 
     public int getWidth() {
         return width;
     }
 
-    public void setWidth(int width) {
-        this.width = width;
+    public int getX() {
+        return x;
     }
 
-    public int getHeight() {
-        return height;
+    public int getY() {
+        return y;
+    }
+    
+    public boolean isInBounds( int x, int y )
+    {
+        return ( x >= this.x && x <= this.x + width && y >= this.y && y <= this.y + height );
     }
 
     public void setHeight(int height) {
         this.height = height;
+    }
+    
+    public void setLocation( int x, int y )
+    {
+        setX(x);
+        setY(y);
+    }
+    
+    public void setLocationAndSize( int x, int y, int width, int height )
+    {
+        setLocation( x, y );
+        setSize( width, height );
+    }
+    
+    public void setSize( int width, int height )
+    {
+        setWidth(width);
+        setHeight(height);
+    }
+
+    public void setWidth(int width) {
+        this.width = width;
+    }
+
+    public void setX(int x) {
+        this.x = x;
+    }
+
+    public void setY(int y) {
+        this.y = y;
     }
 }
