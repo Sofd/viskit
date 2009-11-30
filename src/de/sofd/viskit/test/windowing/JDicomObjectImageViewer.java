@@ -136,7 +136,7 @@ public class JDicomObjectImageViewer extends JPanel {
     }
     
     private static LRUMemoryCache<WindowedImageKey, BufferedImage> windowedImageCache
-        = new LRUMemoryCache<WindowedImageKey, BufferedImage>(20);
+        = new LRUMemoryCache<WindowedImageKey, BufferedImage>(5);
     
     private WindowedImageKey getCurrWindowedImageKey() {
         return new WindowedImageKey(dicomObject.getString(Tag.SOPInstanceUID),
