@@ -31,7 +31,7 @@ public class TexSliceVolumeViewer extends JFrame implements ChangeListener
     {
         super("Volume Viewer");
         
-        vtkImageData imageData = DicomReader.readImageData("D:/dicom/serie2");
+        vtkImageData imageData = DicomReader.readImageDataFromDir("D:/dicom/serie2");
         imageData.Update();
         int dim[] =  imageData.GetDimensions();
         

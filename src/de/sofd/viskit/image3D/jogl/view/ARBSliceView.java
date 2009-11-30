@@ -5,6 +5,8 @@ import static de.sofd.viskit.image3D.jogl.util.Vtk2GL.*;
 import static javax.media.opengl.GL.*;
 import static javax.media.opengl.GL2.*;
 
+import java.awt.*;
+
 import javax.media.opengl.*;
 import javax.media.opengl.awt.*;
 import javax.media.opengl.glu.gl2.*;
@@ -47,6 +49,8 @@ public class ARBSliceView extends GLCanvas implements GLEventListener
     
     protected int viewport[] = new int[4];
     
+    protected String shaderToUse;
+    
     static {
         caps = new GLCapabilities(GLProfile.get(GLProfile.GL2));
         caps.setAlphaBits(8); 
@@ -56,6 +60,7 @@ public class ARBSliceView extends GLCanvas implements GLEventListener
     public ARBSliceView(vtkImageData imageData)
     {
         super(caps);
+        setBackground(Color.BLACK);
         this.imageData = imageData;
         addGLEventListener(this);
     }
@@ -109,7 +114,7 @@ public class ARBSliceView extends GLCanvas implements GLEventListener
         
         
         
-        ShaderManager.bindARB("windowing");
+        ShaderManager.bindARB(shaderToUse);
         gl.glProgramLocalParameter4fARB(GL_FRAGMENT_PROGRAM_ARB, 0, (float)(windowCenter/rangeDist), 0, 0, 0);
         gl.glProgramLocalParameter4fARB(GL_FRAGMENT_PROGRAM_ARB, 1, (float)(windowWidth/rangeDist), 0, 0, 0);
         gl.glEnable(GL_TEXTURE_2D);
@@ -118,7 +123,7 @@ public class ARBSliceView extends GLCanvas implements GLEventListener
         gl.glBindTexture(GL_TEXTURE_2D, texStack[currentSlice-1]);
         //texQuad3D(gl, (float)(width/maxDim), (float)(height/maxDim), (currentSlice-1)*1.0f/(maxSlices-1));
         texQuad2DCentered(gl, (float)(width/maxDim)*2.0f, (float)(height/maxDim)*2.0f);
-        ShaderManager.unbindARB("windowing");
+        ShaderManager.unbindARB(shaderToUse);
         
         //show fps
         gl.glDisable(GL_TEXTURE_2D);
@@ -155,19 +160,34 @@ public class ARBSliceView extends GLCanvas implements GLEventListener
         gl.glShadeModel(GL_FLAT);
         gl.glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
         
+        gl.glEnable(GL_TEXTURE_2D);
+        //theTex = get3DTexture(gl, imageData);
+        
         ShaderManager.init("shader");
         
         try {
-            ShaderManager.readARB(gl, "windowing");
+            int colors = imageData.GetNumberOfScalarComponents();
+            logger.info("number of colors : " + colors);
+            
+            if ( colors == 1 )
+                shaderToUse = "windowing";
+            else if ( colors == 3 )
+                shaderToUse = "windowingRGB";
+            
+            ShaderManager.readARB(gl, shaderToUse);
+            
         } catch (Exception e) {
             e.printStackTrace();
             logger.error(e);
             System.exit(0);
         }
         
-        gl.glEnable(GL_TEXTURE_2D);
-        //theTex = get3DTexture(gl, imageData);
-        texStack = get2DTexturStack(gl, imageData);
+        try {
+            texStack = get2DTexturStack(gl, glu, imageData);
+        } catch (Exception e) {
+            e.printStackTrace();
+            System.exit(-1);
+        }
         
         
         fpsCounter = new FPSCounter();
@@ -181,7 +201,7 @@ public class ARBSliceView extends GLCanvas implements GLEventListener
         //gl.glViewport( 0, 0, width, height ); 
         
         float aspect = width * 1.0f / height;
-        logger.info("width : " + width + ", height : " + height + ", aspect : " + aspect);
+        //logger.info("width : " + width + ", height : " + height + ", aspect : " + aspect);
         
         gl.glMatrixMode(GL_PROJECTION);
         gl.glLoadIdentity();
@@ -189,10 +209,10 @@ public class ARBSliceView extends GLCanvas implements GLEventListener
         gl.glLoadIdentity();
         gl.glOrtho(-aspect, aspect, -1.0, 1.0, -1.0, 1.0);
         
-        logger.info("GL_VENDOR: " + gl.glGetString(GL_VENDOR));
+        /*logger.info("GL_VENDOR: " + gl.glGetString(GL_VENDOR));
         logger.info("GL_RENDERER: " + gl.glGetString(GL_RENDERER));
         //logger.info("GL_VERSION: " + gl.glGetString(GL_VERSION));
-        logger.info("test");
+        logger.info("test");*/
         
         gl.glMatrixMode(GL_MODELVIEW);
         gl.glLoadIdentity();

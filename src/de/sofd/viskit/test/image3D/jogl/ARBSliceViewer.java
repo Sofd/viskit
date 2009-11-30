@@ -30,37 +30,79 @@ public class ARBSliceViewer extends JFrame implements ChangeListener
     protected vtkImageData imageData;
     protected vtkImageGaussianSmooth smooth;
     
+    protected String testfiles[] =
+    {
+        //"8-bit Uncompressed Gray.dcm",
+        
+        /* not supported */
+        //"8-bit RunLength Gray.dcm",
+        //"8-bit JPEG Lossy Gray.dcm",
+        //"8-bit JPEG Lossless Gray.dcm",
+        //"8-bit J2K Lossy Gray.dcm",
+        //"8-bit J2K Lossless Gray.dcm",
+        "24-bit Uncompressed Color.dcm",
+        //"24-bit RunLength Color.dcm",
+        //"24-bit JPEG Lossy Color.dcm",
+        //"24-bit JPEG Lossless Color.dcm",
+        //"24-bit J2K Lossy Color.dcm",
+        //"24-bit J2K Lossless Color.dcm",
+        
+        //"16-bit Uncompressed Gray.dcm",
+        
+        /* not supported */    
+        //"16-bit RunLength Gray.dcm",
+        //"16-bit JPEG Lossless Gray.dcm",
+        //"16-bit J2K Lossy Gray.dcm",
+        //"16-bit J2K Lossless Gray.dcm"
+            
+        //"atl-rgb-24bit.dcm",
+    };
+    
     public ARBSliceViewer() throws IOException
     {
         super("Slice Viewer");
+        setBackground(Color.BLACK);
+        int dim[] = {0, 0, 0};
+        double[] range = {0, 0};
         
-        imageData = DicomReader.readImageData("D:/dicom/serie3");
-        imageData.Update();
-        int dim[] =  imageData.GetDimensions();
+        //imageData = DicomReader.readImageDataFromDir("D:/dicom/serie2");
+        for ( String testfile : testfiles )
+        {
+            try {
+                System.out.println("read " + testfile);
+                imageData = DicomReader.readImageDataFromFile("D:/dicom/testbilder/" + testfile);
+                imageData.Update();
+                dim =  imageData.GetDimensions();
+                
+                range = imageData.GetScalarRange();
+                double rangeDist = range[1] - range[0];
+                rangeDist = ( rangeDist > 0 ? rangeDist : 1 );
+                
+                System.out.println(testfile + " supported!");
+                logger.info("image dimension : " + dim[0] + " " + dim[1] + " " + dim[2] + " " + imageData.GetPointData().GetScalars().GetSize());
+                logger.info("range : [" + range[0] + "," + range[1] + "]");
+            } catch (Exception e1) {
+                System.err.println(testfile + " not supported!");
+            }
+        }
         
-        double[] range = imageData.GetScalarRange();
-        double rangeDist = range[1] - range[0];
-        rangeDist = ( rangeDist > 0 ? rangeDist : 1 );
+        /*smooth = new vtkImageGaussianSmooth();
+        smooth.SetInput(imageData);*/
         
-        logger.debug("image dimension : " + dim[0] + " " + dim[1] + " " + dim[2] + " " + imageData.GetPointData().GetScalars().GetSize());
-        
-        smooth = new vtkImageGaussianSmooth();
-        smooth.SetInput(imageData);
-        
-        sliceView = new ARBSliceView(smooth.GetOutput()); 
+        sliceView = new ARBSliceView(imageData); 
         
         getContentPane().setLayout(new BorderLayout());
         
         JPanel slicePanel = new JPanel(new BorderLayout());
-        
+        slicePanel.setBackground(Color.BLACK);
         slicePanel.add(sliceView, BorderLayout.CENTER);
         slicePanel.add(getSlider("sliceLevel", 1, dim[2], 1), BorderLayout.SOUTH);
         getContentPane().add(slicePanel, BorderLayout.CENTER);
         
         JPanel controlPanel = new JPanel();
         controlPanel.setLayout(new BoxLayout(controlPanel, BoxLayout.PAGE_AXIS));
-        controlPanel.add(getSliderPanel("windowCenter", (int)range[0], (int)range[1], 325));
-        controlPanel.add(getSliderPanel("windowWidth", (int)range[0], (int)range[1], 581));
+        controlPanel.add(getSliderPanel("windowCenter", (int)range[0], (int)range[1], (int)range[0]));
+        controlPanel.add(getSliderPanel("windowWidth", (int)range[0], (int)range[1], (int)range[0]));
         controlPanel.add(Box.createVerticalGlue());
         getContentPane().add(controlPanel, BorderLayout.EAST);
                 
@@ -89,6 +131,8 @@ public class ARBSliceViewer extends JFrame implements ChangeListener
     }
     
     private JPanel getSliderPanel(String name, int min, int max, int value) {
+        System.out.println("" + min + ", " + max + ", " + value);
+        
         JPanel panel = new JPanel(new BorderLayout());
         panel.setPreferredSize(new Dimension(200, 50));
         panel.setMaximumSize(new Dimension(200, 50));

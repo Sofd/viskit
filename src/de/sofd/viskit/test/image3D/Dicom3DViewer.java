@@ -32,7 +32,7 @@ public class Dicom3DViewer extends JFrame implements ChangeListener, ActionListe
   
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         
-        imageData = DicomReader.readImageData("D:/dicom/serie3");
+        imageData = DicomReader.readImageDataFromDir("D:/dicom/serie3");
         imageData.Update();
         int dim[] =  imageData.GetDimensions();
         

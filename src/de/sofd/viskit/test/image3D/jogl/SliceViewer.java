@@ -35,7 +35,7 @@ public class SliceViewer extends JFrame
         
         setBackground(Color.BLACK);
         
-        vtkImageData imageData = DicomReader.readImageData("D:/dicom/serie3");
+        vtkImageData imageData = DicomReader.readImageDataFromDir("D:/dicom/serie3");
         imageData.Update();
         
         FloatBuffer dataBuf = Vtk2GL.getFilledFloatBuffer(imageData);
