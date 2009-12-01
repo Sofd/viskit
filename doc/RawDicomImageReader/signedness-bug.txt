@@ -1,0 +1,120 @@
+Zahnbilder: (hier: f0003563_00623.dcm)
+
+  Optimales Fenster lt. ImageJ und lt. mir bei short: center 13466, width 38603 => -5835 ... 32767
+
+  srcImg.raster instanceof ShortInterleavedRaster
+
+  srcImg.raster.dataBuffer instanceof DataBufferUShort
+
+  srcImg.raster.dataBuffer.dataType == 1  (DataBuffer.TYPE_USHORT)
+
+  srcImg.raster.sampleModel instanceof PixelInterleavedSampleModel
+
+  srcImg.raster.sampleModel.transferType == 1  (DataBuffer.TYPE_USHORT)
+
+  srcImg.type == 11  (BufferedImage.TYPE_USHORT_GRAY)
+
+  srcImg.colorModel instanceof ComponentColorModel
+
+  srcImg.colorModel.numComponents == 1
+
+  srcImg.colorModel.numColorComponents == 1
+
+  srcImg.colorModel.pixelBits == 16
+
+  srcImg.colorModel.nBits == {16}
+
+  srcImg.colorModel.getComponentSize(0) == 16  ==> gesp. Information pro Pixel 16 Bit ---\
+                                                                                         --> Pixelwerte 16 Bit unsigned
+  srcImg.colorModel.transferType == 1  (DataBuffer.TYPE_USHORT)  ------------------------/
+
+  srcImg.colorModel.getRed(13466) == 126    // 13466 = window center
+
+  srcImg.colorModel.getGreen(13466) == 126
+
+  srcImg.colorModel.getBlue(13466) == 126
+
+  srcImg.colorModel.get[Red|Green|Blue](5000) == 78     // hmm.. 5000/13466 * 126 == 46.8 ...
+
+  srcImg.colorModel.get[Red|Green|Blue](25000) == 167   // hmm.. 25000/13466 * 126 == 233.9 ...
+
+  srcImg.colorModel.get[Red|Green|Blue](32767) == 188
+
+  srcImg.colorModel.get[Red|Green|Blue](65535) == 255
+
+  srcImg.colorModel.get[Red|Green|Blue](0) == 0
+
+  srcImg.getColorModel().getNormalizedComponents(new int[]{13466}, 0, null, 0) == {0.20547798}  // = 13466/65535
+
+  srcImg.getColorModel().getNormalizedComponents(new int[]{32768}, 0, null, 0) == {0.5000076}  // = 32768/65535
+
+    ==> das koennte die Methode der Wahl sein. Ergebnis muss mit
+    srcImg.getColorModel().getColorSpace().getMin/MaxValue() normiert
+    werden.
+
+    Vermutlich benutzt RescaleOp das auch.
+
+
+  srcImg.colorModel.colorSpace instanceof ICC_ColorSpace
+
+  srcImg.colorModel.colorSpace.type == 6 (ColorSpace.TYPE_GRAY)
+
+  srcImg.colorModel.colorSpace.numComponents == 1
+
+  srcImg.colorModel.colorSpace.minVal == {0.0}
+
+  srcImg.colorModel.colorSpace.maxVal == {1.0}
+
+  srcImg.colorModel.colorSpace.getName(0) == "Gray"
+
+  srcImg.colorModel.colorSpace.toRGB(new float[]{0F}) == {0, 0, 0}
+
+  srcImg.colorModel.colorSpace.toRGB(new float[]{0.7F}) == {0.8578775, 0.85815215, 0.85796905}
+
+  srcImg.colorModel.colorSpace.toRGB(new float[]{1F}) == {0.9998932, 1, 0.9998779}
+
+  srcImg.colorModel.colorSpace.toRGB(new float[]{1000F}) == {0.99412525, 0.9952392, 0.99412525}
+
+  srcImg.colorModel.colorSpace.toRGB(new float[]{10000F}) == {0.9337148, 0.93403524, 0.93380636}
+
+   (???)
+
+
+
+wenn man das srcImg direkt anzeigt, sieht es schon fehlerhaft aus... :-(
+
+srcImg.getRaster().getPixel(380, 572, null)[0] == 63975   
+srcImg.getRaster().getPixel(381, 572, null)[0] == 64581
+srcImg.getRaster().getPixel(382, 572, null)[0] == 33
+
+(der Streifen ist im ImageJ visuell ziemlich gleichmäßig mittelgrau)
+
+==> offenbar ein Überlauf bei den ersten beiden Werten, d.h. es
+    scheint sich um signed 16-Bit-Werte zu handeln -- konträr zu dem,
+    was srcImg.colorModel.getComponentSize(0)/.transferType und die
+    srcImg.getColorModel().getNormalizedComponents()-Werte oben
+    nahelegen ... :-(( (in signed umgerechnet sind die drei Werte dann
+    -1561, -955, 33)
+
+    Wenn man das Bild mit AutoWindowing=false mit dem normalen
+    dcm4che-DicomReader einliest, kommt ein Bild mit
+    Einkanal-8bit-unsigned-Pixeln raus, die 3 Werte sind dann
+    121,124,128 => passt. Z.B. (-1561 - (-32768)) / 65536 * 255 = 121.4..
+
+
+
+
+
+13358-Bild (hier: ...):
+
+  srcImg.getColorModel().getNormalizedComponents(new int[]{0}, 0, null, 0) == {0.0}
+  ...
+  srcImg.getColorModel().getNormalizedComponents(new int[]{4095}, 0, null, 0) == {1.0}
+
+  srcImg.colorModel.pixelBits == 16    // Platzbedarf eines Pixels 16 Bit ?
+
+  srcImg.colorModel.getComponentSize(0) == 12   (!! ==> gesp. Information pro Pixel 12 Bit, nicht 16!)
+
+
+
+
