@@ -46,6 +46,8 @@ public class WindowingTestApp {
             @Override
             public void mousePressed(MouseEvent e) {
                 prevPoint = e.getPoint();
+                System.out.println("unscaled point: " + prevPoint);
+                System.out.println("image point: " + prevPoint.x / viewer.getDynamicZoomFactor() + ", " + prevPoint.y / viewer.getDynamicZoomFactor());
                 e.consume();
             }
             @Override
@@ -75,6 +77,13 @@ public class WindowingTestApp {
                 updateWlWwLabels();
             }
         });
+        toolbar.add(new AbstractAction("Set to Zahn") {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                viewer.setWindowingParams(13466, 38603);
+                updateWlWwLabels();
+            }
+        });
         viewer.setWindowingParamsToDicom();
         f.getContentPane().add(viewer, BorderLayout.CENTER);
         f.getContentPane().add(toolbar, BorderLayout.PAGE_START);
@@ -99,6 +108,8 @@ public class WindowingTestApp {
                     //URL url = this.getClass().getResource("/de/sofd/viskit/test/resources/series/series1/cd014__center001__0.dcm");
                     URL url = this.getClass().getResource("/de/sofd/viskit/test/resources/series/series2/cd014__center001__25.dcm");
                     //URL url = new URL("file:///shares/shared/DICOM-Testbilder/24-bit J2K Lossy Color.dcm");
+                    //URL url = new URL("file:///tmp/24-bit Uncompressed Color.dcm");
+                    //URL url = new URL("file:///tmp/f0003563_00623.dcm");
                     new WindowingTestApp(url);
                 } catch (Exception ex) {
                     Logger.getLogger(WindowingTestApp.class.getName()).log(Level.SEVERE, null, ex);
