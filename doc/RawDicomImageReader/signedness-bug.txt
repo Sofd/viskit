@@ -110,7 +110,7 @@ srcImg.getRaster().getPixel(382, 572, null)[0] == 33
 
 
 
-13358-Bild (hier: ...):
+13358-Bild (hier: cd014__center001__25.dcm):
 
   srcImg.getColorModel().getNormalizedComponents(new int[]{0}, 0, null, 0) == {0.0}
   ...
