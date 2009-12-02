@@ -96,6 +96,11 @@ srcImg.getRaster().getPixel(382, 572, null)[0] == 33
     nahelegen ... :-(( (in signed umgerechnet sind die drei Werte dann
     -1561, -955, 33)
 
+==> Dieselben kaputten Werte stehen auch im Raw-Raster, auch in dem
+    Raster, das man mit dem Original-dcm4che-DicomImageReader per
+    readRaster(0, null) kriegt!
+
+
     Wenn man das Bild mit AutoWindowing=false mit dem normalen
     dcm4che-DicomReader einliest, kommt ein Bild mit
     Einkanal-8bit-unsigned-Pixeln raus, die 3 Werte sind dann
@@ -116,5 +121,47 @@ srcImg.getRaster().getPixel(382, 572, null)[0] == 33
   srcImg.colorModel.getComponentSize(0) == 12   (!! ==> gesp. Information pro Pixel 12 Bit, nicht 16!)
 
 
+  182,71
 
 
+=====================
+
+(Das folgende war/ist(?) als Bugreport für JAI gedacht...)
+
+When java.awt.image.RescaleOp calculates pixel values for the output
+image, any values that fall outside the allowed range of those values
+should be clamped to that range.
+
+This does not appear to work correctly with 12-bit grayscale images,
+and probably other image color models whose per-band pixel bit count
+isn't a multiple of 8.
+
+This is true at least for the two non-native code paths in the
+RescaleOp#filter(Raster,WritableRaster) method.
+
+The reason for that seems to be that RescaleOp uses
+sourceImage.getSampleModel().getSampleSize(bandNumber) to determine
+the bit count of a band of the image, which always gives the next
+multiple of 8 (16 in the case of 12-bit images). As far as I can tell,
+sourceImage.getColorModel().getComponentSize(bandNumber) would be the
+correct call to use here (it returns 12 for 12-bit images).
+
+Anyway, as it is now, the wrong pixel values range (0..65535 rather
+than 0..4095) is now used for clamping the rescaled 12-bit images,
+which means that no max-value clamping occurs at all in most
+cases. E.g. a pixel value of 5000 will be written into the output
+image (because it is < 65535; but it is > 4095), and if this output
+image is rendered to the screen, visual artifact caused by pixel
+inversion problems occur at pixel values greater than 4095.
+
+Can anyone confirm this?
+
+
+====>
+
+Looks as if these 12-bit BufferedImage (coming out of my dcm4che
+RawDicomImageReader, source file cd014__center001__25.dcm in this
+case) aren't really legal? Writing them to a PNG file using
+ImageIO.write(img, "PNG", new File(outputFilename)) results in a very
+much too dark image -- as if it had interpreted all those values as
+16-bit...

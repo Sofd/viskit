@@ -473,7 +473,7 @@ public class RawDicomImageReader extends ImageReader {
         if (monochrome) {
             WritableRaster raster = bi.getRaster();
             LookupTable lut = createLut((DicomImageReadParam) param,
-                    imageIndex + 1, raster);
+                    imageIndex + 1, raster, bi.getSampleModel().getSampleSize(0));
             if (lut != null) {
                 WritableRaster dest = raster;
                 if (dest.getDataBuffer().getDataType() != DataBuffer.TYPE_BYTE
@@ -569,12 +569,13 @@ public class RawDicomImageReader extends ImageReader {
      * @return Complete lookup table to apply to the image.
      */
     private LookupTable createLut(DicomImageReadParam param, int frame,
-            Raster raster) {
+            Raster raster, int outBits) {
         short[] pval2gray = param.getPValue2Gray();
         DicomObject pr = param.getPresentationState();
         float c = param.getWindowCenter();
         float w = param.getWindowWidth();
         String vlutFct = param.getVoiLutFunction();
+        /* // windowing disabled for this reader
         if (param.isAutoWindowing()) {
             DicomObject voiObj = VOIUtils.selectVoiObject(ds, pr, frame);
             if (voiObj == null) {
@@ -585,9 +586,10 @@ public class RawDicomImageReader extends ImageReader {
                 vlutFct = LookupTable.LINEAR;
             }
         }
+        */
 
         return LookupTable.createLutForImageWithPR(ds, pr, frame, c, w,
-                vlutFct, 8, pval2gray);
+                vlutFct, outBits, pval2gray);   // outBits is fixed to 8 in the original dcm4che source -- will this work?
     }
 
 
