@@ -3,6 +3,7 @@ package de.sofd.viskit.image3D.jogl.util;
 import static com.sun.opengl.util.gl2.GLUT.*;
 import static javax.media.opengl.GL2.*;
 
+import java.awt.*;
 import java.nio.*;
 
 import javax.media.opengl.*;
@@ -12,6 +13,8 @@ import org.apache.log4j.*;
 
 import com.sun.opengl.util.*;
 import com.sun.opengl.util.gl2.*;
+
+import de.sofd.viskit.image3D.util.*;
 
 public class GLUtil
 {
@@ -48,6 +51,42 @@ public class GLUtil
                 
         gl.glPopMatrix();
         gl.glMatrixMode(GL_MODELVIEW); 
+    }
+    
+    public static int getTransferTexture( GL2 gl, Color color1, Color color2 )
+    {
+        return getTransferTexture( gl, color1, color2, 256 );
+    }
+    
+    public static int getTransferTexture( GL2 gl, Color color1, Color color2, int nrOfElements )
+    {
+        FloatBuffer transferBuf = ImageUtil.getTransferFunction( color1, color2, nrOfElements );
+        
+        int transferTex = getTransferTexture( gl, transferBuf );
+        
+        return transferTex;
+    }
+    
+    public static int getTransferTexture( GL2 gl, FloatBuffer texBuf )
+    {
+        gl.glPixelStorei(GL_UNPACK_ALIGNMENT, 1); 
+        
+        int theTex[] = new int[1];
+        gl.glGenTextures( 1, theTex, 0 );
+            
+        gl.glBindTexture( GL_TEXTURE_1D, theTex[0] );    
+        gl.glTexImage1D(GL_TEXTURE_1D, 0, GL_RGB, texBuf.capacity()/3, 0, GL_RGB, GL_FLOAT, texBuf);
+            
+        gl.glTexParameteri( GL_TEXTURE_1D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER );
+           
+        gl.glTexParameteri( GL_TEXTURE_1D, GL_TEXTURE_MIN_FILTER, 
+                             GL_LINEAR );
+        gl.glTexParameteri( GL_TEXTURE_1D, GL_TEXTURE_MAG_FILTER, 
+                             GL_LINEAR );  
+        
+        gl.glTexEnvf( GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE );
+        
+        return theTex[0];
     }
     
     public static void infoText( GL2 gl, GLUT glut, int posX, int posY, String message )
@@ -113,17 +152,50 @@ public class GLUtil
         logger.info( paramName + " : " + value[0] );
     }
     
-    public static void texQuad2DCentered( GL2 gl, float xSize, float ySize )
+    public static void texQuad1D( GL2 gl, 
+              float biasX, float biasY, 
+              float sizeX, float sizeY,
+              boolean isVertical )
     {
+        texQuad1D(gl, biasX, biasY, sizeX, sizeY, 0, 1, isVertical);
+    }
+    
+    public static void texQuad1D( GL2 gl, 
+                                    float biasX, float biasY, 
+                                    float sizeX, float sizeY, 
+                                    float tBiasX, float tSizeX,
+                                    boolean isVertical )
+    {
+        float vx1 =  biasX;
+        float vx2 =  biasX + sizeX;
+        float vy1 =  biasY;
+        float vy2 =  biasY + sizeY;
+        
+        float tx1 = tBiasX;
+        float tx2 = tBiasX + tSizeX;
+                
         gl.glBegin(GL_QUADS);
-            gl.glTexCoord2f( 0.0f, 0.0f );
-            gl.glVertex3f( -xSize/2.0f, -ySize/2.0f, 0.0f );
-            gl.glTexCoord2f( 1.0f, 0.0f );
-            gl.glVertex3f( +xSize/2.0f, -ySize/2.0f, 0.0f );
-            gl.glTexCoord2f( 1.0f, 1.0f );
-            gl.glVertex3f( +xSize/2.0f, +ySize/2.0f, 0.0f );
-            gl.glTexCoord2f( 0.0f, 1.0f );
-            gl.glVertex3f( -xSize/2.0f, +ySize/2.0f, 0.0f );
+            gl.glNormal3f( 0.0f, 0.0f, 1.0f );
+            
+            gl.glTexCoord1f( tx1 );
+            gl.glVertex2f( vx1, vy1 );
+            
+            if ( isVertical )
+                gl.glTexCoord1f( tx1 );
+            else
+                gl.glTexCoord1f( tx2 );
+            
+            gl.glVertex2f( vx2, vy1 );
+            
+            gl.glTexCoord1f( tx2 );
+            gl.glVertex2f( vx2, vy2 );
+            
+            if ( isVertical )
+                gl.glTexCoord1f( tx2 );
+            else
+                gl.glTexCoord1f( tx1 );
+            
+            gl.glVertex2f( vx1, vy2 );
         gl.glEnd();
     }
     
@@ -153,6 +225,20 @@ public class GLUtil
             gl.glVertex2f( vx2, vy2 );
             gl.glTexCoord2f( tx1, ty2 );
             gl.glVertex2f( vx1, vy2 );
+        gl.glEnd();
+    }
+    
+    public static void texQuad2DCentered( GL2 gl, float xSize, float ySize )
+    {
+        gl.glBegin(GL_QUADS);
+            gl.glTexCoord2f( 0.0f, 0.0f );
+            gl.glVertex3f( -xSize/2.0f, -ySize/2.0f, 0.0f );
+            gl.glTexCoord2f( 1.0f, 0.0f );
+            gl.glVertex3f( +xSize/2.0f, -ySize/2.0f, 0.0f );
+            gl.glTexCoord2f( 1.0f, 1.0f );
+            gl.glVertex3f( +xSize/2.0f, +ySize/2.0f, 0.0f );
+            gl.glTexCoord2f( 0.0f, 1.0f );
+            gl.glVertex3f( -xSize/2.0f, +ySize/2.0f, 0.0f );
         gl.glEnd();
     }
     

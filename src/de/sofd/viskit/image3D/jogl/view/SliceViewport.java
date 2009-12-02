@@ -27,6 +27,8 @@ public abstract class SliceViewport extends OrthoViewport
     protected VolumeObject volumeObject;
     
     protected Slider slider;
+    protected TransferComponent transferComp;
+    protected Reticle reticle;
     
     public SliceViewport( int x, int y, int width, int height, ImagePlaneType planeType, int maxSlices, VolumeObject volumeObject ) throws IOException
     {
@@ -39,7 +41,31 @@ public abstract class SliceViewport extends OrthoViewport
         
         Texture sliderBgTex = ResourceLoader.getImageTex("minigui.slider.bg");
         Texture sliderPinTex = ResourceLoader.getImageTex("minigui.slider.pin");
-        slider = new Slider( margin[3], 10, getPlaneWidth(), sliderBgTex, sliderPinTex, 1, maxSlices, currentSlice );
+        
+        slider 
+            = new Slider( margin[3], 
+                          30 - sliderBgTex.getImageHeight() - 2, 
+                          getPlaneWidth(), 
+                          sliderBgTex, 
+                          sliderPinTex, 
+                          1, 
+                          maxSlices, 
+                          currentSlice );
+        
+        transferComp 
+            = new TransferComponent( margin[3] + getPlaneWidth() + 1,
+                                     margin[2],
+                                     margin[1] - 1,
+                                     getPlaneHeight(),
+                                     (float)volumeObject.getRangeMin(),
+                                     (float)volumeObject.getRangeMax(),
+                                     volumeObject.getTransferTexId());
+        
+        reticle
+            = new Reticle( margin[3], margin[2], 
+                           getPlaneWidth(), getPlaneHeight(), 
+                           margin[3] + getPlaneWidth() / 2, margin[2] + getPlaneHeight() / 2 );
+        reticle.setColor( 1.0f, 1.0f, 1.0f, 0.2f );
     }
     
     public void show(GL2 gl)
@@ -47,7 +73,10 @@ public abstract class SliceViewport extends OrthoViewport
         beginViewport(gl);
         
         showTexPlane(gl);
+        reticle.show(gl);
+        
         slider.show(gl);
+        transferComp.show(gl);
         
         endViewport(gl);
     }
@@ -104,34 +133,34 @@ public abstract class SliceViewport extends OrthoViewport
 
     protected abstract void showTexPlane(GL2 gl);
     
-    public void mouseDragged( int mX, int mY ) {
+    public void mouseDragged( int button, int mX, int mY ) {
         if ( isInBounds(mX, mY))
         {
             int mouseX = getRelativeMouseX( mX );
             int mouseY = getRelativeMouseY( mY );
             
-            slider.mouseDragged( mouseX, mouseY );
+            slider.mouseDragged( button, mouseX, mouseY );
             this.currentSlice = slider.getValue();
         }
     }
 
-    public void mousePressed( int mX, int mY ) {
+    public void mousePressed( int button, int mX, int mY ) {
         if ( isInBounds( mX, mY ))
         {
             int mouseX = getRelativeMouseX( mX );
             int mouseY = getRelativeMouseY( mY );
             
-            slider.mousePressed( mouseX, mouseY );
+            slider.mousePressed( button, mouseX, mouseY );
         }
     }
 
-    public void mouseReleased( int mX, int mY) {
+    public void mouseReleased( int button, int mX, int mY) {
         if ( isInBounds( mX, mY ))
         {
             int mouseX = getRelativeMouseX( mX );
             int mouseY = getRelativeMouseY( mY );
             
-            slider.mouseReleased( mouseX, mouseY );
+            slider.mouseReleased( button, mouseX, mouseY );
         }
         
     }

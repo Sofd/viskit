@@ -52,7 +52,7 @@ public class SliceViewer extends JFrame
         sliceView.setMinimumSize(new Dimension(volumeObject.getMaxDim()*2, volumeObject.getMaxDim()*2));*/
         
         //this.setSize( Toolkit.getDefaultToolkit().getScreenSize() );
-        this.setSize( new Dimension(600, 600) );
+        this.setSize( new Dimension(600, 650) );
                 
         setLocationRelativeTo(null);
         

@@ -16,8 +16,6 @@ import javax.media.opengl.glu.gl2.*;
 
 import org.apache.log4j.*;
 
-import vtk.*;
-
 import com.sun.opengl.util.gl2.*;
 
 import de.sofd.viskit.image3D.jogl.model.*;
@@ -43,15 +41,11 @@ public class SliceView extends GLCanvas implements GLEventListener, MouseListene
     protected YSliceViewport ySliceViewport;
     protected ZSliceViewport zSliceViewport;
     
-    protected vtkImageData imageData;
-    
     protected static GLCapabilities caps;
     
     static {
         caps = new GLCapabilities(GLProfile.get(GLProfile.GL2));
         caps.setAlphaBits(8); 
-        
-        
     }
     
     public SliceView( VolumeObject volumeObject )
@@ -60,6 +54,7 @@ public class SliceView extends GLCanvas implements GLEventListener, MouseListene
         
         this.setBackground(Color.BLACK);
         this.volumeObject = volumeObject;
+        
         addGLEventListener(this);
         addMouseListener(this);
         addMouseMotionListener(this);
@@ -86,14 +81,16 @@ public class SliceView extends GLCanvas implements GLEventListener, MouseListene
         ySliceViewport.show(gl);
         zSliceViewport.show(gl);
         
+        gl.glViewport( 0, 0, viewport[2], viewport[3] ); 
+        
         gl.glMatrixMode(GL_MODELVIEW);
         gl.glLoadIdentity();
         
         //show fps
         gl.glDisable(GL_BLEND);
         beginInfoScreen(gl, glu, viewport[2], viewport[3]);
-            gl.glColor3f(1.0f, 0.5f, 0.0f);
-            infoText(gl, glut, 10, 10, "FPS : " + fpsCounter.getFps());
+            gl.glColor3f(1.0f, 1.0f, 1.0f);
+            infoText(gl, glut, 400, 400, "FPS : " + fpsCounter.getFps());
         endInfoScreen(gl);
         
     }
@@ -106,7 +103,7 @@ public class SliceView extends GLCanvas implements GLEventListener, MouseListene
     @Override
     public void init(GLAutoDrawable drawable) {
         drawable.setGL((new DebugGL2(drawable.getGL().getGL2())));
-        logger.info("init");
+        drawable.getChosenGLCapabilities().setAlphaBits(8);
         
         GL2 gl = drawable.getGL().getGL2();
 
@@ -115,14 +112,12 @@ public class SliceView extends GLCanvas implements GLEventListener, MouseListene
         logger.info("GL_VERSION: " + gl.glGetString(GL_VERSION));
         
         volumeObject.loadTexture( gl );
+        volumeObject.setTransferTexId( getTransferTexture( gl, Color.BLACK, Color.WHITE ) );
         
         glu = new GLUgl2();
         glut = new GLUT();
         
-        drawable.getChosenGLCapabilities().setAlphaBits(8);
-        
         logger.info("INIT GL IS: " + gl.getClass().getName());
-
         logger.info("Chosen GLCapabilities: " + drawable.getChosenGLCapabilities());
 
         gl.setSwapInterval(0); 
@@ -137,7 +132,6 @@ public class SliceView extends GLCanvas implements GLEventListener, MouseListene
     
     @Override
     public void reshape(GLAutoDrawable drawable, int x, int y, int width, int height) {
-        //logger.info("reshape");
         GL2 gl = drawable.getGL().getGL2();
         gl.glViewport( 0, 0, width, height ); 
         
@@ -193,9 +187,9 @@ public class SliceView extends GLCanvas implements GLEventListener, MouseListene
 
     @Override
     public void mouseDragged(MouseEvent e) {
-        xSliceViewport.mouseDragged(e.getX(), viewport[3] - e.getY());
-        ySliceViewport.mouseDragged(e.getX(), viewport[3] - e.getY());
-        zSliceViewport.mouseDragged(e.getX(), viewport[3] - e.getY());
+        xSliceViewport.mouseDragged(e.getButton(), e.getX(), viewport[3] - e.getY());
+        ySliceViewport.mouseDragged(e.getButton(), e.getX(), viewport[3] - e.getY());
+        zSliceViewport.mouseDragged(e.getButton(), e.getX(), viewport[3] - e.getY());
     }
 
     @Override
@@ -224,17 +218,17 @@ public class SliceView extends GLCanvas implements GLEventListener, MouseListene
 
     @Override
     public void mousePressed(MouseEvent e) {
-        xSliceViewport.mousePressed(e.getX(), viewport[3] - e.getY());
-        ySliceViewport.mousePressed(e.getX(), viewport[3] - e.getY());
-        zSliceViewport.mousePressed(e.getX(), viewport[3] - e.getY());
+        xSliceViewport.mousePressed(e.getButton(), e.getX(), viewport[3] - e.getY());
+        ySliceViewport.mousePressed(e.getButton(), e.getX(), viewport[3] - e.getY());
+        zSliceViewport.mousePressed(e.getButton(), e.getX(), viewport[3] - e.getY());
         
     }
 
     @Override
     public void mouseReleased(MouseEvent e) {
-        xSliceViewport.mouseReleased(e.getX(), viewport[3] - e.getY());
-        ySliceViewport.mouseReleased(e.getX(), viewport[3] - e.getY());
-        zSliceViewport.mouseReleased(e.getX(), viewport[3] - e.getY());
+        xSliceViewport.mouseReleased(e.getButton(), e.getX(), viewport[3] - e.getY());
+        ySliceViewport.mouseReleased(e.getButton(), e.getX(), viewport[3] - e.getY());
+        zSliceViewport.mouseReleased(e.getButton(), e.getX(), viewport[3] - e.getY());
         
     }
 }

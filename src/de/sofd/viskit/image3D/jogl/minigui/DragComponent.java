@@ -1,5 +1,7 @@
 package de.sofd.viskit.image3D.jogl.minigui;
 
+import java.awt.event.*;
+
 public class DragComponent extends Component
 {
     protected int oldMouseX;
@@ -27,7 +29,7 @@ public class DragComponent extends Component
         
     }
 
-    public void dragged( int mouseX, int mouseY )
+    public void dragged( int button, int mouseX, int mouseY )
     {
         if ( isActive() )
         {
@@ -62,9 +64,9 @@ public class DragComponent extends Component
         return isActive;
     }
 
-    public void pressed( int mouseX, int mouseY )
+    public void pressed( int button, int mouseX, int mouseY )
     {
-        if ( isInBounds( mouseX, mouseY ) )
+        if ( isInBounds( mouseX, mouseY ) && button == MouseEvent.BUTTON1 )
         {
             oldMouseX = mouseX;
             oldMouseY = mouseY;
@@ -74,9 +76,12 @@ public class DragComponent extends Component
         }
     }
 
-    public void released()
+    public void released( int button )
     {
-        setActive(false);
+        if ( button == MouseEvent.BUTTON1 )
+        {
+            setActive(false);
+        }
     }
 
     public void setActive(boolean isActive) {

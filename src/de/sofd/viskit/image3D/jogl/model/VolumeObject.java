@@ -16,25 +16,30 @@ public class VolumeObject
     protected int texId;
     
     /**
-     * Databuffer for 3D-Texture;
+     * Databuffer for 3D-Texture.
      */
     protected FloatBuffer dataBuf;
     
+    /**
+     * OpenGL-Id fuer Transferfunktion.
+     */
+    protected int transferTexId;
+    
     protected int width;
+
     protected int height;
+
     protected int depth;
     protected int maxDim;
     protected int minDim;
-    
     protected double spacingX;
     protected double spacingY;
-    protected double spacingZ;
     
+    protected double spacingZ;
     /**
      * Maximum of width*spacingX, height*spacingY, depth*spacingZ
      */
     protected double maxSize;
-    
     /**
      * Minimum of width*spacingX, height*spacingY, depth*spacingZ
      */
@@ -44,9 +49,10 @@ public class VolumeObject
      * Value range.
      */
     protected double rangeMin;
+    
     protected double rangeMax;
     
-    public VolumeObject(vtkImageData imageData, FloatBuffer dataBuf )
+    public VolumeObject( vtkImageData imageData, FloatBuffer dataBuf )
     {
         int[] dim = imageData.GetDimensions();
         double[] spacing = imageData.GetSpacing();
@@ -72,11 +78,10 @@ public class VolumeObject
         setDataBuf(dataBuf);
         
     }
-
     public FloatBuffer getDataBuf() {
         return dataBuf;
     }
-
+    
     public int getDepth() {
         return depth;
     }
@@ -100,7 +105,7 @@ public class VolumeObject
     public double getMinSize() {
         return minSize;
     }
-    
+
     public double getRangeMax() {
         return rangeMax;
     }
@@ -108,7 +113,7 @@ public class VolumeObject
     public double getRangeMin() {
         return rangeMin;
     }
-
+    
     protected double getRangeSize()
     {
         return ( rangeMax - rangeMin );
@@ -118,12 +123,12 @@ public class VolumeObject
     {
         return ( width * spacingX );
     }
-    
+
     public double getSizeY()
     {
         return ( height * spacingY );
     }
-    
+
     public double getSizeZ()
     {
         return ( depth * spacingZ );
@@ -132,17 +137,21 @@ public class VolumeObject
     public double getSpacingX() {
         return spacingX;
     }
-
+    
     public double getSpacingY() {
         return spacingY;
     }
-
+    
     public double getSpacingZ() {
         return spacingZ;
     }
 
     public int getTexId() {
         return texId;
+    }
+
+    public int getTransferTexId() {
+        return transferTexId;
     }
 
     public int getWidth() {
@@ -200,9 +209,13 @@ public class VolumeObject
     protected void setSpacingZ(double spacingZ) {
         this.spacingZ = spacingZ;
     }
-    
+
     public void setTexId(int texId) {
         this.texId = texId;
+    }
+    
+    public void setTransferTexId(int transferTexId) {
+        this.transferTexId = transferTexId;
     }
 
     protected void setWidth(int width) {

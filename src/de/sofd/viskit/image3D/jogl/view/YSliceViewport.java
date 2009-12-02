@@ -51,8 +51,8 @@ public class YSliceViewport extends SliceViewport
         gl.glDisable(GL_BLEND);
         gl.glDisable(GL_TEXTURE_3D);
         
-        gl.glColor4f( 1.0f, 0.0f, 0.0f, 1.0f );
-        GLUtil.lineQuad( gl, x, y, sizeX, sizeY );
+//        gl.glColor4f( 1.0f, 0.0f, 0.0f, 1.0f );
+//        GLUtil.lineQuad( gl, x, y, sizeX, sizeY );
         
         gl.glMatrixMode( GL_TEXTURE );
         gl.glPopMatrix();

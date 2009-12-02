@@ -32,6 +32,11 @@ public class ResourceLoader
         
         return properties;
     }
+    
+    public static int getProperty1i( String key ) throws NumberFormatException, IOException
+    {
+        return Integer.parseInt( getProperties().getProperty( key ) );
+    }
 
     public static Texture getImageTex( String id ) throws IOException {
         Texture tex = texMap.get(id);

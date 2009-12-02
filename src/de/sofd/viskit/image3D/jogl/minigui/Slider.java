@@ -34,8 +34,9 @@ public class Slider extends Component
         bgTex.setTexParameteri( GL_TEXTURE_MIN_FILTER, GL_LINEAR );
         bgTex.setTexParameteri( GL_TEXTURE_MAG_FILTER, GL_LINEAR );
         
-        pin = new SliderPin(0, 0, pinTex, x, x + width - pinTex.getWidth());
-        pin.setRelativePosition( ( value - rangeMin ) * 1.0f / ( rangeMax - rangeMin ) );
+        int pinY = y + ( height - pinTex.getHeight() );
+        pin = new SliderPin(0, pinY, pinTex, x, x + width - pinTex.getWidth(), pinY, pinY );
+        pin.setRelativeXPosition( ( value - rangeMin ) * 1.0f / ( rangeMax - rangeMin ) );
     }
     
     public SliderPin getPin() {
@@ -52,25 +53,25 @@ public class Slider extends Component
     
     public float getRelativeValue()
     {
-        return pin.getRelativePosition();
+        return pin.getRelativeXPosition();
     }
     
     public int getValue()
     {
-        return (int)(rangeMin + pin.getRelativePosition() * ( rangeMax - rangeMin ));
+        return (int)(rangeMin + pin.getRelativeXPosition() * ( rangeMax - rangeMin ));
         
     }
     
-    public void mouseDragged( int mouseX, int mouseY ) {
-        pin.dragged( mouseX, mouseY );
+    public void mouseDragged( int button, int mouseX, int mouseY ) {
+        pin.dragged( button, mouseX, mouseY );
     }
     
-    public void mousePressed( int mouseX, int mouseY ) {
-        pin.pressed( mouseX, mouseY );
+    public void mousePressed( int button, int mouseX, int mouseY ) {
+        pin.pressed( button, mouseX, mouseY );
     }
     
-    public void mouseReleased( int mouseX, int mouseY ) {
-        pin.released();
+    public void mouseReleased( int button, int mouseX, int mouseY ) {
+        pin.released( button );
     }
 
     public void setRangeMax(float rangeMax) {
@@ -83,36 +84,31 @@ public class Slider extends Component
 
     public void show( GL2 gl )
     {
-        
-        
-        gl.glEnable( GL_BLEND );
-        gl.glBlendFunc( GL_ONE, GL_ONE_MINUS_SRC_ALPHA );
-        gl.glEnable(GL_TEXTURE_2D);
-        
         showSliderBackground(gl);
         showSliderPin(gl);
-                
-        gl.glDisable(GL_TEXTURE_2D);
-        gl.glDisable( GL_BLEND );
-        
-        //GLUtil.lineQuad( gl, x, y, width, height );
     }
 
     private void showSliderBackground(GL2 gl) {
         float texWidth = width*1.0f/bgTex.getImageWidth();
         float texHeight = 1.0f;
         
+        gl.glEnable( GL_BLEND );
+        gl.glBlendFunc( GL_ONE, GL_ONE_MINUS_SRC_ALPHA );
+        gl.glEnable(GL_TEXTURE_2D);
+        
         bgTex.bind();
         gl.glColor4f( 1.0f, 1.0f, 1.0f, 1.0f );
         GLUtil.texQuad2D( gl, x, y, width, height, 0, texHeight, texWidth, -texHeight );
+        
+        gl.glDisable(GL_TEXTURE_2D);
+        gl.glDisable( GL_BLEND );
     }
     
     private void showSliderPin(GL2 gl) {
         float posX = x + ( width - pin.getWidth() ) * getRelativeValue();
-        float posY = y + ( height - pin.getHeight() );
-        
+                
         pin.setX((int)posX);
-        pin.setY((int)posY);
+        
         pin.show(gl);
     }
     

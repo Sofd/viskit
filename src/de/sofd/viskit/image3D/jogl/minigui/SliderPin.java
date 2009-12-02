@@ -12,8 +12,8 @@ public class SliderPin extends DragComponent
 {
     protected Texture pinTex;
     
-    public SliderPin( int x, int y, Texture pinTex, int minX, int maxX ) {
-        super( x, y, pinTex.getImageWidth(), pinTex.getImageHeight(), minX, maxX, y, y );
+    public SliderPin( int x, int y, Texture pinTex, int minX, int maxX, int minY, int maxY ) {
+        super( x, y, pinTex.getImageWidth(), pinTex.getImageHeight(), minX, maxX, minY, maxY );
         
         this.pinTex = pinTex;
         
@@ -24,22 +24,37 @@ public class SliderPin extends DragComponent
         
     }
     
+    public float getRelativeXPosition() {
+        float r = ( x - minX ) * 1.0f / ( maxX - minX );
+        return r;
+    }
+
+    public float getRelativeYPosition() {
+        float r = ( y - minY ) * 1.0f / ( maxY - minY );
+        return r;
+    }
+    
+    public void setRelativeXPosition( float r ) {
+        this.x = (int)(minX + r * ( maxX - minX ));
+        
+    }
+    
+    public void setRelativeYPosition( float r ) {
+        this.y = (int)(minY + r * ( maxY - minY ));
+        
+    }
+    
     public void show( GL2 gl )
     {
+        gl.glEnable( GL_TEXTURE_2D );
+        gl.glEnable( GL_BLEND );
+        gl.glBlendFunc( GL_ONE, GL_ONE_MINUS_SRC_ALPHA );
+        
         pinTex.bind();
         gl.glColor4f( 1.0f, 1.0f, 1.0f, 1.0f );
         GLUtil.texQuad2D( gl, x, y, width, height, 0, 1.0f, 1.0f, -1.0f );
         
-        
-    }
-
-    public float getRelativePosition() {
-        float r = ( x - minX ) * 1.0f / ( maxX - minX );
-        return r;
-    }
-    
-    public void setRelativePosition( float r ) {
-        this.x = (int)(minX + r * ( maxX - minX ));
-        
+        gl.glDisable( GL_BLEND );
+        gl.glDisable( GL_TEXTURE_2D );
     }
 }
