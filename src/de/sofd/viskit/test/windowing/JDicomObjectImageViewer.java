@@ -285,9 +285,11 @@ public class JDicomObjectImageViewer extends JPanel {
         System.out.println("raster.databuffer.sampleModel.transferType: " + getDataBufferTypeName(r.getSampleModel().getTransferType()));
         int numBands = r.getNumBands();
         System.out.println("raster.numBands: " + numBands);
+        System.out.println("raster.width: " + r.getWidth());
+        System.out.println("raster.height: " + r.getHeight());
         //int min = Integer.MAX_VALUE, max = Integer.MIN_VALUE;
         //SortedSet<Integer>
-        //SortedMap<Integer, int[]>
+        //SortedMap<Integer, int[]>   // O(1) rather than O(log n) insertion complexity probably outweighs need for additional sort() call below? (TODO)
         Map<Integer, int[]> valueCounts = new HashMap<Integer, int[]>(1024);
         for (int x = 0; x < r.getWidth(); x++) {
             for (int y = 0; y < r.getHeight(); y++) {
@@ -305,8 +307,22 @@ public class JDicomObjectImageViewer extends JPanel {
 
         List<Integer> sortedValues = new ArrayList<Integer>(valueCounts.keySet());
         Collections.sort(sortedValues);
-        System.out.println("raster pixels minValue: " + sortedValues.get(0) + ", maxValue: " + sortedValues.get(sortedValues.size() - 1));
+        int min = sortedValues.get(0), max = sortedValues.get(sortedValues.size() - 1);
+        System.out.println("raster pixels minValue: " + min + ", maxValue: " + max);
         System.out.println("raster pixels #values: " + sortedValues.size());
+        // histogram...
+        int bagsCount = 20;
+        int[] bagValues = new int[bagsCount];
+        int bagWidth = (max - min) / bagsCount + 1;
+        for (int value : sortedValues) {
+            int bag = (value - min) / bagWidth;
+            bagValues[bag] += valueCounts.get(value)[0];
+        }
+        System.out.print("raster histogram (avg. over all bands): [");
+        for (int bv : bagValues) {
+            System.out.print(" " + bv/numBands);
+        }
+        System.out.println("]");
     }
 
     public static String getDataBufferTypeName(int type) {
