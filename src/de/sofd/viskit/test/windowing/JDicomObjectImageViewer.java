@@ -42,6 +42,7 @@ import java.util.Map;
 import java.util.SortedMap;
 import java.util.SortedSet;
 import org.dcm4che2.imageio.plugins.dcm.DicomImageReadParam;
+import org.dcm4che2.imageioimpl.plugins.dcm.DicomImageReader;
 import org.dcm4che2.media.FileMetaInformation;
 
 /**
@@ -416,7 +417,10 @@ public class JDicomObjectImageViewer extends JPanel {
                     throw new IllegalStateException("The DICOM image I/O filter (from dcm4che1) must be available to read images.");
                 }
                 reader.setInput(in);
-                objectImage = reader.read(0);
+                DicomImageReadParam parm = (DicomImageReadParam) reader.getDefaultReadParam();
+                //DicomImageReadParam parm = new DicomImageReadParam();
+                parm.setAutoWindowing(false);
+                objectImage = reader.read(0, parm);
                 //objectImage = unbugDicomImage(objectImage);
                 rawImageCache.put(dicomObject.getString(Tag.SOPInstanceUID), objectImage);
             } catch (IOException e) {
@@ -435,7 +439,7 @@ public class JDicomObjectImageViewer extends JPanel {
         if (null == windowedImage) {
             // window it
             BufferedImage srcImg = getRawObjectImage();
-            /*
+            ///*
             if (srcImg.getColorModel().getColorSpace().getType() == ColorSpace.TYPE_GRAY) {
                 windowedImage = windowMonochrome(srcImg, windowLocation, windowWidth);
             } else if (srcImg.getColorModel().getColorSpace().isCS_sRGB()) {
@@ -447,8 +451,8 @@ public class JDicomObjectImageViewer extends JPanel {
                 //    some createCompatibleImage() method in BufferedImage or elsewhere),
                 //    window all bands of that, and let the JRE figure out how to draw the result?
             }
-            */
-            windowedImage = windowWithRasterOp(srcImg, windowLocation, windowWidth);
+            //*/
+            //windowedImage = windowWithRasterOp(srcImg, windowLocation, windowWidth);
             //windowedImage = srcImg;
             
             windowedImageCache.put(imgKey, windowedImage);
