@@ -31,7 +31,17 @@ import org.dcm4che2.data.UID;
 import org.dcm4che2.io.DicomOutputStream;
 
 import java.awt.color.ColorSpace;
+import java.awt.image.DataBuffer;
 import java.awt.image.Raster;
+import java.awt.image.RescaleOp;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.SortedMap;
+import java.util.SortedSet;
+import org.dcm4che2.imageio.plugins.dcm.DicomImageReadParam;
 import org.dcm4che2.media.FileMetaInformation;
 
 /**
@@ -208,6 +218,173 @@ public class JDicomObjectImageViewer extends JPanel {
         setWindowingParams((min + max) / 2, max - min);
     }
 
+    public void analyzeRawImage() {
+        System.out.println("Raw Image");
+        System.out.println("==========");
+        analyzeImage(getRawObjectImage());
+        System.out.println();
+    }
+
+    public void analyzeRawRaster() {
+        System.out.println("Raw Raster");
+        System.out.println("==========");
+        Iterator it = ImageIO.getImageReadersByFormatName("DICOM");
+        if (!it.hasNext()) {
+            throw new IllegalStateException("The DICOM image I/O filter must be available to read images.");
+        }
+
+        // extract the BufferedImage from the received imageDicomObject
+        ByteArrayOutputStream bos = new ByteArrayOutputStream(200000);
+        DicomOutputStream dos = new DicomOutputStream(bos);
+        try {
+            String tsuid = dicomObject.getString(Tag.TransferSyntaxUID);
+            if (null == tsuid) {
+                tsuid = UID.ImplicitVRLittleEndian;
+            }
+            FileMetaInformation fmi = new FileMetaInformation(dicomObject);
+            fmi = new FileMetaInformation(fmi.getMediaStorageSOPClassUID(), fmi.getMediaStorageSOPInstanceUID(), tsuid);
+            dos.writeFileMetaInformation(fmi.getDicomObject());
+            dos.writeDataset(dicomObject, tsuid);
+            dos.close();
+
+            ImageReader reader = (ImageReader) it.next();
+            ImageInputStream in = ImageIO.createImageInputStream(new ByteArrayInputStream(bos.toByteArray()));
+            if (null == in) {
+                throw new IllegalStateException("The DICOM image I/O filter (from dcm4che1) must be available to read images.");
+            }
+            reader.setInput(in);
+            Raster raster = reader.readRaster(0, null);
+            analyzeRaster(raster);
+        } catch (IOException e) {
+            throw new IllegalStateException("error trying to extract image from DICOM object", e);
+        }
+        System.out.println();
+    }
+
+    public void analyzeWindowedImage() {
+        System.out.println("Windowed Image");
+        System.out.println("===============");
+        analyzeImage(getWindowedObjectImage());
+        System.out.println();
+    }
+
+    public static void analyzeImage(BufferedImage img) {
+        System.out.println("getType(): " + getBufferedImgTypeName(img.getType()));
+        System.out.println("getColorModel().getPixelSize(): " + img.getColorModel().getPixelSize());
+        System.out.print("getColorModel().getComponentSize(): {");
+        for (int sz : img.getColorModel().getComponentSize()) {
+            System.out.print(" " + sz);
+        }
+        System.out.println("}");
+        analyzeRaster(img.getRaster());
+    }
+
+    public static void analyzeRaster(Raster r) {
+        System.out.println("raster.databuffer.type: " + getDataBufferTypeName(r.getDataBuffer().getDataType()));
+        System.out.println("raster.databuffer.sampleModel.transferType: " + getDataBufferTypeName(r.getSampleModel().getTransferType()));
+        int numBands = r.getNumBands();
+        System.out.println("raster.numBands: " + numBands);
+        //int min = Integer.MAX_VALUE, max = Integer.MIN_VALUE;
+        //SortedSet<Integer>
+        //SortedMap<Integer, int[]>
+        Map<Integer, int[]> valueCounts = new HashMap<Integer, int[]>(1024);
+        for (int x = 0; x < r.getWidth(); x++) {
+            for (int y = 0; y < r.getHeight(); y++) {
+                for (int band = 0; band < numBands; band++) {
+                    int value = r.getSample(x, y, band);
+                    int[] count = valueCounts.get(value);
+                    if (count == null) {
+                        count = new int[]{0};
+                        valueCounts.put(value, count);
+                    }
+                    count[0]++;
+                }
+            }
+        }
+
+        List<Integer> sortedValues = new ArrayList<Integer>(valueCounts.keySet());
+        Collections.sort(sortedValues);
+        System.out.println("raster pixels minValue: " + sortedValues.get(0) + ", maxValue: " + sortedValues.get(sortedValues.size() - 1));
+        System.out.println("raster pixels #values: " + sortedValues.size());
+    }
+
+    public static String getDataBufferTypeName(int type) {
+        switch (type) {
+            case DataBuffer.TYPE_BYTE:
+                return "TYPE_BYTE";
+
+            case DataBuffer.TYPE_USHORT:
+                return "TYPE_USHORT";
+
+            case DataBuffer.TYPE_SHORT:
+                return "TYPE_SHORT";
+
+            case DataBuffer.TYPE_INT:
+                return "TYPE_INT";
+
+            case DataBuffer.TYPE_FLOAT:
+                return "TYPE_FLOAT";
+
+            case DataBuffer.TYPE_DOUBLE:
+                return "TYPE_DOUBLE";
+
+            case DataBuffer.TYPE_UNDEFINED:
+                return "UNDEFINED";
+
+            default:
+                return "unknown type " + type;
+        }
+    }
+
+    public static String getBufferedImgTypeName(int type) {
+        switch (type) {
+            case BufferedImage.TYPE_INT_RGB:
+                return "TYPE_INT_RGB";
+
+            case BufferedImage.TYPE_INT_ARGB:
+                return "TYPE_INT_ARGB";
+
+            case BufferedImage.TYPE_INT_ARGB_PRE:
+                return "TYPE_INT_ARGB_PRE";
+
+            case BufferedImage.TYPE_INT_BGR:
+                return "TYPE_INT_BGR";
+
+            case BufferedImage.TYPE_3BYTE_BGR:
+                return "TYPE_3BYTE_BGR";
+
+            case BufferedImage.TYPE_4BYTE_ABGR:
+                return "TYPE_4BYTE_ABGR";
+
+            case BufferedImage.TYPE_4BYTE_ABGR_PRE:
+                return "TYPE_4BYTE_ABGR_PRE";
+
+            case BufferedImage.TYPE_BYTE_GRAY:
+                return "TYPE_BYTE_GRAY";
+
+            case BufferedImage.TYPE_BYTE_BINARY:
+                return "TYPE_BYTE_BINARY";
+
+            case BufferedImage.TYPE_BYTE_INDEXED:
+                return "TYPE_BYTE_INDEXED";
+
+            case BufferedImage.TYPE_USHORT_GRAY:
+                return "TYPE_USHORT_GRAY";
+
+            case BufferedImage.TYPE_USHORT_565_RGB:
+                return "TYPE_USHORT_565_RGB";
+
+            case BufferedImage.TYPE_USHORT_555_RGB:
+                return "TYPE_USHORT_555_RGB";
+
+            case BufferedImage.TYPE_CUSTOM:
+                return "TYPE_CUSTOM";
+
+            default:
+                return "unknown type " + type;
+        }
+    }
+
     protected BufferedImage getRawObjectImage() {
         if (null == dicomObject) {
             return null;
@@ -258,15 +435,11 @@ public class JDicomObjectImageViewer extends JPanel {
         if (null == windowedImage) {
             // window it
             BufferedImage srcImg = getRawObjectImage();
-            windowedImage = new BufferedImage(srcImg.getWidth(), srcImg.getHeight(),
-                                              BufferedImage.TYPE_INT_RGB);
-            final int windowedImageGrayscalesCount = 256;  // for BufferedImage.TYPE_INT_RGB
-            float scale = windowedImageGrayscalesCount/windowWidth;
-            float offset = (windowWidth/2-windowLocation)*scale;
+            /*
             if (srcImg.getColorModel().getColorSpace().getType() == ColorSpace.TYPE_GRAY) {
-                windowMonochrome(srcImg, windowedImage, scale, offset);
+                windowedImage = windowMonochrome(srcImg, windowLocation, windowWidth);
             } else if (srcImg.getColorModel().getColorSpace().isCS_sRGB()) {
-                windowRGB(srcImg, windowedImage, scale, offset);
+                windowedImage = windowRGB(srcImg, windowLocation, windowWidth);
             } else {
                 throw new IllegalStateException("don't know how to window image with color space " + srcImg.getColorModel().getColorSpace());
                 // TODO: do something cleverer here? Like, create windowedImage
@@ -274,6 +447,9 @@ public class JDicomObjectImageViewer extends JPanel {
                 //    some createCompatibleImage() method in BufferedImage or elsewhere),
                 //    window all bands of that, and let the JRE figure out how to draw the result?
             }
+            */
+            windowedImage = windowWithRasterOp(srcImg, windowLocation, windowWidth);
+            //windowedImage = srcImg;
             
             windowedImageCache.put(imgKey, windowedImage);
         }
@@ -283,8 +459,11 @@ public class JDicomObjectImageViewer extends JPanel {
     /**
      * @pre destImg is of type BufferedImage.TYPE_INT_RGB
      */
-    private BufferedImage windowMonochrome(BufferedImage srcImg, BufferedImage destImg, float scale, float offset) {
+    private BufferedImage windowMonochrome(BufferedImage srcImg, float windowLocation, float windowWidth) {
+        BufferedImage destImg = new BufferedImage(srcImg.getWidth(), srcImg.getHeight(), BufferedImage.TYPE_INT_RGB);
         final int windowedImageGrayscalesCount = 256;  // for BufferedImage.TYPE_INT_RGB
+        float scale = windowedImageGrayscalesCount/windowWidth;
+        float offset = (windowWidth/2-windowLocation)*scale;
         if (! (srcImg.getColorModel().getColorSpace().getType() == ColorSpace.TYPE_GRAY)) {
             throw new IllegalArgumentException("source image must be grayscales");
         }
@@ -314,8 +493,11 @@ public class JDicomObjectImageViewer extends JPanel {
     /**
      * @pre destImg is of type BufferedImage.TYPE_INT_RGB
      */
-    private BufferedImage windowRGB(BufferedImage srcImg, BufferedImage destImg, float scale, float offset) {
+    private BufferedImage windowRGB(BufferedImage srcImg, float windowLocation, float windowWidth) {
+        BufferedImage destImg = new BufferedImage(srcImg.getWidth(), srcImg.getHeight(), BufferedImage.TYPE_INT_RGB);
         final int windowedImageBandValuesCount = 256;  // for BufferedImage.TYPE_INT_RGB
+        float scale = windowedImageBandValuesCount/windowWidth;
+        float offset = (windowWidth/2-windowLocation)*scale;
         if (! srcImg.getColorModel().getColorSpace().isCS_sRGB()) {
             throw new IllegalArgumentException("source image must be RGB");
         }
@@ -340,6 +522,18 @@ public class JDicomObjectImageViewer extends JPanel {
             }
         }
         return destImg;
+    }
+
+    private BufferedImage windowWithRasterOp(BufferedImage srcImg, float windowLocation, float windowWidth) {
+        //final int windowedImageBandValuesCount = 256;  // for BufferedImage.TYPE_INT_RGB
+        //final float windowedImageBandValuesCount = 1.0F;
+        //final float windowedImageBandValuesCount = 65535F;
+        //final float windowedImageBandValuesCount = 4095F;
+        final float windowedImageBandValuesCount = (1 << srcImg.getColorModel().getComponentSize(0)) - 1;
+        float scale = windowedImageBandValuesCount/windowWidth;
+        float offset = (windowWidth/2-windowLocation)*scale;
+        RescaleOp rescaleOp = new RescaleOp(scale, offset, null);
+        return rescaleOp.filter(srcImg, null);
     }
 
     public float getWindowLocation() {

@@ -84,6 +84,14 @@ public class WindowingTestApp {
                 updateWlWwLabels();
             }
         });
+        toolbar.add(new AbstractAction("ImgAnalyze") {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                viewer.analyzeRawImage();
+                viewer.analyzeRawRaster();
+                viewer.analyzeWindowedImage();
+            }
+        });
         viewer.setWindowingParamsToDicom();
         f.getContentPane().add(viewer, BorderLayout.CENTER);
         f.getContentPane().add(toolbar, BorderLayout.PAGE_START);
