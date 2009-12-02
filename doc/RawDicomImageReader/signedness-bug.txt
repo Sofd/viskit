@@ -126,6 +126,21 @@ srcImg.getRaster().getPixel(382, 572, null)[0] == 33
 
 =====================
 
+Wenn man den in Changeset #295 eingefuehrten Codepath[1] aktiviert,
+skaliert er irgendwie die Pixelwerte im Ausgabebild so hoch, dass sie
+den gesamten Wertebereich (z.B. 12 Bit) ausfüllen. Dadurch sind die
+Windowing-Werte auch entspr. größer, und z.B. die Windowing-Werte aus
+den DICOM-Tags sind nicht mehr anwendbar... Man will das nicht! Man
+will die verdammten Original-Pixelwerte unmodifiziert und mit der
+richtigen Datentypangabe (short vs. unsigned short etc.) kriegen!
+WIE?? ==> Im dcm4che-Forum nachfragen!
+
+[1] RawDicomImageReader: additional code path for
+BufferedImage#read(int) that SHOULD apply all LUTs except windowing
+AND retain the raw image's bit depth
+
+=====================
+
 (Das folgende war/ist(?) als Bugreport für JAI gedacht...)
 
 When java.awt.image.RescaleOp calculates pixel values for the output
@@ -164,4 +179,6 @@ RawDicomImageReader, source file cd014__center001__25.dcm in this
 case) aren't really legal? Writing them to a PNG file using
 ImageIO.write(img, "PNG", new File(outputFilename)) results in a very
 much too dark image -- as if it had interpreted all those values as
-16-bit...
+16-bit... (the same image drawn to a Java GUI using
+Graphics2D#drawImage() looks correctly, so that method apparently
+honours the 12 bit indication)
