@@ -469,6 +469,22 @@ public class RawDicomImageReader extends ImageReader {
                         ((DataBufferByte)bi.getRaster().getDataBuffer()).getData());
             }
         }
+        // (olaf) hack: if pixel values are signed 16-bit, convert... TODO: implement 8 bit too
+        //   get rid of this as soon as we have something better
+        if (1 == ds.getInt(Tag.PixelRepresentation) && 16 == ds.getInt(Tag.BitsAllocated)) {
+            WritableRaster raster = bi.getRaster();
+            int w = raster.getWidth(), h = raster.getHeight();
+            int numBands = raster.getNumBands();
+            for (int x = 0; x < w; x++) {
+                for (int y = 0; y < h; y++) {
+                    for (int band = 0; band < numBands; band++) {
+                        // can't store negative integers in the raster b/c it uses a UShortBuffer internally.
+                        //   ==> have to change the values to all-positive integers. Windowing values from DICOM Tags will no longer match :-(
+                        raster.setSample(x, y, band, (int)(short)raster.getSample(x, y, band) + 0x8000);
+                    }
+                }
+            }
+        }
         /* leave out the windowing -- that's the sole reason this class exists
         if (monochrome) {
             WritableRaster raster = bi.getRaster();

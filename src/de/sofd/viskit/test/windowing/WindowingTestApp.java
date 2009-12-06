@@ -45,6 +45,8 @@ public class WindowingTestApp {
         toolbar.add(wlLabel = new JLabel());
         toolbar.add(wwLabel = new JLabel());
         //toolbar.add(pixelLabel = new JLabel());
+        int nBits = viewer.getRawObjectImage().getColorModel().getComponentSize(0);
+        final int windowingMouseScale = (nBits >= 16 ? 20 : 1);
         MouseAdapter windowingCellMouseListener = new MouseAdapter() {
             private Point prevPoint;
             @Override
@@ -70,8 +72,8 @@ public class WindowingTestApp {
             public void mouseDragged(MouseEvent e) {
                 Point p = e.getPoint();
                 if (prevPoint != null) {
-                    viewer.setWindowingParams(viewer.getWindowLocation() + 1 * (p.x - prevPoint.x),
-                                              viewer.getWindowWidth() + 1 * (p.y - prevPoint.y));
+                    viewer.setWindowingParams(viewer.getWindowLocation() + windowingMouseScale * (p.x - prevPoint.x),
+                                              viewer.getWindowWidth() + windowingMouseScale * (p.y - prevPoint.y));
                     updateWlWwLabels();
                 }
                 prevPoint = p;
