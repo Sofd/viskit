@@ -1,5 +1,7 @@
 package de.sofd.viskit.test.image3D;
 
+import gdcm.*;
+
 import javax.swing.*;
 import javax.swing.event.*;
 
@@ -29,7 +31,7 @@ public class Dicom3DViewer extends JFrame implements ChangeListener, ActionListe
     public Dicom3DViewer() throws Exception
     {
         super("Dicom3D");
-  
+        
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         
         imageData = DicomReader.readImageDataFromDir("D:/dicom/serie3");

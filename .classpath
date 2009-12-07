@@ -34,5 +34,6 @@
 	<classpathentry kind="lib" path="lib/jogl/jogl.all.jar"/>
 	<classpathentry kind="lib" path="lib/jogl/nativewindow.all.jar"/>
 	<classpathentry kind="lib" path="lib/jogl/newt.all.jar"/>
+	<classpathentry kind="lib" path="lib/gdcm/gdcm.jar"/>
 	<classpathentry kind="output" path="build/classes"/>
 </classpath>
