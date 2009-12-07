@@ -9,7 +9,7 @@
 	<classpathentry kind="lib" path="lib/commons-lang.jar"/>
 	<classpathentry kind="lib" path="lib/CopyLibs/org-netbeans-modules-java-j2seproject-copylibstask.jar"/>
 	<classpathentry kind="lib" path="lib/dcm4che-audit-2.0.20.jar"/>
-	<classpathentry kind="lib" path="lib/dcm4che-core-2.0.20.jar"/>
+	<classpathentry kind="lib" path="lib/dcm4che-core-2.0.20.jar" sourcepath="D:/install/dcm4che/dcm4che-2.0.20/dcm4che-core/src/main/java"/>
 	<classpathentry kind="lib" path="lib/dcm4che-filecache-2.0.20.jar"/>
 	<classpathentry kind="lib" path="lib/dcm4che-hp-2.0.20.jar"/>
 	<classpathentry kind="lib" path="lib/dcm4che-image-2.0.20.jar"/>

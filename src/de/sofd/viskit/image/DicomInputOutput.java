@@ -1,12 +1,12 @@
 package de.sofd.viskit.image;
 
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
 import java.net.URL;
+import java.util.*;
+
 import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
-import org.dcm4che2.data.BasicDicomObject;
-import org.dcm4che2.data.DicomObject;
+import org.dcm4che2.data.*;
 import org.dcm4che2.io.DicomInputStream;
 import org.dcm4che2.io.StopTagInputHandler;
 
@@ -71,5 +71,49 @@ public class DicomInputOutput {
             }
         }
         return null;
+    }
+    
+    public static Collection<DicomObject> readDir( String dirPath, String seriesInstanceUID ) throws IOException
+    {
+        TreeMap<Integer, DicomObject> dicomSeries
+            = new TreeMap<Integer, DicomObject>();
+        
+        File dir = new File(dirPath);
+        
+        if ( ! dir.isDirectory() )
+            throw new IOException("no directory : " + dirPath);
+        
+        System.out.println("files : " + dir.listFiles().length);
+        int counter=0;
+        for ( File file : dir.listFiles() )
+        {
+            if ( file.isDirectory() ) continue;
+            System.out.println("file : " + ++counter);
+        
+            DicomInputStream dis = new DicomInputStream(file);
+//            DicomInputStream dis = 
+//                new DicomInputStream(new BufferedInputStream(new FileInputStream(file)), TransferSyntax.NoPixelData);
+
+            dis.setHandler(new StopTagInputHandler(Tag.PixelData));
+            DicomObject header = new BasicDicomObject();
+            dis.readDicomObject(header, -1); 
+            String headerUID = header.getString(Tag.SeriesInstanceUID);
+            System.out.println("headerUID : " + headerUID);
+            dis.close();
+            dis = null;
+            
+            if ( seriesInstanceUID.equals( headerUID ) )
+            {
+                System.out.println("test : ");
+                dis = new DicomInputStream(file);
+                DicomObject dicomObject = dis.readDicomObject();
+                Integer imageNr = dicomObject.getInt(Tag.InstanceNumber);
+                                
+                dicomSeries.put(imageNr, dicomObject);
+                dis.close();
+            }
+        }
+        
+        return dicomSeries.values();
     }
 }
