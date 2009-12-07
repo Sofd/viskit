@@ -51,6 +51,9 @@ public class JGridImageListView extends JImageListView {
         setModel(new DefaultListModel());
         wrappedGridList.setComponentFactory(new WrappedGridListComponentFactory());
         setSelectionModel(wrappedGridList.getSelectionModel());
+        wrappedGridList.addMouseListener(wholeGridTestMouseHandler);
+        wrappedGridList.addMouseMotionListener(wholeGridTestMouseHandler);
+        wrappedGridList.addMouseWheelListener(wholeGridTestMouseHandler);
     }
 
     @Override
@@ -206,26 +209,31 @@ public class JGridImageListView extends JImageListView {
             ImageListViewCellViewer resultComponent = new ImageListViewCellViewer(cell);
             resultComponent.setVisible(true);
             parent.add(resultComponent);
-            resultComponent.addMouseListener(gridComponentMouseHandler);
-            resultComponent.addMouseMotionListener(gridComponentMouseHandler);
-            resultComponent.addMouseWheelListener(gridComponentMouseHandler);
+            //resultComponent.addMouseListener(gridComponentMouseHandler);
+            //resultComponent.addMouseMotionListener(gridComponentMouseHandler);
+            //resultComponent.addMouseWheelListener(gridComponentMouseHandler);
             return resultComponent;
         }
 
         @Override
         public void deleteComponent(JGridList source, JPanel parent, Object modelItem, JComponent component) {
-            component.removeMouseListener(gridComponentMouseHandler);
-            component.removeMouseMotionListener(gridComponentMouseHandler);
-            component.removeMouseWheelListener(gridComponentMouseHandler);
+            //component.removeMouseListener(gridComponentMouseHandler);
+            //component.removeMouseMotionListener(gridComponentMouseHandler);
+            //component.removeMouseWheelListener(gridComponentMouseHandler);
             super.deleteComponent(source, parent, modelItem, component);
         }
 
     }
 
-    // TODO: the mouse listeners eat the events so they're no longer received by
+    /*
+    // TODO: the gridComponentMouseHandler eats the events so they're no longer received by
     //       the wrappedGridList, so e.g. selecting using the mouse no longer works.
     //       Figure out how to avoid this. Maybe use just one listener (per type) on the
     //       whole wrappedGridList? (as we do in JGridList's own mouse event handling)
+    //
+    //       Thus we've disabled the gridComponentMouseHandler for now and enabled the
+    //       wholeGridTestMouseHandler (single listener on the whole list) instead. Figure
+    //       out what's best in the long run.
 
     private MouseAdapter gridComponentMouseHandler = new MouseAdapter() {
 
@@ -267,6 +275,52 @@ public class JGridImageListView extends JImageListView {
         @Override
         public void mouseWheelMoved(MouseWheelEvent evt) {
             dispatchEventToCell(evt);
+        }
+
+    };
+    */
+
+    private MouseAdapter wholeGridTestMouseHandler = new MouseAdapter() {
+
+        @Override
+        public void mouseClicked(MouseEvent evt) {
+            System.out.println("whole grid event: " + evt);
+            System.out.println("mouseClicked on: " + evt.getSource());
+        }
+
+        @Override
+        public void mousePressed(MouseEvent evt) {
+            System.out.println("whole grid event: " + evt);
+        }
+
+        @Override
+        public void mouseReleased(final MouseEvent evt) {
+            System.out.println("whole grid event: " + evt);
+        }
+
+        @Override
+        public void mouseEntered(MouseEvent evt) {
+            System.out.println("whole grid event: " + evt);
+        }
+
+        @Override
+        public void mouseExited(MouseEvent evt) {
+            System.out.println("whole grid event: " + evt);
+        }
+
+        @Override
+        public void mouseMoved(MouseEvent evt) {
+            System.out.println("whole grid event: " + evt);
+        }
+
+        @Override
+        public void mouseDragged(MouseEvent evt) {
+            System.out.println("whole grid event: " + evt);
+        }
+
+        @Override
+        public void mouseWheelMoved(MouseWheelEvent evt) {
+            System.out.println("whole grid event: " + evt);
         }
 
     };
