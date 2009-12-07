@@ -39,7 +39,8 @@ public class SliceViewer extends JFrame
         imageData.Update();
         
         FloatBuffer dataBuf = Vtk2GL.getFilledFloatBuffer(imageData);
-        VolumeObject volumeObject = new VolumeObject(imageData, dataBuf);        
+        int[] dim = imageData.GetDimensions();
+        VolumeObject volumeObject = new VolumeObject(imageData, dataBuf, new int[]{dim[0]/2, dim[1]/2, dim[2]/2});        
         sliceView = new SliceView(volumeObject); 
         
         getContentPane().setLayout(new BorderLayout());

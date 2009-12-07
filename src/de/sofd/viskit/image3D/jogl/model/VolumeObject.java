@@ -52,7 +52,12 @@ public class VolumeObject
     
     protected double rangeMax;
     
-    public VolumeObject( vtkImageData imageData, FloatBuffer dataBuf )
+    /**
+     * Point in volume object where x-slice, y-slice and z-slice intersect
+     */
+    protected int[] sliceCursor;
+    
+    public VolumeObject( vtkImageData imageData, FloatBuffer dataBuf, int[] sliceCursor    )
     {
         int[] dim = imageData.GetDimensions();
         double[] spacing = imageData.GetSpacing();
@@ -76,8 +81,10 @@ public class VolumeObject
         setRangeMax(range[1]);
         
         setDataBuf(dataBuf);
+        setSliceCursor(sliceCursor);
         
     }
+
     public FloatBuffer getDataBuf() {
         return dataBuf;
     }
@@ -85,11 +92,15 @@ public class VolumeObject
     public int getDepth() {
         return depth;
     }
-
+    
     public int getHeight() {
         return height;
     }
-
+    
+    protected int[] getIntersectPoint() {
+        return sliceCursor;
+    }
+    
     public int getMaxDim() {
         return maxDim;
     }
@@ -113,7 +124,7 @@ public class VolumeObject
     public double getRangeMin() {
         return rangeMin;
     }
-    
+
     protected double getRangeSize()
     {
         return ( rangeMax - rangeMin );
@@ -123,7 +134,7 @@ public class VolumeObject
     {
         return ( width * spacingX );
     }
-
+    
     public double getSizeY()
     {
         return ( height * spacingY );
@@ -133,7 +144,11 @@ public class VolumeObject
     {
         return ( depth * spacingZ );
     }
-    
+
+    public int[] getSliceCursor() {
+        return sliceCursor;
+    }
+
     public double getSpacingX() {
         return spacingX;
     }
@@ -145,7 +160,7 @@ public class VolumeObject
     public double getSpacingZ() {
         return spacingZ;
     }
-
+    
     public int getTexId() {
         return texId;
     }
@@ -196,6 +211,10 @@ public class VolumeObject
 
     protected void setRangeMin(double rangeMin) {
         this.rangeMin = rangeMin;
+    }
+
+    protected void setSliceCursor(int[] sliceCursor) {
+        this.sliceCursor = sliceCursor;
     }
 
     protected void setSpacingX(double spacingX) {

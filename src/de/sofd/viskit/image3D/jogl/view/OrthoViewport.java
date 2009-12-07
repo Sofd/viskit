@@ -4,7 +4,7 @@ import static javax.media.opengl.fixedfunc.GLMatrixFunc.*;
 
 import javax.media.opengl.*;
 
-public class OrthoViewport
+public abstract class OrthoViewport
 {
     protected int x;
     protected int y;
@@ -73,7 +73,7 @@ public class OrthoViewport
     {
         return ( x >= this.x && x <= this.x + width && y >= this.y && y <= this.y + height );
     }
-
+    
     public void setHeight(int height) {
         this.height = height;
     }
@@ -107,4 +107,6 @@ public class OrthoViewport
     public void setY(int y) {
         this.y = y;
     }
+
+    public abstract void show(GL2 gl);
 }

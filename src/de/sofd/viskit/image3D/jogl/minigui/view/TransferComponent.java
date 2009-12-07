@@ -1,5 +1,6 @@
-package de.sofd.viskit.image3D.jogl.view;
+package de.sofd.viskit.image3D.jogl.minigui.view;
 
+import static javax.media.opengl.GL.*;
 import static javax.media.opengl.GL2.*;
 
 import java.io.*;
@@ -8,7 +9,8 @@ import javax.media.opengl.*;
 
 import com.sun.opengl.util.texture.*;
 
-import de.sofd.viskit.image3D.jogl.minigui.*;
+import de.sofd.viskit.image3D.jogl.minigui.controller.*;
+import de.sofd.viskit.image3D.jogl.minigui.util.*;
 import de.sofd.viskit.image3D.jogl.util.*;
 
 public class TransferComponent extends Component
@@ -17,11 +19,13 @@ public class TransferComponent extends Component
     protected float rangeMin;
     protected float rangeMax;
 
-    protected int texId;
     protected int scalaWidth;
     
     protected SliderPin sliderPin;
-
+    protected DragController pinController;
+    
+    protected int texId;
+    
     public TransferComponent( int x, int y, 
                               int width, int height, 
                               float rangeMin, float rangeMax, 
@@ -35,8 +39,8 @@ public class TransferComponent extends Component
         Texture sliderPinTex = ResourceLoader.getImageTex("minigui.transfer.pin");
         int pinX = x + scalaWidth;
         int pinY = y;
-        sliderPin = new SliderPin( pinX, pinY, sliderPinTex, pinX, pinX, y, y + height - sliderPinTex.getImageHeight() );
-        
+        sliderPin = new SliderPin( pinX, pinY, sliderPinTex, new float[]{1.0f, 1.0f, 1.0f, 1.0f} );
+        pinController = new DragController( sliderPin, pinX, pinX, y, y + height - sliderPinTex.getImageHeight() );
     }
 
     public float getRangeMax() {
@@ -49,7 +53,7 @@ public class TransferComponent extends Component
     
     public float getRelativeValue()
     {
-        return sliderPin.getRelativeYPosition();
+        return pinController.getRelativeYPosition();
     }
     
     public int getScalaWidth() {
@@ -57,12 +61,12 @@ public class TransferComponent extends Component
     }
 
     public int getTexId() {
-        return texId;
+        return this.texId;
     }
 
     public int getValue()
     {
-        return (int)(rangeMin + sliderPin.getRelativeYPosition() * ( rangeMax - rangeMin ));
+        return (int)(rangeMin + pinController.getRelativeYPosition() * ( rangeMax - rangeMin ));
         
     }
 
@@ -103,7 +107,14 @@ public class TransferComponent extends Component
         float posY = y + ( height - sliderPin.getHeight() ) * getRelativeValue();
                 
         sliderPin.setY((int)posY);
+        
+        gl.glEnable( GL_TEXTURE_2D );
+        gl.glEnable( GL_BLEND );
+        gl.glBlendFunc( GL_ONE, GL_ONE_MINUS_SRC_ALPHA );
+        
         sliderPin.show(gl);
         
+        gl.glDisable( GL_BLEND );
+        gl.glDisable( GL_TEXTURE_2D );
     }
 }

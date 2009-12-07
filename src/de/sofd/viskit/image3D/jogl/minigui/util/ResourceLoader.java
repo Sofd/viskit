@@ -1,4 +1,4 @@
-package de.sofd.viskit.image3D.jogl.minigui;
+package de.sofd.viskit.image3D.jogl.minigui.util;
 
 import java.io.*;
 import java.net.*;

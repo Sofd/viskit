@@ -31,7 +31,7 @@ public class GPUVolumeViewer extends JFrame implements ChangeListener
     {
         super("Volume Viewer");
         
-        vtkImageData imageData = DicomReader.readImageDataFromDir("D:/dicom/serie6");
+        vtkImageData imageData = DicomReader.readImageDataFromDir("D:/dicom/serie3");
         imageData.Update();
         int dim[] =  imageData.GetDimensions();
         
