@@ -1,7 +1,5 @@
 package de.sofd.viskit.test.image3D;
 
-import gdcm.*;
-
 import javax.swing.*;
 import javax.swing.event.*;
 
