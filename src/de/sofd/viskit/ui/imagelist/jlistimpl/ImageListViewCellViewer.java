@@ -82,26 +82,12 @@ public class ImageListViewCellViewer extends JPanel {
         //       the lines of n2g JDicomObjectImageViewer.
         //       Maybe expose the DicomObject (containing the image UID) in the cell class after all.
         BufferedImage srcImg = displayedCell.getDisplayedModelElement().getImage();
-        BufferedImage windowedImage = new BufferedImage(srcImg.getWidth(), srcImg.getHeight(),
-                                                        BufferedImage.TYPE_INT_RGB);
-        float scale = 256.0F / displayedCell.getWindowWidth();
-        float offset = scale * (displayedCell.getWindowWidth() / 2 - displayedCell.getWindowLocation());
-
-        /* windowing using RescaleOp disabled for now -- image too dark (TODO: investigate)
-        RescaleOp rescaleOp = new RescaleOp(scale, offset, null);
-        // TODO: windowedImage after the following filter call is not identical to the
-        // return value, contrary to what the documentation seems to imply. If we get
-        // rid of windowedImage (and supply null instead), the result looks visually
-        // identical *most* of the times, but for some images, e.g. cd846__center4001__39.dcm,
-        // JAI causes a JVM segfault on Linux... With the call as done here, it seems to
-        // work all the time, albeit maybe with unnecessary performance penalties.
-        return rescaleOp.filter(srcImg, windowedImage);
-         */
-
+        BufferedImage windowedImage;
+        ///*
         if (srcImg.getColorModel().getColorSpace().getType() == ColorSpace.TYPE_GRAY) {
-            windowMonochrome(srcImg, windowedImage, scale, offset);
+            windowedImage = windowMonochrome(srcImg, displayedCell.getWindowLocation(), displayedCell.getWindowWidth());
         } else if (srcImg.getColorModel().getColorSpace().isCS_sRGB()) {
-            windowRGB(srcImg, windowedImage, scale, offset);
+            windowedImage = windowRGB(srcImg, displayedCell.getWindowLocation(), displayedCell.getWindowWidth());
         } else {
             throw new IllegalStateException("don't know how to window image with color space " + srcImg.getColorModel().getColorSpace());
             // TODO: do something cleverer here? Like, create windowedImage
@@ -109,14 +95,22 @@ public class ImageListViewCellViewer extends JPanel {
             //    some createCompatibleImage() method in BufferedImage or elsewhere),
             //    window all bands of that, and let the JRE figure out how to draw the result?
         }
+        //*/
+        //windowedImage = windowWithRasterOp(srcImg, windowLocation, windowWidth);
+        //windowedImage = srcImg;
+
         return windowedImage;
     }
+
 
     /**
      * @pre destImg is of type BufferedImage.TYPE_INT_RGB
      */
-    private BufferedImage windowMonochrome(BufferedImage srcImg, BufferedImage destImg, float scale, float offset) {
+    private BufferedImage windowMonochrome(BufferedImage srcImg, float windowLocation, float windowWidth) {
+        BufferedImage destImg = new BufferedImage(srcImg.getWidth(), srcImg.getHeight(), BufferedImage.TYPE_INT_RGB);
         final int windowedImageGrayscalesCount = 256;  // for BufferedImage.TYPE_INT_RGB
+        float scale = windowedImageGrayscalesCount/windowWidth;
+        float offset = (windowWidth/2-windowLocation)*scale;
         if (! (srcImg.getColorModel().getColorSpace().getType() == ColorSpace.TYPE_GRAY)) {
             throw new IllegalArgumentException("source image must be grayscales");
         }
@@ -146,8 +140,11 @@ public class ImageListViewCellViewer extends JPanel {
     /**
      * @pre destImg is of type BufferedImage.TYPE_INT_RGB
      */
-    private BufferedImage windowRGB(BufferedImage srcImg, BufferedImage destImg, float scale, float offset) {
+    private BufferedImage windowRGB(BufferedImage srcImg, float windowLocation, float windowWidth) {
+        BufferedImage destImg = new BufferedImage(srcImg.getWidth(), srcImg.getHeight(), BufferedImage.TYPE_INT_RGB);
         final int windowedImageBandValuesCount = 256;  // for BufferedImage.TYPE_INT_RGB
+        float scale = windowedImageBandValuesCount/windowWidth;
+        float offset = (windowWidth/2-windowLocation)*scale;
         if (! srcImg.getColorModel().getColorSpace().isCS_sRGB()) {
             throw new IllegalArgumentException("source image must be RGB");
         }
@@ -172,6 +169,18 @@ public class ImageListViewCellViewer extends JPanel {
             }
         }
         return destImg;
+    }
+
+    private BufferedImage windowWithRasterOp(BufferedImage srcImg, float windowLocation, float windowWidth) {
+        //final int windowedImageBandValuesCount = 256;  // for BufferedImage.TYPE_INT_RGB
+        //final float windowedImageBandValuesCount = 1.0F;
+        //final float windowedImageBandValuesCount = 65535F;
+        //final float windowedImageBandValuesCount = 4095F;
+        final float windowedImageBandValuesCount = (1 << srcImg.getColorModel().getComponentSize(0)) - 1;
+        float scale = windowedImageBandValuesCount/windowWidth;
+        float offset = (windowWidth/2-windowLocation)*scale;
+        RescaleOp rescaleOp = new RescaleOp(scale, offset, null);
+        return rescaleOp.filter(srcImg, null);
     }
 
     @Override
