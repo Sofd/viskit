@@ -2,6 +2,7 @@ package de.sofd.viskit.test.jogl.coil;
 
 import com.sun.opengl.util.Animator;
 import java.awt.Color;
+import java.awt.Component;
 import java.awt.Frame;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
@@ -16,6 +17,8 @@ import javax.media.opengl.GLDrawable;
 import javax.media.opengl.GLEventListener;
 import javax.media.opengl.GLProfile;
 import javax.media.opengl.awt.GLCanvas;
+import javax.media.opengl.awt.GLJPanel;
+import javax.swing.JFrame;
 import javax.swing.SwingUtilities;
 
 /**
@@ -25,14 +28,16 @@ import javax.swing.SwingUtilities;
 public class Main {
 
     public Main() {
-        Frame frame = new Frame("Coil");
+        JFrame frame = new JFrame("Coil");
+        //Frame frame = new Frame("Coil");
         frame.setBackground(Color.WHITE);
         //GLCanvas canvas = GLDrawableFactory.getFactory(GLProfile.get(GLProfile.GL2)).createGLCanvas(new GLCapabilities(null));
         GLCapabilities caps = new GLCapabilities(GLProfile.get(GLProfile.GL2));
         caps.setDoubleBuffered(true);
-        GLCanvas canvas = new GLCanvas(caps);
+        GLAutoDrawable canvas = new GLCanvas(caps);
+        //GLAutoDrawable canvas = new GLJPanel(caps);
         canvas.addGLEventListener(new GLEventHandler(canvas));
-        frame.add(canvas);
+        frame.add((Component)canvas);
         frame.setSize(800, 600);
         frame.setBackground(Color.black);
         frame.setVisible(true);
@@ -98,7 +103,7 @@ public class Main {
             float[] color = new float[4];
         };
 
-        Collection<Coil> coils = new ArrayList<Coil>();
+        Collection<Coil> coils;
 
         class Viewer {
             float[] worldToEyeCoordTransform = new float[16];
@@ -108,6 +113,7 @@ public class Main {
 
         @Override
         public void init(GLAutoDrawable glAutoDrawable) {
+            System.out.println("INIT GLAutoDrawable");
             GL2 gl = (GL2) glAutoDrawable.getGL();
             initCoilsAndViewer();
             setupEye2ViewportTransformation(gl);
@@ -127,6 +133,8 @@ public class Main {
             // < AlastairLynn> you really should avoid glGet. It can cause pipeline stalls
 
             LinAlg.fillIdentity(theViewer.worldToEyeCoordTransform);
+
+            coils = new ArrayList<Coil>();
 
             Coil coil1 = new Coil();
             coil1.locationInWorld[0] = 15;
@@ -270,7 +278,6 @@ public class Main {
         public void display(GLAutoDrawable glAutoDrawable) {
             GL2 gl = (GL2) glAutoDrawable.getGL();
             animate();
-            // printf("re-displaying...\n");
             gl.glClear(gl.GL_COLOR_BUFFER_BIT | gl.GL_DEPTH_BUFFER_BIT);
             gl.glMatrixMode(gl.GL_MODELVIEW);
             gl.glLoadIdentity();
