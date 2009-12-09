@@ -35,14 +35,14 @@ public class Dicom3DViewer extends JFrame implements ChangeListener, ActionListe
         
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         
-        Collection<DicomObject> dicomList
-            = DicomInputOutput.readDir("D:/dicom/serie7", "1.2.840.113619.2.135.2025.3758242.5289.1206919099.647");
+//        Collection<DicomObject> dicomList
+//            = DicomInputOutput.readDir("/home/oliver/dicom/series1", null);
         
         
 //        Collection<DicomObject> dicomList
 //            = DicomInputOutput.readDir("D:/dicom/1578", "2x.16.756.5.23.5012.70.3563.3.20090827121711.3767977317");
         
-        /*imageData = DicomReader.readImageDataFromDir("D:/dicom/serie3");
+        imageData = DicomReader.readImageDataFromDir("/home/oliver/dicom/series1");
         imageData.Update();
         int dim[] =  imageData.GetDimensions();
         
@@ -60,7 +60,7 @@ public class Dicom3DViewer extends JFrame implements ChangeListener, ActionListe
         getContentPane().add("Center", panel);
         
         
-        pack();*/
+        pack();
     }
     
     private JPanel getControlPanel() {
@@ -196,12 +196,12 @@ public class Dicom3DViewer extends JFrame implements ChangeListener, ActionListe
 
     public static void main(String s[]) {
         try {
-            //VTK.init();
+            VTK.init();
             
             PropertyConfigurator.configureAndWatch("log4j.properties", 6000);
             
             final Dicom3DViewer viewer = new Dicom3DViewer();
-            /*viewer.setLocationRelativeTo(null);
+            viewer.setLocationRelativeTo(null);
             viewer.setVisible(true);
             
             SwingUtilities.invokeLater(new Runnable()
@@ -210,7 +210,7 @@ public class Dicom3DViewer extends JFrame implements ChangeListener, ActionListe
                 {
                     viewer.startTimers();
                 }
-            });*/
+            });
             
         } catch (Exception e) {
             logger.error(e.getMessage());

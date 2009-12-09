@@ -65,29 +65,39 @@ public class ARBSliceViewer extends JFrame implements ChangeListener
         int dim[] = {0, 0, 0};
         double[] range = {0, 0};
         
-        //imageData = DicomReader.readImageDataFromDir("D:/dicom/serie2");
-        for ( String testfile : testfiles )
-        {
-            try {
-                System.out.println("read " + testfile);
-                imageData = DicomReader.readImageDataFromFile("D:/dicom/testbilder/" + testfile);
-                imageData.Update();
-                dim =  imageData.GetDimensions();
-                
-                range = imageData.GetScalarRange();
-                double rangeDist = range[1] - range[0];
-                rangeDist = ( rangeDist > 0 ? rangeDist : 1 );
-                
-                System.out.println(testfile + " supported!");
-                logger.info("image dimension : " + dim[0] + " " + dim[1] + " " + dim[2] + " " + imageData.GetPointData().GetScalars().GetSize());
-                logger.info("range : [" + range[0] + "," + range[1] + "]");
-            } catch (Exception e1) {
-                System.err.println(testfile + " not supported!");
-            }
-        }
+        imageData = DicomReader.readImageDataFromDir("/home/oliver/dicom/series1");
+        imageData.Update();
+        dim =  imageData.GetDimensions();
         
-        /*smooth = new vtkImageGaussianSmooth();
-        smooth.SetInput(imageData);*/
+        range = imageData.GetScalarRange();
+        double rangeDist = range[1] - range[0];
+        rangeDist = ( rangeDist > 0 ? rangeDist : 1 );
+        
+        logger.info("image dimension : " + dim[0] + " " + dim[1] + " " + dim[2] + " " + imageData.GetPointData().GetScalars().GetSize());
+        logger.info("range : [" + range[0] + "," + range[1] + "]");
+        
+//        for ( String testfile : testfiles )
+//        {
+//            try {
+//                System.out.println("read " + testfile);
+//                imageData = DicomReader.readImageDataFromFile("D:/dicom/testbilder/" + testfile);
+//                imageData.Update();
+//                dim =  imageData.GetDimensions();
+//                
+//                range = imageData.GetScalarRange();
+//                double rangeDist = range[1] - range[0];
+//                rangeDist = ( rangeDist > 0 ? rangeDist : 1 );
+//                
+//                System.out.println(testfile + " supported!");
+//                logger.info("image dimension : " + dim[0] + " " + dim[1] + " " + dim[2] + " " + imageData.GetPointData().GetScalars().GetSize());
+//                logger.info("range : [" + range[0] + "," + range[1] + "]");
+//            } catch (Exception e1) {
+//                System.err.println(testfile + " not supported!");
+//            }
+//        }
+//        
+//        smooth = new vtkImageGaussianSmooth();
+//        smooth.SetInput(imageData);
         
         sliceView = new ARBSliceView(imageData); 
         
@@ -155,6 +165,7 @@ public class ARBSliceViewer extends JFrame implements ChangeListener
         
         if ( "sliceLevel".equals(slider.getName()))
         {
+            System.out.println("slider value : "+slider.getValue());
             sliceView.setCurrentSlice(slider.getValue());
         }
         if ( "windowCenter".equals(slider.getName()))

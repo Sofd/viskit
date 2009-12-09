@@ -31,7 +31,7 @@ public class GPUVolumeViewer extends JFrame implements ChangeListener
     {
         super("Volume Viewer");
         
-        vtkImageData imageData = DicomReader.readImageDataFromDir("D:/dicom/serie3");
+        vtkImageData imageData = DicomReader.readImageDataFromDir("/home/oliver/dicom/series1");
         imageData.Update();
         int dim[] =  imageData.GetDimensions();
         
@@ -152,28 +152,31 @@ public class GPUVolumeViewer extends JFrame implements ChangeListener
             }
         );
         
-        try {
-            VTK.init();
-            
-            final GPUVolumeViewer volumeViewer = new GPUVolumeViewer();
-            
-            SwingUtilities.invokeAndWait(new Runnable()
+        SwingUtilities.invokeLater(new Runnable()
+        {
+            public void run()
             {
-                public void run()
-                {
-                    volumeViewer.setVisible(true);
-                }
-            });
+                try {
+                    VTK.init();
             
-            volumeViewer.getVolumeView().requestFocus();
-            animator.start();
-        } catch (IOException e) {
-            logger.error(e);
-            e.printStackTrace();
-        } catch (Exception e) {
-            logger.error(e);
-            e.printStackTrace();
-        } 
+            
+                    final GPUVolumeViewer volumeViewer = new GPUVolumeViewer();
+                    volumeViewer.setVisible(true);
+                    volumeViewer.getVolumeView().requestFocus();
+            
+            
+            
+                    animator.start();
+                } catch (IOException e) {
+                    logger.error(e);
+                    e.printStackTrace();
+                } catch (Exception e) {
+                    logger.error(e);
+                    e.printStackTrace();
+                } 
+        
+            }
+        });
         
     }
 

@@ -37,8 +37,8 @@ public class SliceViewController implements MouseListener, MouseMotionListener
         for ( OrthoViewportController orthoViewportController : orthoViewportControllerList )
             orthoViewportController.mouseDragged( e.getButton(), e.getX(), sliceView.getViewportHeight() - e.getY() );
 
-        int pos[] = sliceView.getVolumeObject().getSliceCursor();
-        System.out.println( "x : " + pos[0] + ", y : " + pos[1] + ", z : " + pos[2] );
+//        int pos[] = sliceView.getVolumeObject().getSliceCursor();
+//        System.out.println( "x : " + pos[0] + ", y : " + pos[1] + ", z : " + pos[2] );
 
         for ( OrthoViewportController orthoViewportController : orthoViewportControllerList )
         {
@@ -69,8 +69,8 @@ public class SliceViewController implements MouseListener, MouseMotionListener
         for ( OrthoViewportController orthoViewportController : orthoViewportControllerList )
             orthoViewportController.mouseMoved( e.getButton(), e.getX(), sliceView.getViewportHeight() - e.getY() );
 
-        int pos[] = sliceView.getVolumeObject().getSliceCursor();
-        System.out.println( "x : " + pos[0] + ", y : " + pos[1] + ", z : " + pos[2] );
+//        int pos[] = sliceView.getVolumeObject().getSliceCursor();
+//        System.out.println( "x : " + pos[0] + ", y : " + pos[1] + ", z : " + pos[2] );
         
         for ( OrthoViewportController orthoViewportController : orthoViewportControllerList )
         {

@@ -23,7 +23,7 @@ import de.sofd.viskit.image3D.util.*;
 
 
 @SuppressWarnings("serial")
-public class ARBSliceView extends GLCanvas implements GLEventListener
+public class ARBSliceView extends GLJPanel implements GLEventListener
 {
     static final Logger logger = Logger.getLogger(ARBSliceView.class);
     
@@ -54,6 +54,9 @@ public class ARBSliceView extends GLCanvas implements GLEventListener
     static {
         caps = new GLCapabilities(GLProfile.get(GLProfile.GL2));
         caps.setAlphaBits(8); 
+        caps.setOnscreen(true);
+        caps.setHardwareAccelerated(true);
+        caps.setDoubleBuffered(true);
         
     }
     
@@ -89,7 +92,7 @@ public class ARBSliceView extends GLCanvas implements GLEventListener
     @Override
     public void display(GLAutoDrawable drawable) {
         idle();
-        //drawable.getContext().getGL().g
+        
         double[] spacing = imageData.GetSpacing();
         int[] dim = imageData.GetDimensions();
         double width = dim[0] * spacing[0];
@@ -114,20 +117,23 @@ public class ARBSliceView extends GLCanvas implements GLEventListener
         
         
         
-        ShaderManager.bindARB(shaderToUse);
-        gl.glProgramLocalParameter4fARB(GL_FRAGMENT_PROGRAM_ARB, 0, (float)(windowCenter/rangeDist), 0, 0, 0);
-        gl.glProgramLocalParameter4fARB(GL_FRAGMENT_PROGRAM_ARB, 1, (float)(windowWidth/rangeDist), 0, 0, 0);
-        gl.glEnable(GL_TEXTURE_2D);
-        gl.glEnable(GL_BLEND);
+//        ShaderManager.bindARB(shaderToUse);
+//        gl.glProgramLocalParameter4fARB(GL_FRAGMENT_PROGRAM_ARB, 0, (float)(windowCenter/rangeDist), 0, 0, 0);
+//        gl.glProgramLocalParameter4fARB(GL_FRAGMENT_PROGRAM_ARB, 1, (float)(windowWidth/rangeDist), 0, 0, 0);
+        //gl.glEnable(GL_TEXTURE_2D);
+        gl.glDisable(GL_TEXTURE_2D);
+        gl.glDisable(GL_LIGHTING);
+        //gl.glEnable(GL_BLEND);
         gl.glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
         gl.glBindTexture(GL_TEXTURE_2D, texStack[currentSlice-1]);
         //texQuad3D(gl, (float)(width/maxDim), (float)(height/maxDim), (currentSlice-1)*1.0f/(maxSlices-1));
         texQuad2DCentered(gl, (float)(width/maxDim)*2.0f, (float)(height/maxDim)*2.0f);
-        ShaderManager.unbindARB(shaderToUse);
+//        ShaderManager.unbindARB(shaderToUse);
         
         //show fps
         gl.glDisable(GL_TEXTURE_2D);
-        gl.glDisable(GL_BLEND);
+        //gl.glDisable(GL_BLEND);
+        
         beginInfoScreen(gl, glu, viewport[2], viewport[3]);
             gl.glColor3f(1.0f, 1.0f, 0.0f);
             infoText(gl, glut, 10, 10, "FPS : " + fpsCounter.getFps());
@@ -161,9 +167,10 @@ public class ARBSliceView extends GLCanvas implements GLEventListener
         gl.glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
         
         gl.glEnable(GL_TEXTURE_2D);
+        gl.glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
         //theTex = get3DTexture(gl, imageData);
         
-        ShaderManager.init("shader");
+        //ShaderManager.init("shader");
         
         try {
             int colors = imageData.GetNumberOfScalarComponents();
@@ -174,7 +181,7 @@ public class ARBSliceView extends GLCanvas implements GLEventListener
             else if ( colors == 3 )
                 shaderToUse = "windowingRGB";
             
-            ShaderManager.readARB(gl, shaderToUse);
+            //ShaderManager.readARB(gl, shaderToUse);
             
         } catch (Exception e) {
             e.printStackTrace();
@@ -209,10 +216,10 @@ public class ARBSliceView extends GLCanvas implements GLEventListener
         gl.glLoadIdentity();
         gl.glOrtho(-aspect, aspect, -1.0, 1.0, -1.0, 1.0);
         
-        /*logger.info("GL_VENDOR: " + gl.glGetString(GL_VENDOR));
+        logger.info("GL_VENDOR: " + gl.glGetString(GL_VENDOR));
         logger.info("GL_RENDERER: " + gl.glGetString(GL_RENDERER));
-        //logger.info("GL_VERSION: " + gl.glGetString(GL_VERSION));
-        logger.info("test");*/
+        logger.info("GL_VERSION: " + gl.glGetString(GL_VERSION));
+        logger.info("test");
         
         gl.glMatrixMode(GL_MODELVIEW);
         gl.glLoadIdentity();

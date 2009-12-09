@@ -27,12 +27,12 @@
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/de.sofd.draw2d"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/de.sofd.util"/>
-	<classpathentry combineaccessrules="false" kind="src" path="/de.sofd.swing"/>
 	<classpathentry kind="lib" path="lib/vtk/concurrent.jar"/>
-	<classpathentry kind="lib" path="lib/vtk/vtk.jar"/>
 	<classpathentry kind="lib" path="lib/jogl/gluegen-rt.jar"/>
 	<classpathentry kind="lib" path="lib/jogl/jogl.all.jar"/>
 	<classpathentry kind="lib" path="lib/jogl/nativewindow.all.jar"/>
 	<classpathentry kind="lib" path="lib/jogl/newt.all.jar"/>
+	<classpathentry kind="lib" path="lib/vtk/vtk-5.2.1.jar"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/de.sofd.swing"/>
 	<classpathentry kind="output" path="build/classes"/>
 </classpath>

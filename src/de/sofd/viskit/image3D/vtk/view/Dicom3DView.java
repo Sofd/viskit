@@ -11,7 +11,6 @@ import org.apache.log4j.*;
  * This example reads a volume dataset, extracts two isosurfaces that
  * represent the skin and bone, and then displays them.
  */
-@SuppressWarnings("serial")
 public class Dicom3DView extends VtkScenePanel {
 
     static final Logger logger = Logger.getLogger(Dicom3DView.class);

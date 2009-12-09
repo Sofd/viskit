@@ -42,12 +42,12 @@ public class ReticleController
         if ( button == MouseEvent.BUTTON1 && reticle.getCross().isInBounds( mouseX, mouseY ) && !isActive() )
         {
             setActive( true );
-            awtParent.setCursor( AwtUtil.getEmptyCursor() );
+            //awtParent.setCursor( AwtUtil.getEmptyCursor() );
         }
         else if ( button == MouseEvent.BUTTON1 && reticle.getMoveBounds().isInBounds( mouseX, mouseY ) && isActive() )
         {
             setActive( false );
-            awtParent.setCursor( Cursor.getDefaultCursor() );
+            //awtParent.setCursor( Cursor.getPredefinedCursor( Cursor.MOVE_CURSOR) );
         }
     }
 
