@@ -343,7 +343,7 @@ public class JGridImageListView extends JImageListView {
             Point mousePosInCell = SwingUtilities.convertPoint(wrappedGridList, evt.getPoint(), wrappedGridList.getComponentFor(clickedModelIndex));
             MouseEvent ce = Misc.deepCopy(evt);
             ce.setSource(cell);
-            //ce.setPosision(mousePosInCell); // TODO: impl
+            ce.translatePoint(mousePosInCell.x - ce.getX(), mousePosInCell.y - ce.getY());
             if (ce instanceof MouseWheelEvent) {
                 fireCellMouseWheelEvent((MouseWheelEvent) ce);
             } else {
