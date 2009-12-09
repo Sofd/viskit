@@ -217,20 +217,20 @@ public class JListImageListView extends JImageListView {
             Border border = null;
             if (cellHasFocus || isSelected) {
                 if (cellHasFocus && isSelected) {
-                    border = BorderFactory.createMatteBorder(2, 2, 2, 2, Color.RED);
+                    border = BorderFactory.createMatteBorder(BORDER_WIDTH, BORDER_WIDTH, BORDER_WIDTH, BORDER_WIDTH, Color.RED);
                 } else if (isSelected) {
-                    border = BorderFactory.createMatteBorder(2, 2, 2, 2, Color.RED);
+                    border = BorderFactory.createMatteBorder(BORDER_WIDTH, BORDER_WIDTH, BORDER_WIDTH, BORDER_WIDTH, Color.RED);
                 } else if (cellHasFocus) {
-                    border = BorderFactory.createMatteBorder(2, 2, 2, 2, Color.ORANGE);
+                    border = BorderFactory.createMatteBorder(BORDER_WIDTH, BORDER_WIDTH, BORDER_WIDTH, BORDER_WIDTH, Color.ORANGE);
                 }
                 if (border == null) {
-                    border = BorderFactory.createMatteBorder(2, 2, 2, 2, Color.PINK);
+                    border = BorderFactory.createMatteBorder(BORDER_WIDTH, BORDER_WIDTH, BORDER_WIDTH, BORDER_WIDTH, Color.PINK);
                 }
             } else {
                 if (list.getSelectedIndex() == -1 && false /* && index == lastCellHasFocusIndex */) {
-                    border = BorderFactory.createMatteBorder(2, 2, 2, 2, Color.ORANGE);
+                    border = BorderFactory.createMatteBorder(BORDER_WIDTH, BORDER_WIDTH, BORDER_WIDTH, BORDER_WIDTH, Color.ORANGE);
                 } else {
-                    border = BorderFactory.createMatteBorder(2, 2, 2, 2, Color.DARK_GRAY);
+                    border = BorderFactory.createMatteBorder(BORDER_WIDTH, BORDER_WIDTH, BORDER_WIDTH, BORDER_WIDTH, Color.DARK_GRAY);
                 }
 
             }
