@@ -69,17 +69,7 @@ public class DragController
     public int getMinY() {
         return minY;
     }
-
-    public float getRelativeXPosition() {
-        float r = ( component.getX() - minX ) * 1.0f / ( maxX - minX );
-        return r;
-    }
-
-    public float getRelativeYPosition() {
-        float r = ( component.getX() - minY ) * 1.0f / ( maxY - minY );
-        return r;
-    }
-
+    
     public boolean isActive() {
         return isActive;
     }
@@ -135,19 +125,5 @@ public class DragController
     public void setMinY(int minY) {
         this.minY = minY;
     }
-    
-    public void setRelativeXPosition( float r ) {
-        component.setX( (int)(minX + r * ( maxX - minX ) ) );
-        
-    }
-    
-    public void setRelativeYPosition( float r ) {
-        component.setY( (int)(minY + r * ( maxY - minY ) ) );
-    }
-
-    
-    
-    
-    
     
 }

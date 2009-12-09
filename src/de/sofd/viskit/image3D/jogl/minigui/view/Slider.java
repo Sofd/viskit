@@ -10,102 +10,109 @@ import com.sun.opengl.util.texture.*;
 
 import de.sofd.viskit.image3D.jogl.util.*;
 
-public class Slider extends TexComponent {
-    static final Logger logger = Logger.getLogger(Slider.class);
+public abstract class Slider extends TexComponent
+{
+    static final Logger logger = Logger.getLogger( Slider.class );
 
     protected float rangeMin;
     protected float rangeMax;
 
     protected SliderPin pin;
-    
-    protected float value;
-    
-    public Slider(int x, int y, int width, Texture bgTex, Texture pinTex,
-            int rangeMin, int rangeMax, int value, float[] color) {
-        super(x, y, width, bgTex.getImageHeight(), bgTex, color);
 
-        setRangeMin(rangeMin);
-        setRangeMax(rangeMax);
+    public Slider(    int x,
+                    int y,
+                    int width,
+                    int height,
+                    Texture bgTex,
+                    Texture pinTex,
+                    float rangeMin,
+                    float rangeMax,
+                    float[] color )
+    {
+        super( x, y, width, height, bgTex, color );
 
-        bgTex.setTexParameteri(GL_TEXTURE_WRAP_S, GL_REPEAT);
-        bgTex.setTexParameteri(GL_TEXTURE_WRAP_T, GL_REPEAT);
-        bgTex.setTexParameteri(GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-        bgTex.setTexParameteri(GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        setRangeMin( rangeMin );
+        setRangeMax( rangeMax );
 
-        int pinY = y + (height - pinTex.getHeight());
-        pin = new SliderPin(0, pinY, pinTex, color);
-        
-        this.value = value;
+        if ( bgTex != null )
+        {
+            bgTex.setTexParameteri( GL_TEXTURE_WRAP_S, GL_REPEAT );
+            bgTex.setTexParameteri( GL_TEXTURE_WRAP_T, GL_REPEAT );
+            bgTex.setTexParameteri( GL_TEXTURE_MIN_FILTER, GL_LINEAR );
+            bgTex.setTexParameteri( GL_TEXTURE_MAG_FILTER, GL_LINEAR );
+        }
     }
 
-    public SliderPin getPin() {
+    public SliderPin getPin()
+    {
         return pin;
     }
-    
-    public float getRangeMax() {
+
+    public float getRangeMax()
+    {
         return rangeMax;
     }
 
-    public float getRangeMin() {
+    public float getRangeMin()
+    {
         return rangeMin;
     }
 
-    public float getRelativeValue() {
-        return ( getValue() - rangeMin ) / ( rangeMax - rangeMin );
-    }
+    public abstract float getRelativeValue();
     
-    public void setRelativeValue( float relativeValue )
+    public int getValue()
     {
-        setValue( rangeMin + relativeValue * (rangeMax - rangeMin) );
-    }
-    
-    public void setValue( float value )
-    {
-        this.value = value;
+        return (int)( rangeMin + getRelativeValue() * ( rangeMax - rangeMin ) );
     }
 
-    public int getValue() {
-        return (int)this.value;
-    }
-
-    public void setRangeMax(float rangeMax) {
+    public void setRangeMax( float rangeMax )
+    {
         this.rangeMax = rangeMax;
     }
 
-    public void setRangeMin(float rangeMin) {
+    public void setRangeMin( float rangeMin )
+    {
         this.rangeMin = rangeMin;
     }
 
+    public abstract void setRelativeValue( float relativeValue );
+
+    public void setValue( float value )
+    {
+        setRelativeValue( ( value - rangeMin ) * 1.0f / ( rangeMax - rangeMin ) );
+    }
+
     @Override
-    public void show(GL2 gl) {
+    public void show( GL2 gl )
+    {
         gl.glEnable( GL_TEXTURE_2D );
         gl.glEnable( GL_BLEND );
         gl.glBlendFunc( GL_ONE, GL_ONE_MINUS_SRC_ALPHA );
-        
-        showSliderBackground(gl);
-        showSliderPin(gl);
-        
+
+        showSliderBackground( gl );
+        showSliderPin( gl );
+
         gl.glDisable( GL_BLEND );
         gl.glDisable( GL_TEXTURE_2D );
-        
+
     }
 
-    private void showSliderBackground(GL2 gl) {
-        float texWidth = width * 1.0f / getTex().getImageWidth();
-        float texHeight = 1.0f;
+    protected abstract float getTexWidth();
+    protected abstract float getTexHeight();
+    
+    protected void showSliderBackground( GL2 gl )
+    {
+        float texWidth = getTexWidth();
+        float texHeight = getTexHeight();
 
         getTex().bind();
-        gl.glColor4fv(this.color, 0);
-        GLUtil.texQuad2D(gl, x, y, width, height, 0, texHeight, texWidth,
-                -texHeight);
+        gl.glColor4fv( this.color, 0 );
+        GLUtil.texQuad2D( gl, x, y, width, height, 0, texHeight, texWidth, -texHeight );
     }
 
-    private void showSliderPin(GL2 gl) {
-        float posX = x + (width - pin.getWidth()) * getRelativeValue();
-
-        pin.setX((int) posX);
-
-        pin.show(gl);
+    private void showSliderPin( GL2 gl )
+    {
+        pin.show( gl );
     }
 
 }

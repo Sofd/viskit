@@ -15,16 +15,11 @@ public class SliderController extends DragController
                 slider.getY() + slider.getHeight() - slider.getPin().getTex().getImageHeight() );
         
         this.slider = slider;
-        
-        setRelativeXPosition( slider.getRelativeValue() );
     }
     
     @Override
     public void dragged( int button, int mouseX, int mouseY )
     {
         super.dragged( button, mouseX, mouseY );
-        
-        //and y?
-        slider.setRelativeValue( getRelativeXPosition() );
     }
 }

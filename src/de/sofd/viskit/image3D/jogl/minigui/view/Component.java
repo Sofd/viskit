@@ -33,7 +33,17 @@ public class Component
     
     public boolean isInBounds( int x, int y )
     {
-        return ( x >= this.x && x <= this.x + width && y >= this.y && y <= this.y + height );
+        return ( isInXBounds( x ) && isInYBounds( y ) );
+    }
+    
+    public boolean isInXBounds( int x )
+    {
+        return ( x >= this.x && x <= this.x + width );
+    }
+    
+    public boolean isInYBounds( int y )
+    {
+        return ( y >= this.y && y <= this.y + height );
     }
     
     public void setHeight(int height) {

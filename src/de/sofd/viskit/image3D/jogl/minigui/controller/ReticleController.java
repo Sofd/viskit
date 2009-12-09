@@ -1,54 +1,77 @@
 package de.sofd.viskit.image3D.jogl.minigui.controller;
 
+import java.awt.*;
+import java.awt.Component;
 import java.awt.event.*;
+
+import de.sofd.util.*;
 import de.sofd.viskit.image3D.jogl.minigui.view.*;
 
 public class ReticleController
 {
     protected Reticle reticle;
-    
+
     protected boolean isActive;
-    
-    public ReticleController(Reticle reticle) {
-        
+
+    protected Component awtParent;
+
+    protected Robot robot;
+
+    public ReticleController( Reticle reticle, Component awtParent )
+    {
+
         this.reticle = reticle;
         this.isActive = false;
+        this.awtParent = awtParent;
     }
-    
-    protected Reticle getReticle() {
+
+    protected Reticle getReticle()
+    {
         return reticle;
     }
-    
-    protected boolean isActive() {
+
+    protected boolean isActive()
+    {
         return isActive;
     }
-    
-    public void mouseClicked( int button, int mouseX, int mouseY ) {
-        if ( button == MouseEvent.BUTTON1 && reticle.getCross().isInBounds( mouseX, mouseY ) && ! isActive() )
+
+    public void mouseClicked(    int button,
+                                int mouseX,
+                                int mouseY )
+    {
+        if ( button == MouseEvent.BUTTON1 && reticle.getCross().isInBounds( mouseX, mouseY ) && !isActive() )
         {
             setActive( true );
-            //observer.setCursor( AwtUtil.getEmptyCursor() );
+            awtParent.setCursor( AwtUtil.getEmptyCursor() );
         }
-        else if ( button == MouseEvent.BUTTON1 && reticle.isInBounds( mouseX, mouseY ) && isActive() )
+        else if ( button == MouseEvent.BUTTON1 && reticle.getMoveBounds().isInBounds( mouseX, mouseY ) && isActive() )
         {
             setActive( false );
-            //observer.setCursor( Cursor.getDefaultCursor() );
+            awtParent.setCursor( Cursor.getDefaultCursor() );
         }
     }
-    
-    public void mouseMoved( int button, int mouseX, int mouseY ) {
-        if ( isActive() && reticle.isInBounds( mouseX, mouseY ) )
+
+    public void mouseMoved( int button,
+                            int mouseX,
+                            int mouseY )
+    {
+        if ( isActive() )
         {
-            reticle.getCross().setPosX( mouseX );
-            reticle.getCross().setPosY( mouseY );
+            if ( reticle.getMoveBounds().isInXBounds( mouseX ) )
+                reticle.getCross().setPosX( mouseX );
+
+            if ( reticle.getMoveBounds().isInYBounds( mouseY ) )
+                reticle.getCross().setPosY( mouseY );
         }
     }
-    
-    protected void setActive(boolean isActive) {
+
+    protected void setActive( boolean isActive )
+    {
         this.isActive = isActive;
     }
 
-    public void setReticle(Reticle reticle) {
+    public void setReticle( Reticle reticle )
+    {
         this.reticle = reticle;
     }
 }
