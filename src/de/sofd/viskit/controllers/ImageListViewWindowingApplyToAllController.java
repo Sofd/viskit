@@ -91,7 +91,12 @@ public class ImageListViewWindowingApplyToAllController {
             ImageListViewCell sourceCell = (ImageListViewCell) evt.getSource();
             for (int i = 0; i < controlledImageListView.getLength(); i++) {
                 ImageListViewCell targetCell = controlledImageListView.getCell(i);
-                if (targetCell != sourceCell) {
+                if (targetCell != null && targetCell != sourceCell) {
+                    // targetCell != null test because targetCell may be null null under some circumstances,
+                    // e.g. if the windowing is set in a cellCreated handler for a newly created cell, which
+                    // may have been created b/c of a dynamic JImageListView#setModel call, which ends up
+                    // firing the cellCreared event before adding the cell to
+                    // the internal cell list that getCell(int) uses
                     inProgrammedChange = true;
                     try {
                         targetCell.setWindowLocation(sourceCell.getWindowLocation());
