@@ -8,20 +8,18 @@ import de.sofd.viskit.model.ImageListViewModelElement;
 import de.sofd.viskit.ui.imagelist.JImageListView;
 import de.sofd.viskit.ui.imagelist.jlistimpl.ImageListViewCellViewer;
 import java.awt.GridLayout;
+import java.awt.Point;
 import java.awt.event.InputEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
-import java.awt.event.MouseMotionAdapter;
-import java.awt.event.MouseMotionListener;
 import java.awt.event.MouseWheelEvent;
-import java.awt.event.MouseWheelListener;
 import java.util.ArrayList;
 import java.util.Collection;
 import javax.swing.DefaultListModel;
 import javax.swing.JComponent;
 import javax.swing.JPanel;
 import javax.swing.ListModel;
+import javax.swing.SwingUtilities;
 import javax.swing.event.ListDataEvent;
 
 /**
@@ -284,43 +282,46 @@ public class JGridImageListView extends JImageListView {
 
         @Override
         public void mouseClicked(MouseEvent evt) {
-            System.out.println("whole grid event: " + evt);
-            System.out.println("mouseClicked on: " + evt.getSource());
+            dispatchEventToCell(evt);
         }
 
         @Override
         public void mousePressed(MouseEvent evt) {
-            System.out.println("whole grid event: " + evt);
+            dispatchEventToCell(evt);
         }
 
         @Override
         public void mouseReleased(final MouseEvent evt) {
-            System.out.println("whole grid event: " + evt);
+             dispatchEventToCell(evt);
         }
+
+        // TODO: generate correct enter/exit events for the cells?
+        //       this is something that would be much easier with per-cell
+        //       mouse listeners of course... (see TODO in commted-out block above)
 
         @Override
         public void mouseEntered(MouseEvent evt) {
-            System.out.println("whole grid event: " + evt);
+             //dispatchEventToCell(evt);
         }
 
         @Override
         public void mouseExited(MouseEvent evt) {
-            System.out.println("whole grid event: " + evt);
+            //dispatchEventToCell(evt);
         }
 
         @Override
         public void mouseMoved(MouseEvent evt) {
-            System.out.println("whole grid event: " + evt);
+             dispatchEventToCell(evt);
         }
 
         @Override
         public void mouseDragged(MouseEvent evt) {
-            System.out.println("whole grid event: " + evt);
+             dispatchEventToCell(evt);
         }
 
         @Override
         public void mouseWheelMoved(MouseWheelEvent evt) {
-            System.out.println("whole grid event: " + evt);
+             dispatchEventToCell(evt);
         }
 
     };
@@ -336,22 +337,17 @@ public class JGridImageListView extends JImageListView {
     }
 
     protected void dispatchEventToCell(MouseEvent evt) {
-        ImageListViewCellViewer cellViewer = (ImageListViewCellViewer) evt.getSource();
-        ImageListViewCell cell = cellViewer.getDisplayedCell();
-        if (null != cell.getLatestSize()) {
+        int clickedModelIndex = wrappedGridList.findModelIndexAt(evt.getPoint());
+        if (clickedModelIndex != -1) {
+            ImageListViewCell cell = getCell(clickedModelIndex);
+            Point mousePosInCell = SwingUtilities.convertPoint(wrappedGridList, evt.getPoint(), wrappedGridList.getComponentFor(clickedModelIndex));
             MouseEvent ce = Misc.deepCopy(evt);
             ce.setSource(cell);
+            //ce.setPosision(mousePosInCell); // TODO: impl
             if (ce instanceof MouseWheelEvent) {
                 fireCellMouseWheelEvent((MouseWheelEvent) ce);
             } else {
                 fireCellMouseEvent(ce);
-            }
-            if (ce.isConsumed()) {
-                //System.out.println("refreshing cell. not dispatching event onwards");
-                refreshCell(cell);
-            } else {
-                //System.out.println("dispatching event onwards");
-                //((JComponent) evt.getSource()).dispatchEvent(evt);
             }
         }
     }
