@@ -9,6 +9,10 @@ import java.awt.geom.AffineTransform;
 import java.awt.geom.Point2D;
 import java.awt.image.AffineTransformOp;
 import java.awt.image.BufferedImageOp;
+import javax.media.opengl.GL2;
+import javax.media.opengl.GLAutoDrawable;
+import javax.media.opengl.GLDrawable;
+import javax.media.opengl.GLEventListener;
 import javax.media.opengl.awt.GLJPanel;
 
 /**
@@ -23,6 +27,7 @@ public class GLImageListViewCellViewer extends GLJPanel {
 
     public GLImageListViewCellViewer(ImageListViewCell cell) {
         this.displayedCell = cell;
+        this.addGLEventListener(new GLEventHandler());
     }
 
     public ImageListViewCell getDisplayedCell() {
@@ -93,5 +98,30 @@ public class GLImageListViewCellViewer extends GLJPanel {
     protected void renderOverlays(Graphics2D g2d) {
         displayedCell.getRoiDrawingViewer().paint(g2d);
     }
+
+
+    protected class GLEventHandler implements GLEventListener {
+
+        @Override
+        public void init(GLAutoDrawable glAutoDrawable) {
+            System.out.println("INIT GLAutoDrawable");
+            GL2 gl = (GL2) glAutoDrawable.getGL();
+        }
+
+        @Override
+        public void dispose(GLAutoDrawable glAutoDrawable) {
+        }
+
+        @Override
+        public void display(GLAutoDrawable glAutoDrawable) {
+            GL2 gl = (GL2) glAutoDrawable.getGL();
+            //glAutoDrawable.swapBuffers();
+        }
+
+        @Override
+        public void reshape(GLAutoDrawable glAutoDrawable, int x, int y, int width, int height) {
+            GL2 gl = (GL2) glAutoDrawable.getGL();
+        }
+    };
 
 }
