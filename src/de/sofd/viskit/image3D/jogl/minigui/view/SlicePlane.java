@@ -144,7 +144,7 @@ public abstract class SlicePlane extends Component
                                     1,
                                     1,
                                     tz );
-
+    
         gl.glDisable( GL_BLEND );
         gl.glDisable( GL_TEXTURE_3D );
 

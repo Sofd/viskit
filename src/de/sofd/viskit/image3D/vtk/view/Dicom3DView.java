@@ -59,7 +59,6 @@ public class Dicom3DView extends VtkScenePanel {
         boneExtractor.SetInput(imageData);
         boneExtractor.SetValue(0, 250);
         boneExtractor.ComputeNormalsOn();
-        
         double[] spacing = imageData.GetSpacing();
         
         double minSpacing = 1000;
@@ -110,7 +109,6 @@ public class Dicom3DView extends VtkScenePanel {
         logger.info("number of polys " + decimator.GetOutput().GetNumberOfPolys());
         logger.info("number of strips " + decimator.GetOutput().GetNumberOfStrips());
         logger.info("number of verts " + decimator.GetOutput().GetNumberOfVerts());*/
-        
         /*vtkPolyDataNormals boneNormals = new vtkPolyDataNormals();
         boneNormals.SetInput(decimator.GetOutput());
         boneNormals.SetFeatureAngle(60.0);*/
@@ -142,7 +140,6 @@ public class Dicom3DView extends VtkScenePanel {
         aCamera.SetPosition(0, 1, 0);
         aCamera.SetFocalPoint(0, 0, 0);
         aCamera.ComputeViewPlaneNormal();
-    
         // Actors are added to the renderer. An initial camera view is created.
         // The Dolly() method moves the camera towards the FocalPoint,
         // thereby enlarging the image.
@@ -151,7 +148,6 @@ public class Dicom3DView extends VtkScenePanel {
         renderer.SetActiveCamera(aCamera);
         renderer.ResetCamera();
         aCamera.Dolly(1.5);
-    
         // Set a background color for the renderer and set the size of the
         // render window (expressed in pixels).
         renderer.SetBackground(0, 0, 0);

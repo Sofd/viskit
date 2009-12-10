@@ -20,12 +20,6 @@ public class DicomReader
             throw new IllegalStateException("SingleFrameTestApp.properties file does not contain a rootDir property");
         }
     
-        // The following reader is used to read a series of 2D slices (images)
-        // that compose the volume. The slice dimensions are set, and the
-        // pixel spacing. The data Endianness must also be specified. The reader
-        // usese the FilePrefix in combination with the slice number to construct
-        // filenames using the format FilePrefix.%d. (In this case the FilePrefix
-        // is the root name of the file: quarter.)
         vtkDICOMImageReader vDicom = new vtkDICOMImageReader();
         vDicom.SetDataByteOrderToLittleEndian();
         

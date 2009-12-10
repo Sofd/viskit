@@ -55,10 +55,11 @@ public class Vtk2GL
                 {
                     for ( int k = 0; k < colors; ++k )
                     {
+                        //z order inverted
                         if ( colors == 1 )
-                            dataBuf.put( (float)( imageData.GetScalarComponentAsFloat( x, y, z, k ) / rangeDist ) );
+                            dataBuf.put( (float)( imageData.GetScalarComponentAsFloat( x, y, dim[2] - z - 1, k ) / rangeDist ) );
                         else
-                            dataBuf.put( (float)( imageData.GetScalarComponentAsFloat( x, y, z, k ) / 255.0f ) );
+                            dataBuf.put( (float)( imageData.GetScalarComponentAsFloat( x, y, dim[2] - z - 1, k ) / 255.0f ) );
                     }
                 }
             }
@@ -172,7 +173,8 @@ public class Vtk2GL
                     if ( (int)( oldRate ) % 10 != 0 && (int)( newRate ) % 10 == 0 )
                         System.out.println( "" + (int)newRate + " % of 3d texture loaded" );
 
-                    dataBuf.put( (float)( ( imageData.GetScalarComponentAsFloat( x, y, z, 0 ) - range[0] ) / rangeDist ) );
+                    //z order inverted
+                    dataBuf.put( (float)( ( imageData.GetScalarComponentAsFloat( x, y, dim[2] - z - 1, 0 ) - range[0] ) / rangeDist ) );
                     oldRate = newRate;
                 }
 

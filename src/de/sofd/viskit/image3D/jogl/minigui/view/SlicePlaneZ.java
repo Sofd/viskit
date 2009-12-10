@@ -82,10 +82,10 @@ public class SlicePlaneZ extends SlicePlane
     @Override
     protected void transformTex( GL2 gl )
     {
-        gl.glLoadIdentity();
-        gl.glTranslatef( 0.5f, 0.5f, 0.5f );
-        gl.glScalef( 1.0f, 1.0f, -1.0f );
-        gl.glTranslatef( -0.5f, -0.5f, -0.5f );
+//        gl.glLoadIdentity();
+//        gl.glTranslatef( 0.5f, 0.5f, 0.5f );
+//        gl.glScalef( 1.0f, 1.0f, -1.0f );
+//        gl.glTranslatef( -0.5f, -0.5f, -0.5f );
     }
 
     @Override

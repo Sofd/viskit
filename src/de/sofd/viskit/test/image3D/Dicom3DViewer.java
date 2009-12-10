@@ -36,7 +36,7 @@ public class Dicom3DViewer extends JFrame implements ChangeListener, ActionListe
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         
 //        Collection<DicomObject> dicomList
-//            = DicomInputOutput.readDir("/home/oliver/dicom/series1", null);
+//            = DicomInputOutput.readDir("D:/dicom/serie7", "1.2.840.113619.2.135.2025.3758242.5289.1206919099.647");
         
         
 //        Collection<DicomObject> dicomList
@@ -50,7 +50,7 @@ public class Dicom3DViewer extends JFrame implements ChangeListener, ActionListe
         
         smooth = new vtkImageGaussianSmooth();
         smooth.SetInput(imageData);
-        
+        System.out.println("pass1");
         dicom3DView = new Dicom3DView(smooth.GetOutput());
         
         JPanel panel = new JPanel(new BorderLayout());

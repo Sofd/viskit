@@ -62,7 +62,7 @@ public class VolumeObject
         int[] dim = imageData.GetDimensions();
         double[] spacing = imageData.GetSpacing();
         double[] range = imageData.GetScalarRange();
-
+        
         setWidth( dim[0] );
         setHeight( dim[1] );
         setDepth( dim[2] );

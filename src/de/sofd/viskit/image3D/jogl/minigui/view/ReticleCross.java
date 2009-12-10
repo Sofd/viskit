@@ -13,7 +13,7 @@ public class ReticleCross extends TexComponent
     public ReticleCross( Texture tex, float[] color, int posX, int posY )
     {
         super(    posX - tex.getImageWidth() / 2,
-                posY - tex.getImageHeight() / 2,
+                posY - tex.getImageHeight() / 2 - 1,
                 tex.getImageWidth(),
                 tex.getImageHeight(),
                 tex,
@@ -48,7 +48,7 @@ public class ReticleCross extends TexComponent
     public void setPosY( int posY )
     {
         this.posY = posY;
-        setY( posY - getHeight() / 2 );
+        setY( posY - getHeight() / 2 - 1 );
     }
 
 }
