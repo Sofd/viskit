@@ -11,6 +11,7 @@ import java.awt.image.AffineTransformOp;
 import java.awt.image.BufferedImageOp;
 import javax.media.opengl.GL2;
 import javax.media.opengl.GLAutoDrawable;
+import javax.media.opengl.GLContext;
 import javax.media.opengl.GLDrawable;
 import javax.media.opengl.GLEventListener;
 import javax.media.opengl.awt.GLJPanel;
@@ -23,12 +24,22 @@ import javax.media.opengl.awt.GLJPanel;
  */
 public class GLImageListViewCellViewer extends GLJPanel {
 
+    protected GLContext sharedContext;
+
     private final ImageListViewCell displayedCell;
 
     public GLImageListViewCellViewer(ImageListViewCell cell) {
         this.displayedCell = cell;
+        if (null == sharedContext) {
+            sharedContext = this.getContext();
+        } else {
+            this.setContext(sharedContext);
+        }
         this.addGLEventListener(new GLEventHandler());
     }
+
+    // TODO: following method are copy & paste with ImageListeCellViewer...
+    // (can't use common superclass for that b/c there already are two different superclasses)
 
     public ImageListViewCell getDisplayedCell() {
         return displayedCell;
@@ -104,8 +115,33 @@ public class GLImageListViewCellViewer extends GLJPanel {
 
         @Override
         public void init(GLAutoDrawable glAutoDrawable) {
-            System.out.println("INIT GLAutoDrawable");
+            System.out.println("INIT GL drawable: " + glAutoDrawable);
             GL2 gl = (GL2) glAutoDrawable.getGL();
+            gl.glMatrixMode(gl.GL_PROJECTION);
+            gl.glLoadIdentity();
+
+            /*
+            // isometric projection
+            GLdouble vpHeightInObjCoords = vpWidthInWorldCoords * vpHeight / vpWidth;
+            glOrtho(-vpWidthInWorldCoords/2,  //    GLdouble      left,
+                    vpWidthInWorldCoords/2,   //    GLdouble      right,
+                    -vpHeightInObjCoords/2, //    GLdouble      bottom,
+                    vpHeightInObjCoords/2,  //    GLdouble      top,
+                    -1000, //  GLdouble      nearVal,
+                    1000   //  GLdouble      farVal
+                    );
+
+
+            // eye coord -> viewport transformation
+            gl.glViewport(0, //GLint x,
+                          0, //GLint y,
+                          drawable.getWidth(), //GLsizei width,
+                          drawable.getHeight() //GLsizei height
+                          );
+            gl.glDepthRange(0,1);
+            */
+            
+            gl.glClearColor(0,0,0,0);
         }
 
         @Override
@@ -121,6 +157,7 @@ public class GLImageListViewCellViewer extends GLJPanel {
         @Override
         public void reshape(GLAutoDrawable glAutoDrawable, int x, int y, int width, int height) {
             GL2 gl = (GL2) glAutoDrawable.getGL();
+            displayedCell.setLatestSize(getSize());
         }
     };
 
