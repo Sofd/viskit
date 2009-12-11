@@ -73,7 +73,7 @@ public class DicomInputOutput {
         return null;
     }
     
-    public static Collection<DicomObject> readDir( String dirPath, String seriesInstanceUID ) throws IOException
+    public static ArrayList<DicomObject> readDir( String dirPath, String seriesInstanceUID, int firstSlice, int nrOfSlices ) throws IOException
     {
         TreeMap<Integer, DicomObject> dicomSeries
             = new TreeMap<Integer, DicomObject>();
@@ -88,23 +88,30 @@ public class DicomInputOutput {
         for ( File file : dir.listFiles() )
         {
             if ( file.isDirectory() ) continue;
-            System.out.println("file : " + ++counter);
+            
+            counter++;
+            
+            if ( counter < firstSlice || counter >= firstSlice + nrOfSlices ) continue;
+            
+            System.out.println("file : " + counter);
         
             DicomInputStream dis = new DicomInputStream(file);
-//            DicomInputStream dis = 
-//                new DicomInputStream(new BufferedInputStream(new FileInputStream(file)), TransferSyntax.NoPixelData);
 
-            dis.setHandler(new StopTagInputHandler(Tag.PixelData));
-            DicomObject header = new BasicDicomObject();
-            dis.readDicomObject(header, -1); 
-            String headerUID = header.getString(Tag.SeriesInstanceUID);
-            System.out.println("headerUID : " + headerUID);
-            dis.close();
-            dis = null;
+            String headerUID = null;
             
-            if ( seriesInstanceUID.equals( headerUID ) )
+            if ( seriesInstanceUID != null )
             {
-                System.out.println("test : ");
+                dis.setHandler(new StopTagInputHandler(Tag.PixelData));
+                DicomObject header = new BasicDicomObject();
+                dis.readDicomObject(header, -1); 
+                headerUID = header.getString(Tag.SeriesInstanceUID);
+                System.out.println("headerUID : " + headerUID);
+                dis.close();
+                dis = null;
+            }
+            
+            if ( seriesInstanceUID == null || seriesInstanceUID.equals( headerUID ) )
+            {
                 dis = new DicomInputStream(file);
                 DicomObject dicomObject = dis.readDicomObject();
                 Integer imageNr = dicomObject.getInt(Tag.InstanceNumber);
@@ -114,6 +121,6 @@ public class DicomInputOutput {
             }
         }
         
-        return dicomSeries.values();
+        return new ArrayList<DicomObject>(dicomSeries.values());
     }
 }

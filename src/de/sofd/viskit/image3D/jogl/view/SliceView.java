@@ -162,8 +162,10 @@ public class SliceView extends GLJPanel implements GLEventListener
         gl.glOrtho( 0, width, 0, height, -1.0, 1.0 );
 
         // int minSize = Math.min(width, height);
-        int quadSizeX = volumeObject.getMaxDim() + 40;
-        int quadSizeY = volumeObject.getMaxDim() + 40;
+//        int quadSizeX = volumeObject.getMaxDim() + 40;
+//        int quadSizeY = volumeObject.getMaxDim() + 40;
+        int quadSizeX = 256 + 40;
+        int quadSizeY = 256 + 40;
 
         try
         {

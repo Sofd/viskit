@@ -104,52 +104,7 @@ public class Vtk2GL
 
         int[] dim = imageData.GetDimensions();
 
-        return get3DTexture( gl, dataBuf, dim[0], dim[1], dim[2], trilinear );
-    }
-
-    public static int get3DTexture( GL2 gl,
-                                    FloatBuffer dataBuf,
-                                    int width,
-                                    int height,
-                                    int depth,
-                                    boolean trilinear )
-    {
-        int[] texId = new int[ 1 ];
-
-        gl.glPixelStorei( GL_UNPACK_ALIGNMENT, 1 );
-
-        logi( gl, "GL_UNPACK_ROW_LENGTH", GL_UNPACK_ROW_LENGTH );
-        logi( gl, "GL_UNPACK_IMAGE_HEIGHT", GL_UNPACK_IMAGE_HEIGHT );
-        logi( gl, "GL_UNPACK_SKIP_IMAGES", GL_UNPACK_SKIP_IMAGES );
-        logi( gl, "GL_MAX_TEXTURE_SIZE", GL_MAX_TEXTURE_SIZE );
-        logi( gl, "GL_MAX_3D_TEXTURE_SIZE", GL_MAX_3D_TEXTURE_SIZE );
-
-        gl.glEnable( GL_TEXTURE_3D );
-
-        gl.glGenTextures( 1, texId, 0 );
-        gl.glBindTexture( GL_TEXTURE_3D, texId[0] );
-        gl.glTexImage3D( GL_TEXTURE_3D, 0, GL_ALPHA, width, height, depth, 0, GL_ALPHA, GL_FLOAT, dataBuf );
-
-        gl.glTexParameteri( GL_TEXTURE_3D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER );
-        gl.glTexParameteri( GL_TEXTURE_3D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER );
-        gl.glTexParameteri( GL_TEXTURE_3D, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_BORDER );
-
-        if ( trilinear )
-        {
-            gl.glTexParameteri( GL_TEXTURE_3D, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
-            gl.glTexParameteri( GL_TEXTURE_3D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
-        }
-        else
-        {
-            gl.glTexParameteri( GL_TEXTURE_3D, GL_TEXTURE_MIN_FILTER, GL_NEAREST );
-            gl.glTexParameteri( GL_TEXTURE_3D, GL_TEXTURE_MAG_FILTER, GL_NEAREST );
-        }
-
-        gl.glTexEnvf( GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE );
-
-        gl.glDisable( GL_TEXTURE_3D );
-
-        return texId[0];
+        return GLUtil.get3DTexture( gl, dataBuf, dim[0], dim[1], dim[2], trilinear );
     }
 
     public static FloatBuffer getFilledFloatBuffer( vtkImageData imageData )

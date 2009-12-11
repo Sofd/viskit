@@ -101,7 +101,7 @@ public class SliceViewportController extends OrthoViewportController
         slicePlaneController.updateComponents();
         getSliceViewport().getSlider().setValue( getSliceViewport().getPlane().getCurrentSlice() + 1 );
         transferComponentController    .getTransferComponent()
-                                    .setRelativeValue( getSliceViewport().getVolumeObject().getCursorRelativeValue() );
+                                    .setRelativeValue( 0.5f );
     }
 
 }

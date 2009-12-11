@@ -35,7 +35,7 @@ public abstract class SlicePlane extends Component
                         int texHeight ) throws IOException
     {
         super( x, y, width, height );
-
+        
         texBounds = new Component( x + ( width - texWidth ) / 2, y + ( height - texHeight ) / 2, texWidth, texHeight );
 
         reticle = new Reticle( x, y, width, height, x + width / 2, y + height / 2, texBounds );
@@ -144,7 +144,6 @@ public abstract class SlicePlane extends Component
                                     1,
                                     1,
                                     tz );
-    
         gl.glDisable( GL_BLEND );
         gl.glDisable( GL_TEXTURE_3D );
 

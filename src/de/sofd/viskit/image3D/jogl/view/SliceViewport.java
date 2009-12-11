@@ -74,7 +74,7 @@ public class SliceViewport extends OrthoViewport
                                                 (float)volumeObject.getRangeMax(),
                                                 volumeObject.getTransferTexId(),
                                                 transferTex,
-                                                volumeObject.getCursorRelativeValue() );
+                                                0.5f );
 
     }
 

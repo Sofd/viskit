@@ -85,7 +85,7 @@ public class SlicePlaneX extends SlicePlane
     {
         gl.glLoadIdentity();
         gl.glTranslatef( 0.5f, 0.5f, 0.5f );
-        gl.glScalef( -1, 1, 1 );
+        gl.glScalef( -1, -1, 1 );
         gl.glRotatef( -90.0f, 0.0f, 1.0f, 0.0f );
         gl.glTranslatef( -0.5f, -0.5f, -0.5f );
     }
