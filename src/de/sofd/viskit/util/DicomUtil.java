@@ -34,6 +34,21 @@ public class DicomUtil
 
         return dataBuf;
     }
+    
+    public static ShortBuffer getFilledShortBuffer( DicomObject dicomObject )
+    {
+        int[] dim = new int[ 2 ];
+        dim[ 0 ] = dicomObject.getInt( Tag.Columns );
+        dim[ 1 ] = dicomObject.getInt( Tag.Rows );
+
+        ShortBuffer dataBuf = BufferUtil.newShortBuffer( dim[ 0 ] * dim[ 1 ] );
+
+        dataBuf.put( dicomObject.getShorts( Tag.PixelData ) );
+
+        dataBuf.rewind();
+
+        return dataBuf;
+    }
 
     public static ArrayList<ITransferFunction> getWindowing( ArrayList<DicomObject> dicomList )
     {

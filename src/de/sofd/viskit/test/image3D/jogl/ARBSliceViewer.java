@@ -4,19 +4,26 @@ import java.awt.*;
 import java.awt.event.*;
 import java.io.*;
 import java.lang.reflect.*;
+import java.nio.*;
+import java.util.*;
 
 import javax.swing.*;
 import javax.swing.event.*;
 
 import org.apache.log4j.*;
+import org.dcm4che2.data.*;
 
 import vtk.*;
 
 import com.sun.opengl.util.Animator;
 
+import de.sofd.viskit.image.*;
+import de.sofd.viskit.image3D.jogl.model.*;
 import de.sofd.viskit.image3D.jogl.view.*;
 import de.sofd.viskit.image3D.vtk.*;
 import de.sofd.viskit.image3D.vtk.util.*;
+import de.sofd.viskit.model.*;
+import de.sofd.viskit.util.*;
 
 @SuppressWarnings("serial")
 public class ARBSliceViewer extends JFrame implements ChangeListener
@@ -61,20 +68,10 @@ public class ARBSliceViewer extends JFrame implements ChangeListener
     public ARBSliceViewer() throws IOException
     {
         super("Slice Viewer");
-        setBackground(Color.BLACK);
-        int dim[] = {0, 0, 0};
-        double[] range = {0, 0};
-        
-        imageData = DicomReader.readImageDataFromDir("/home/oliver/dicom/series1");
-        imageData.Update();
-        dim =  imageData.GetDimensions();
-        
-        range = imageData.GetScalarRange();
-        double rangeDist = range[1] - range[0];
-        rangeDist = ( rangeDist > 0 ? rangeDist : 1 );
-        
-        logger.info("image dimension : " + dim[0] + " " + dim[1] + " " + dim[2] + " " + imageData.GetPointData().GetScalars().GetSize());
-        logger.info("range : [" + range[0] + "," + range[1] + "]");
+        setBackground( Color.BLACK );
+
+        ArrayList<DicomObject> dicomList = DicomInputOutput.readDir( "/home/oliver/dicom/series1", null );
+        //ArrayList<DicomObject> dicomList = DicomInputOutput.readDir( "/home/oliver/Desktop/Laufwerk_D/dicom/1578", null, 400, 100 );
         
 //        for ( String testfile : testfiles )
 //        {
@@ -96,23 +93,21 @@ public class ARBSliceViewer extends JFrame implements ChangeListener
 //            }
 //        }
 //        
-//        smooth = new vtkImageGaussianSmooth();
-//        smooth.SetInput(imageData);
         
-        sliceView = new ARBSliceView(imageData); 
+        sliceView = new ARBSliceView(dicomList); 
         
         getContentPane().setLayout(new BorderLayout());
         
         JPanel slicePanel = new JPanel(new BorderLayout());
         slicePanel.setBackground(Color.BLACK);
         slicePanel.add(sliceView, BorderLayout.CENTER);
-        slicePanel.add(getSlider("sliceLevel", 1, dim[2], 1), BorderLayout.SOUTH);
+        slicePanel.add(getSlider("sliceLevel", 1, dicomList.size(), 1), BorderLayout.SOUTH);
         getContentPane().add(slicePanel, BorderLayout.CENTER);
         
         JPanel controlPanel = new JPanel();
         controlPanel.setLayout(new BoxLayout(controlPanel, BoxLayout.PAGE_AXIS));
-        controlPanel.add(getSliderPanel("windowCenter", (int)range[0], (int)range[1], (int)range[0]));
-        controlPanel.add(getSliderPanel("windowWidth", (int)range[0], (int)range[1], (int)range[0]));
+        //controlPanel.add(getSliderPanel("windowCenter", (int)range[0], (int)range[1], (int)range[0]));
+        //controlPanel.add(getSliderPanel("windowWidth", (int)range[0], (int)range[1], (int)range[0]));
         controlPanel.add(Box.createVerticalGlue());
         getContentPane().add(controlPanel, BorderLayout.EAST);
                 

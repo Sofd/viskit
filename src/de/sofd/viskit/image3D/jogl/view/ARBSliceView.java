@@ -6,20 +6,26 @@ import static javax.media.opengl.GL.*;
 import static javax.media.opengl.GL2.*;
 
 import java.awt.*;
+import java.nio.*;
+import java.util.*;
 
 import javax.media.opengl.*;
 import javax.media.opengl.awt.*;
 import javax.media.opengl.glu.gl2.*;
 
 import org.apache.log4j.*;
+import org.dcm4che2.data.*;
 
 import vtk.*;
 
 import com.sun.opengl.util.*;
 import com.sun.opengl.util.gl2.*;
 
+import de.sofd.viskit.image3D.jogl.model.*;
 import de.sofd.viskit.image3D.jogl.util.*;
 import de.sofd.viskit.image3D.util.*;
+import de.sofd.viskit.model.*;
+import de.sofd.viskit.util.*;
 
 
 @SuppressWarnings("serial")
@@ -34,13 +40,11 @@ public class ARBSliceView extends GLJPanel implements GLEventListener
     protected static GLUgl2 glu;
     protected static GLUT glut;
     
-    protected vtkImageData imageData;
     protected int thePlane;
     
     //protected int theTex;
     int texStack[];
     
-    protected int maxSlices;
     protected int currentSlice=1;
     protected float windowCenter=325;
     protected float windowWidth=581;
@@ -51,6 +55,10 @@ public class ARBSliceView extends GLJPanel implements GLEventListener
     
     protected String shaderToUse;
     
+    protected ArrayList<DicomObject> dicomList;
+    
+    protected VolumeObject volumeObject;
+    
     static {
         caps = new GLCapabilities(GLProfile.get(GLProfile.GL2));
         caps.setAlphaBits(8); 
@@ -60,11 +68,13 @@ public class ARBSliceView extends GLJPanel implements GLEventListener
         
     }
     
-    public ARBSliceView(vtkImageData imageData)
+    public ARBSliceView(ArrayList<DicomObject> dicomList)
     {
         super(caps);
         setBackground(Color.BLACK);
-        this.imageData = imageData;
+        
+        this.dicomList = dicomList;
+        
         addGLEventListener(this);
     }
     
@@ -93,21 +103,6 @@ public class ARBSliceView extends GLJPanel implements GLEventListener
     public void display(GLAutoDrawable drawable) {
         idle();
         
-        double[] spacing = imageData.GetSpacing();
-        int[] dim = imageData.GetDimensions();
-        double width = dim[0] * spacing[0];
-        double height = dim[1] * spacing[1];
-        double depth = dim[2] * spacing[2];
-        
-        double maxDim = 0;
-        if ( width > maxDim ) maxDim = width;
-        if ( height > maxDim ) maxDim = height;
-        if ( depth > maxDim ) maxDim = depth;
-        
-        double[] range = imageData.GetScalarRange();
-        double rangeDist = range[1] - range[0];
-        rangeDist = ( rangeDist > 0 ? rangeDist : 1 );
-        
         GL2 gl = drawable.getGL().getGL2();
         
         gl.glClear(GL_COLOR_BUFFER_BIT); 
@@ -117,22 +112,19 @@ public class ARBSliceView extends GLJPanel implements GLEventListener
         
         
         
-//        ShaderManager.bindARB(shaderToUse);
-//        gl.glProgramLocalParameter4fARB(GL_FRAGMENT_PROGRAM_ARB, 0, (float)(windowCenter/rangeDist), 0, 0, 0);
-//        gl.glProgramLocalParameter4fARB(GL_FRAGMENT_PROGRAM_ARB, 1, (float)(windowWidth/rangeDist), 0, 0, 0);
-        //gl.glEnable(GL_TEXTURE_2D);
-        gl.glDisable(GL_TEXTURE_2D);
-        gl.glDisable(GL_LIGHTING);
-        //gl.glEnable(GL_BLEND);
+        ShaderManager.bindARB(shaderToUse);
+        //gl.glProgramLocalParameter4fARB(GL_FRAGMENT_PROGRAM_ARB, 0, (float)(windowCenter/rangeDist), 0, 0, 0);
+        //gl.glProgramLocalParameter4fARB(GL_FRAGMENT_PROGRAM_ARB, 1, (float)(windowWidth/rangeDist), 0, 0, 0);
+        gl.glEnable(GL_TEXTURE_2D);
+        gl.glEnable(GL_BLEND);
         gl.glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
         gl.glBindTexture(GL_TEXTURE_2D, texStack[currentSlice-1]);
-        //texQuad3D(gl, (float)(width/maxDim), (float)(height/maxDim), (currentSlice-1)*1.0f/(maxSlices-1));
-        texQuad2DCentered(gl, (float)(width/maxDim)*2.0f, (float)(height/maxDim)*2.0f);
-//        ShaderManager.unbindARB(shaderToUse);
+        texQuad2DCentered(gl, (float)(volumeObject.getSizeX()/volumeObject.getSizeMax())*2.0f, (float)(volumeObject.getSizeY()/volumeObject.getSizeMax())*2.0f);
+        ShaderManager.unbindARB(shaderToUse);
         
         //show fps
         gl.glDisable(GL_TEXTURE_2D);
-        //gl.glDisable(GL_BLEND);
+        gl.glDisable(GL_BLEND);
         
         beginInfoScreen(gl, glu, viewport[2], viewport[3]);
             gl.glColor3f(1.0f, 1.0f, 0.0f);
@@ -168,20 +160,13 @@ public class ARBSliceView extends GLJPanel implements GLEventListener
         
         gl.glEnable(GL_TEXTURE_2D);
         gl.glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
-        //theTex = get3DTexture(gl, imageData);
         
-        //ShaderManager.init("shader");
+        ShaderManager.init("shader");
         
         try {
-            int colors = imageData.GetNumberOfScalarComponents();
-            logger.info("number of colors : " + colors);
+            shaderToUse = "windowing";
             
-            if ( colors == 1 )
-                shaderToUse = "windowing";
-            else if ( colors == 3 )
-                shaderToUse = "windowingRGB";
-            
-            //ShaderManager.readARB(gl, shaderToUse);
+            ShaderManager.readARB(gl, shaderToUse);
             
         } catch (Exception e) {
             e.printStackTrace();
@@ -190,7 +175,9 @@ public class ARBSliceView extends GLJPanel implements GLEventListener
         }
         
         try {
-            texStack = get2DTexturStack(gl, glu, imageData);
+            volumeObject = new VolumeObject( dicomList, null, null );
+            
+            texStack = get2DTexturStack(gl, glu, dicomList, volumeObject);
         } catch (Exception e) {
             e.printStackTrace();
             System.exit(-1);
@@ -199,7 +186,6 @@ public class ARBSliceView extends GLJPanel implements GLEventListener
         
         fpsCounter = new FPSCounter();
         
-        maxSlices = imageData.GetDimensions()[2];
     }
     
     @Override

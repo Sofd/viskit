@@ -39,6 +39,23 @@ public class ImageUtil
 
         return buf;
     }
+    
+    public static FloatBuffer getTranferredData(    ShortBuffer dataBuf,
+                                                    ITransferFunction transferFunction )
+    {
+        FloatBuffer floatbuf = BufferUtil.newFloatBuffer( dataBuf.capacity() );
+        
+        for ( int i = 0; i < dataBuf.capacity(); ++i )
+        {
+                float value = transferFunction.getY(dataBuf.get( i ));
+                floatbuf.put( value );
+        }
+                
+        dataBuf.rewind();
+        floatbuf.rewind();
+        
+        return floatbuf;
+    }
 
     public static FloatBuffer getTranferredData(    ShortBuffer dataBuf,
                                                 Collection<ITransferFunction> transferFunctionList,

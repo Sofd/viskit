@@ -19,7 +19,7 @@ import com.sun.opengl.util.*;
 public class Vtk2GL
 {
     static final Logger logger = Logger.getLogger( Vtk2GL.class );
-
+    
     public static int[] get2DTexturStack(    GL2 gl,
                                             GLU glu,
                                             vtkImageData imageData ) throws Exception

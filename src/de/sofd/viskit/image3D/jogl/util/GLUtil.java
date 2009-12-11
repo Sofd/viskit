@@ -6,15 +6,19 @@ import static javax.media.opengl.GL2.*;
 
 import java.awt.*;
 import java.nio.*;
+import java.util.*;
 
 import javax.media.opengl.*;
 import javax.media.opengl.glu.*;
 
 import org.apache.log4j.*;
+import org.dcm4che2.data.*;
 
 import com.sun.opengl.util.*;
 import com.sun.opengl.util.gl2.*;
 
+import de.sofd.viskit.image3D.jogl.model.*;
+import de.sofd.viskit.model.*;
 import de.sofd.viskit.util.*;
 
 public class GLUtil
@@ -27,6 +31,51 @@ public class GLUtil
                                         int winHeight )
     {
         beginInfoScreen( gl, glu, winWidth, winHeight, true, false, null );
+    }
+    
+    public static int[] get2DTexturStack(    GL2 gl,
+            GLU glu,
+            ArrayList<DicomObject> dicomList,
+            VolumeObject volumeObject ) throws Exception
+    {
+        
+        int[] texIds = new int[ dicomList.size() ];
+        
+        logi( gl, "GL_UNPACK_ROW_LENGTH", GL_UNPACK_ROW_LENGTH );
+        logi( gl, "GL_UNPACK_IMAGE_HEIGHT", GL_UNPACK_IMAGE_HEIGHT );
+        logi( gl, "GL_UNPACK_SKIP_IMAGES", GL_UNPACK_SKIP_IMAGES );
+        logi( gl, "GL_MAX_TEXTURE_SIZE", GL_MAX_TEXTURE_SIZE );
+        logi( gl, "GL_MAX_3D_TEXTURE_SIZE", GL_MAX_3D_TEXTURE_SIZE );
+        
+        ArrayList<ITransferFunction> windowing = DicomUtil.getWindowing( dicomList );
+        
+        gl.glPixelStorei( GL_UNPACK_ALIGNMENT, 1 );
+        
+        int z = 0;
+        for ( DicomObject dicomObject : dicomList )
+        {
+            ShortBuffer dataBuf = DicomUtil.getFilledShortBuffer( dicomObject );
+            
+            FloatBuffer floatbuf = ImageUtil.getTranferredData(dataBuf, windowing.get(z));
+        
+            int[] texid = new int[ 1 ];
+            gl.glGenTextures( 1, texid, 0 );
+            texIds[z] = texid[0];
+            gl.glBindTexture( GL_TEXTURE_2D, texIds[z] );
+            
+            glu.gluBuild2DMipmaps( GL_TEXTURE_2D, GL_ALPHA, volumeObject.getImageWidth(), volumeObject.getImageHeight(), GL_ALPHA, GL_FLOAT, floatbuf );
+                    
+            gl.glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER );
+            gl.glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER );
+            
+            gl.glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
+            gl.glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
+            gl.glTexEnvf( GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE );
+            
+            z++;
+        }
+        
+        return texIds;
     }
 
     public static int get3DTexture( GL2 gl,
