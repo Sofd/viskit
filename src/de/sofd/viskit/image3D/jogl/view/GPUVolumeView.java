@@ -1,7 +1,6 @@
 package de.sofd.viskit.image3D.jogl.view;
 
 import static de.sofd.viskit.image3D.jogl.util.GLUtil.*;
-import static de.sofd.viskit.image3D.jogl.util.Vtk2GL.*;
 import static javax.media.opengl.GL.*;
 import static javax.media.opengl.GL2.*;
 
@@ -13,11 +12,10 @@ import javax.media.opengl.glu.gl2.*;
 
 import org.apache.log4j.*;
 
-import vtk.*;
-
 import com.sun.opengl.util.*;
 import com.sun.opengl.util.gl2.*;
 
+import de.sofd.viskit.image3D.jogl.model.*;
 import de.sofd.viskit.image3D.jogl.util.*;
 import de.sofd.viskit.image3D.util.*;
 
@@ -25,40 +23,14 @@ import de.sofd.viskit.image3D.util.*;
 @SuppressWarnings("serial")
 public class GPUVolumeView extends GLCanvas implements GLEventListener, MouseListener, MouseMotionListener
 {
-    static final Logger logger = Logger.getLogger(GPUVolumeView.class);
-    
     protected static Animator animator;
     
     protected static GLCapabilities caps;
     
     protected static GLUgl2 glu;
+    
     protected static GLUT glut;
-    
-    protected vtkImageData imageData;
-    Cube theCube;
-    
-    protected int theBackFaceTex = -1;
-    protected int theTex;
-            
-    protected float phi = 0.0f;
-    protected float phi2 = 0.0f;
-    protected float dist = 2.5f;
-    
-    protected float alpha = 2.0f;
-    protected float sliceStep = 1/220.0f;
-    protected float bias = 0.5f;
-    protected float yLevel = 1.0f;
-    protected float zLevelMin = 0.0f;
-    protected float zLevelMax = 1.0f;
-    
-    protected int lastX;
-    protected int lastY;
-    protected float oldPhi;
-    protected float oldPhi2;
-    
-    protected FPSCounter fpsCounter;
-    
-    protected int viewport[] = new int[4];
+    static final Logger logger = Logger.getLogger(GPUVolumeView.class);
     
     static {
         caps = new GLCapabilities(GLProfile.get(GLProfile.GL2));
@@ -66,10 +38,36 @@ public class GPUVolumeView extends GLCanvas implements GLEventListener, MouseLis
         
     }
     
-    public GPUVolumeView(vtkImageData imageData)
+    protected float alpha = 2.0f;
+                
+    protected float bias = 0.5f;
+    protected float dist = 2.5f;
+    protected FPSCounter fpsCounter;
+    
+    protected int lastX;
+    protected int lastY;
+    protected float oldPhi;
+    protected float oldPhi2;
+    protected float phi = 0.0f;
+    protected float phi2 = 0.0f;
+    
+    protected float sliceStep = 1/220.0f;
+    protected int theBackFaceTex = -1;
+    Cube theCube;
+    protected int viewport[] = new int[4];
+    
+    protected VolumeObject volumeObject;
+    
+    protected float yLevel = 1.0f;
+    
+    protected float zLevelMax = 1.0f;
+    
+    protected float zLevelMin = 0.0f;
+    
+    public GPUVolumeView(VolumeObject volumeObject)
     {
         super(caps);
-        this.imageData = imageData;
+        this.volumeObject = volumeObject;
         addGLEventListener(this);
         addMouseListener(this);
         addMouseMotionListener(this);
@@ -77,59 +75,9 @@ public class GPUVolumeView extends GLCanvas implements GLEventListener, MouseLis
         
     }
     
-    public float getAlpha() {
-        return alpha;
-    }
-    
-    public float getSliceStep() {
-        return sliceStep;
-    }
-    
-    public void setAlpha(float alpha) {
-        this.alpha = alpha;
-    }
-    
-    public void setBias(float bias) {
-        this.bias = bias;
-        
-    }
-
-    public void setSliceStep(float sliceStep) {
-        this.sliceStep = sliceStep;
-    }
-    
-    public void setYLevel(float yLevel) {
-        this.yLevel = yLevel;
-    }
-    
-    public void setZLevelMin(float zLevelMin) {
-        this.zLevelMin = zLevelMin;
-    }
-    
-    public void setZLevelMax(float zLevelMax) {
-        this.zLevelMax = zLevelMax;
-    }
-    
-    protected void idle()
-    {
-        //phi += 2.0f;
-        fpsCounter.update();
-    }
-    
     @Override
     public void display(GLAutoDrawable drawable) {
         idle();
-        //drawable.getContext().getGL().g
-        double[] spacing = imageData.GetSpacing();
-        int[] dim = imageData.GetDimensions();
-        double width = dim[0] * spacing[0];
-        double height = dim[1] * spacing[1];
-        double depth = dim[2] * spacing[2];
-        
-        double maxDim = 0;
-        if ( width > maxDim ) maxDim = width;
-        if ( height > maxDim ) maxDim = height;
-        if ( depth > maxDim ) maxDim = depth;
         
         GL2 gl = drawable.getGL().getGL2();
         
@@ -168,7 +116,7 @@ public class GPUVolumeView extends GLCanvas implements GLEventListener, MouseLis
         ShaderManager.bind("volView");
        
         gl.glActiveTexture(GL_TEXTURE2);
-        gl.glBindTexture(GL_TEXTURE_3D, theTex);
+        gl.glBindTexture(GL_TEXTURE_3D, volumeObject.getTexId());
         gl.glEnable(GL_TEXTURE_3D);
         ShaderManager.get("volView").bindUniform("volTex", 2);
         
@@ -199,13 +147,27 @@ public class GPUVolumeView extends GLCanvas implements GLEventListener, MouseLis
         
         
     }
-
+    
     @Override
     public void dispose(GLAutoDrawable drawable) {
         System.out.println("dispose: "+drawable); 
         
     }
+    
+    public float getAlpha() {
+        return alpha;
+    }
+    
+    public float getSliceStep() {
+        return sliceStep;
+    }
 
+    protected void idle()
+    {
+        //phi += 2.0f;
+        fpsCounter.update();
+    }
+    
     @Override
     public void init(GLAutoDrawable drawable) {
         logger.info("init");
@@ -221,7 +183,7 @@ public class GPUVolumeView extends GLCanvas implements GLEventListener, MouseLis
 
         System.err.println("Chosen GLCapabilities: " + drawable.getChosenGLCapabilities());
 
-        gl.setSwapInterval(1); 
+        gl.setSwapInterval(0); 
         
         gl.glShadeModel(GL_SMOOTH);
         gl.glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
@@ -230,7 +192,7 @@ public class GPUVolumeView extends GLCanvas implements GLEventListener, MouseLis
         
         ShaderManager.init("shader");
         
-        theTex = get3DTexture(gl, imageData, true);
+        volumeObject.loadTexture(gl);
         
         try {
             ShaderManager.read(gl, "tc2col");
@@ -251,19 +213,55 @@ public class GPUVolumeView extends GLCanvas implements GLEventListener, MouseLis
         
         fpsCounter = new FPSCounter();
         
-        double[] spacing = imageData.GetSpacing();
-        int[] dim = imageData.GetDimensions();
-        double width = dim[0] * spacing[0];
-        double height = dim[1] * spacing[1];
-        double depth = dim[2] * spacing[2];
-        
-        double maxDim = 0;
-        if ( width > maxDim ) maxDim = width;
-        if ( height > maxDim ) maxDim = height;
-        if ( depth > maxDim ) maxDim = depth;
-        theCube = new Cube(gl, 2.0f*width/maxDim, 2.0f*height/maxDim, 2.0f*depth/maxDim);
+        theCube = new Cube(gl, 2.0f*volumeObject.getSizeX()/volumeObject.getSizeMax(), 2.0f*volumeObject.getSizeY()/volumeObject.getSizeMax(), 2.0f*volumeObject.getSizeZ()/volumeObject.getSizeMax());
         
         
+        
+    }
+    
+    public void mouseClicked(MouseEvent e) {
+        // TODO Auto-generated method stub
+        
+    }
+    
+    public void mouseDragged(MouseEvent e) {
+        int x = e.getX();
+        int y = e.getY();
+        
+        phi = oldPhi + (x - lastX);
+        phi2 = oldPhi2 + (y - lastY);
+
+        /*lastX = x;
+        lastY = y;*/
+    }
+    
+    public void mouseEntered(MouseEvent e) {
+        
+    }
+    
+    public void mouseExited(MouseEvent e) {
+        // TODO Auto-generated method stub
+        
+    }
+
+    public void mouseMoved(MouseEvent e) {
+        lastX = e.getX();
+        lastY = e.getY();
+        oldPhi = phi;
+        oldPhi2 = phi2;
+        //panel.render();
+    }
+
+    public void mousePressed(MouseEvent e) {
+
+        oldPhi = phi;
+        oldPhi2 = phi2;
+        lastX = e.getX();
+        lastY = e.getY();
+
+    }
+    
+    public void mouseReleased(MouseEvent e) {
         
     }
     
@@ -299,52 +297,30 @@ public class GPUVolumeView extends GLCanvas implements GLEventListener, MouseLis
         
         theBackFaceTex = initScreenTex(gl, width, height);
     }
-    
-    public void mouseClicked(MouseEvent e) {
-        // TODO Auto-generated method stub
+
+    public void setAlpha(float alpha) {
+        this.alpha = alpha;
+    }
+
+    public void setBias(float bias) {
+        this.bias = bias;
         
     }
 
-    public void mouseDragged(MouseEvent e) {
-        int x = e.getX();
-        int y = e.getY();
-        
-        phi = oldPhi + (x - lastX);
-        phi2 = oldPhi2 + (y - lastY);
-
-        /*lastX = x;
-        lastY = y;*/
-    }
-
-    public void mouseEntered(MouseEvent e) {
-        
-    }
-
-    public void mouseExited(MouseEvent e) {
-        // TODO Auto-generated method stub
-        
+    public void setSliceStep(float sliceStep) {
+        this.sliceStep = sliceStep;
     }
     
-    public void mouseMoved(MouseEvent e) {
-        lastX = e.getX();
-        lastY = e.getY();
-        oldPhi = phi;
-        oldPhi2 = phi2;
-        //panel.render();
+    public void setYLevel(float yLevel) {
+        this.yLevel = yLevel;
     }
     
-    public void mousePressed(MouseEvent e) {
-
-        oldPhi = phi;
-        oldPhi2 = phi2;
-        lastX = e.getX();
-        lastY = e.getY();
-
-        
+    public void setZLevelMax(float zLevelMax) {
+        this.zLevelMax = zLevelMax;
     }
 
-    public void mouseReleased(MouseEvent e) {
-        
+    public void setZLevelMin(float zLevelMin) {
+        this.zLevelMin = zLevelMin;
     }
 
     

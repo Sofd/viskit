@@ -35,7 +35,17 @@ public class SliceViewController implements MouseListener, MouseMotionListener
     public void mouseDragged( MouseEvent e )
     {
         for ( OrthoViewportController orthoViewportController : orthoViewportControllerList )
-            orthoViewportController.mouseDragged( e.getButton(), e.getX(), sliceView.getViewportHeight() - e.getY() );
+        {
+            boolean draggingLocked = false;
+            for ( OrthoViewportController orthoViewportController2 : orthoViewportControllerList )
+            {
+                if ( orthoViewportController != orthoViewportController2 && orthoViewportController2.isDragging() )
+                    draggingLocked = true;
+            }
+            
+            if ( ! draggingLocked )
+                orthoViewportController.mouseDragged( e.getButton(), e.getX(), sliceView.getViewportHeight() - e.getY() );
+        }
 
 //        int pos[] = sliceView.getVolumeObject().getSliceCursor();
 //        System.out.println( "x : " + pos[0] + ", y : " + pos[1] + ", z : " + pos[2] );

@@ -15,6 +15,8 @@ public abstract class OrthoViewportController
         return orthoViewport;
     }
     
+    public abstract boolean isDragging();
+    
     public abstract void mouseClicked( int button, int mX, int mY );
 
     public abstract void mouseDragged( int button, int mX, int mY );

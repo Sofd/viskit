@@ -36,17 +36,11 @@ public class SliceViewer extends JFrame
 
         setBackground( Color.BLACK );
 
-        //ArrayList<DicomObject> dicomList = DicomInputOutput.readDir( "/home/oliver/dicom/series1", null );
-        ArrayList<DicomObject> dicomList = DicomInputOutput.readDir( "/home/oliver/Desktop/Laufwerk_D/dicom/1578", null, 400, 100 );
+        ArrayList<DicomObject> dicomList = DicomInputOutput.readDir( "/home/oliver/dicom/series1", null );
+        //ArrayList<DicomObject> dicomList = DicomInputOutput.readDir( "/home/oliver/Desktop/Laufwerk_D/dicom/1578", null, 400, 100 );
         
-        if ( dicomList.isEmpty() )
-        {
-            System.out.println( "no dicom images" );
-            System.exit( -1 );
-        }
-
         ShortBuffer dataBuf = DicomUtil.getFilledShortBuffer( dicomList );
-        ArrayList<Windowing> windowing = DicomUtil.getWindowing( dicomList );
+        ArrayList<ITransferFunction> windowing = DicomUtil.getWindowing( dicomList );
 
         VolumeObject volumeObject = new VolumeObject( dicomList, windowing, dataBuf );
         sliceView = new SliceView( volumeObject );

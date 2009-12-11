@@ -6,7 +6,7 @@ import java.util.*;
 
 import com.sun.opengl.util.*;
 
-import de.sofd.viskit.model.Windowing;
+import de.sofd.viskit.model.*;
 
 public class ImageUtil
 {
@@ -40,56 +40,21 @@ public class ImageUtil
         return buf;
     }
 
-    /**
-     * Applies windowing to original value and maps result to [0, 1].
-     * 
-     * @param originalValue
-     * @param windowCenter
-     * @param windowWidth
-     * @return windowed value.
-     */
-    public static float getWindowed(    short originalValue,
-                                        float windowCenter,
-                                        float windowWidth )
-    {
-        if ( originalValue < windowCenter - windowWidth / 2 )
-            return 0;
-
-        if ( originalValue > windowCenter + windowWidth / 2 )
-            return 1;
-
-        return ( originalValue - windowCenter + windowWidth / 2 ) / ( windowWidth );
-    }
-
-    /**
-     * Applies windowing to original value and maps result to [0, 1].
-     * 
-     * @param originalValue
-     * @param windowing
-     *            windowing parameters.
-     * @return windowed value.
-     */
-    public static float getWindowed(    short originalValue,
-                                        Windowing windowing )
-    {
-        return getWindowed( originalValue, windowing.getWindowCenter(), windowing.getWindowWidth() );
-    }
-
-    public static FloatBuffer getWindowedData(    ShortBuffer dataBuf,
-                                                Collection<Windowing> windowingList,
+    public static FloatBuffer getTranferredData(    ShortBuffer dataBuf,
+                                                Collection<ITransferFunction> transferFunctionList,
                                                 int imageWidth,
                                                 int imageHeight )
     {
         FloatBuffer floatbuf = BufferUtil.newFloatBuffer( dataBuf.capacity() );
         int index = 0;
 
-        for ( Windowing windowing : windowingList )
+        for ( ITransferFunction transferFunction : transferFunctionList )
         {
             for ( int y = 0; y < imageHeight; ++y )
             {
                 for ( int x = 0; x < imageWidth; ++x )
                 {
-                    float value = getWindowed( dataBuf.get( index ), windowing );
+                    float value = transferFunction.getY(dataBuf.get( index ));
                     floatbuf.put( value );
                     index++;
                 }

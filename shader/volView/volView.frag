@@ -33,20 +33,14 @@ void main() {
 	
 	for ( int i=0; i<steps; ++i )
 	{
-		volValue = ( 1.0f - abs(bias - texture3D(volTex, rayPos).a)/bias ) * alpha;
-		//volValue = texture3D(volTex, rayPos).a;
+		//volValue = ( 1.0f - abs(bias - texture3D(volTex, rayPos).a)/bias ) * alpha;
+		volValue = texture3D(volTex, rayPos).a * alpha;
 		value = volValue * volValue + (1 - volValue) * value;
 		
-		/*if ( volValue >= alpha - 0.05f && volValue <= alpha + 0.05f )
-		{
-			
-			value = 1.0f;
-			break; 	
-		}*/
-		//value = max(value, volValue);
 		rayPos += moveDir;
 	}
 	
 	gl_FragColor = vec4( value, value, value, 1.0f );
-	//gl_FragColor = vec4( rayStart.x, value, value, 1.0f );
+	//gl_FragColor = vec4( 1.0f, 1.0f, 1.0f, value );
+	
 } 

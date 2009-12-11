@@ -22,7 +22,7 @@ import de.sofd.viskit.image3D.model.*;
 import de.sofd.viskit.image3D.util.*;
 
 @SuppressWarnings( "serial" )
-public class SliceView extends GLJPanel implements GLEventListener
+public class SliceView extends GLCanvas implements GLEventListener
 {
     static final Logger logger = Logger.getLogger( SliceView.class );
 

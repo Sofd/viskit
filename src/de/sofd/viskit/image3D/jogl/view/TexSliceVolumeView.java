@@ -1,18 +1,22 @@
 package de.sofd.viskit.image3D.jogl.view;
 
-import static de.sofd.viskit.image3D.jogl.util.Vtk2GL.*;
+import static de.sofd.viskit.image3D.jogl.util.GLUtil.*;
+import static javax.media.opengl.GL.*;
 import static javax.media.opengl.GL2.*;
 
 import java.awt.event.*;
 
 import javax.media.opengl.*;
 import javax.media.opengl.awt.*;
+import javax.media.opengl.glu.gl2.*;
 
 import org.apache.log4j.*;
 
-import vtk.*;
-
 import com.sun.opengl.util.*;
+import com.sun.opengl.util.gl2.*;
+
+import de.sofd.viskit.image3D.jogl.model.*;
+import de.sofd.viskit.image3D.util.*;
 
 
 @SuppressWarnings("serial")
@@ -24,9 +28,6 @@ public class TexSliceVolumeView extends GLCanvas implements GLEventListener, Mou
     
     protected static Animator animator;
     
-    protected vtkImageData imageData;
-    
-    protected int theTex;
     protected int thePlanes;
     
     protected static GLCapabilities caps;
@@ -45,6 +46,14 @@ public class TexSliceVolumeView extends GLCanvas implements GLEventListener, Mou
     protected float oldPhi;
     protected float oldPhi2;
     
+    protected VolumeObject volumeObject;
+    
+    protected int viewport[] = new int[4];
+    
+    protected FPSCounter fpsCounter;
+    
+    protected static GLUT glut;
+    protected static GLUgl2 glu;
     
     public float getAlpha() {
         return alpha;
@@ -68,58 +77,27 @@ public class TexSliceVolumeView extends GLCanvas implements GLEventListener, Mou
         
     }
     
-    public TexSliceVolumeView(vtkImageData imageData)
+    public TexSliceVolumeView(VolumeObject volumeObject)
     {
         super(caps);
-        this.imageData = imageData;
+        this.volumeObject = volumeObject;
         addGLEventListener(this);
         addMouseListener(this);
         addMouseMotionListener(this);
     }
     
-    private void initPlanes(GL2 gl) {
-        double[] spacing = imageData.GetSpacing();
-        int[] dim = imageData.GetDimensions();
-        double width = dim[0] * spacing[0];
-        double height = dim[1] * spacing[1];
-        double depth = dim[2] * spacing[2];
-        
-        double maxDim = 0;
-        if ( width > maxDim ) maxDim = width;
-        if ( height > maxDim ) maxDim = height;
-        if ( depth > maxDim ) maxDim = depth;
-        
-        logger.info("width : " + width);
-        logger.info("height : " + height);
-        logger.info("depth : " + depth);
-         
-        
-        
-    }
-    
     protected void idle()
     {
-        //phi += 2.0f;
+        fpsCounter.update();
     }
     
     @Override
     public void display(GLAutoDrawable drawable) {
         idle();
         
-        double[] spacing = imageData.GetSpacing();
-        int[] dim = imageData.GetDimensions();
-        double width = dim[0] * spacing[0];
-        double height = dim[1] * spacing[1];
-        double depth = dim[2] * spacing[2];
-        
-        double maxDim = 0;
-        if ( width > maxDim ) maxDim = width;
-        if ( height > maxDim ) maxDim = height;
-        if ( depth > maxDim ) maxDim = depth;
-        
         GL2 gl = drawable.getGL().getGL2();
         
-        gl.glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); 
+        gl.glClear(GL_COLOR_BUFFER_BIT); 
         
         gl.glMatrixMode(GL_TEXTURE);
         gl.glLoadIdentity();
@@ -134,32 +112,48 @@ public class TexSliceVolumeView extends GLCanvas implements GLEventListener, Mou
         
         //gl.glTranslatef(0.0f, 0.0f, 4.0f);
         
-        gl.glBindTexture(GL_TEXTURE_3D, theTex);
-
+        gl.glEnable(GL_TEXTURE_3D);
+        gl.glEnable(GL_BLEND);
+        gl.glDisable(GL_DEPTH_TEST);
+        gl.glBindTexture(GL_TEXTURE_3D, volumeObject.getTexId());
+        gl.glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+        
         float adjAlpha = alpha/slices;
-        gl.glAlphaFunc(GL_EQUAL, alpha);
+                
+        double maxDim = volumeObject.getSizeMax();
+        double x1 = -volumeObject.getSizeX()/maxDim*zoom;
+        double x2 = volumeObject.getSizeX()/maxDim*zoom;
+        double y1 = -volumeObject.getSizeY()/maxDim*zoom;
+        double y2 = volumeObject.getSizeY()/maxDim*zoom;
         
         gl.glBegin(GL_QUADS);
         for (int i=0; i<slices; ++i)
         //for (int i=slices-1; i>=0; --i)
         {
-            double z = (-depth/maxDim + (depth*2.0f/maxDim)*i/(slices-1))*zoom;
+            double z = (-volumeObject.getSizeZ()/maxDim + (volumeObject.getSizeZ()*2.0f/maxDim)*i/(slices-1))*zoom;
             double u = (1.0f - i*1.0f/(slices - 1))*zoom+0.5-zoom/2;
-            //float adjAlpha = i*1.0f/(slices-1);
-            //logger.info("z : "+ z + ", u : " + u);
             gl.glColor4f(1.0f, 1.0f, 1.0f, adjAlpha);
-            //gl.glColor4f(1.0f, 1.0f, 1.0f, 0.5f);
+            
             gl.glTexCoord4d(0.5f-0.5f*zoom, 0.5f-0.5f*zoom, u, 1.0f);
-            gl.glVertex3d(-width/maxDim*zoom, -height/maxDim*zoom, z);
+            gl.glVertex3d(x1, y1, z);
             gl.glTexCoord4d(0.5f+0.5f*zoom, 0.5f-0.5f*zoom, u, 1.0f);
-            gl.glVertex3d( width/maxDim*zoom, -height/maxDim*zoom, z);
+            gl.glVertex3d( x2, y1, z);
             gl.glTexCoord4d(0.5f+0.5f*zoom, 0.5f+0.5f*zoom, u, 1.0f);
-            gl.glVertex3d( width/maxDim*zoom, height/maxDim*zoom, z);
+            gl.glVertex3d( x2, y2, z);
             gl.glTexCoord4d(0.5f-0.5f*zoom, 0.5f+0.5f*zoom, u, 1.0f);
-            gl.glVertex3d(-width/maxDim*zoom, height/maxDim*zoom, z);
+            gl.glVertex3d(x1, y2, z);
         }
         
-    gl.glEnd();
+        gl.glEnd();
+        
+        //show fps
+        gl.glDisable(GL_TEXTURE_3D);
+        gl.glDisable(GL_BLEND);
+        
+        beginInfoScreen(gl, glu, viewport[2], viewport[3]);
+            gl.glColor3f(0.0f, 0.0f, 1.0f);
+            infoText(gl, glut, 10, 10, "FPS : " + fpsCounter.getFps());
+        endInfoScreen(gl);
         
         
         
@@ -175,6 +169,10 @@ public class TexSliceVolumeView extends GLCanvas implements GLEventListener, Mou
     public void init(GLAutoDrawable drawable) {
         drawable.setGL((new DebugGL2(drawable.getGL().getGL2())));
         
+        glu = new GLUgl2();
+        
+        glut = new GLUT();
+        
         GL2 gl = drawable.getGL().getGL2();
 
         drawable.getChosenGLCapabilities().setAlphaBits(8);
@@ -183,22 +181,22 @@ public class TexSliceVolumeView extends GLCanvas implements GLEventListener, Mou
 
         logger.info("Chosen GLCapabilities: " + drawable.getChosenGLCapabilities());
 
-        gl.setSwapInterval(1); 
+        gl.setSwapInterval(0); 
         
         gl.glShadeModel(GL_SMOOTH);
         gl.glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
         
-       // gl.glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-       gl.glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+        gl.glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+       //gl.glBlendFunc(GL_SRC_ALPHA, GL_ONE);
         //gl.glBlendColor(1.0f, 1.0f, 1.0f, 1.0f/MAX_PLANES);
         //gl.glBlendEquation(GL_MAX);
         gl.glEnable(GL_BLEND);
-        gl.glEnable(GL_DEPTH_TEST);
         gl.glEnable(GL_TEXTURE_3D);
-        //gl.glEnable(GL_ALPHA_TEST);
                 
-        theTex = get3DTexture(gl, imageData, true);
-        initPlanes(gl);
+        volumeObject.loadTexture(gl);
+        
+        fpsCounter = new FPSCounter();
+        
         
     }
 
@@ -220,7 +218,7 @@ public class TexSliceVolumeView extends GLCanvas implements GLEventListener, Mou
         gl.glMatrixMode(GL_MODELVIEW);
         gl.glLoadIdentity();
         
-        
+        gl.glGetIntegerv ( GL_VIEWPORT, viewport, 0 );
     }
     
     public void mouseClicked(MouseEvent e) {

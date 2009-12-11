@@ -20,27 +20,27 @@ public class SlicePlaneY extends SlicePlane
                 ImageAxis.AXIS_Y,
                 type,
                 volumeObject,
-                (int)( volumeObject.getSizeX() * width / volumeObject.getMaxSize() ),
-                (int)( volumeObject.getSizeZ() * height / volumeObject.getMaxSize() ) );
+                (int)( volumeObject.getSizeX() * width / volumeObject.getSizeMax() ),
+                (int)( volumeObject.getSizeZ() * height / volumeObject.getSizeMax() ) );
 
     }
 
     @Override
     public int getCurrentSlice()
     {
-        return volumeObject.getSliceCursor()[1];
+        return ( getMaxSlices() - volumeObject.getSliceCursor()[1] - 1 );
     }
 
     @Override
     public int getHorizontalMaxSlices()
     {
-        return volumeObject.getWidth();
+        return volumeObject.getImageWidth();
     }
 
     @Override
     public int getMaxSlices()
     {
-        return volumeObject.getHeight();
+        return volumeObject.getImageHeight();
     }
 
     @Override
@@ -70,13 +70,13 @@ public class SlicePlaneY extends SlicePlane
     @Override
     public int getVerticalMaxSlices()
     {
-        return volumeObject.getDepth();
+        return volumeObject.getImageDepth();
     }
 
     @Override
     public void setCurrentSlice( int currentSlice )
     {
-        volumeObject.getSliceCursor()[1] = currentSlice;
+        volumeObject.getSliceCursor()[1] = ( getMaxSlices() - currentSlice - 1 );
     }
     
     @Override
@@ -86,6 +86,13 @@ public class SlicePlaneY extends SlicePlane
         gl.glTranslatef( 0.5f, 0.5f, 0.5f );
         gl.glRotatef( 90.0f, 1.0f, 0.0f, 0.0f );
         gl.glTranslatef( -0.5f, -0.5f, -0.5f );
+    }
+    
+    @Override
+    public void updateReticle()
+    {
+        reticle.setRelativePosX( getSliceHorizontalFromCursor() * 1.0f / ( getHorizontalMaxSlices() - 1 ) );
+        reticle.setRelativePosY( getSliceVerticalFromCursor() * 1.0f / ( getVerticalMaxSlices() - 1 ) );
     }
     
     @Override

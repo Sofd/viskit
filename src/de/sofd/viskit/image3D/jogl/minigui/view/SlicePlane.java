@@ -157,12 +157,8 @@ public abstract class SlicePlane extends Component
 
     protected abstract void transformTex( GL2 gl );
 
-    public void updateReticle()
-    {
-        reticle.setRelativePosX( getSliceHorizontalFromCursor() * 1.0f / ( getHorizontalMaxSlices() - 1 ) );
-        reticle.setRelativePosY( getSliceVerticalFromCursor() * 1.0f / ( getVerticalMaxSlices() - 1 ) );
-    }
-
+    public abstract void updateReticle();
+    
     public abstract void updateSliceCursor();
 
 }

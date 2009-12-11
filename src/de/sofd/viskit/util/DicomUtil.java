@@ -35,9 +35,9 @@ public class DicomUtil
         return dataBuf;
     }
 
-    public static ArrayList<Windowing> getWindowing( ArrayList<DicomObject> dicomList )
+    public static ArrayList<ITransferFunction> getWindowing( ArrayList<DicomObject> dicomList )
     {
-        ArrayList<Windowing> windowing = new ArrayList<Windowing>();
+        ArrayList<ITransferFunction> windowing = new ArrayList<ITransferFunction>();
 
         for ( DicomObject dicomObject : dicomList )
         {

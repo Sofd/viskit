@@ -1,6 +1,6 @@
 package de.sofd.viskit.model;
 
-public class Windowing
+public class Windowing implements ITransferFunction
 {
     protected float windowCenter;
     protected float windowWidth;
@@ -8,7 +8,7 @@ public class Windowing
     public Windowing( float windowCenter, float windowWidth )
     {
         super();
-        System.out.println("windowCenter : " + windowCenter + ", windowWidth " + windowWidth);
+        
         this.windowCenter = windowCenter;
         this.windowWidth = windowWidth;
     }
@@ -31,6 +31,22 @@ public class Windowing
     public void setWindowWidth( float windowWidth )
     {
         this.windowWidth = windowWidth;
+    }
+
+    @Override
+    public short getX(float y) {
+        return (short)(y * windowWidth + windowCenter - windowWidth / 2);
+    }
+
+    @Override
+    public float getY(short x) {
+        if ( x < windowCenter - windowWidth / 2 )
+            return 0;
+
+        if ( x > windowCenter + windowWidth / 2 )
+            return 1;
+
+        return ( x - windowCenter + windowWidth / 2 ) / ( windowWidth );
     }
 
 }
