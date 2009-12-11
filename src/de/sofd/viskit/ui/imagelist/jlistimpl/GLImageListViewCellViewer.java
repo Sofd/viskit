@@ -11,8 +11,10 @@ import java.awt.image.AffineTransformOp;
 import java.awt.image.BufferedImageOp;
 import javax.media.opengl.GL2;
 import javax.media.opengl.GLAutoDrawable;
+import javax.media.opengl.GLCapabilities;
 import javax.media.opengl.GLContext;
 import javax.media.opengl.GLEventListener;
+import javax.media.opengl.GLProfile;
 import javax.media.opengl.awt.GLJPanel;
 
 /**
@@ -27,7 +29,14 @@ public class GLImageListViewCellViewer extends GLJPanel {
 
     private final ImageListViewCell displayedCell;
 
+    private static GLCapabilities caps;
+    static {
+        caps = new GLCapabilities(GLProfile.get(GLProfile.GL2));
+        caps.setAlphaBits(8);
+    }
+
     public GLImageListViewCellViewer(ImageListViewCell cell) {
+        super(caps);
         this.displayedCell = cell;
         /*
         if (null == sharedContext) {
@@ -115,7 +124,8 @@ public class GLImageListViewCellViewer extends GLJPanel {
         @Override
         public void init(GLAutoDrawable glAutoDrawable) {
             System.out.println("INIT GL drawable: " + glAutoDrawable);
-            GL2 gl = (GL2) glAutoDrawable.getGL();
+            GL2 gl = glAutoDrawable.getGL().getGL2();
+            gl.setSwapInterval(1);
             setupEye2ViewportTransformation(gl);
             gl.glClearColor(0,0,0,0);
             gl.glShadeModel(gl.GL_FLAT);
@@ -127,11 +137,11 @@ public class GLImageListViewCellViewer extends GLJPanel {
 
         @Override
         public void display(GLAutoDrawable glAutoDrawable) {
-            GL2 gl = (GL2) glAutoDrawable.getGL();
+            GL2 gl = glAutoDrawable.getGL().getGL2();
             gl.glClear(gl.GL_COLOR_BUFFER_BIT);
             gl.glMatrixMode(gl.GL_MODELVIEW);
             gl.glLoadIdentity();
-            gl.glTranslated(displayedCell.getCenterOffset().getX(), displayedCell.getCenterOffset().getY(), 0);
+            gl.glTranslated(displayedCell.getCenterOffset().getX(), -displayedCell.getCenterOffset().getY(), 0);
             gl.glScaled(displayedCell.getScale(), displayedCell.getScale(), 0);
             gl.glColor3f(0, 1, 0);
             float w2 = (float) getOriginalImageWidth() / 2, h2 = (float) getOriginalImageHeight() / 2;
@@ -141,6 +151,7 @@ public class GLImageListViewCellViewer extends GLJPanel {
             gl.glVertex2f( w2, -h2);
             gl.glVertex2f(-w2, -h2);
             gl.glEnd();
+            //gl.glFlush();
             //glAutoDrawable.swapBuffers();
         }
 
@@ -155,7 +166,6 @@ public class GLImageListViewCellViewer extends GLJPanel {
             gl.glMatrixMode(gl.GL_PROJECTION);
             gl.glLoadIdentity();
             Dimension sz = displayedCell.getLatestSize();
-            /*
             if (sz != null) {
                 gl.glOrtho(-sz.width / 2,   //    GLdouble      left,
                             sz.width / 2,   //    GLdouble      right,
@@ -172,7 +182,6 @@ public class GLImageListViewCellViewer extends GLJPanel {
                               );
                 gl.glDepthRange(0,1);
             }
-             */
         }
 
     };
