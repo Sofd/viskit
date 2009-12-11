@@ -25,7 +25,7 @@ import javax.media.opengl.awt.GLJPanel;
  */
 public class GLImageListViewCellViewer extends GLJPanel {
 
-    protected static GLContext sharedContext;
+    //protected static GLContext sharedContext;
 
     private final ImageListViewCell displayedCell;
 
@@ -175,11 +175,16 @@ public class GLImageListViewCellViewer extends GLJPanel {
                             1000   //  GLdouble      farVal
                            );
 
+                /*
+                // TODO: if we have a glViewPort() call, strange things happen
+                //  (completely wrong viewport in some cells) if the J2D OGL pipeline is active.
+                //  If we don't include it, everything works. Why?
                 gl.glViewport(0, //GLint x,
                               0, //GLint y,
                               getWidth(), //GLsizei width,
                               getHeight() //GLsizei height
                               );
+                */
                 gl.glDepthRange(0,1);
             }
         }
