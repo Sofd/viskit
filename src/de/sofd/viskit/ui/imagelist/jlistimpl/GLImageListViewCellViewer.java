@@ -178,7 +178,9 @@ public class GLImageListViewCellViewer extends GLJPanel {
                 /*
                 // TODO: if we have a glViewPort() call, strange things happen
                 //  (completely wrong viewport in some cells) if the J2D OGL pipeline is active.
-                //  If we don't include it, everything works. Why?
+                //  If we don't include it, everything works. Why? The JOGL UserGuide says
+                //  that the viewport is automatically set to the drawable's size, but why
+                //  is it harmful to do this manually too?
                 gl.glViewport(0, //GLint x,
                               0, //GLint y,
                               getWidth(), //GLsizei width,
