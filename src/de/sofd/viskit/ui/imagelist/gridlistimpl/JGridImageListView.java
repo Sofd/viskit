@@ -6,6 +6,7 @@ import de.sofd.util.Misc;
 import de.sofd.viskit.ui.imagelist.ImageListViewCell;
 import de.sofd.viskit.model.ImageListViewModelElement;
 import de.sofd.viskit.ui.imagelist.JImageListView;
+import de.sofd.viskit.ui.imagelist.jlistimpl.GLImageListViewCellViewer;
 import de.sofd.viskit.ui.imagelist.jlistimpl.ImageListViewCellViewer;
 import java.awt.GridLayout;
 import java.awt.Point;
@@ -29,17 +30,25 @@ import javax.swing.event.ListDataEvent;
  */
 public class JGridImageListView extends JImageListView {
 
+    /**
+     * The central {@link JGridList} that we embed to display the cells.
+     */
     protected final JGridList wrappedGridList;
+
     /**
      * use for the wrapped grid list a separate model that always tracks
      * (via shallow copying) our #getModel(). This is so we can
      * better control who sees changes when, e.g. we can more easily
      * ensure that if the model changes and the wrappedGridList calls
      * back into us (e.g. into the component factory), the corresponding
-     * changes in this object (e.g. cellcreation for new model elements)
+     * changes in this object (e.g. cell creation for new model elements)
      * will already have been done.
      */
     protected DefaultListModel wrappedGridListModel;
+
+    public static enum RendererType {JAVA2D, OPENGL};
+
+    private RendererType rendererType = RendererType.JAVA2D;
 
     public JGridImageListView() {
         setLayout(new GridLayout(1, 1));
@@ -198,13 +207,37 @@ public class JGridImageListView extends JImageListView {
         }
     }
 
+    @Override
+    public void refreshCells() {
+        wrappedGridList.repaint();
+    }
+
+    public RendererType getRendererType() {
+        return rendererType;
+    }
+
+    public void setRendererType(RendererType rendererType) {
+        this.rendererType = rendererType;
+        wrappedGridList.refresh();
+    }
+
+
     class WrappedGridListComponentFactory extends AbstractFramedSelectionGridListComponentFactory {
 
         @Override
         public JComponent createComponent(JGridList source, JPanel parent, Object modelItem) {
             ImageListViewModelElement elt = (ImageListViewModelElement) modelItem;
             ImageListViewCell cell = getCellForElement(elt);
-            ImageListViewCellViewer resultComponent = new ImageListViewCellViewer(cell);
+            JComponent resultComponent = null;
+            switch (rendererType) {
+                case JAVA2D:
+                    resultComponent = new ImageListViewCellViewer(cell);
+                    break;
+
+                case OPENGL:
+                    resultComponent = new GLImageListViewCellViewer(cell);
+                    break;
+            }
             resultComponent.setVisible(true);
             parent.add(resultComponent);
             //resultComponent.addMouseListener(gridComponentMouseHandler);
