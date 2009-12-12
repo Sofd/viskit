@@ -1,5 +1,9 @@
 package de.sofd.viskit.ui.imagelist.jlistimpl;
 
+import com.sun.opengl.util.texture.Texture;
+import com.sun.opengl.util.texture.TextureCoords;
+import com.sun.opengl.util.texture.TextureIO;
+import com.sun.opengl.util.texture.awt.AWTTextureIO;
 import de.sofd.viskit.ui.imagelist.ImageListViewCell;
 import java.awt.Dimension;
 import java.awt.Graphics;
@@ -12,7 +16,6 @@ import java.awt.image.BufferedImageOp;
 import javax.media.opengl.GL2;
 import javax.media.opengl.GLAutoDrawable;
 import javax.media.opengl.GLCapabilities;
-import javax.media.opengl.GLContext;
 import javax.media.opengl.GLEventListener;
 import javax.media.opengl.GLProfile;
 import javax.media.opengl.awt.GLJPanel;
@@ -28,6 +31,7 @@ public class GLImageListViewCellViewer extends GLJPanel {
     //protected static GLContext sharedContext;
 
     private final ImageListViewCell displayedCell;
+    private Texture imageTexture;
 
     private static GLCapabilities caps;
     static {
@@ -132,10 +136,6 @@ public class GLImageListViewCellViewer extends GLJPanel {
         }
 
         @Override
-        public void dispose(GLAutoDrawable glAutoDrawable) {
-        }
-
-        @Override
         public void display(GLAutoDrawable glAutoDrawable) {
             GL2 gl = glAutoDrawable.getGL().getGL2();
             gl.glClear(gl.GL_COLOR_BUFFER_BIT);
@@ -143,14 +143,26 @@ public class GLImageListViewCellViewer extends GLJPanel {
             gl.glLoadIdentity();
             gl.glTranslated(displayedCell.getCenterOffset().getX(), -displayedCell.getCenterOffset().getY(), 0);
             gl.glScaled(displayedCell.getScale(), displayedCell.getScale(), 0);
+            if (imageTexture == null) {
+                imageTexture = AWTTextureIO.newTexture(getDisplayedCell().getDisplayedModelElement().getImage(), true);
+            }
+            imageTexture.enable();
+            imageTexture.bind();
+            gl.glTexEnvi(GL2.GL_TEXTURE_ENV, GL2.GL_TEXTURE_ENV_MODE, gl.GL_REPLACE);
+            TextureCoords coords = imageTexture.getImageTexCoords();
             gl.glColor3f(0, 1, 0);
             float w2 = (float) getOriginalImageWidth() / 2, h2 = (float) getOriginalImageHeight() / 2;
             gl.glBegin(GL2.GL_QUADS);
+            gl.glTexCoord2f(coords.left(), coords.top());
             gl.glVertex2f(-w2, h2);
+            gl.glTexCoord2f(coords.right(), coords.top());
             gl.glVertex2f( w2,  h2);
+            gl.glTexCoord2f(coords.right(), coords.bottom());
             gl.glVertex2f( w2, -h2);
+            gl.glTexCoord2f(coords.left(), coords.bottom());
             gl.glVertex2f(-w2, -h2);
             gl.glEnd();
+            imageTexture.disable();
             //gl.glFlush();
             //glAutoDrawable.swapBuffers();
         }
@@ -189,6 +201,10 @@ public class GLImageListViewCellViewer extends GLJPanel {
                 */
                 gl.glDepthRange(0,1);
             }
+        }
+
+        @Override
+        public void dispose(GLAutoDrawable glAutoDrawable) {
         }
 
     };
