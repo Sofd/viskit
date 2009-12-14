@@ -13,9 +13,11 @@ import java.awt.geom.AffineTransform;
 import java.awt.geom.Point2D;
 import java.awt.image.AffineTransformOp;
 import java.awt.image.BufferedImageOp;
+import javax.media.opengl.DebugGL2;
 import javax.media.opengl.GL2;
 import javax.media.opengl.GLAutoDrawable;
 import javax.media.opengl.GLCapabilities;
+import javax.media.opengl.GLContext;
 import javax.media.opengl.GLEventListener;
 import javax.media.opengl.GLProfile;
 import javax.media.opengl.awt.GLJPanel;
@@ -28,7 +30,7 @@ import javax.media.opengl.awt.GLJPanel;
  */
 public class GLImageListViewCellViewer extends GLJPanel {
 
-    //protected static GLContext sharedContext;
+    protected static GLContext sharedContext;
 
     private final ImageListViewCell displayedCell;
     private Texture imageTexture;
@@ -41,14 +43,13 @@ public class GLImageListViewCellViewer extends GLJPanel {
 
     public GLImageListViewCellViewer(ImageListViewCell cell) {
         super(caps);
+        System.out.println("CREA GL drawable: " + this);
         this.displayedCell = cell;
-        /*
         if (null == sharedContext) {
             sharedContext = this.getContext();
         } else {
             this.setContext(sharedContext);
         }
-        */
         this.addGLEventListener(new GLEventHandler());
     }
 
@@ -127,16 +128,20 @@ public class GLImageListViewCellViewer extends GLJPanel {
 
         @Override
         public void init(GLAutoDrawable glAutoDrawable) {
+            // Use debug pipeline
+            //glAutoDrawable.setGL(new DebugGL2(glAutoDrawable.getGL().getGL2()));
             System.out.println("INIT GL drawable: " + glAutoDrawable);
             GL2 gl = glAutoDrawable.getGL().getGL2();
             gl.setSwapInterval(1);
             setupEye2ViewportTransformation(gl);
             gl.glClearColor(0,0,0,0);
             gl.glShadeModel(gl.GL_FLAT);
+            imageTexture = null;
         }
 
         @Override
         public void display(GLAutoDrawable glAutoDrawable) {
+            System.out.println("DISP GL drawable: ctx: " + glAutoDrawable.getContext().hashCode() + ", drawable: " + glAutoDrawable);
             GL2 gl = glAutoDrawable.getGL().getGL2();
             gl.glClear(gl.GL_COLOR_BUFFER_BIT);
             gl.glMatrixMode(gl.GL_MODELVIEW);
@@ -144,8 +149,10 @@ public class GLImageListViewCellViewer extends GLJPanel {
             gl.glTranslated(displayedCell.getCenterOffset().getX(), -displayedCell.getCenterOffset().getY(), 0);
             gl.glScaled(displayedCell.getScale(), displayedCell.getScale(), 0);
             if (imageTexture == null) {
+                System.out.println("(CREATING TEXTURE)");
                 imageTexture = AWTTextureIO.newTexture(getDisplayedCell().getDisplayedModelElement().getImage(), true);
             }
+            //gl.glAreTexturesResident(WIDTH, arg1, WIDTH, arg3, WIDTH);
             imageTexture.enable();
             imageTexture.bind();
             gl.glTexEnvi(GL2.GL_TEXTURE_ENV, GL2.GL_TEXTURE_ENV_MODE, gl.GL_REPLACE);
