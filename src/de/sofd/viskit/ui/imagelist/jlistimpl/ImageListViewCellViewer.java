@@ -77,10 +77,8 @@ public class ImageListViewCellViewer extends JPanel {
     }
 
     protected BufferedImage getWindowedImage() {
-        // TODO: caching of windowed images
-        // TODO: unique identification of images would provide for better caching possibility along
-        //       the lines of n2g JDicomObjectImageViewer.
-        //       Maybe expose the DicomObject (containing the image UID) in the cell class after all.
+        // TODO: caching of windowed images, probably using
+        //       displayedCell.getDisplayedModelElement().getImageKey() and the windowing parameters as the cache key
         BufferedImage srcImg = displayedCell.getDisplayedModelElement().getImage();
         BufferedImage windowedImage;
         ///*
