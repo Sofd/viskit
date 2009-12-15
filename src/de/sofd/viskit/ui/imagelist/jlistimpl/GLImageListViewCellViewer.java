@@ -2,7 +2,6 @@ package de.sofd.viskit.ui.imagelist.jlistimpl;
 
 import com.sun.opengl.util.texture.Texture;
 import com.sun.opengl.util.texture.TextureCoords;
-import com.sun.opengl.util.texture.TextureIO;
 import com.sun.opengl.util.texture.awt.AWTTextureIO;
 import de.sofd.viskit.ui.imagelist.ImageListViewCell;
 import java.awt.Dimension;
@@ -33,7 +32,7 @@ public class GLImageListViewCellViewer extends GLJPanel {
     protected static GLContext sharedContext;
 
     private final ImageListViewCell displayedCell;
-    private Texture imageTexture;
+    private Texture imageTexture;   // TODO: uniquely identifyable images, hash texture objects by them (LRU cache)
 
     private static GLCapabilities caps;
     static {
@@ -137,10 +136,9 @@ public class GLImageListViewCellViewer extends GLJPanel {
             System.out.println("INIT " + drawableToString(glAutoDrawable));
             GL2 gl = glAutoDrawable.getGL().getGL2();
             gl.setSwapInterval(1);
-            setupEye2ViewportTransformation(gl);
             gl.glClearColor(0,0,0,0);
             gl.glShadeModel(gl.GL_FLAT);
-            imageTexture = null;
+            //imageTexture = null;   // TODO: this should not work reliably now, but apparently does, and the TestTexture jogl demo does the same thing...
         }
 
         @Override
