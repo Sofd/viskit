@@ -4,6 +4,7 @@ import de.sofd.draw2d.Drawing;
 import de.sofd.viskit.model.ImageListViewModelElement;
 import java.awt.image.BufferedImage;
 import org.apache.log4j.Logger;
+import org.dcm4che2.data.Tag;
 
 /**
  *
@@ -23,6 +24,11 @@ public class DcmImageListViewModelElement implements ImageListViewModelElement {
     @Override
     public BufferedImage getImage() {
         return dcm.getImage();
+    }
+
+    @Override
+    public Object getImageKey() {
+        return dcm.getBasicDicomObject().getString(Tag.SOPInstanceUID);
     }
 
     @Override

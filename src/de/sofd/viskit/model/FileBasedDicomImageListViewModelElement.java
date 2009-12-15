@@ -107,7 +107,7 @@ public class FileBasedDicomImageListViewModelElement extends CachingDicomImageLi
     }
 
     @Override
-    protected Object getBackendDicomObjectKey() {
+    public Object getImageKey() {
         checkInitialized();
         return url;
     }

@@ -31,17 +31,6 @@ public abstract class CachingDicomImageListViewModelElement implements DicomImag
     }
 
     /**
-     * Returns a key that uniquely identifies the DicomObject returned by getBackendDicomObject().
-     * The key will be used for caching those backend DicomObjects.
-     * This key should be constant under equals()/hashCode() throughout the lifetime of <i>this</i>. This method will
-     * be called often, so it should operate quickly (as opposed to getBackendDicomObject()). It
-     * should work without calling getBackendDicomObject().
-     *
-     * @return
-     */
-    protected abstract Object getBackendDicomObjectKey();
-
-    /**
      * Extract from the backend and return the DicomObject. This method should not cache the
      * results or anything like that (this base class will do that), so it may be time-consuming.
      *
@@ -120,20 +109,20 @@ public abstract class CachingDicomImageListViewModelElement implements DicomImag
 
     @Override
     public DicomObject getDicomObject() {
-        DicomObject result = rawDcmObjectCache.get(getBackendDicomObjectKey());
+        DicomObject result = rawDcmObjectCache.get(getImageKey());
         if (result == null) {
             result = getBackendDicomObject();
-            rawDcmObjectCache.put(getBackendDicomObjectKey(), result);
+            rawDcmObjectCache.put(getImageKey(), result);
         }
         return result;
     }
 
     @Override
     public BufferedImage getImage() {
-        BufferedImage result = rawImageCache.get(getBackendDicomObjectKey());
+        BufferedImage result = rawImageCache.get(getImageKey());
         if (result == null) {
             result = getBackendImage();
-            rawImageCache.put(getBackendDicomObjectKey(), result);
+            rawImageCache.put(getImageKey(), result);
         }
         return result;
     }
