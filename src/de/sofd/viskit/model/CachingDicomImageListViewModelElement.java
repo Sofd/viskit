@@ -20,7 +20,7 @@ import org.dcm4che2.media.FileMetaInformation;
 
 /**
  * Implements getDicomObject(), getImage() as caching delegators to the (subclass-provided)
- * new methods getBackendDicomObjectKey(), getBackendDicomObject().
+ * methods getImageKey(), getBackendImage(), getBackendDicomObject().
  *
  * @author olaf
  */
