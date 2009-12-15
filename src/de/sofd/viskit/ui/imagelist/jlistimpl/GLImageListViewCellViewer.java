@@ -43,7 +43,7 @@ public class GLImageListViewCellViewer extends GLJPanel {
 
     public GLImageListViewCellViewer(ImageListViewCell cell) {
         super(caps);
-        System.out.println("CREA GL drawable: " + this);
+        System.out.println("CREA GL drawable: " + this.hashCode());
         this.displayedCell = cell;
         if (null == sharedContext) {
             sharedContext = this.getContext();
@@ -126,11 +126,15 @@ public class GLImageListViewCellViewer extends GLJPanel {
 
     protected class GLEventHandler implements GLEventListener {
 
+        private String drawableToString(GLAutoDrawable dr) {
+            return "GL Context: " + dr.getContext().hashCode() + " (Drawable " + dr.hashCode() + ")";
+        }
+
         @Override
         public void init(GLAutoDrawable glAutoDrawable) {
             // Use debug pipeline
             //glAutoDrawable.setGL(new DebugGL2(glAutoDrawable.getGL().getGL2()));
-            System.out.println("INIT GL drawable: " + glAutoDrawable);
+            System.out.println("INIT " + drawableToString(glAutoDrawable));
             GL2 gl = glAutoDrawable.getGL().getGL2();
             gl.setSwapInterval(1);
             setupEye2ViewportTransformation(gl);
@@ -141,7 +145,7 @@ public class GLImageListViewCellViewer extends GLJPanel {
 
         @Override
         public void display(GLAutoDrawable glAutoDrawable) {
-            System.out.println("DISP GL drawable: ctx: " + glAutoDrawable.getContext().hashCode() + ", drawable: " + glAutoDrawable);
+            System.out.println("DISP " + drawableToString(glAutoDrawable));
             GL2 gl = glAutoDrawable.getGL().getGL2();
             gl.glClear(gl.GL_COLOR_BUFFER_BIT);
             gl.glMatrixMode(gl.GL_MODELVIEW);
@@ -212,6 +216,7 @@ public class GLImageListViewCellViewer extends GLJPanel {
 
         @Override
         public void dispose(GLAutoDrawable glAutoDrawable) {
+            System.out.println("DELE " + drawableToString(glAutoDrawable));
         }
 
     };
