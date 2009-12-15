@@ -21,7 +21,7 @@ public class ImageListViewCellBase implements ImageListViewCell {
     private int windowLocation;
     private int windowWidth;
     private double scale;
-    private Dimension latestSize = new Dimension(0, 0);
+    private Dimension latestSize; // = new Dimension(0, 0);
     private Point2D centerOffset;
     private boolean interactiveWindowingInProgress;
     private DrawingViewer roiDrawingViewer;
