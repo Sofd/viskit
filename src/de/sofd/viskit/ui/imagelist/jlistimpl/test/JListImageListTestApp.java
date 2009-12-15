@@ -7,6 +7,7 @@ import de.sofd.draw2d.viewer.tools.SelectorTool;
 import de.sofd.viskit.controllers.ImageListViewMouseWindowingController;
 import de.sofd.viskit.controllers.ImageListViewMouseZoomPanController;
 import de.sofd.viskit.controllers.ImageListViewRoiInputEventController;
+import de.sofd.viskit.controllers.ImageListViewWindowingApplyToAllController;
 import de.sofd.viskit.image.Dcm;
 import de.sofd.viskit.image.DcmImageListViewModelElement;
 import de.sofd.viskit.image.DicomInputOutput;
@@ -59,6 +60,8 @@ public class JListImageListTestApp {
     public JListImageListTestApp() throws Exception {
         final DefaultListModel model = new DefaultListModel();
         //final DefaultListModel model = getViewerListModelForDirectory(new File("/home/olaf/gi/resources/DICOM-Testbilder/1578"));
+        //final DefaultListModel model = getViewerListModelForDirectory(new File("/shares/shared/projekts/disk312043/Images/cd822__center4001"));
+        //final DefaultListModel model = getViewerListModelForDirectory(new File("/shares/shared/projekts/disk312043/Images/cd836__center4001"));
         for (int i = 0; i < 20; i++) {
             model.addElement(new TestImageModelElement(i));
             //model.addElement(new FileBasedDicomImageListViewModelElement("/home/olaf/gi/resources/DICOM-Testbilder/1578/f0003563_00623.dcm"));
@@ -90,7 +93,7 @@ public class JListImageListTestApp {
         viewer.addCellPropertyChangeListener(new PropertyChangeListener() {
             @Override
             public void propertyChange(PropertyChangeEvent evt) {
-                System.out.println("cell propChanged " + evt.getPropertyName() + " => " + evt.getNewValue() + " in cell " + evt.getSource());
+                //System.out.println("cell propChanged " + evt.getPropertyName() + " => " + evt.getNewValue() + " in cell " + evt.getSource());
             }
         });
         viewer.addListSelectionListener(new ListSelectionListener() {
@@ -158,6 +161,20 @@ public class JListImageListTestApp {
                 }
             }
         });
+        toolbar.add(new AbstractAction("WndOptim") {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                try {
+                    ImageListViewModelElement elt = viewer.getSelectedValue();
+                    if (null != elt) {
+                        ImageListViewCell cell = viewer.getCellForElement(elt);
+                        setWindowingToOptimal(cell);
+                    }
+                } catch (IndexOutOfBoundsException ex) {
+                    System.out.println("list has no 4th element or 4th element contains no ROIs...");
+                }
+            }
+        });
         toolbar.add(new JLabel("ScaleMode:"));
         final JComboBox scaleModeCombo = new JComboBox();
         for (JImageListView.ScaleMode sm : viewer.getSupportedScaleModes()) {
@@ -179,6 +196,7 @@ public class JListImageListTestApp {
         new ImageListViewMouseWindowingController(viewer);
         new ImageListViewMouseZoomPanController(viewer);
         new ImageListViewRoiInputEventController(viewer);
+        //new ImageListViewWindowingApplyToAllController(viewer).setEnabled(true);
 
         f.getContentPane().add(viewer, BorderLayout.CENTER);
         f.getContentPane().add(toolbar, BorderLayout.PAGE_START);
