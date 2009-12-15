@@ -3,6 +3,7 @@ package de.sofd.viskit.model;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Iterator;
@@ -23,28 +24,50 @@ public class FileBasedDicomImageListViewModelElement extends CachingDicomImageLi
 
     private /*final*/ URL url;
 
-    public FileBasedDicomImageListViewModelElement() {
+    protected FileBasedDicomImageListViewModelElement() {
     }
 
     public FileBasedDicomImageListViewModelElement(URL url) {
-        setUrl(url);
+        setUrl(url, true);
+    }
+
+    public FileBasedDicomImageListViewModelElement(URL url, boolean checkReadability) {
+        setUrl(url, checkReadability);
     }
 
     public FileBasedDicomImageListViewModelElement(String fileName) throws MalformedURLException {
-        this(new File(fileName));
+        this(new File(fileName), true);
+    }
+
+    public FileBasedDicomImageListViewModelElement(String fileName, boolean checkReadability) throws MalformedURLException {
+        this(new File(fileName), checkReadability);
     }
 
     public FileBasedDicomImageListViewModelElement(File file) {
+        this(file, true);
+    }
+
+    public FileBasedDicomImageListViewModelElement(File file, boolean checkReadability) {
         try {
-            setUrl(file.toURI().toURL());
+            setUrl(file.toURI().toURL(), checkReadability);
         } catch (MalformedURLException e) {
             throw new RuntimeException(e);
         }
     }
 
     protected void setUrl(URL url) {
+        setUrl(url, true);
+    }
+
+    protected void setUrl(URL url, boolean checkReadability) {
+        if (url == null) {
+            throw new NullPointerException("null url passed");
+        }
         if (this.url != null) {
             throw new IllegalStateException("FileBasedDicomImageListViewModelElement: don't change the URL once it's been set -- cache invalidation in that case is unsupported");
+        }
+        if (checkReadability) {
+            checkReadable(url);
         }
         this.url = url;
     }
@@ -52,6 +75,34 @@ public class FileBasedDicomImageListViewModelElement extends CachingDicomImageLi
     protected void checkInitialized() {
         if (this.url == null) {
             throw new IllegalStateException("FileBasedDicomImageListViewModelElement: URL not initialized");
+        }
+    }
+
+    public void checkReadable() {
+        checkReadable(this.url);
+    }
+
+    protected static void checkReadable(URL url) {
+        try {
+            InputStream in = null;
+            try {
+                in = url.openConnection().getInputStream();
+            } finally {
+                if (null != in) {
+                    in.close();
+                }
+            }
+        } catch (IOException e) {
+            throw new IllegalStateException("DICOM object not accessible: " + url, e);
+        }
+    }
+
+    public boolean isReadable() {
+        try {
+            checkReadable(this.url);
+            return true;
+        } catch (Exception e) {
+            return false;
         }
     }
 
