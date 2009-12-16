@@ -13,8 +13,7 @@ public class TransferComponentController
         this.transferComponent = transferComponent;
 
         SliderPin pin = transferComponent.getPin();
-        pinController = new DragController( pin, pin.getX(), pin.getX(), pin.getY(), pin.getY()
-                + transferComponent.getHeight() - pin.getHeight() );
+        pinController = new DragController( pin );
     }
 
     public TransferComponent getTransferComponent()

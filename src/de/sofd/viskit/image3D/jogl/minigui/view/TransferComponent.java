@@ -36,12 +36,7 @@ public class TransferComponent extends SliderVertical
         setTexId( texId );
         setScalaWidth( ResourceLoader.getProperty1i( "minigui.transfer.scale.width" ) );
         
-        int pinX = x + scalaWidth;
-        int pinY = y;
-        pin = new SliderPin( pinX, pinY, sliderPinTex, new float[]
-        {
-                1.0f, 1.0f, 1.0f, 1.0f
-        } );
+        pin.setXAndBounds( x + getScalaWidth() );
         
         setRelativeValue( relativeValue );
         
@@ -66,6 +61,18 @@ public class TransferComponent extends SliderVertical
     public int getTexId()
     {
         return this.texId;
+    }
+    
+    @Override
+    public void resize( int x,
+                        int y,
+                        int width,
+                        int height )
+    {
+        super.resize( x, y, width, height );
+        
+        int pinX = x + getScalaWidth();
+        pin.setXAndBounds( pinX );
     }
 
     public void setRangeMax( float rangeMax )

@@ -15,36 +15,33 @@ import de.sofd.viskit.image3D.model.*;
 public abstract class SlicePlane extends Component
 {
 
+    protected ImageAxis axis;
+
     protected Reticle reticle;
+
+    protected Component texBounds;
+    protected ImagePlaneType type;
 
     protected VolumeObject volumeObject;
 
-    protected ImagePlaneType type;
-    protected ImageAxis axis;
-
-    protected Component texBounds;
-
-    public SlicePlane(    int x,
-                        int y,
-                        int width,
-                        int height,
-                        ImageAxis axis,
-                        ImagePlaneType type,
-                        VolumeObject volumeObject,
-                        int texWidth,
-                        int texHeight ) throws IOException
+    public SlicePlane( int x, int y, int width, int height, ImageAxis axis, ImagePlaneType type,
+            VolumeObject volumeObject ) throws IOException
     {
         super( x, y, width, height );
-        
-        texBounds = new Component( x + ( width - texWidth ) / 2, y + ( height - texHeight ) / 2, texWidth, texHeight );
-
-        reticle = new Reticle( x, y, width, height, x + width / 2, y + height / 2, texBounds );
-        reticle.setColor( 0.2f, 0.2f, 0.2f, 0.2f );
 
         setType( type );
         setVolumeObject( volumeObject );
         setAxis( axis );
         setTexBounds( texBounds );
+        setPreferredAspectRatio( 1.0f );
+        
+        texBounds = new Component( x + ( width - getTexWidth() ) / 2, y + ( height - getTexHeight() ) / 2,
+                getTexWidth(), getTexHeight() );
+
+        reticle = new Reticle( x, y, width, height, x + width / 2, y + height / 2, texBounds );
+        reticle.setColor( 0.2f, 0.2f, 0.2f, 0.2f );
+
+        
 
     }
 
@@ -66,16 +63,20 @@ public abstract class SlicePlane extends Component
 
     public abstract int getSliceHorizontalFromCursor();
 
+    public abstract int getSliceHorizontalFromReticle();
+
     public abstract int getSliceVerticalFromCursor();
 
-    public abstract int getSliceHorizontalFromReticle();
-    
     public abstract int getSliceVerticalFromReticle();
 
     public Component getTexBounds()
     {
         return texBounds;
     }
+
+    protected abstract int getTexHeight();
+
+    protected abstract int getTexWidth();
 
     public ImagePlaneType getType()
     {
@@ -87,6 +88,25 @@ public abstract class SlicePlane extends Component
     public VolumeObject getVolumeObject()
     {
         return volumeObject;
+    }
+
+    @Override
+    public void resize( int x,
+                        int y,
+                        int width,
+                        int height )
+    {
+        super.resize( x, y, width, height );
+        
+        float rx = reticle.getRelativeXPosition();
+        float ry = reticle.getRelativeYPosition();
+        
+        texBounds.resize( x + ( width - getTexWidth() ) / 2, y + ( height - getTexHeight() ) / 2, getTexWidth(),
+                getTexHeight() );
+        
+        reticle.resize( x, y, width, height, rx, ry );
+        
+        
     }
 
     protected void setAxis( ImageAxis axis )
@@ -136,14 +156,8 @@ public abstract class SlicePlane extends Component
         gl.glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA );
 
         gl.glColor4f( 1.0f, 1.0f, 1.0f, 1.0f );
-        GLUtil.texQuad3DCentered(    gl,
-                                    texBounds.getX(),
-                                    texBounds.getY(),
-                                    texBounds.getWidth(),
-                                    texBounds.getHeight(),
-                                    1,
-                                    1,
-                                    tz );
+        GLUtil.texQuad3DCentered( gl, texBounds.getX(), texBounds.getY(), texBounds.getWidth(), texBounds.getHeight(),
+                1, 1, tz );
         gl.glDisable( GL_BLEND );
         gl.glDisable( GL_TEXTURE_3D );
 
@@ -158,7 +172,7 @@ public abstract class SlicePlane extends Component
     protected abstract void transformTex( GL2 gl );
 
     public abstract void updateReticle();
-    
+
     public abstract void updateSliceCursor();
 
 }

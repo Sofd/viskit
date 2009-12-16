@@ -17,7 +17,13 @@ public abstract class OrthoViewportController
     
     public abstract boolean isDragging();
     
-    public abstract void mouseClicked( int button, int mX, int mY );
+    public void mouseClicked( int button, int mX, int mY, int clickCount )
+    {
+        if ( clickCount == 2 && orthoViewport.isInBounds( mX, mY ) && orthoViewport.isVisible() )
+        {
+            orthoViewport.setMaximized( ! orthoViewport.isMaximized() );
+        }
+    }
 
     public abstract void mouseDragged( int button, int mX, int mY );
     

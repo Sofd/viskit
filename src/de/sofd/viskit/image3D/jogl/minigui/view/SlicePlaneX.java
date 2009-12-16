@@ -13,22 +13,14 @@ public class SlicePlaneX extends SlicePlane
     public SlicePlaneX( int x, int y, int width, int height, ImagePlaneType type, VolumeObject volumeObject )
             throws IOException
     {
-        super(    x,
-                y,
-                width,
-                height,
-                ImageAxis.AXIS_X,
-                type,
-                volumeObject,
-                (int)( volumeObject.getSizeZ() * width / volumeObject.getSizeMax() ),
-                (int)( volumeObject.getSizeY() * height / volumeObject.getSizeMax() ) );
+        super( x, y, width, height, ImageAxis.AXIS_X, type, volumeObject );
 
     }
 
     @Override
     public int getCurrentSlice()
     {
-        return volumeObject.getSliceCursor()[0];
+        return volumeObject.getSliceCursor()[ 0 ];
     }
 
     @Override
@@ -46,7 +38,7 @@ public class SlicePlaneX extends SlicePlane
     @Override
     public int getSliceHorizontalFromCursor()
     {
-        return volumeObject.getSliceCursor()[2];
+        return volumeObject.getSliceCursor()[ 2 ];
     }
 
     @Override
@@ -58,13 +50,25 @@ public class SlicePlaneX extends SlicePlane
     @Override
     public int getSliceVerticalFromCursor()
     {
-        return volumeObject.getSliceCursor()[1];
+        return volumeObject.getSliceCursor()[ 1 ];
     }
 
     @Override
     public int getSliceVerticalFromReticle()
     {
         return (int)( ( 1 - reticle.getRelativeYPosition() ) * ( getVerticalMaxSlices() - 1 ) );
+    }
+
+    @Override
+    protected int getTexHeight()
+    {
+        return (int)( volumeObject.getSizeY() * height / volumeObject.getSizeMax() );
+    }
+
+    @Override
+    protected int getTexWidth()
+    {
+        return (int)( volumeObject.getSizeZ() * width / volumeObject.getSizeMax() );
     }
 
     @Override
@@ -76,10 +80,10 @@ public class SlicePlaneX extends SlicePlane
     @Override
     public void setCurrentSlice( int currentSlice )
     {
-        volumeObject.getSliceCursor()[0] = currentSlice;
+        volumeObject.getSliceCursor()[ 0 ] = currentSlice;
 
     }
-    
+
     @Override
     protected void transformTex( GL2 gl )
     {
@@ -89,19 +93,19 @@ public class SlicePlaneX extends SlicePlane
         gl.glRotatef( -90.0f, 0.0f, 1.0f, 0.0f );
         gl.glTranslatef( -0.5f, -0.5f, -0.5f );
     }
-    
+
     @Override
     public void updateReticle()
     {
         reticle.setRelativePosX( getSliceHorizontalFromCursor() * 1.0f / ( getHorizontalMaxSlices() - 1 ) );
         reticle.setRelativePosY( 1.0f - getSliceVerticalFromCursor() * 1.0f / ( getVerticalMaxSlices() - 1 ) );
     }
-    
+
     @Override
     public void updateSliceCursor()
     {
-        volumeObject.getSliceCursor()[2] = getSliceHorizontalFromReticle();
-        volumeObject.getSliceCursor()[1] = getSliceVerticalFromReticle();
+        volumeObject.getSliceCursor()[ 2 ] = getSliceHorizontalFromReticle();
+        volumeObject.getSliceCursor()[ 1 ] = getSliceVerticalFromReticle();
     }
 
 }

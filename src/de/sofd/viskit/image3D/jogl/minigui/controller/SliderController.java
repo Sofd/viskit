@@ -8,11 +8,7 @@ public class SliderController extends DragController
     
     public SliderController( Slider slider )
     {
-        super( slider.getPin(), 
-                slider.getX(), 
-                slider.getX() + slider.getWidth() - slider.getPin().getTex().getImageWidth(), 
-                slider.getY() + slider.getHeight() - slider.getPin().getTex().getImageHeight(),
-                slider.getY() + slider.getHeight() - slider.getPin().getTex().getImageHeight() );
+        super( slider.getPin() );
         
         this.slider = slider;
     }

@@ -50,7 +50,6 @@ public class Dicom3DViewer extends JFrame implements ChangeListener, ActionListe
         
         smooth = new vtkImageGaussianSmooth();
         smooth.SetInput(imageData);
-        System.out.println("pass1");
         dicom3DView = new Dicom3DView(smooth.GetOutput());
         
         JPanel panel = new JPanel(new BorderLayout());

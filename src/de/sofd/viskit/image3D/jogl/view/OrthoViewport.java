@@ -4,22 +4,16 @@ import static javax.media.opengl.fixedfunc.GLMatrixFunc.*;
 
 import javax.media.opengl.*;
 
-public abstract class OrthoViewport
-{
-    protected int x;
-    protected int y;
-    
-    protected int width;
-    protected int height;
+import de.sofd.util.*;
+import de.sofd.viskit.image3D.jogl.minigui.view.*;
 
+public abstract class OrthoViewport extends Component
+{
     public OrthoViewport( int x, int y, int width, int height )
     {
-        setX(x);
-        setY(y);
-        setWidth(width);
-        setHeight(height);
+        super( x, y, width, height );
     }
-    
+
     protected void beginViewport(GL2 gl)
     {
         gl.glViewport( x, y, width, height ); 
@@ -33,7 +27,7 @@ public abstract class OrthoViewport
         gl.glMatrixMode(GL_MODELVIEW);
         gl.glLoadIdentity();
     }
-    
+
     protected void endViewport(GL2 gl)
     {
         gl.glMatrixMode(GL_PROJECTION);
@@ -41,10 +35,6 @@ public abstract class OrthoViewport
         
         gl.glMatrixMode(GL_MODELVIEW);
         gl.glLoadIdentity();
-    }
-    
-    public int getHeight() {
-        return height;
     }
     
     public int getRelativeMouseX( int x )
@@ -56,57 +46,25 @@ public abstract class OrthoViewport
     {
         return y - this.y;
     }
-
-    public int getWidth() {
-        return width;
-    }
-
-    public int getX() {
-        return x;
-    }
-
-    public int getY() {
-        return y;
-    }
     
-    public boolean isInBounds( int x, int y )
+    @Override
+    public synchronized void pack()
     {
-        return ( x >= this.x && x <= this.x + width && y >= this.y && y <= this.y + height );
+        if ( layout != null )
+        {
+            Size size = layout.getPreferredSize( width, height );
+            this.width = size.getWidth();
+            this.height = size.getHeight();
+            //relative coordinates
+            layout.pack( 0, 0, width, height );
+        }
     }
     
-    public void setHeight(int height) {
-        this.height = height;
-    }
-    
-    public void setLocation( int x, int y )
+    @Override
+    public void resizeLayout()
     {
-        setX(x);
-        setY(y);
+        //relative coordinates
+        if ( layout != null )
+            layout.resize( 0, 0, width, height );
     }
-    
-    public void setLocationAndSize( int x, int y, int width, int height )
-    {
-        setLocation( x, y );
-        setSize( width, height );
-    }
-    
-    public void setSize( int width, int height )
-    {
-        setWidth(width);
-        setHeight(height);
-    }
-
-    public void setWidth(int width) {
-        this.width = width;
-    }
-
-    public void setX(int x) {
-        this.x = x;
-    }
-
-    public void setY(int y) {
-        this.y = y;
-    }
-
-    public abstract void show(GL2 gl);
 }

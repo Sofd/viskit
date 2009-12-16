@@ -2,25 +2,19 @@ package de.sofd.viskit.image3D.jogl.minigui.view;
 
 import com.sun.opengl.util.texture.*;
 
+import de.sofd.util.*;
+
 public class SliderHorizontal extends Slider
 {
 
-    public SliderHorizontal(    int x,
-                                int y,
-                                int width,
-                                int height,
-                                Texture bgTex,
-                                Texture pinTex,
-                                float rangeMin,
-                                float rangeMax,
-                                float value,
-                                float[] color )
+    public SliderHorizontal( int x, int y, int width, int height, Texture bgTex, Texture pinTex, float rangeMin,
+            float rangeMax, float value, float[] color )
     {
         super( x, y, width, height, bgTex, pinTex, rangeMin, rangeMax, color );
-        
+
         int pinY = y + ( height - pinTex.getHeight() );
-        pin = new SliderPin( 0, pinY, pinTex, color );
-        
+        pin = new SliderPin( 0, pinY, pinTex, color, new Bounds( x, pinY, x + width - pinTex.getWidth(), pinY ) );
+
         setValue( value );
     }
 
@@ -28,7 +22,7 @@ public class SliderHorizontal extends Slider
     public float getRelativeValue()
     {
         float rv = ( pin.getX() - getX() ) * 1.0f / ( getWidth() - pin.getWidth() );
-        
+
         return rv;
     }
 
@@ -45,11 +39,22 @@ public class SliderHorizontal extends Slider
     }
 
     @Override
+    public void resize( int x,
+                        int y,
+                        int width,
+                        int height )
+    {
+        int pinY = y + ( height - pin.getHeight() );
+        pin.getBounds().resize( x, pinY, x + width - pin.getWidth(), pinY );
+        pin.setY( pinY );
+        
+        super.resize( x, y, width, height );
+    }
+
+    @Override
     public void setRelativeValue( float relativeValue )
     {
         pin.setX( (int)( getX() + relativeValue * ( getWidth() - pin.getWidth() ) ) );
     }
-        
-    
-    
+
 }

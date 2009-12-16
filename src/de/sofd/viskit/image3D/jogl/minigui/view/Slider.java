@@ -64,7 +64,20 @@ public abstract class Slider extends TexComponent
     {
         return (int)( rangeMin + getRelativeValue() * ( rangeMax - rangeMin ) );
     }
-
+    
+    @Override
+    public void resize( int x,
+                        int y,
+                        int width,
+                        int height )
+    {
+        float pinValue = getRelativeValue();
+        System.out.println("relvalue : " + pinValue );
+        super.resize( x, y, width, height );
+        
+        setRelativeValue( pinValue );
+    }
+    
     public void setRangeMax( float rangeMax )
     {
         this.rangeMax = rangeMax;

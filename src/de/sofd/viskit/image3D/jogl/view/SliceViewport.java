@@ -7,6 +7,7 @@ import javax.media.opengl.*;
 import com.sun.opengl.util.texture.*;
 
 import de.sofd.viskit.image3D.jogl.minigui.controller.*;
+import de.sofd.viskit.image3D.jogl.minigui.layout.*;
 import de.sofd.viskit.image3D.jogl.minigui.util.*;
 import de.sofd.viskit.image3D.jogl.minigui.view.*;
 import de.sofd.viskit.image3D.jogl.model.*;
@@ -14,9 +15,6 @@ import de.sofd.viskit.image3D.model.*;
 
 public class SliceViewport extends OrthoViewport
 {
-    // top, right, bottom, left
-    protected int[] margin = new int[ 4 ];
-
     protected SlicePlane plane;
 
     protected Slider slider;
@@ -25,57 +23,42 @@ public class SliceViewport extends OrthoViewport
 
     protected VolumeObject volumeObject;
 
-    public SliceViewport(    int x,
-                            int y,
-                            int width,
-                            int height,
-                            ImageAxis axis,
-                            ImagePlaneType planeType,
-                            VolumeObject volumeObject ) throws IOException
+    public SliceViewport( int x, int y, int width, int height, ImageAxis axis, ImagePlaneType planeType,
+            VolumeObject volumeObject ) throws IOException
     {
         super( x, y, width, height );
 
         this.volumeObject = volumeObject;
 
-        setMargin( 10, 30, 30, 10 );
+        setLayout( new BorderLayout( 0, 30, 14, 0 ) );
+        int[] margin = getLayout().getMargin();
 
-        plane = SlicePlaneFactory.getInstance().getPlane(    margin[3],
-                                                            margin[2],
-                                                            width - margin[1] - margin[3],
-                                                            height - margin[0] - margin[2],
-                                                            axis,
-                                                            planeType,
-                                                            volumeObject );
+        plane = SlicePlaneFactory.getInstance().getPlane( margin[ 3 ], margin[ 2 ], width - margin[ 1 ] - margin[ 3 ],
+                height - margin[ 0 ] - margin[ 2 ], axis, planeType, volumeObject );
 
         Texture sliderBgTex = ResourceLoader.getImageTex( "minigui.slider.bg" );
         Texture sliderPinTex = ResourceLoader.getImageTex( "minigui.slider.pin" );
 
-        slider = new SliderHorizontal(    margin[3],
-                                        margin[2] - sliderBgTex.getImageHeight() - 2,
-                                        plane.getWidth(),
-                                        sliderBgTex.getHeight(),
-                                        sliderBgTex,
-                                        sliderPinTex,
-                                        1,
-                                        plane.getMaxSlices(),
-                                        plane.getCurrentSlice() + 1,
-                                        new float[]
-                                        {
-                                                1.0f, 1.0f, 1.0f, 1.0f
-                                        } );
+        slider = new SliderHorizontal( margin[ 3 ], margin[ 2 ] - sliderBgTex.getImageHeight() - 2, plane.getWidth(),
+                sliderBgTex.getHeight(), sliderBgTex, sliderPinTex, 1, plane.getMaxSlices(),
+                plane.getCurrentSlice() + 1, new float[] { 1.0f, 1.0f, 1.0f, 1.0f } );
 
         Texture transferTex = ResourceLoader.getImageTex( "minigui.transfer.pin" );
 
-        transferComp = new TransferComponent(    margin[3] + plane.getWidth() + 1,
-                                                margin[2],
-                                                margin[1] - 1,
-                                                plane.getHeight(),
-                                                (float)volumeObject.getRangeMin(),
-                                                (float)volumeObject.getRangeMax(),
-                                                volumeObject.getTransferTexId(),
-                                                transferTex,
-                                                volumeObject.getRelativeCursorValue() );
+        transferComp = new TransferComponent( margin[ 3 ] + plane.getWidth() + 1, margin[ 2 ], margin[ 1 ] - 1, plane
+                .getHeight(), (float)volumeObject.getRangeMin(), (float)volumeObject.getRangeMax(), volumeObject
+                .getTransferTexId(), transferTex, volumeObject.getRelativeCursorValue() );
+        
+        getLayout().add( plane, BorderLayout.CENTER );
+        getLayout().add( slider, BorderLayout.SOUTH );
+        getLayout().add( transferComp, BorderLayout.EAST );
 
+    }
+
+    @Override
+    public BorderLayout getLayout()
+    {
+        return (BorderLayout)layout;
     }
 
     public SlicePlane getPlane()
@@ -98,27 +81,12 @@ public class SliceViewport extends OrthoViewport
         return volumeObject;
     }
 
-    public void setMargin(    int top,
-                            int right,
-                            int bottom,
-                            int left )
-    {
-        margin[0] = top;
-        margin[1] = right;
-        margin[2] = bottom;
-        margin[3] = left;
-
-    }
-
     @Override
     public void show( GL2 gl )
     {
         beginViewport( gl );
 
-        plane.show( gl );
-
-        slider.show( gl );
-        transferComp.show( gl );
+        super.show( gl );
 
         endViewport( gl );
     }

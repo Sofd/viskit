@@ -86,6 +86,19 @@ public class Reticle extends Component
         float ry = ( getPosY() - moveBounds.getY() ) * 1.0f / moveBounds.getHeight();
         return ry;
     }
+    
+    public void resize( int x,
+                        int y,
+                        int width,
+                        int height,
+                        float rx,
+                        float ry)
+    {
+        super.resize( x, y, width, height );
+        setRelativePosX( rx );
+        setRelativePosY( ry );
+        
+    }
 
     public void setColor(    float r,
                             float g,

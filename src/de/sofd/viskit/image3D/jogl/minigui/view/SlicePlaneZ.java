@@ -19,9 +19,7 @@ public class SlicePlaneZ extends SlicePlane
                 height,
                 ImageAxis.AXIS_Z,
                 type,
-                volumeObject,
-                (int)( volumeObject.getSizeX() * width / volumeObject.getSizeMax() ),
-                (int)( volumeObject.getSizeY() * height / volumeObject.getSizeMax() ) );
+                volumeObject );
 
     }
 
@@ -68,11 +66,23 @@ public class SlicePlaneZ extends SlicePlane
     }
 
     @Override
+    protected int getTexHeight()
+    {
+        return (int)( volumeObject.getSizeY() * height / volumeObject.getSizeMax() );
+    }
+
+    @Override
+    protected int getTexWidth()
+    {
+        return (int)( volumeObject.getSizeX() * width / volumeObject.getSizeMax() );
+    }
+
+    @Override
     public int getVerticalMaxSlices()
     {
         return volumeObject.getImageHeight();
     }
-
+    
     @Override
     public void setCurrentSlice( int currentSlice )
     {
@@ -87,7 +97,7 @@ public class SlicePlaneZ extends SlicePlane
         gl.glScalef( 1.0f, -1.0f, 1.0f );
         gl.glTranslatef( -0.5f, -0.5f, -0.5f );
     }
-    
+
     @Override
     public void updateReticle()
     {

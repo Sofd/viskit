@@ -14,31 +14,21 @@ public class DragController
     protected int oldX;
     protected int oldY;
     
-    protected int minX;
-    protected int maxX;
-    protected int minY;
-    protected int maxY;
-    
     protected Component component;
 
-    public DragController( Component component, int minX, int maxX, int minY, int maxY ) {
+    public DragController( Component component ) {
         setComponent(component);
         setLastX(0);
         setLastY(0);
         setActive(false);
-        setMinX(minX);
-        setMaxX(maxX);
-        setMinY(minY);
-        setMaxY(maxY);
-        
     }
-
+    
     public void dragged( int button, int mouseX, int mouseY )
     {
         if ( isActive() )
         {
-            component.setX( Math.min( Math.max( minX, oldX + ( mouseX - oldMouseX ) ), maxX ) );
-            component.setY( Math.min( Math.max( minY, oldY + ( mouseY - oldMouseY ) ), maxY ) );
+            component.setX( oldX + ( mouseX - oldMouseX ) );
+            component.setY( oldY + ( mouseY - oldMouseY ) );
         }
     }
 
@@ -53,26 +43,11 @@ public class DragController
     public int getLastY() {
         return oldMouseY;
     }
-
-    public int getMaxX() {
-        return maxX;
-    }
-    
-    public int getMaxY() {
-        return maxY;
-    }
-    
-    public int getMinX() {
-        return minX;
-    }
-    
-    public int getMinY() {
-        return minY;
-    }
     
     public boolean isActive() {
         return isActive;
     }
+    
     public void pressed( int button, int mouseX, int mouseY )
     {
         if ( component.isInBounds( mouseX, mouseY ) && button == MouseEvent.BUTTON1 )
@@ -107,23 +82,4 @@ public class DragController
     public void setLastY(int lastY) {
         this.oldMouseY = lastY;
     }
-    
-    public void setMaxX(int maxX) {
-        this.maxX = maxX;
-    }
-
-    
-
-    public void setMaxY(int maxY) {
-        this.maxY = maxY;
-    }
-    
-    public void setMinX(int minX) {
-        this.minX = minX;
-    }
-
-    public void setMinY(int minY) {
-        this.minY = minY;
-    }
-    
 }

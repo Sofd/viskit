@@ -1,8 +1,6 @@
 package de.sofd.viskit.test.image3D.jogl;
 
 import java.awt.*;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
 import java.io.*;
 import java.nio.*;
 import java.util.ArrayList;
@@ -15,6 +13,7 @@ import org.dcm4che2.data.DicomObject;
 import com.sun.opengl.util.Animator;
 
 import de.sofd.viskit.image.DicomInputOutput;
+import de.sofd.viskit.image3D.jogl.control.*;
 import de.sofd.viskit.image3D.jogl.model.*;
 import de.sofd.viskit.image3D.jogl.view.*;
 import de.sofd.viskit.image3D.vtk.*;
@@ -28,7 +27,7 @@ public class SliceViewer extends JFrame
 
     protected static Animator animator;
 
-    protected SliceView sliceView;
+    protected SliceCanvas sliceView;
 
     public SliceViewer() throws Exception
     {
@@ -43,39 +42,24 @@ public class SliceViewer extends JFrame
         ArrayList<ITransferFunction> windowing = DicomUtil.getWindowing( dicomList );
 
         VolumeObject volumeObject = new VolumeObject( dicomList, windowing, dataBuf );
-        sliceView = new SliceView( volumeObject );
+        sliceView = new SliceCanvas( volumeObject );
 
         getContentPane().setLayout( new BorderLayout() );
         getContentPane().setBackground( Color.BLACK );
         getContentPane().add( sliceView, BorderLayout.CENTER );
 
-        // sliceView.setSize(volumeObject.getMaxDim()*2,
-        // volumeObject.getMaxDim()*2);
-        /*
-         * sliceView.setPreferredSize(new Dimension(volumeObject.getMaxDim()*2,
-         * volumeObject.getMaxDim()*2)); sliceView.setMaximumSize(new
-         * Dimension(volumeObject.getMaxDim()*2, volumeObject.getMaxDim()*2));
-         * sliceView.setMinimumSize(new Dimension(volumeObject.getMaxDim()*2,
-         * volumeObject.getMaxDim()*2));
-         */
-
-        // this.setSize( Toolkit.getDefaultToolkit().getScreenSize() );
         this.setSize( new Dimension( 600, 650 ) );
+        this.setMinimumSize( new Dimension( 600, 650 ) );
 
         setLocationRelativeTo( null );
 
         animator = new Animator( sliceView );
 
-        addWindowListener( new WindowAdapter()
-        {
-            public void windowClosing( WindowEvent e )
-            {
-                System.exit( 0 );
-            }
-        } );
+        addWindowListener( new SliceViewWindowAdapter() );
+        
     }
 
-    public SliceView getSliceView()
+    public SliceCanvas getSliceView()
     {
         return sliceView;
     }
@@ -137,5 +121,4 @@ public class SliceViewer extends JFrame
         }
 
     }
-
 }
