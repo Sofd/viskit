@@ -57,7 +57,7 @@ public class Main {
             JComboBox cb = new JComboBox(new Object[]{"foo","bar","baz","quux"});
             toolbar.add(cb);
             frame.add(cb, BorderLayout.NORTH);
-            CoilViewer glViewer = new CoilViewer(w);
+            WorldViewer glViewer = new WorldViewer(w);
             //anim.add(glViewer.getGlCanvas());
             frame.add(glViewer, BorderLayout.CENTER);
             frame.setSize(800, 600);
