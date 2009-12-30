@@ -19,6 +19,9 @@ import javax.swing.JPanel;
  */
 public class CoilViewer extends JPanel {
 
+    private static int sharedCoilDisplayList;
+    private static boolean sharedCoilDisplayListInitialized = false;
+
     private GLAutoDrawable glCanvas;
 
     public CoilViewer() {
@@ -108,6 +111,30 @@ public class CoilViewer extends JPanel {
             gl.glClearColor(0,0,0,0);
             //gl.glPolygonMode(gl.GL_FRONT_AND_BACK, gl.GL_LINE);
             //gl.glShadeModel(gl.GL_FLAT);
+            if (!sharedCoilDisplayListInitialized) {
+                System.out.println("initializing coil display list...");
+                sharedCoilDisplayList = gl.glGenLists(1);  //TODO: error handling
+                gl.glNewList(sharedCoilDisplayList, gl.GL_COMPILE);
+                for (int mesh_h = 0; mesh_h < mesh_count_h; mesh_h++) {
+                    float ah = mesh_h * mesh_da_h;
+                    gl.glBegin(gl.GL_TRIANGLE_STRIP);
+                    for (int mesh_w = 0; mesh_w < mesh_count_w; mesh_w++) {
+                        float aw = mesh_w * mesh_da_w;
+                        float[] objv = new float[3], normv = new float[3];
+                        mesh2normv(ah, aw, normv);
+                        mesh2objCoord(ah, aw, objv);
+                        gl.glNormal3fv(normv, 0);
+                        gl.glVertex3fv(objv, 0);
+                        mesh2normv(ah + mesh_da_h, aw, normv);
+                        mesh2objCoord(ah + mesh_da_h, aw, objv);
+                        gl.glNormal3fv(normv, 0);
+                        gl.glVertex3fv(objv, 0);
+                    }
+                    gl.glEnd();
+                }
+                gl.glEndList();
+                sharedCoilDisplayListInitialized = true;
+            }
         }
 
         private void initCoilsAndViewer() {
@@ -237,23 +264,7 @@ public class CoilViewer extends JPanel {
             gl.glMaterialfv(gl.GL_FRONT_AND_BACK, gl.GL_SPECULAR, GLCOLOR_WHITE, 0);
             gl.glMaterialfv(gl.GL_FRONT_AND_BACK, gl.GL_SHININESS, mid_shininess, 0);
             gl.glColor3fv(c.color, 0);
-            for (int mesh_h = 0; mesh_h < mesh_count_h; mesh_h++) {
-                float ah = mesh_h * mesh_da_h;
-                gl.glBegin(gl.GL_TRIANGLE_STRIP);
-                for (int mesh_w = 0; mesh_w < mesh_count_w; mesh_w++) {
-                    float aw = mesh_w * mesh_da_w;
-                    float[] objv = new float[3], normv = new float[3];
-                    mesh2normv(ah, aw, normv);
-                    mesh2objCoord(ah, aw, objv);
-                    gl.glNormal3fv(normv, 0);
-                    gl.glVertex3fv(objv, 0);
-                    mesh2normv(ah + mesh_da_h, aw, normv);
-                    mesh2objCoord(ah + mesh_da_h, aw, objv);
-                    gl.glNormal3fv(normv, 0);
-                    gl.glVertex3fv(objv, 0);
-                }
-                gl.glEnd();
-            }
+            gl.glCallList(sharedCoilDisplayList);
             gl.glPopAttrib();
         }
 
