@@ -11,6 +11,8 @@ import javax.swing.JComboBox;
 import javax.swing.JFrame;
 import javax.swing.JToolBar;
 import javax.swing.SwingUtilities;
+import static de.sofd.viskit.test.jogl.coil.Constants.*;
+
 
 /**
  *
@@ -19,6 +21,31 @@ import javax.swing.SwingUtilities;
 public class Main {
 
     public Main() {
+        World w = new World();
+
+        Coil coil1 = new Coil();
+        coil1.locationInWorld[0] = 15;
+        coil1.locationInWorld[1] = 0;
+        coil1.locationInWorld[2] = -70;
+        LinAlg.copyArr(GLCOLOR_RED, coil1.color);
+        coil1.color[0] = 0.4F;
+        coil1.color[1] = 0.0F;
+        coil1.color[2] = 0.0F;
+        coil1.color[3] = 1.0F;
+        coil1.rotAngle = 70;
+        coil1.rotAngularVelocity = 0;
+
+        Coil coil2 = new Coil();
+        coil2.locationInWorld[0] = -20;
+        coil2.locationInWorld[1] = 15;
+        coil2.locationInWorld[2] = -110;
+        LinAlg.copyArr(GLCOLOR_GREEN, coil2.color);
+        coil2.rotAngle = 0;
+        coil1.rotAngularVelocity = 40;
+
+        w.addCoil(coil1);
+        w.addCoil(coil2);
+
         int nFrames = 3;
         final Animator anim = new Animator();
         for (int i = 0; i < nFrames; i++) {
@@ -30,7 +57,7 @@ public class Main {
             JComboBox cb = new JComboBox(new Object[]{"foo","bar","baz","quux"});
             toolbar.add(cb);
             frame.add(cb, BorderLayout.NORTH);
-            CoilViewer glViewer = new CoilViewer();
+            CoilViewer glViewer = new CoilViewer(w);
             //anim.add(glViewer.getGlCanvas());
             frame.add(glViewer, BorderLayout.CENTER);
             frame.setSize(800, 600);

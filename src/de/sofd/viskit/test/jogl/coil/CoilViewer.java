@@ -3,9 +3,6 @@ package de.sofd.viskit.test.jogl.coil;
 import de.sofd.util.IdentityHashSet;
 import java.awt.Component;
 import java.awt.GridLayout;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.LinkedHashSet;
 import java.util.Set;
 import javax.media.opengl.GL2;
 import javax.media.opengl.GLAutoDrawable;
@@ -17,6 +14,9 @@ import javax.media.opengl.GLProfile;
 import javax.media.opengl.awt.GLCanvas;
 import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
+
+import static de.sofd.viskit.test.jogl.coil.Constants.*;
+
 
 /**
  *
@@ -33,13 +33,16 @@ public class CoilViewer extends JPanel {
         int coilDisplayList;
     }
 
+    private final World viewedWorld;
+
     private GLAutoDrawable glCanvas;
 
     private static Object getId(Object o) {
         return null == o ? null : System.identityHashCode(o);
     }
 
-    public CoilViewer() {
+    public CoilViewer(World viewedWorld) {
+        this.viewedWorld = viewedWorld;
         System.out.println("CREATING VIEWER " + getId(this));
         setLayout(new GridLayout(1, 1));
         if (instances.isEmpty() || sharedContextData.glContext != null) {
@@ -95,29 +98,11 @@ public class CoilViewer extends JPanel {
          */
         final float vpWidthInRadiants = 0.9F;
 
-        public /*static*/ final float[] GLCOLOR_RED = {0.6F,0F,0F,1F};
-        public /*static*/ final float[] GLCOLOR_GREEN = {0F,0.6F,0F,1F};
-        public /*static*/ final float[] GLCOLOR_BLUE = {0F,0F,0.6F,1F};
-        public /*static*/ final float[] GLCOLOR_WHITE = {0.6F,0.6F,0.6F,1F};
-
-        public /*static*/ final float low_shininess[] = {5};
-        public /*static*/ final float mid_shininess[] = {20};
-        public /*static*/ final float high_shininess[] = {100};
-
         float[] identityTransform = new float[16];
 
         {
             LinAlg.fillIdentity(identityTransform);
         }
-
-        class Coil {
-            float[] locationInWorld = new float[3];
-            float rotAngle;   // in degrees
-            float rotAngularVelocity;   // in degrees / sec
-            float[] color = new float[4];
-        };
-
-        Collection<Coil> coils;
 
         class Viewer {
             float[] worldToEyeCoordTransform = new float[16];
@@ -177,36 +162,7 @@ public class CoilViewer extends JPanel {
         }
 
         private void initCoilsAndViewer() {
-            // wanted to misuse current OGL matrix stack for matrix operations,
-            // but glGetDoublev() doesn't do anything.
-            // < AlastairLynn> you really should avoid glGet. It can cause pipeline stalls
-
             LinAlg.fillIdentity(theViewer.worldToEyeCoordTransform);
-
-            coils = new ArrayList<Coil>();
-
-            Coil coil1 = new Coil();
-            coil1.locationInWorld[0] = 15;
-            coil1.locationInWorld[1] = 0;
-            coil1.locationInWorld[2] = -70;
-            LinAlg.copyArr(GLCOLOR_RED, coil1.color);
-            coil1.color[0] = 0.4F;
-            coil1.color[1] = 0.0F;
-            coil1.color[2] = 0.0F;
-            coil1.color[3] = 1.0F;
-            coil1.rotAngle = 70;
-            coil1.rotAngularVelocity = 0;
-
-            Coil coil2 = new Coil();
-            coil2.locationInWorld[0] = -20;
-            coil2.locationInWorld[1] = 15;
-            coil2.locationInWorld[2] = -110;
-            LinAlg.copyArr(GLCOLOR_GREEN, coil2.color);
-            coil2.rotAngle = 0;
-            coil1.rotAngularVelocity = 40;
-
-            coils.add(coil1);
-            coils.add(coil2);
         }
 
         private void setupEye2ViewportTransformation(GL2 gl) {
@@ -323,7 +279,7 @@ public class CoilViewer extends JPanel {
             float ambientLight[] = {1,1,1, 0.1F};
             gl.glLightModelfv(gl.GL_LIGHT_MODEL_AMBIENT, ambientLight, 0);
             // draw all the coils
-            for (Coil c : coils) {
+            for (Coil c : viewedWorld.getCoils()) {
                 gl.glPushMatrix();
                 gl.glTranslatef(c.locationInWorld[0], c.locationInWorld[1], c.locationInWorld[2]);
                 gl.glRotatef(c.rotAngle, 0, 1, 0);
@@ -340,7 +296,7 @@ public class CoilViewer extends JPanel {
             final long now = System.currentTimeMillis();
             if (lastAnimStepTime > 0) {
                 float dt = (float) (now - lastAnimStepTime) / 1000;
-                for (Coil c : coils) {
+                for (Coil c : viewedWorld.getCoils()) {
                     c.rotAngle += dt * c.rotAngularVelocity;
                     c.rotAngle -= 360 * (int)(c.rotAngle / 360);
                 }
