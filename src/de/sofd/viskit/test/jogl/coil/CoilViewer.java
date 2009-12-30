@@ -24,11 +24,14 @@ import javax.swing.SwingUtilities;
  */
 public class CoilViewer extends JPanel {
 
-    private static GLContext sharedGLContext;
-    private static Set<CoilViewer> instances = new IdentityHashSet<CoilViewer>();
+    private static final Set<CoilViewer> instances = new IdentityHashSet<CoilViewer>();
 
-    private static int sharedCoilDisplayList;
-    private static boolean sharedCoilDisplayListInitialized = false;
+    private static final SharedContextData sharedContextData = new SharedContextData();
+
+    private static class SharedContextData {
+        GLContext glContext = null;
+        int coilDisplayList;
+    }
 
     private GLAutoDrawable glCanvas;
 
@@ -39,7 +42,7 @@ public class CoilViewer extends JPanel {
     public CoilViewer() {
         System.out.println("CREATING VIEWER " + getId(this));
         setLayout(new GridLayout(1, 1));
-        if (instances.isEmpty() || sharedGLContext != null) {
+        if (instances.isEmpty() || sharedContextData.glContext != null) {
             createGlCanvas();
         }
         instances.add(this);
@@ -51,7 +54,7 @@ public class CoilViewer extends JPanel {
         }
         GLCapabilities caps = new GLCapabilities(GLProfile.get(GLProfile.GL2));
         caps.setDoubleBuffered(true);
-        glCanvas = new GLCanvas(caps, null, sharedGLContext, null);
+        glCanvas = new GLCanvas(caps, null, sharedContextData.glContext, null);
         glCanvas.addGLEventListener(new GLEventHandler(glCanvas));
         this.add((Component)glCanvas);
         revalidate();
@@ -136,10 +139,12 @@ public class CoilViewer extends JPanel {
             gl.glClearColor(0,0,0,0);
             //gl.glPolygonMode(gl.GL_FRONT_AND_BACK, gl.GL_LINE);
             //gl.glShadeModel(gl.GL_FLAT);
-            if (!sharedCoilDisplayListInitialized) {
+            if (sharedContextData.glContext == null) {
+                sharedContextData.glContext = ((GLAutoDrawable)drawable).getContext();
+                System.out.println("shared context set to " + getId(sharedContextData.glContext) + ", creating GL canvasses of other viewers...");
                 System.out.println("initializing coil display list...");
-                sharedCoilDisplayList = gl.glGenLists(1);  //TODO: error handling
-                gl.glNewList(sharedCoilDisplayList, gl.GL_COMPILE);
+                sharedContextData.coilDisplayList = gl.glGenLists(1);  //TODO: error handling
+                gl.glNewList(sharedContextData.coilDisplayList, gl.GL_COMPILE);
                 for (int mesh_h = 0; mesh_h < mesh_count_h; mesh_h++) {
                     float ah = mesh_h * mesh_da_h;
                     gl.glBegin(gl.GL_TRIANGLE_STRIP);
@@ -158,19 +163,12 @@ public class CoilViewer extends JPanel {
                     gl.glEnd();
                 }
                 gl.glEndList();
-                sharedCoilDisplayListInitialized = true;
-            }
-            if (sharedGLContext == null) {
                 SwingUtilities.invokeLater(new Runnable() {
                     @Override
                     public void run() {
-                        if (sharedGLContext == null) {
-                            sharedGLContext = ((GLAutoDrawable)drawable).getContext();
-                            System.out.println("shared context set to " + getId(sharedGLContext) + ", creating GL canvasses of other viewers...");
-                            for (CoilViewer v : instances) {
-                                if (v != CoilViewer.this) {
-                                    v.createGlCanvas();
-                                }
+                        for (CoilViewer v : instances) {
+                            if (v != CoilViewer.this) {
+                                v.createGlCanvas();
                             }
                         }
                     }
@@ -306,7 +304,7 @@ public class CoilViewer extends JPanel {
             gl.glMaterialfv(gl.GL_FRONT_AND_BACK, gl.GL_SPECULAR, GLCOLOR_WHITE, 0);
             gl.glMaterialfv(gl.GL_FRONT_AND_BACK, gl.GL_SHININESS, mid_shininess, 0);
             gl.glColor3fv(c.color, 0);
-            gl.glCallList(sharedCoilDisplayList);
+            gl.glCallList(sharedContextData.coilDisplayList);
             gl.glPopAttrib();
         }
 
