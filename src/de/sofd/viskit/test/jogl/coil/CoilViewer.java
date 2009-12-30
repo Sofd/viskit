@@ -7,6 +7,7 @@ import java.util.Collection;
 import javax.media.opengl.GL2;
 import javax.media.opengl.GLAutoDrawable;
 import javax.media.opengl.GLCapabilities;
+import javax.media.opengl.GLContext;
 import javax.media.opengl.GLDrawable;
 import javax.media.opengl.GLEventListener;
 import javax.media.opengl.GLProfile;
@@ -19,10 +20,16 @@ import javax.swing.JPanel;
  */
 public class CoilViewer extends JPanel {
 
+    private static GLContext sharedGLContext;
+
     private static int sharedCoilDisplayList;
     private static boolean sharedCoilDisplayListInitialized = false;
 
     private GLAutoDrawable glCanvas;
+
+    private static Object getId(Object o) {
+        return null == o ? null : o.hashCode();
+    }
 
     public CoilViewer() {
         setLayout(new GridLayout(1, 1));
@@ -31,6 +38,7 @@ public class CoilViewer extends JPanel {
         glCanvas = new GLCanvas(caps, null, null, null);
         glCanvas.addGLEventListener(new GLEventHandler(glCanvas));
         this.add((Component)glCanvas);
+        System.out.println("CREATED " + getId(glCanvas) + ", its context is now: " + getId(glCanvas.getContext()));
     }
 
     public GLAutoDrawable getGlCanvas() {
@@ -99,7 +107,7 @@ public class CoilViewer extends JPanel {
 
         @Override
         public void init(GLAutoDrawable glAutoDrawable) {
-            System.out.println("INIT GLAutoDrawable");
+            System.out.println("INIT " + getId(glAutoDrawable) + ", its context is now: " + getId(((GLAutoDrawable)glAutoDrawable).getContext()));
             GL2 gl = (GL2) glAutoDrawable.getGL();
             initCoilsAndViewer();
             setupEye2ViewportTransformation(gl);
