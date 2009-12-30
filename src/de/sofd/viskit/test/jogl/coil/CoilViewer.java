@@ -1,9 +1,12 @@
 package de.sofd.viskit.test.jogl.coil;
 
+import de.sofd.util.IdentityHashSet;
 import java.awt.Component;
 import java.awt.GridLayout;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.LinkedHashSet;
+import java.util.Set;
 import javax.media.opengl.GL2;
 import javax.media.opengl.GLAutoDrawable;
 import javax.media.opengl.GLCapabilities;
@@ -13,6 +16,7 @@ import javax.media.opengl.GLEventListener;
 import javax.media.opengl.GLProfile;
 import javax.media.opengl.awt.GLCanvas;
 import javax.swing.JPanel;
+import javax.swing.SwingUtilities;
 
 /**
  *
@@ -21,6 +25,7 @@ import javax.swing.JPanel;
 public class CoilViewer extends JPanel {
 
     private static GLContext sharedGLContext;
+    private static Set<CoilViewer> instances = new IdentityHashSet<CoilViewer>();
 
     private static int sharedCoilDisplayList;
     private static boolean sharedCoilDisplayListInitialized = false;
@@ -28,17 +33,29 @@ public class CoilViewer extends JPanel {
     private GLAutoDrawable glCanvas;
 
     private static Object getId(Object o) {
-        return null == o ? null : o.hashCode();
+        return null == o ? null : System.identityHashCode(o);
     }
 
     public CoilViewer() {
+        System.out.println("CREATING VIEWER " + getId(this));
         setLayout(new GridLayout(1, 1));
+        if (instances.isEmpty() || sharedGLContext != null) {
+            createGlCanvas();
+        }
+        instances.add(this);
+    }
+
+    private void createGlCanvas() {
+        if (getComponentCount() != 0) {
+            throw new IllegalStateException("trying to initialize GL canvas more than once");
+        }
         GLCapabilities caps = new GLCapabilities(GLProfile.get(GLProfile.GL2));
         caps.setDoubleBuffered(true);
-        glCanvas = new GLCanvas(caps, null, null, null);
+        glCanvas = new GLCanvas(caps, null, sharedGLContext, null);
         glCanvas.addGLEventListener(new GLEventHandler(glCanvas));
         this.add((Component)glCanvas);
-        System.out.println("CREATED " + getId(glCanvas) + ", its context is now: " + getId(glCanvas.getContext()));
+        revalidate();
+        System.out.println("CREATED CANVAS " + getId(glCanvas) + " of viewer " + getId(this) + ", its context is now: " + getId(glCanvas.getContext()));
     }
 
     public GLAutoDrawable getGlCanvas() {
@@ -143,6 +160,22 @@ public class CoilViewer extends JPanel {
                 gl.glEndList();
                 sharedCoilDisplayListInitialized = true;
             }
+            if (sharedGLContext == null) {
+                SwingUtilities.invokeLater(new Runnable() {
+                    @Override
+                    public void run() {
+                        if (sharedGLContext == null) {
+                            sharedGLContext = ((GLAutoDrawable)drawable).getContext();
+                            System.out.println("shared context set to " + getId(sharedGLContext) + ", creating GL canvasses of other viewers...");
+                            for (CoilViewer v : instances) {
+                                if (v != CoilViewer.this) {
+                                    v.createGlCanvas();
+                                }
+                            }
+                        }
+                    }
+                });
+            }
         }
 
         private void initCoilsAndViewer() {
@@ -222,6 +255,7 @@ public class CoilViewer extends JPanel {
 
         @Override
         public void dispose(GLAutoDrawable glAutoDrawable) {
+            System.out.println("DISPOSE " + getId(glAutoDrawable) + ", its context is now: " + getId(((GLAutoDrawable)glAutoDrawable).getContext()));
         }
 
 

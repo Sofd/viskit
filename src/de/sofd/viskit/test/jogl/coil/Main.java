@@ -31,7 +31,7 @@ public class Main {
             toolbar.add(cb);
             frame.add(cb, BorderLayout.NORTH);
             CoilViewer glViewer = new CoilViewer();
-            anim.add(glViewer.getGlCanvas());
+            //anim.add(glViewer.getGlCanvas());
             frame.add(glViewer, BorderLayout.CENTER);
             frame.setSize(800, 600);
             frame.setBackground(Color.black);
