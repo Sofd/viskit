@@ -193,20 +193,7 @@ public class WorldViewer extends JPanel {
             gl.glMatrixMode(gl.GL_MODELVIEW);
             gl.glLoadIdentity();
             gl.glMultMatrixf(theViewer.worldToEyeCoordTransform, 0);
-            // define light source
-            float[] l0Pos = {200, 40, -10, 0};
-            gl.glLightfv(gl.GL_LIGHT0, gl.GL_POSITION, l0Pos, 0);
-            // global ambient light
-            float ambientLight[] = {1,1,1, 0.1F};
-            gl.glLightModelfv(gl.GL_LIGHT_MODEL_AMBIENT, ambientLight, 0);
-            // draw all the coils
-            for (Coil c : viewedWorld.getCoils()) {
-                gl.glPushMatrix();
-                gl.glTranslatef(c.locationInWorld[0], c.locationInWorld[1], c.locationInWorld[2]);
-                gl.glRotatef(c.rotAngle, 0, 1, 0);
-                c.draw(sharedContextData, gl);
-                gl.glPopMatrix();
-            }
+            viewedWorld.draw(sharedContextData, gl);
 
             glAutoDrawable.swapBuffers();
         }

@@ -11,7 +11,7 @@ import static de.sofd.viskit.test.jogl.coil.Constants.*;
  *
  * @author olaf
  */
-public class Coil {
+public class Coil implements GLDrawableObject {
     float[] locationInWorld = new float[3];
     float rotAngle;   // in degrees
     float rotAngularVelocity;   // in degrees / sec
@@ -90,6 +90,7 @@ public class Coil {
     }
 
 
+    @Override
     public void draw(SharedContextData cd, GL gl1) {
         GL2 gl = gl1.getGL2();
         // printf("Drawing coil at %lf, %lf, %lf\n", c.locationInWorld[0], c.locationInWorld[1], c.locationInWorld[2]);
