@@ -13,4 +13,10 @@ public class Constants {
     public static final float low_shininess[] = {5};
     public static final float mid_shininess[] = {20};
     public static final float high_shininess[] = {100};
+
+
+    public static Object getId(Object o) {
+        return null == o ? null : System.identityHashCode(o);
+    }
+
 }

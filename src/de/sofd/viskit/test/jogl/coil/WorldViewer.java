@@ -7,7 +7,6 @@ import java.util.Set;
 import javax.media.opengl.GL2;
 import javax.media.opengl.GLAutoDrawable;
 import javax.media.opengl.GLCapabilities;
-import javax.media.opengl.GLContext;
 import javax.media.opengl.GLDrawable;
 import javax.media.opengl.GLEventListener;
 import javax.media.opengl.GLProfile;
@@ -28,24 +27,15 @@ public class WorldViewer extends JPanel {
 
     private static final SharedContextData sharedContextData = new SharedContextData();
 
-    private static class SharedContextData {
-        GLContext glContext = null;
-        int coilDisplayList;
-    }
-
     private final World viewedWorld;
 
     private GLAutoDrawable glCanvas;
-
-    private static Object getId(Object o) {
-        return null == o ? null : System.identityHashCode(o);
-    }
 
     public WorldViewer(World viewedWorld) {
         this.viewedWorld = viewedWorld;
         System.out.println("CREATING VIEWER " + getId(this));
         setLayout(new GridLayout(1, 1));
-        if (instances.isEmpty() || sharedContextData.glContext != null) {
+        if (instances.isEmpty() || sharedContextData.getGlContext() != null) {
             createGlCanvas();
         }
         instances.add(this);
@@ -57,7 +47,7 @@ public class WorldViewer extends JPanel {
         }
         GLCapabilities caps = new GLCapabilities(GLProfile.get(GLProfile.GL2));
         caps.setDoubleBuffered(true);
-        glCanvas = new GLCanvas(caps, null, sharedContextData.glContext, null);
+        glCanvas = new GLCanvas(caps, null, sharedContextData.getGlContext(), null);
         glCanvas.addGLEventListener(new GLEventHandler(glCanvas));
         this.add((Component)glCanvas);
         revalidate();
@@ -68,6 +58,9 @@ public class WorldViewer extends JPanel {
         return glCanvas;
     }
 
+    public void dispose() {
+        // TODO
+    }
 
     protected class GLEventHandler implements GLEventListener {
 
@@ -124,30 +117,9 @@ public class WorldViewer extends JPanel {
             gl.glClearColor(0,0,0,0);
             //gl.glPolygonMode(gl.GL_FRONT_AND_BACK, gl.GL_LINE);
             //gl.glShadeModel(gl.GL_FLAT);
-            if (sharedContextData.glContext == null) {
-                sharedContextData.glContext = ((GLAutoDrawable)drawable).getContext();
-                System.out.println("shared context set to " + getId(sharedContextData.glContext) + ", creating GL canvasses of other viewers...");
-                System.out.println("initializing coil display list...");
-                sharedContextData.coilDisplayList = gl.glGenLists(1);  //TODO: error handling
-                gl.glNewList(sharedContextData.coilDisplayList, gl.GL_COMPILE);
-                for (int mesh_h = 0; mesh_h < mesh_count_h; mesh_h++) {
-                    float ah = mesh_h * mesh_da_h;
-                    gl.glBegin(gl.GL_TRIANGLE_STRIP);
-                    for (int mesh_w = 0; mesh_w < mesh_count_w; mesh_w++) {
-                        float aw = mesh_w * mesh_da_w;
-                        float[] objv = new float[3], normv = new float[3];
-                        mesh2normv(ah, aw, normv);
-                        mesh2objCoord(ah, aw, objv);
-                        gl.glNormal3fv(normv, 0);
-                        gl.glVertex3fv(objv, 0);
-                        mesh2normv(ah + mesh_da_h, aw, normv);
-                        mesh2objCoord(ah + mesh_da_h, aw, objv);
-                        gl.glNormal3fv(normv, 0);
-                        gl.glVertex3fv(objv, 0);
-                    }
-                    gl.glEnd();
-                }
-                gl.glEndList();
+            if (sharedContextData.getGlContext() == null) {
+                sharedContextData.setGlContext(((GLAutoDrawable)drawable).getContext());
+                SharedContextData.callContextInitCallbacks(sharedContextData, gl);
                 SwingUtilities.invokeLater(new Runnable() {
                     @Override
                     public void run() {
@@ -213,57 +185,6 @@ public class WorldViewer extends JPanel {
         }
 
 
-        // these should be per-coil eventually
-        final float coil_radius = 15;
-        final float wire_radius = 3;
-        final float coil_height = 40;
-        final float coil_winding_angle_range = 3 * 2 * (float) Math.PI;
-        final float mesh_count_w = 20;
-        final float mesh_count_h = 40 * (coil_winding_angle_range / 2 / (float) Math.PI);
-
-        final float mesh_da_w = 2 * (float) Math.PI / (mesh_count_w - 1);
-        final float mesh_da_h = coil_winding_angle_range / (mesh_count_h - 1);
-        final float coil_bottom = -coil_height/2;
-        final float coil_dh = coil_height / (mesh_count_h - 1);
-
-
-        private void mesh2objCoord(float ah, float aw, float[] result) {
-            result[0] = coil_radius * (float)Math.cos(ah) + wire_radius * (float)Math.cos(aw) * (float)Math.cos(ah);
-            result[1] = coil_bottom + coil_dh * ah / mesh_da_h + wire_radius * (float)Math.sin(aw);
-            result[2] = coil_radius * (float)Math.sin(ah) + wire_radius * (float)Math.cos(aw) * (float)Math.sin(ah);
-        }
-
-
-        private void mesh2normv(float ah, float aw, float[] result) {
-            float[] tangv1 = new float[3];
-            tangv1[0] = -coil_radius * (float)Math.sin(ah) - wire_radius * (float)Math.cos(aw) * (float)Math.sin(ah);
-            tangv1[1] = coil_dh/mesh_da_h;
-            tangv1[2] = coil_radius * (float)Math.cos(ah) + wire_radius * (float)Math.cos(ah) * (float)Math.cos(aw);
-
-            float[] tangv2 = new float[3];
-            tangv2[0] = - wire_radius * (float)Math.cos(ah) * (float)Math.sin(aw);
-            tangv2[1] = wire_radius * (float)Math.cos(aw);
-            tangv2[2] = - wire_radius * (float)Math.sin(ah) * (float)Math.sin(aw);
-
-            //cross(tangv1, tangv2, unnormalized);
-            float[] unnormalized = LinAlg.cross(tangv2, tangv1, null);
-
-            LinAlg.norm(unnormalized, result);
-        }
-
-
-        private void drawCoil(Coil c, GL2 gl) {
-            // printf("Drawing coil at %lf, %lf, %lf\n", c.locationInWorld[0], c.locationInWorld[1], c.locationInWorld[2]);
-            gl.glPushAttrib(gl.GL_COLOR_BUFFER_BIT|gl.GL_CURRENT_BIT);
-            gl.glColorMaterial(gl.GL_FRONT_AND_BACK, gl.GL_AMBIENT_AND_DIFFUSE);
-            //gl.glColorMaterial(gl.GL_FRONT_AND_BACK, gl.GL_SPECULAR);
-            gl.glMaterialfv(gl.GL_FRONT_AND_BACK, gl.GL_SPECULAR, GLCOLOR_WHITE, 0);
-            gl.glMaterialfv(gl.GL_FRONT_AND_BACK, gl.GL_SHININESS, mid_shininess, 0);
-            gl.glColor3fv(c.color, 0);
-            gl.glCallList(sharedContextData.coilDisplayList);
-            gl.glPopAttrib();
-        }
-
         @Override
         public void display(GLAutoDrawable glAutoDrawable) {
             GL2 gl = (GL2) glAutoDrawable.getGL();
@@ -283,7 +204,7 @@ public class WorldViewer extends JPanel {
                 gl.glPushMatrix();
                 gl.glTranslatef(c.locationInWorld[0], c.locationInWorld[1], c.locationInWorld[2]);
                 gl.glRotatef(c.rotAngle, 0, 1, 0);
-                drawCoil(c, gl);
+                c.draw(sharedContextData, gl);
                 gl.glPopMatrix();
             }
 
@@ -292,7 +213,7 @@ public class WorldViewer extends JPanel {
 
         private long lastAnimStepTime = -1;
 
-        private void animate() {
+        private void animate() {   // TODO: move to central place so it's not run once per viewer
             final long now = System.currentTimeMillis();
             if (lastAnimStepTime > 0) {
                 float dt = (float) (now - lastAnimStepTime) / 1000;
