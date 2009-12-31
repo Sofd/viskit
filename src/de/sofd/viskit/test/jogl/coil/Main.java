@@ -4,10 +4,12 @@ import com.sun.opengl.util.Animator;
 import de.sofd.lang.Runnable1;
 import java.awt.BorderLayout;
 import java.awt.Color;
+import java.awt.event.ActionEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.swing.AbstractAction;
 import javax.swing.JComboBox;
 import javax.swing.JFrame;
 import javax.swing.JToolBar;
@@ -34,8 +36,11 @@ public class Main {
         }
     }
 
+    private final World world;
+    private JFrame controllerFrame;
+
     public Main() {
-        final World w = new World();
+        world = new World();
 
         Coil coil1 = new Coil();
         coil1.locationInWorld[0] = 15;
@@ -57,10 +62,31 @@ public class Main {
         coil2.rotAngle = 0;
         coil1.rotAngularVelocity = 40;
 
-        w.addCoil(coil1);
-        w.addCoil(coil2);
+        world.addCoil(coil1);
+        world.addCoil(coil2);
 
-        int nFrames = 3;
+        {
+            controllerFrame = new JFrame("Controller");
+            controllerFrame.setSize(400, 200);
+            JToolBar toolbar = new JToolBar();
+            toolbar.setFloatable(false);
+            controllerFrame.add(toolbar, BorderLayout.NORTH);
+            toolbar.add(new AbstractAction("NewViewer") {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    addViewer();
+                }
+            });
+            controllerFrame.addWindowListener(new WindowAdapter() {
+                @Override
+                public void windowClosing(WindowEvent e) {
+                    //anim.stop();
+                    System.exit(0);
+                }
+            });
+            controllerFrame.setVisible(true);
+        }
+
         final MyAnimator anim = new MyAnimator();
         WorldViewer.addGlCanvasCreatedCallback(new Runnable1<WorldViewer>() {
             @Override
@@ -68,27 +94,9 @@ public class Main {
                 anim.add(v.getGlCanvas());
             }
         });
-        for (int i = 0; i < nFrames; i++) {
-            JFrame frame = new JFrame("Coil");
-            //Frame frame = new Frame("Coil");
-            frame.setBackground(Color.black);
-            JToolBar toolbar = new JToolBar();
-            toolbar.setFloatable(false);
-            JComboBox cb = new JComboBox(new Object[]{"foo","bar","baz","quux"});
-            toolbar.add(cb);
-            frame.add(cb, BorderLayout.NORTH);
-            WorldViewer glViewer = new WorldViewer(w);
-            frame.add(glViewer, BorderLayout.CENTER);
-            frame.setSize(800, 600);
-            frame.setBackground(Color.black);
-            frame.setVisible(true);
-            frame.addWindowListener(new WindowAdapter() {
-                @Override
-                public void windowClosing(WindowEvent e) {
-                    //anim.stop();
-                    System.exit(0);
-                }
-            });
+        // some initial viewers...
+        for (int i = 0; i < 2; i++) {
+            addViewer();
         }
         // dont start() anim; run its display() method directly instead from
         // our own internal thread so we can intersperse other work into it
@@ -109,7 +117,7 @@ public class Main {
                 final long now = System.currentTimeMillis();
                 if (lastAnimStepTime > 0) {
                     float dt = (float) (now - lastAnimStepTime) / 1000;
-                    for (Coil c : w.getCoils()) {
+                    for (Coil c : world.getCoils()) {
                         c.rotAngle += dt * c.rotAngularVelocity;
                         c.rotAngle -= 360 * (int)(c.rotAngle / 360);
                     }
@@ -119,6 +127,28 @@ public class Main {
         });
         animThread.setDaemon(true);
         animThread.start();
+    }
+
+    private void addViewer() {
+        JFrame frame = new JFrame("Viewer");
+        //Frame frame = new Frame("Viewer");
+        frame.setBackground(Color.black);
+        JToolBar toolbar = new JToolBar();
+        toolbar.setFloatable(false);
+        JComboBox cb = new JComboBox(new Object[]{"foo","bar","baz","quux"});
+        toolbar.add(cb);
+        frame.add(cb, BorderLayout.NORTH);
+        final WorldViewer glViewer = new WorldViewer(world);
+        frame.add(glViewer, BorderLayout.CENTER);
+        frame.setSize(800, 600);
+        frame.setBackground(Color.black);
+        frame.setVisible(true);
+        frame.addWindowListener(new WindowAdapter() {
+            @Override
+            public void windowClosing(WindowEvent e) {
+                //glViewer.dispose();
+            }
+        });
     }
 
     /**
