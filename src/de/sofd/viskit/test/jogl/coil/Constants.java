@@ -1,5 +1,8 @@
 package de.sofd.viskit.test.jogl.coil;
 
+import java.util.Random;
+import javax.media.opengl.GLContext;
+
 /**
  *
  * @author olaf
@@ -14,9 +17,20 @@ public class Constants {
     public static final float mid_shininess[] = {20};
     public static final float high_shininess[] = {100};
 
+    private static Random r = new Random();
 
     public static Object getId(Object o) {
-        return null == o ? null : System.identityHashCode(o);
+        if (o instanceof GLContext) {
+            GLContext ctx = (GLContext) o;
+            Object marker = ctx.getAttachedObject("viskitMarker");
+            if (null == marker) {
+                marker = "ctx-" + r.nextInt(1000);
+                ctx.putAttachedObject("viskitMarker", marker);
+            }
+            return marker;
+        } else {
+            return null == o ? null : System.identityHashCode(o);
+        }
     }
 
 }
