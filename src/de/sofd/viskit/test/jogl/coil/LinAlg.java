@@ -40,25 +40,29 @@ public class LinAlg {
         float c = (float) Math.cos(aRad);
         float s = (float) Math.sin(aRad);
 
-        res[0]  = x*x*(1-c)+c;
-        res[1]  = y*x*(1-c)+z*s;
-        res[2]  = x*z*(1-c)-y*s;
-        res[3]  = 0;
+        float[] rm = new float[16];
 
-        res[4]  = x*y*(1-c)-z*s;
-        res[5]  = y*y*(1-c)+c;
-        res[6]  = y*z*(1-c)+x*s;
-        res[7]  = 0;
+        rm[0]  = x*x*(1-c)+c;
+        rm[1]  = y*x*(1-c)+z*s;
+        rm[2]  = x*z*(1-c)-y*s;
+        rm[3]  = 0;
 
-        res[8]  = x*z*(1-c)+y*s;
-        res[9]  = y*z*(1-c)-x*s;
-        res[10] = z*z*(1-c)+c;
-        res[11] = 0;
+        rm[4]  = x*y*(1-c)-z*s;
+        rm[5]  = y*y*(1-c)+c;
+        rm[6]  = y*z*(1-c)+x*s;
+        rm[7]  = 0;
 
-        res[12] = 0;
-        res[13] = 0;
-        res[14] = 0;
-        res[15] = 1;
+        rm[8]  = x*z*(1-c)+y*s;
+        rm[9]  = y*z*(1-c)-x*s;
+        rm[10] = z*z*(1-c)+c;
+        rm[11] = 0;
+
+        rm[12] = 0;
+        rm[13] = 0;
+        rm[14] = 0;
+        rm[15] = 1;
+
+        fillMultiplication(a, rm, res);
     }
 
 
@@ -76,12 +80,20 @@ public class LinAlg {
     }
 
     public static void fillMultiplication(float[] a, float[] b, float[] res) {
+        float[] a2 = a;
+        if (a2 == res) {
+            a2 = copyArr(a, null);
+        }
+        float[] b2 = b;
+        if (b2 == res) {
+            b2 = copyArr(b, null);
+        }
         for (int rr = 0; rr < 4; rr++) {
             for (int rc = 0; rc < 4; rc++) {
                 int ri = rc * 4 + rr;
                 res[ri] = 0;
                 for (int i = 0; i < 4; i++) {
-                    res[ri] += a[i * 4 + rr] * b[rc * 4 + i];
+                    res[ri] += a2[i * 4 + rr] * b2[rc * 4 + i];
                 }
             }
         }
