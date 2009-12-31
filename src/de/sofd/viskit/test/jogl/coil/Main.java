@@ -7,6 +7,8 @@ import java.awt.Color;
 import java.awt.event.ActionEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.AbstractAction;
@@ -99,16 +101,15 @@ public class Main {
             addViewer();
         }
         // dont start() anim; run its display() method directly instead from
-        // our own internal thread so we can intersperse other work into it
+        // our own internal timer so we can intersperse other work into it
         // without having to have additional threads
-        final Thread animThread = new Thread(new Runnable() {
+        Timer animTimer = new Timer(true);
+        final int FPS = 50;
+        animTimer.scheduleAtFixedRate(new TimerTask() {
             @Override
             public void run() {
-                while (true) {
-                    animateCoils();
-                    anim.display();
-                    Thread.yield();
-                }
+                animateCoils();
+                anim.display();
             }
 
             private long lastAnimStepTime = -1;
@@ -124,9 +125,7 @@ public class Main {
                 }
                 lastAnimStepTime = now;
             }
-        });
-        animThread.setDaemon(true);
-        animThread.start();
+        }, 0, 1000/FPS);
     }
 
     private void addViewer() {
