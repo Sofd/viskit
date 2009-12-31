@@ -53,8 +53,9 @@ public class Main {
         coil1.color[1] = 0.0F;
         coil1.color[2] = 0.0F;
         coil1.color[3] = 1.0F;
+        coil1.isTextured = true;
         coil1.rotAngle = 70;
-        coil1.rotAngularVelocity = 0;
+        coil1.rotAngularVelocity = 40;
 
         Coil coil2 = new Coil();
         coil2.locationInWorld[0] = -20;
@@ -62,7 +63,7 @@ public class Main {
         coil2.locationInWorld[2] = -110;
         LinAlg.copyArr(GLCOLOR_GREEN, coil2.color);
         coil2.rotAngle = 0;
-        coil1.rotAngularVelocity = 40;
+        coil2.rotAngularVelocity = 0;
 
         world.addCoil(coil1);
         world.addCoil(coil2);
