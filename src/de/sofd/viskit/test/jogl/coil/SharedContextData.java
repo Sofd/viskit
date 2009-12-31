@@ -14,6 +14,7 @@ import javax.media.opengl.GLContext;
  */
 public class SharedContextData {
 
+    private int refCount = 0;
     private GLContext glContext = null;
     private final Map<String, Object> attributes = new HashMap<String, Object>();
 
@@ -27,13 +28,39 @@ public class SharedContextData {
         return glContext;
     }
 
+    // TODO: this ref counting scheme for ensuring context re-initializations is probably too brittle
+    // and fragile in the presence of possible arbitrary context re-initializations. A more robust
+    // approach: "mark" a context, e.g. by storing a well-known, small object (texture, display list or whatever)
+    // in it, when it is first created, Check for the presence of that mark whenever the context is
+    // to be used, re-initialize the context if the mark is missing.
+
     /**
      * Used by GLContext creators (e.g. GL viewer components) only (when initializing a new context).
      *
      * @param glContext
      */
-    void setGlContext(GLContext glContext) {
-        this.glContext = glContext;
+    void ref(GLContext glContext) {
+        refCount++;
+        if (refCount == 1) {
+            this.glContext = glContext;
+        }
+    }
+
+    /**
+     * Used by GLContext creators (e.g. GL viewer components) only (when initializing a new context).
+     */
+    void unref() {
+        if (refCount == 0) {
+            throw new IllegalStateException("too many unref calls...");
+        }
+        refCount--;
+        if (refCount == 0) {
+            this.glContext = null;
+        }
+    }
+
+    public int getRefCount() {
+        return refCount;
     }
 
     public Object getAttribute(String name) {

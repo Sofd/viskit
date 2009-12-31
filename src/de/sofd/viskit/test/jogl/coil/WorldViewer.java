@@ -125,8 +125,8 @@ public class WorldViewer extends JPanel {
             gl.glClearColor(0,0,0,0);
             //gl.glPolygonMode(gl.GL_FRONT_AND_BACK, gl.GL_LINE);
             //gl.glShadeModel(gl.GL_FLAT);
-            if (sharedContextData.getGlContext() == null) {
-                sharedContextData.setGlContext(((GLAutoDrawable)drawable).getContext());
+            sharedContextData.ref(((GLAutoDrawable)drawable).getContext());
+            if (sharedContextData.getRefCount() == 1) {
                 SharedContextData.callContextInitCallbacks(sharedContextData, gl);
                 SwingUtilities.invokeLater(new Runnable() {
                     @Override
@@ -185,6 +185,8 @@ public class WorldViewer extends JPanel {
 
         @Override
         public void dispose(GLAutoDrawable glAutoDrawable) {
+            sharedContextData.unref();
+            instances.remove(WorldViewer.this);
             System.out.println("DISPOSE " + getId(glAutoDrawable) + ", its context is now: " + getId(((GLAutoDrawable)glAutoDrawable).getContext()));
         }
 
