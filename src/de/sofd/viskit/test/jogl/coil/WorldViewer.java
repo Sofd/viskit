@@ -4,6 +4,11 @@ import de.sofd.lang.Runnable1;
 import de.sofd.util.IdentityHashSet;
 import java.awt.Component;
 import java.awt.GridLayout;
+import java.awt.Point;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Set;
@@ -60,8 +65,12 @@ public class WorldViewer extends JPanel {
         caps.setDoubleBuffered(true);
         glCanvas = new GLCanvas(caps, null, sharedContextData.getGlContext(), null);
         glCanvas.addGLEventListener(new GLEventHandler(glCanvas));
-        this.add((Component)glCanvas);
+        Component glCanvasComp = (Component)glCanvas;
+        this.add(glCanvasComp);
         revalidate();
+        glCanvasComp.addMouseListener(canvasMouseAndKeyHandler);
+        glCanvasComp.addMouseMotionListener(canvasMouseAndKeyHandler);
+        glCanvasComp.addKeyListener(canvasMouseAndKeyHandler);
         System.out.println("CREATED CANVAS " + getId(glCanvas) + " of viewer " + getId(this) + ", its context is now: " + getId(glCanvas.getContext()));
         for (Runnable1<WorldViewer> callback : glCanvasCreatedCallbacks) {
             callback.run(this);
@@ -70,6 +79,64 @@ public class WorldViewer extends JPanel {
 
     public GLAutoDrawable getGlCanvas() {
         return glCanvas;
+    }
+
+    private CanvasMouseAndKeyHandler canvasMouseAndKeyHandler = new CanvasMouseAndKeyHandler();
+
+    private class CanvasMouseAndKeyHandler extends MouseAdapter implements KeyListener {
+        private Point lastPos = null;
+        @Override
+        public void mousePressed(MouseEvent e) {
+            lastPos = e.getPoint();
+        }
+        @Override
+        public void mouseDragged(MouseEvent e) {
+            Point pos = e.getPoint();
+            if (lastPos != null) {
+                float roty = ((float)pos.x - lastPos.x) / 400 * 180;
+                float rotx = ((float)pos.y - lastPos.y) / 400 * 180;
+                float[] viewerDeltaTransform = new float[16];
+                LinAlg.fillIdentity(viewerDeltaTransform);
+                LinAlg.fillRotation(viewerDeltaTransform, rotx, 1, 0, 0, viewerDeltaTransform);
+                LinAlg.fillRotation(viewerDeltaTransform, roty, 0, 1, 0, viewerDeltaTransform);
+                LinAlg.fillMultiplication(viewerDeltaTransform, worldToEyeCoordTransform, worldToEyeCoordTransform);
+                ((Component) glCanvas).repaint();
+            }
+            lastPos = pos;
+        }
+
+        @Override
+        public void keyTyped(KeyEvent e) {
+            System.out.println("keyTyped " + e.getKeyCode() + ", " + e.getKeyChar());
+        }
+
+        @Override
+        public void keyPressed(KeyEvent e) {
+            System.out.println("keyPressed " + e.getKeyCode());
+            float[] viewerDeltaTransform = new float[16];
+            LinAlg.fillIdentity(viewerDeltaTransform);
+            switch (e.getKeyCode()) {
+                case KeyEvent.VK_UP:
+                    LinAlg.fillTranslation(viewerDeltaTransform, 0, 0, 5, viewerDeltaTransform);
+                    break;
+                case KeyEvent.VK_DOWN:
+                    LinAlg.fillTranslation(viewerDeltaTransform, 0, 0, -5, viewerDeltaTransform);
+                    break;
+                case KeyEvent.VK_LEFT:
+                    LinAlg.fillRotation(viewerDeltaTransform, -5, 0, 0, 1, viewerDeltaTransform);
+                    break;
+                case KeyEvent.VK_RIGHT:
+                    LinAlg.fillRotation(viewerDeltaTransform, 5, 0, 0, 1, viewerDeltaTransform);
+                    break;
+            }
+            LinAlg.fillMultiplication(viewerDeltaTransform, worldToEyeCoordTransform, worldToEyeCoordTransform);
+            ((Component) glCanvas).repaint();
+        }
+
+        @Override
+        public void keyReleased(KeyEvent e) {
+            System.out.println("keyReleased " + e.getKeyCode());
+        }
     }
 
     public void dispose() {
