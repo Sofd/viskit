@@ -23,6 +23,10 @@ public class Constants {
         if (o instanceof GLContext) {
             GLContext ctx = (GLContext) o;
             Object marker = ctx.getAttachedObject("viskitMarker");
+            // this doesn't work as it should -- the "attachedObjects"
+            // are per - GLContext instance apparently; they're not
+            // shared between GLContext instances that wrap the same
+            // underlying GL context :-(
             if (null == marker) {
                 marker = "ctx-" + r.nextInt(1000);
                 ctx.putAttachedObject("viskitMarker", marker);
