@@ -1,8 +1,11 @@
 package de.sofd.viskit.test.jogl.coil;
 
+import de.sofd.lang.Runnable1;
 import de.sofd.util.IdentityHashSet;
 import java.awt.Component;
 import java.awt.GridLayout;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Set;
 import javax.media.opengl.GL2;
 import javax.media.opengl.GLAutoDrawable;
@@ -29,7 +32,15 @@ public class WorldViewer extends JPanel {
 
     private final World viewedWorld;
 
+    private float[] worldToEyeCoordTransform = new float[16];
+
     private GLAutoDrawable glCanvas;
+
+    private static Collection<Runnable1<WorldViewer>> glCanvasCreatedCallbacks = new ArrayList<Runnable1<WorldViewer>>();
+
+    public static void addGlCanvasCreatedCallback(Runnable1<WorldViewer> callback) {
+        glCanvasCreatedCallbacks.add(callback);
+    }
 
     public WorldViewer(World viewedWorld) {
         this.viewedWorld = viewedWorld;
@@ -52,6 +63,9 @@ public class WorldViewer extends JPanel {
         this.add((Component)glCanvas);
         revalidate();
         System.out.println("CREATED CANVAS " + getId(glCanvas) + " of viewer " + getId(this) + ", its context is now: " + getId(glCanvas.getContext()));
+        for (Runnable1<WorldViewer> callback : glCanvasCreatedCallbacks) {
+            callback.run(this);
+        }
     }
 
     public GLAutoDrawable getGlCanvas() {
@@ -70,7 +84,7 @@ public class WorldViewer extends JPanel {
             this.drawable = drawable;
         }
 
-        // this is a least-effort port straight from my C "coil" test app
+        // The GL stuff is mostly a least-effort port straight from C.
         // Beware: Very ugly. No typedefs in Java... must use classes eventually
 
         // in isometric (glOrtho) projection: width of viewport in world coords
@@ -97,17 +111,11 @@ public class WorldViewer extends JPanel {
             LinAlg.fillIdentity(identityTransform);
         }
 
-        class Viewer {
-            float[] worldToEyeCoordTransform = new float[16];
-        };
-
-        Viewer theViewer = new Viewer();
-
         @Override
         public void init(GLAutoDrawable glAutoDrawable) {
             System.out.println("INIT " + getId(glAutoDrawable) + ", its context is now: " + getId(((GLAutoDrawable)glAutoDrawable).getContext()));
             GL2 gl = (GL2) glAutoDrawable.getGL();
-            initCoilsAndViewer();
+            LinAlg.fillIdentity(worldToEyeCoordTransform);
             setupEye2ViewportTransformation(gl);
             gl.glEnable(gl.GL_DEPTH_TEST);
             gl.glEnable(gl.GL_RESCALE_NORMAL);
@@ -131,10 +139,6 @@ public class WorldViewer extends JPanel {
                     }
                 });
             }
-        }
-
-        private void initCoilsAndViewer() {
-            LinAlg.fillIdentity(theViewer.worldToEyeCoordTransform);
         }
 
         private void setupEye2ViewportTransformation(GL2 gl) {
@@ -188,28 +192,13 @@ public class WorldViewer extends JPanel {
         @Override
         public void display(GLAutoDrawable glAutoDrawable) {
             GL2 gl = (GL2) glAutoDrawable.getGL();
-            animate();
             gl.glClear(gl.GL_COLOR_BUFFER_BIT | gl.GL_DEPTH_BUFFER_BIT);
             gl.glMatrixMode(gl.GL_MODELVIEW);
             gl.glLoadIdentity();
-            gl.glMultMatrixf(theViewer.worldToEyeCoordTransform, 0);
+            gl.glMultMatrixf(worldToEyeCoordTransform, 0);
             viewedWorld.draw(sharedContextData, gl);
 
             glAutoDrawable.swapBuffers();
-        }
-
-        private long lastAnimStepTime = -1;
-
-        private void animate() {   // TODO: move to central place so it's not run once per viewer
-            final long now = System.currentTimeMillis();
-            if (lastAnimStepTime > 0) {
-                float dt = (float) (now - lastAnimStepTime) / 1000;
-                for (Coil c : viewedWorld.getCoils()) {
-                    c.rotAngle += dt * c.rotAngularVelocity;
-                    c.rotAngle -= 360 * (int)(c.rotAngle / 360);
-                }
-            }
-            lastAnimStepTime = now;
         }
 
         @Override

@@ -1,6 +1,7 @@
 package de.sofd.viskit.test.jogl.coil;
 
 import com.sun.opengl.util.Animator;
+import de.sofd.lang.Runnable1;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.event.WindowAdapter;
@@ -20,8 +21,21 @@ import static de.sofd.viskit.test.jogl.coil.Constants.*;
  */
 public class Main {
 
+    /**
+     * Derive our own Animator class from the JOGL Animator
+     * so we can get its (protected by default) display() method
+     * (which redisplays all the components). We only want that,
+     * not Animator's internal thread/display loop.
+     */
+    private static class MyAnimator extends Animator {
+        @Override
+        public void display() {
+            super.display();
+        }
+    }
+
     public Main() {
-        World w = new World();
+        final World w = new World();
 
         Coil coil1 = new Coil();
         coil1.locationInWorld[0] = 15;
@@ -47,7 +61,13 @@ public class Main {
         w.addCoil(coil2);
 
         int nFrames = 3;
-        final Animator anim = new Animator();
+        final MyAnimator anim = new MyAnimator();
+        WorldViewer.addGlCanvasCreatedCallback(new Runnable1<WorldViewer>() {
+            @Override
+            public void run(WorldViewer v) {
+                anim.add(v.getGlCanvas());
+            }
+        });
         for (int i = 0; i < nFrames; i++) {
             JFrame frame = new JFrame("Coil");
             //Frame frame = new Frame("Coil");
@@ -58,7 +78,6 @@ public class Main {
             toolbar.add(cb);
             frame.add(cb, BorderLayout.NORTH);
             WorldViewer glViewer = new WorldViewer(w);
-            //anim.add(glViewer.getGlCanvas());
             frame.add(glViewer, BorderLayout.CENTER);
             frame.setSize(800, 600);
             frame.setBackground(Color.black);
@@ -71,9 +90,36 @@ public class Main {
                 }
             });
         }
-        anim.start();
-    }
+        // dont start() anim; run its display() method directly instead from
+        // our own internal thread so we can intersperse other work into it
+        // without having to have additional threads
+        final Thread animThread = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                while (true) {
+                    animateCoils();
+                    anim.display();
+                    Thread.yield();
+                }
+            }
 
+            private long lastAnimStepTime = -1;
+
+            private void animateCoils() {
+                final long now = System.currentTimeMillis();
+                if (lastAnimStepTime > 0) {
+                    float dt = (float) (now - lastAnimStepTime) / 1000;
+                    for (Coil c : w.getCoils()) {
+                        c.rotAngle += dt * c.rotAngularVelocity;
+                        c.rotAngle -= 360 * (int)(c.rotAngle / 360);
+                    }
+                }
+                lastAnimStepTime = now;
+            }
+        });
+        animThread.setDaemon(true);
+        animThread.start();
+    }
 
     /**
      * @param args the command line arguments
