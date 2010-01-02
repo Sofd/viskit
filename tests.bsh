@@ -1,0 +1,162 @@
+// -*- java -*-
+
+import de.sofd.iseer.server.modelimpl.NaviRootNodeProvider;
+import de.sofd.iseer.model.*;
+import de.sofd.iseer.ui.scripting.*;
+import java.util.*;
+import java.io.*;
+import org.dcm4che2.data.*;
+import org.dcm4che2.io.*;
+import org.dcm4che2.net.*;
+import org.dcm4che2.util.*;
+
+
+
+
+//loading/saving arbitrary serializable java objects
+
+loadObject(filename) {
+    //finally is buggy in bsh -- see http://life.neophi.com/danielr/2005/10/beanshell_and_finally.html
+    var result = null;
+    var ois = new ObjectInputStream(new FileInputStream(filename));
+    try {
+        result = ois.readObject();
+    } finally {
+        ois.close();
+    }
+    return result;
+}
+
+saveObject(obj,filename) {
+    var oos = new ObjectOutputStream(new FileOutputStream(filename));
+    try {
+        oos.writeObject(obj);
+    } finally {
+        oos.close();
+    }
+}
+
+
+
+//loading/saving/printing DICOM objects (load/save from/to standard DICOM streams)
+
+loadDobj(filename) {
+    var result = null;
+    var in = new DicomInputStream(new File(filename));
+    try {
+        result = in.readDicomObject();
+    } finally {
+        in.close();
+    }
+    return result;
+}
+
+
+saveDobj(dobj,filename) {
+    DicomOutputStream os = new DicomOutputStream(new FileOutputStream(filename));
+    try {
+        if (!dobj.contains(Tag.TransferSyntaxUID)) {
+            dobj.putString(Tag.TransferSyntaxUID, VR.UI, UID.ImplicitVRLittleEndian);
+        }
+        os.writeDicomFile(dobj);
+    } finally {
+        os.close();
+    }
+}
+
+
+printDobj_old(inputObject) {
+    printDobj(inputObject, "");
+}
+
+
+printDobj_old(inputObject, prefix) {
+    for (Iterator it = inputObject.iterator(); it.hasNext();) {
+        var elt = it.next();
+        if (elt.vr()==VR.SQ) {
+            print(prefix+elt);
+            for (int i=0; i<elt.countItems(); i++) {
+                var subobj=elt.getDicomObject(i);
+                printDobj(subobj, prefix+">");
+                print(prefix+">==========================================");
+            }
+        } else {
+            var stringVal;
+            try {
+                stringVal = inputObject.getString(elt.tag());
+            } catch (UnsupportedOperationException e) {
+                stringVal = "[undisplayable]";
+            }
+            print(prefix+TagUtils.toString(elt.tag()) + " " +
+                  inputObject.nameOf(elt.tag()) + " = " +
+                  stringVal);
+        }
+    }
+}
+
+
+
+printDobj(inputObject) {
+    var s = new StringBuffer(500);
+    inputObject.toStringBuffer(s, new DicomObjectToStringParam(true,   // name
+                                                               9999,     // valueLength;
+                                                               99999999,     // numItems;
+                                                               300,    // lineLength;
+                                                               99999999,    // numLines;
+                                                               "",     // indent
+                                                               System.getProperty("line.separator", "\n")));
+    print(s);
+}
+
+
+
+
+
+//unit test utilities
+
+public class AssertionError extends Exception {
+    public AssertionError() {
+        super();
+    }
+
+    public AssertionError(String message) {
+        super(message);
+    }
+
+    public AssertionError(Throwable cause) {
+        super(cause);
+    }
+
+    public AssertionError(String message, Throwable cause) {
+        super(message, cause);
+    }
+};
+
+assert(condition) {
+    if (!condition) {
+        throw new AssertionError();
+    }
+}
+
+
+assertEquals(o1,o2) {
+    //for some reason equals() does not work with primitive types
+    if (o1 instanceof bsh.Primitive) {
+        if (!(o2 instanceof bsh.Primitive && o1==o2)) {
+            throw new AssertionError("NOT EQUAL: "+o1+", "+o2);
+        }
+        else {
+            return;
+        }
+    }
+
+    if (!o1.equals(o2)) {
+        throw new AssertionError("NOT EQUAL: "+o1+", "+o2);
+    }
+}
+
+assertIdentical(o1,o2) {
+    if (o1!=o2) {
+        throw new AssertionError("NOT IDENTICAL: "+o1+", "+o2);
+    }
+}
