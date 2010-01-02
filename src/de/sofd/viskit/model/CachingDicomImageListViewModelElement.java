@@ -117,6 +117,19 @@ public abstract class CachingDicomImageListViewModelElement implements DicomImag
         return result;
     }
 
+    public boolean isDicomObjectCached() {
+        return rawDcmObjectCache.containsKey(getImageKey());
+    }
+
+    public boolean isImageCached() {
+        return rawImageCache.containsKey(getImageKey());
+    }
+
+    @Override
+    public DicomObject getDicomImageMetaData() {
+        return getDicomObject();
+    }
+
     @Override
     public BufferedImage getImage() {
         BufferedImage result = rawImageCache.get(getImageKey());
