@@ -2,6 +2,7 @@ package de.sofd.viskit.test.jogl.coil;
 
 import com.sun.opengl.util.texture.Texture;
 import com.sun.opengl.util.texture.TextureCoords;
+import com.sun.opengl.util.texture.TextureData;
 import com.sun.opengl.util.texture.TextureIO;
 import de.sofd.lang.Runnable2;
 import java.io.IOException;
@@ -24,6 +25,8 @@ public class Coil implements GLDrawableObject {
 
     private static final String COIL_DISP_LIST_ID = "coilDisplayListId";
     private static final String COIL_TEXTURE = "coilTexture";
+
+    private static TextureData coilTextureData;
 
     // these should be per-coil eventually
     static final float coil_radius = 15;
@@ -51,38 +54,42 @@ public class Coil implements GLDrawableObject {
                 GL2 gl = gl1.getGL2();
 
                 System.out.println("initializing coil texture...");
-                Texture coilTexture;
-                try {
-                    // TODO: might initialize the Texture's underlying TextureData (which doesn't need a GL context)
-                    // independently and reuse it if/when the context is re-initialized. The Texture object essentially
-                    // uses the TextureData's image (pixel) data and metadata and binds that into a GL texture in
-                    // the currently active GL context. Unlike the Texture itself, the TextureData is independent of
-                    // the context and still valid after the context is lost. The TextureData in turn (and thus the Texture)
-                    // will directly use the pixel buffer of the BufferedImage supplied here, i.e. it won't copy
-                    // it internally[1]. So that buffer will be passed to glTex(Sub)Image2D. At that point however, the
-                    // GL driver will copy it internally, so there will still be 2 copies of the data -- one in the
-                    // BufferedImage, one in the GL driver (the latter possibly in VRAM, depending on driver internals).
-                    // To get rid of the former and still use the texture,
-                    // it might work to essentially create the Texture normally, then grab its generated internal
-                    // texture ID (which is known to GL) from it and leave the Texture, TextureData and BufferedImage objects
-                    // unreferenced (and thus eligible for GC). In that case, only the GL-internal copy of the texture
-                    // should remain. The disadvantage of that would be that on GL context re-initializations,
-                    // the pixel data would be lost and would have to be re-read from the original storage area
-                    // (classpath/filesystem/etc.). Some mixed strategy might be in order here -- reserve some memory
-                    // for BufferedImages, other memory for GL-managed textures. Always use the various estimateSize()
-                    // methods to get actual byte sizes of textures so as to create better caches. Also, when using
-                    // GLJPanel instead of GLCanvas, it should be considered that the GL context may be re-initialized
-                    // much more frequently (essentially on every resize of the component...), so a larger GL-external
-                    // and smaller GL-internal cache may be in order...
-                    //
-                    // [1] May not be the case with all kinds of BufferedImage; investigate in the vincinity of
-                    //      private void AWTTextureData.createFromImage(BufferedImage image) / case BufferedImage.TYPE_3BYTE_BGR
-                    //      / setupLazyCustomConversion
+                // initialize the Texture's underlying TextureData (which doesn't need a GL context)
+                // independently and reuse it if/when the context is re-initialized. The Texture object essentially
+                // uses the TextureData's image (pixel) data and metadata and binds that into a GL texture in
+                // the currently active GL context. Unlike the Texture itself, the TextureData is independent of
+                // the context and still valid after the context is lost. The TextureData in turn (and thus the Texture)
+                // will directly use the pixel buffer of the BufferedImage supplied here, i.e. it won't copy
+                // it internally[1]. So that buffer will be passed to glTex(Sub)Image2D. At that point however, the
+                // GL driver will copy it internally, so there will still be 2 copies of the data -- one in the
+                // BufferedImage, one in the GL driver (the latter possibly in VRAM, depending on driver internals).
+                // To get rid of the former and still use the texture,
+                // it might work to essentially create the Texture normally, then grab its generated internal
+                // texture ID (which is known to GL) from it and leave the Texture, TextureData and BufferedImage objects
+                // unreferenced (and thus eligible for GC). In that case, only the GL-internal copy of the texture
+                // should remain. The disadvantage of that would be that on GL context re-initializations,
+                // the pixel data would be lost and would have to be re-read from the original storage area
+                // (classpath/filesystem/etc.). Some mixed strategy might be in order here -- reserve some memory
+                // for BufferedImages, other memory for GL-managed textures. Always use the various estimateSize()
+                // methods to get actual byte sizes of textures so as to create better caches. Also, when using
+                // GLJPanel instead of GLCanvas, it should be considered that the GL context may be re-initialized
+                // much more frequently (essentially on every resize of the component...), so a larger GL-external
+                // and smaller GL-internal cache may be in order...
+                //
+                // [1] May not be the case with all kinds of BufferedImage; investigate in the vincinity of
+                //      private void AWTTextureData.createFromImage(BufferedImage image) / case BufferedImage.TYPE_3BYTE_BGR
+                //      / setupLazyCustomConversion
 
-                    coilTexture = TextureIO.newTexture(Coil.class.getResourceAsStream("mri_brain.jpg"), true, "jpg");
-                } catch (IOException ex) {
-                    throw new RuntimeException("FATAL", ex);
+                if (null == coilTextureData) {
+                    System.out.println("reading coil texture data from backing original store...");
+                    try {
+                        coilTextureData = TextureIO.newTextureData(Coil.class.getResourceAsStream("mri_brain.jpg"), true, "jpg");
+                    } catch (IOException ex) {
+                        throw new RuntimeException("FATAL", ex);
+                    }
+                    coilTextureData.flush();
                 }
+                Texture coilTexture = new Texture(coilTextureData);
                 cd.setAttribute(COIL_TEXTURE, coilTexture);
 
                 System.out.println("shared context set to " + getId(cd.getGlContext()) + ", creating GL canvasses of other viewers...");
