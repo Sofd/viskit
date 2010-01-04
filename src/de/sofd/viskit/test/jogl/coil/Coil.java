@@ -5,6 +5,7 @@ import com.sun.opengl.util.texture.TextureCoords;
 import com.sun.opengl.util.texture.TextureData;
 import com.sun.opengl.util.texture.TextureIO;
 import de.sofd.lang.Runnable2;
+import java.io.FileInputStream;
 import java.io.IOException;
 import javax.media.opengl.GL;
 import javax.media.opengl.GL2;
@@ -83,13 +84,22 @@ public class Coil implements GLDrawableObject {
                 if (null == coilTextureData) {
                     System.out.println("reading coil texture data from backing original store...");
                     try {
-                        coilTextureData = TextureIO.newTextureData(Coil.class.getResourceAsStream("mri_brain.jpg"), true, "jpg");
+                        System.out.print("(READING TEXTURE DATA)... ");
+                        long t0 = System.currentTimeMillis();
+                        //coilTextureData = TextureIO.newTextureData(Coil.class.getResourceAsStream("mri_brain.jpg"), true, "jpg");
+                        coilTextureData = TextureIO.newTextureData(new FileInputStream("/home/olaf/gi/resources/DICOM-Testbilder/1578/f0003563_00620.dcm"), true, "dcm");
+                        long t1 = System.currentTimeMillis();
+                        System.out.println("" + (t1-t0) + " ms.");
                     } catch (IOException ex) {
                         throw new RuntimeException("FATAL", ex);
                     }
                     coilTextureData.flush();
                 }
+                System.out.print("(CREATING TEXTURE)... ");
+                long t0 = System.currentTimeMillis();
                 Texture coilTexture = new Texture(coilTextureData);
+                long t1 = System.currentTimeMillis();
+                System.out.println("" + (t1-t0) + " ms.");
                 cd.setAttribute(COIL_TEXTURE, coilTexture);
 
                 System.out.println("shared context set to " + getId(cd.getGlContext()) + ", creating GL canvasses of other viewers...");
