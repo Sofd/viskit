@@ -31,6 +31,10 @@ import static de.sofd.viskit.test.jogl.coil.Constants.*;
  */
 public class WorldViewer extends JPanel {
 
+    static {
+        System.setProperty("sun.awt.noerasebackground", "true");
+    }
+
     private static final Set<WorldViewer> instances = new IdentityHashSet<WorldViewer>();
 
     private static final SharedContextData sharedContextData = new SharedContextData();
