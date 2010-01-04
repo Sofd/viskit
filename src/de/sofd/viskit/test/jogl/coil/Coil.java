@@ -88,6 +88,7 @@ public class Coil implements GLDrawableObject {
                         long t0 = System.currentTimeMillis();
                         coilTextureData = TextureIO.newTextureData(Coil.class.getResourceAsStream("mri_brain.jpg"), true, "jpg");
                         //coilTextureData = TextureIO.newTextureData(new FileInputStream("/home/olaf/gi/resources/DICOM-Testbilder/1578/f0003563_00620.dcm"), true, "dcm");
+                        //coilTextureData = TextureIO.newTextureData(new FileInputStream("/shares/projects/DICOM-Testbilder/1578/f0003563_00620.dcm"), true, "dcm");
                         long t1 = System.currentTimeMillis();
                         System.out.println("" + (t1-t0) + " ms.");
                     } catch (IOException ex) {
@@ -99,7 +100,7 @@ public class Coil implements GLDrawableObject {
                 long t0 = System.currentTimeMillis();
                 Texture coilTexture = new Texture(coilTextureData);
                 long t1 = System.currentTimeMillis();
-                System.out.println("" + (t1-t0) + " ms.");
+                System.out.println("" + (t1-t0) + " ms. Texture " + coilTexture.getWidth() + "x" + coilTexture.getHeight() + ", size (est.): " + coilTexture.getEstimatedMemorySize());
                 cd.setAttribute(COIL_TEXTURE, coilTexture);
 
                 System.out.println("shared context set to " + getId(cd.getGlContext()) + ", creating GL canvasses of other viewers...");
