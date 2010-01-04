@@ -23,4 +23,13 @@ public class SliceView extends Component
     {
         return (ArrayList<Component>)layout.getComponents();
     }
+    
+    public void glCreate() throws Exception
+    {
+        for ( Component component : getViewports() )
+        {
+            if ( component != null )
+                component.glCreate();
+        }
+    }
 }

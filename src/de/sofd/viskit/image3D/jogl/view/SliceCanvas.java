@@ -3,6 +3,7 @@ package de.sofd.viskit.image3D.jogl.view;
 import static de.sofd.viskit.image3D.jogl.util.GLUtil.*;
 
 import java.awt.*;
+import java.io.*;
 
 import static javax.media.opengl.GL.*;
 import static javax.media.opengl.GL2.*;
@@ -13,10 +14,12 @@ import javax.media.opengl.glu.gl2.*;
 
 import org.apache.log4j.*;
 
+import com.sun.opengl.util.*;
 import com.sun.opengl.util.gl2.*;
 
 import de.sofd.viskit.image3D.jogl.control.*;
 import de.sofd.viskit.image3D.jogl.model.*;
+import de.sofd.viskit.image3D.jogl.util.*;
 import de.sofd.viskit.image3D.model.*;
 import de.sofd.viskit.image3D.util.*;
 
@@ -36,6 +39,8 @@ public class SliceCanvas extends GLCanvas implements GLEventListener
         caps.setAlphaBits( 8 );
     }
 
+    protected Animator animator;
+
     protected FPSCounter fpsCounter;
 
     protected SliceView sliceView;
@@ -43,8 +48,10 @@ public class SliceCanvas extends GLCanvas implements GLEventListener
     protected int viewport[] = new int[ 4 ];
 
     protected VolumeObject volumeObject;
+    
+    protected SliceViewController sliceViewController;
 
-    public SliceCanvas( VolumeObject volumeObject )
+    public SliceCanvas( VolumeObject volumeObject ) throws IOException
     {
         super( caps );
 
@@ -53,6 +60,9 @@ public class SliceCanvas extends GLCanvas implements GLEventListener
 
         addGLEventListener( this );
 
+        animator = new Animator( this );
+        
+        
     }
 
     @Override
@@ -66,7 +76,7 @@ public class SliceCanvas extends GLCanvas implements GLEventListener
 
         gl.glMatrixMode( GL_MODELVIEW );
         gl.glLoadIdentity();
-
+        
         sliceView.show( gl );
 
         gl.glViewport( 0, 0, viewport[ 2 ], viewport[ 3 ] );
@@ -76,8 +86,13 @@ public class SliceCanvas extends GLCanvas implements GLEventListener
 
         // show fps
         gl.glDisable( GL_BLEND );
+        gl.glDisable( GL_TEXTURE_3D );
+        gl.glDisable( GL_TEXTURE_2D );
+        gl.glDisable( GL_LIGHTING );
+        gl.glUseProgram(0);
+        
         beginInfoScreen( gl, glu, viewport[ 2 ], viewport[ 3 ] );
-        gl.glColor3f( 1.0f, 1.0f, 1.0f );
+        gl.glColor4f( 1.0f, 1.0f, 0.0f, 1.0f );
         infoText( gl, glut, 400, 400, "FPS : " + fpsCounter.getFps() );
         endInfoScreen( gl );
 
@@ -89,9 +104,19 @@ public class SliceCanvas extends GLCanvas implements GLEventListener
 
     }
 
+    public Animator getAnimator()
+    {
+        return animator;
+    }
+
     public SliceView getSliceView()
     {
         return sliceView;
+    }
+
+    public SliceViewController getSliceViewController()
+    {
+        return sliceViewController;
     }
 
     public int getViewportHeight()
@@ -113,34 +138,69 @@ public class SliceCanvas extends GLCanvas implements GLEventListener
     {
         fpsCounter.update();
     }
-
+    
     @Override
     public void init( GLAutoDrawable drawable )
     {
-        drawable.setGL( ( new DebugGL2( drawable.getGL().getGL2() ) ) );
-        drawable.getChosenGLCapabilities().setAlphaBits( 8 );
-
-        GL2 gl = drawable.getGL().getGL2();
-
-        logger.info( "GL_VENDOR: " + gl.glGetString( GL_VENDOR ) );
-        logger.info( "GL_RENDERER: " + gl.glGetString( GL_RENDERER ) );
-        logger.info( "GL_VERSION: " + gl.glGetString( GL_VERSION ) );
-
-        volumeObject.loadTexture( gl );
-        volumeObject.setTransferTexId( getTransferTexture( gl, Color.BLACK, Color.WHITE ) );
-
-        glu = new GLUgl2();
-        glut = new GLUT();
-
-        logger.info( "INIT GL IS: " + gl.getClass().getName() );
-        logger.info( "Chosen GLCapabilities: " + drawable.getChosenGLCapabilities() );
-
-        gl.setSwapInterval( 0 );
-
-        gl.glShadeModel( GL_SMOOTH );
-        gl.glClearColor( 0.0f, 0.0f, 0.0f, 0.0f );
-
-        // ShaderManager.init("shader");
+        try {
+            
+            drawable.setGL( ( new DebugGL2( drawable.getGL().getGL2() ) ) );
+            drawable.getChosenGLCapabilities().setAlphaBits( 8 );
+    
+            GL2 gl = drawable.getGL().getGL2();
+    
+            logger.info( "GL_VENDOR: " + gl.glGetString( GL_VENDOR ) );
+            logger.info( "GL_RENDERER: " + gl.glGetString( GL_RENDERER ) );
+            logger.info( "GL_VERSION: " + gl.glGetString( GL_VERSION ) );
+            
+            int width = getWidth();
+            int height = getHeight();
+            
+            sliceView = new SliceView( 0, 0, width, height );
+            sliceView.getLayout().add(
+                    new SliceViewport( 0, 0, width, height, ImageAxis.AXIS_X, ImagePlaneType.PLANE_SAGITTAL,
+                            volumeObject ), 1, 1 );
+            sliceView.getLayout().add(
+                    new SliceViewport( 0, 0, width, height, ImageAxis.AXIS_Y, ImagePlaneType.PLANE_AXIAL,
+                            volumeObject ), 0, 0 );
+            sliceView.getLayout().add(
+                    new SliceViewport( 0, 0, width, height, ImageAxis.AXIS_Z, ImagePlaneType.PLANE_CORONAL,
+                            volumeObject ), 1, 0 );
+            
+            sliceView.glCreate();
+            
+            sliceViewController = new SliceViewController( this );
+            this.addMouseListener( sliceViewController );
+            this.addMouseMotionListener( sliceViewController );
+            
+            ShaderManager.init("shader");
+            
+            ShaderManager.read(gl, "sliceView");
+                                    
+            ShaderManager.get("sliceView").addProgramUniform("volTex");
+            ShaderManager.get("sliceView").addProgramUniform("winTex");
+            ShaderManager.get("sliceView").addProgramUniform( "transferTex" );
+    
+            volumeObject.loadTexture( gl );
+            volumeObject.createWindowingTexture( gl );
+            volumeObject.createTransferTexture( gl );
+            
+            glu = new GLUgl2();
+            glut = new GLUT();
+    
+            logger.info( "INIT GL IS: " + gl.getClass().getName() );
+            logger.info( "Chosen GLCapabilities: " + drawable.getChosenGLCapabilities() );
+    
+            gl.setSwapInterval( 0 );
+    
+            gl.glShadeModel( GL_SMOOTH );
+            gl.glClearColor( 0.0f, 0.0f, 0.0f, 0.0f );
+            
+        } catch (Exception e) {
+            e.printStackTrace();
+            logger.error(e);
+            System.exit(0);
+        }
 
         fpsCounter = new FPSCounter();
     }
@@ -165,30 +225,8 @@ public class SliceCanvas extends GLCanvas implements GLEventListener
 
         try
         {
-            if ( sliceView == null )
-            {
-                sliceView = new SliceView( 0, 0, width, height );
-                sliceView.getLayout().add(
-                        new SliceViewport( 0, 0, width, height, ImageAxis.AXIS_X, ImagePlaneType.PLANE_SAGITTAL,
-                                volumeObject ), 1, 1 );
-                sliceView.getLayout().add(
-                        new SliceViewport( 0, 0, width, height, ImageAxis.AXIS_Y, ImagePlaneType.PLANE_AXIAL,
-                                volumeObject ), 0, 0 );
-                sliceView.getLayout().add(
-                        new SliceViewport( 0, 0, width, height, ImageAxis.AXIS_Z, ImagePlaneType.PLANE_CORONAL,
-                                volumeObject ), 1, 0 );
-
-                SliceViewController controller = new SliceViewController( this );
-
-                addMouseListener( controller );
-                addMouseMotionListener( controller );
-            }
-
-            System.out.println("first resize");
             sliceView.resize( 0, 0, width, height );
-            System.out.println("pack resize");
             sliceView.pack();
-            System.out.println("second resize");
             sliceView.resize( ( width - sliceView.getWidth() ) / 2, ( height - sliceView.getHeight() ) / 2, sliceView
                     .getWidth(), sliceView.getHeight() );
         }
@@ -202,6 +240,12 @@ public class SliceCanvas extends GLCanvas implements GLEventListener
         gl.glLoadIdentity();
 
         gl.glGetIntegerv( GL_VIEWPORT, viewport, 0 );
+    }
+
+    public void mouseExited()
+    {
+        // TODO Auto-generated method stub
+        
     }
 
 }

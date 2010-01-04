@@ -15,11 +15,12 @@ import org.dcm4che2.data.*;
 
 import com.sun.opengl.util.Animator;
 
+import de.sofd.util.*;
 import de.sofd.viskit.image.*;
 import de.sofd.viskit.image3D.jogl.model.*;
 import de.sofd.viskit.image3D.jogl.view.*;
+import de.sofd.viskit.image3D.util.Image3DUtil;
 import de.sofd.viskit.image3D.vtk.*;
-import de.sofd.viskit.model.*;
 import de.sofd.viskit.util.*;
 
 @SuppressWarnings("serial")
@@ -31,7 +32,7 @@ public class TexSliceVolumeViewer extends JFrame implements ChangeListener
     
     protected TexSliceVolumeView volumeView;
     
-    public TexSliceVolumeViewer() throws IOException
+    public TexSliceVolumeViewer() throws Exception
     {
         super("Volume Viewer");
         
@@ -40,9 +41,10 @@ public class TexSliceVolumeViewer extends JFrame implements ChangeListener
         ArrayList<DicomObject> dicomList = DicomInputOutput.readDir( "/home/oliver/dicom/series1", null );
         
         ShortBuffer dataBuf = DicomUtil.getFilledShortBuffer( dicomList );
-        ArrayList<ITransferFunction> windowing = DicomUtil.getWindowing( dicomList );
-
-        VolumeObject volumeObject = new VolumeObject( dicomList, windowing, dataBuf );
+        ShortRange range = ImageUtil.getRange( dataBuf );
+        ShortBuffer windowing = DicomUtil.getWindowing( dicomList, range );
+        
+        VolumeObject volumeObject = new VolumeObject( dicomList, windowing, dataBuf, Image3DUtil.getzStride(), range );
         
         volumeView = new TexSliceVolumeView(volumeObject); 
         

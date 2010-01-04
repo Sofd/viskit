@@ -6,8 +6,6 @@ import javax.media.opengl.*;
 
 import org.apache.log4j.*;
 
-import com.sun.opengl.util.texture.*;
-
 import de.sofd.viskit.image3D.jogl.util.*;
 
 public abstract class Slider extends TexComponent
@@ -23,24 +21,14 @@ public abstract class Slider extends TexComponent
                     int y,
                     int width,
                     int height,
-                    Texture bgTex,
-                    Texture pinTex,
                     float rangeMin,
                     float rangeMax,
                     float[] color )
     {
-        super( x, y, width, height, bgTex, color );
+        super( x, y, width, height, null, color );
 
         setRangeMin( rangeMin );
         setRangeMax( rangeMax );
-
-        if ( bgTex != null )
-        {
-            bgTex.setTexParameteri( GL_TEXTURE_WRAP_S, GL_REPEAT );
-            bgTex.setTexParameteri( GL_TEXTURE_WRAP_T, GL_REPEAT );
-            bgTex.setTexParameteri( GL_TEXTURE_MIN_FILTER, GL_LINEAR );
-            bgTex.setTexParameteri( GL_TEXTURE_MAG_FILTER, GL_LINEAR );
-        }
     }
 
     public SliderPin getPin()
@@ -60,9 +48,23 @@ public abstract class Slider extends TexComponent
 
     public abstract float getRelativeValue();
     
-    public int getValue()
+    public double getValue()
     {
-        return (int)( rangeMin + getRelativeValue() * ( rangeMax - rangeMin ) );
+        return ( rangeMin + getRelativeValue() * ( rangeMax - rangeMin ) );
+    }
+    
+    @Override
+    public void glCreate() throws Exception
+    {
+        if ( tex != null )
+        {
+            tex.setTexParameteri( GL_TEXTURE_WRAP_S, GL_REPEAT );
+            tex.setTexParameteri( GL_TEXTURE_WRAP_T, GL_REPEAT );
+            tex.setTexParameteri( GL_TEXTURE_MIN_FILTER, GL_LINEAR );
+            tex.setTexParameteri( GL_TEXTURE_MAG_FILTER, GL_LINEAR );
+        }
+        
+        pin.glCreate();
     }
     
     @Override
@@ -72,7 +74,7 @@ public abstract class Slider extends TexComponent
                         int height )
     {
         float pinValue = getRelativeValue();
-        System.out.println("relvalue : " + pinValue );
+
         super.resize( x, y, width, height );
         
         setRelativeValue( pinValue );

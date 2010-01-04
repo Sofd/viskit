@@ -65,7 +65,7 @@ public class ARBSliceViewer extends JFrame implements ChangeListener
         //"atl-rgb-24bit.dcm",
     };
     
-    public ARBSliceViewer() throws IOException
+    public ARBSliceViewer() throws Exception
     {
         super("Slice Viewer");
         setBackground( Color.BLACK );

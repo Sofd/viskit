@@ -26,10 +26,10 @@ public class TransferComponent extends SliderVertical
                                 float rangeMin,
                                 float rangeMax,
                                 int texId,
-                                Texture sliderPinTex,
+                                TextureData sliderPinTex,
                                 float relativeValue) throws IOException
     {
-        super( x, y, width, height, null, sliderPinTex, rangeMin, rangeMax, 0, new float[] { 1.0f, 1.0f, 1.0f, 1.0f } );
+        super( x, y, width, height, sliderPinTex, rangeMin, rangeMax, 0, new float[] { 1.0f, 1.0f, 1.0f, 1.0f } );
 
         setRangeMin( rangeMin );
         setRangeMax( rangeMax );
@@ -61,6 +61,14 @@ public class TransferComponent extends SliderVertical
     public int getTexId()
     {
         return this.texId;
+    }
+    
+    
+    
+    @Override
+    public synchronized void pack( int x, int y, int width, int height )
+    {
+        resize( x, y, width, height );
     }
     
     @Override

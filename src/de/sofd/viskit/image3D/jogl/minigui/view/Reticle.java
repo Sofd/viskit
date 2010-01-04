@@ -30,31 +30,11 @@ public class Reticle extends Component
     {
         super( x, y, width, height );
 
-        retTex[0] = ResourceLoader.getImageTex( "minigui.reticle.top" );
-        retTex[1] = ResourceLoader.getImageTex( "minigui.reticle.right" );
-        retTex[2] = ResourceLoader.getImageTex( "minigui.reticle.bottom" );
-        retTex[3] = ResourceLoader.getImageTex( "minigui.reticle.left" );
-
-        for ( int i = 0; i < retTex.length; ++i )
-        {
-            retTex[i].setTexParameteri( GL_TEXTURE_MIN_FILTER, GL_NEAREST );
-            retTex[i].setTexParameteri( GL_TEXTURE_MAG_FILTER, GL_NEAREST );
-        }
-
-        retTex[0].setTexParameteri( GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE );
-        retTex[0].setTexParameteri( GL_TEXTURE_WRAP_T, GL_REPEAT );
-        retTex[1].setTexParameteri( GL_TEXTURE_WRAP_S, GL_REPEAT );
-        retTex[1].setTexParameteri( GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE );
-        retTex[2].setTexParameteri( GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE );
-        retTex[2].setTexParameteri( GL_TEXTURE_WRAP_T, GL_REPEAT );
-        retTex[3].setTexParameteri( GL_TEXTURE_WRAP_S, GL_REPEAT );
-        retTex[3].setTexParameteri( GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE );
-
-        cross = new ReticleCross( ResourceLoader.getImageTex( "minigui.reticle.center" ), color, posX, posY );
+        cross = new ReticleCross( color, posX, posY );
 
         setMoveBounds( moveBounds );
     }
-
+    
     public ReticleCross getCross()
     {
         return cross;
@@ -86,20 +66,33 @@ public class Reticle extends Component
         float ry = ( getPosY() - moveBounds.getY() ) * 1.0f / moveBounds.getHeight();
         return ry;
     }
-    
-    public void resize( int x,
-                        int y,
-                        int width,
-                        int height,
-                        float rx,
-                        float ry)
-    {
-        super.resize( x, y, width, height );
-        setRelativePosX( rx );
-        setRelativePosY( ry );
-        
-    }
 
+    @Override
+    public void glCreate() throws Exception
+    {
+        retTex[0] = ResourceLoader.getImageTex( "minigui.reticle.top" );
+        retTex[1] = ResourceLoader.getImageTex( "minigui.reticle.right" );
+        retTex[2] = ResourceLoader.getImageTex( "minigui.reticle.bottom" );
+        retTex[3] = ResourceLoader.getImageTex( "minigui.reticle.left" );
+
+        for ( int i = 0; i < retTex.length; ++i )
+        {
+            retTex[i].setTexParameteri( GL_TEXTURE_MIN_FILTER, GL_NEAREST );
+            retTex[i].setTexParameteri( GL_TEXTURE_MAG_FILTER, GL_NEAREST );
+        }
+
+        retTex[0].setTexParameteri( GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE );
+        retTex[0].setTexParameteri( GL_TEXTURE_WRAP_T, GL_REPEAT );
+        retTex[1].setTexParameteri( GL_TEXTURE_WRAP_S, GL_REPEAT );
+        retTex[1].setTexParameteri( GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE );
+        retTex[2].setTexParameteri( GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE );
+        retTex[2].setTexParameteri( GL_TEXTURE_WRAP_T, GL_REPEAT );
+        retTex[3].setTexParameteri( GL_TEXTURE_WRAP_S, GL_REPEAT );
+        retTex[3].setTexParameteri( GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE );
+        
+        cross.glCreate();
+    }
+    
     public void setColor(    float r,
                             float g,
                             float b,

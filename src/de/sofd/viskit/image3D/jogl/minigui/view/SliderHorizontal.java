@@ -7,10 +7,10 @@ import de.sofd.util.*;
 public class SliderHorizontal extends Slider
 {
 
-    public SliderHorizontal( int x, int y, int width, int height, Texture bgTex, Texture pinTex, float rangeMin,
+    public SliderHorizontal( int x, int y, int width, int height, TextureData pinTex, float rangeMin,
             float rangeMax, float value, float[] color )
     {
-        super( x, y, width, height, bgTex, pinTex, rangeMin, rangeMax, color );
+        super( x, y, width, height, rangeMin, rangeMax, color );
 
         int pinY = y + ( height - pinTex.getHeight() );
         pin = new SliderPin( 0, pinY, pinTex, color, new Bounds( x, pinY, x + width - pinTex.getWidth(), pinY ) );
@@ -37,7 +37,7 @@ public class SliderHorizontal extends Slider
     {
         return ( width * 1.0f / getTex().getImageWidth() );
     }
-
+    
     @Override
     public void resize( int x,
                         int y,

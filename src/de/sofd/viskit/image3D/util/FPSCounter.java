@@ -30,7 +30,7 @@ public class FPSCounter
 
     public int getFps()
     {
-        if ( timeQ.isEmpty() || timeQ.getFirst() == timeQ.getLast() ) return 100;
+        if ( timeQ.isEmpty() || timeQ.getFirst() == timeQ.getLast() ) return 0;
         return (int)( timeQ.size() * ( 1000.0f / ( timeQ.getLast() - timeQ.getFirst() ) ) );
     }
    

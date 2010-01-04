@@ -53,4 +53,28 @@ public class ResourceLoader
         
         return tex;
     }
+    
+    public static Texture getImageTex( TextureData data, String id ) throws IOException {
+        Texture tex = texMap.get(id);
+        
+        if ( tex == null )
+        {
+            tex = TextureIO.newTexture( data );
+            texMap.put( id, tex );
+        }
+        
+        return tex;
+    }
+    
+    public static TextureData getImageTexData( String id ) throws IOException {
+        String imagePath = getImagePath() + getProperties().getProperty( id );
+        URL url = ClassLoader.getSystemResource( imagePath );
+        TextureData tex = TextureIO.newTextureData( url.openStream(), false, null );
+        logger.debug(imagePath + " loaded.");
+        logger.debug("imageWidth : " + tex.getWidth() + ", imageHeight : " + tex.getHeight() );
+        
+        return tex;
+    }
+    
+    
 }

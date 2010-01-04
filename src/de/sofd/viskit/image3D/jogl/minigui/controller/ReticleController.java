@@ -15,8 +15,6 @@ public class ReticleController
 
     protected Component awtParent;
 
-    protected Robot robot;
-
     public ReticleController( Reticle reticle, Component awtParent )
     {
 

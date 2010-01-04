@@ -11,7 +11,6 @@ import javax.imageio.ImageIO;
 import javax.imageio.ImageReader;
 import javax.imageio.stream.ImageInputStream;
 import org.dcm4che2.data.DicomObject;
-import org.dcm4che2.imageio.plugins.dcm.DicomStreamMetaData;
 import org.dcm4che2.io.DicomInputStream;
 
 /**
@@ -154,39 +153,6 @@ public class FileBasedDicomImageListViewModelElement extends CachingDicomImageLi
             }
         } catch (IOException e) {
             throw new IllegalStateException("error trying to extract image from DICOM object", e);
-        }
-    }
-
-    @Override
-    public DicomObject getDicomImageMetaData() {
-        checkInitialized();
-        if (isDicomObjectCached()) {
-            // the backend DicomObject is already cached -- just return it as the metadata
-            return super.getDicomImageMetaData();
-        } else {
-            // the backend DicomObject isn't cached yet -- read the metadata (and only the metadata) directly from the backend file,
-            // in the hope that that will be faster than reading & caching the whole backend DicomObject (which would include the pixel data)
-            // TODO: consider caching these metadata DicomObjects separately
-            Iterator it = ImageIO.getImageReadersByFormatName("RAWDICOM");
-            if (!it.hasNext()) {
-                throw new IllegalStateException("The DICOM image I/O filter (from dcm4che1) must be available to read images.");
-            }
-            ImageReader reader = (ImageReader) it.next();
-
-            try {
-                ImageInputStream in = ImageIO.createImageInputStream(url.openStream());
-                if (null == in) {
-                    throw new IllegalStateException("The DICOM image I/O filter (from dcm4che1) must be available to read images.");
-                }
-                try {
-                    reader.setInput(in);
-                    return ((DicomStreamMetaData) reader.getStreamMetadata()).getDicomObject();
-                } finally {
-                    in.close();
-                }
-            } catch (IOException e) {
-                throw new IllegalStateException("error trying to extract image from DICOM object", e);
-            }
         }
     }
 

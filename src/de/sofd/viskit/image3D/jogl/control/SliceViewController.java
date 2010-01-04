@@ -5,12 +5,17 @@ import java.util.*;
 
 import de.sofd.viskit.image3D.jogl.minigui.view.*;
 import de.sofd.viskit.image3D.jogl.view.*;
+import de.sofd.viskit.image3D.view.*;
 
 public class SliceViewController implements MouseListener, MouseMotionListener
 {
     protected SliceCanvas sliceCanvas;
 
     protected ArrayList<OrthoViewportController> orthoViewportControllerList = new ArrayList<OrthoViewportController>();
+    
+    protected TransferFrame transferFrame;
+    
+    protected GPUVolumeView volumeView;
 
     public SliceViewController( SliceCanvas sliceCanvas )
     {
@@ -45,6 +50,11 @@ public class SliceViewController implements MouseListener, MouseMotionListener
             sliceCanvas.getSliceView().getLayout().checkMaximized();
             sliceCanvas.getSliceView().resizeLayout();
         }
+        
+        sliceCanvas.display();
+        
+        if ( transferFrame != null )
+            transferFrame.updateValues();
     }
 
     @Override
@@ -67,9 +77,6 @@ public class SliceViewController implements MouseListener, MouseMotionListener
                 orthoViewportController.mouseDragged( e.getButton(), e.getX(), sliceCanvas.getViewportHeight() - e.getY() );
         }
 
-//        int pos[] = sliceView.getVolumeObject().getSliceCursor();
-//        System.out.println( "x : " + pos[0] + ", y : " + pos[1] + ", z : " + pos[2] );
-
         for ( OrthoViewportController orthoViewportController : orthoViewportControllerList )
         {
             if ( ! orthoViewportController.getOrthoViewport().isVisible() ) continue;
@@ -79,20 +86,25 @@ public class SliceViewController implements MouseListener, MouseMotionListener
                 ( (SliceViewportController)orthoViewportController ).updateComponents();
             }
         }
+        
+        sliceCanvas.display();
+        
+        if ( volumeView != null )
+            volumeView.display();
     }
 
     @Override
     public void mouseEntered( MouseEvent arg0 )
     {
-        // TODO Auto-generated method stub
+        sliceCanvas.requestFocus();
+        //sliceCanvas.getAnimator().start();
 
     }
 
     @Override
-    public void mouseExited( MouseEvent arg0 )
+    public void mouseExited( MouseEvent e )
     {
-        // TODO Auto-generated method stub
-
+        
     }
 
     @Override
@@ -109,6 +121,8 @@ public class SliceViewController implements MouseListener, MouseMotionListener
                 ( (SliceViewportController)orthoViewportController ).updateComponents();
             }
         }
+        
+        sliceCanvas.display();
     }
 
     @Override
@@ -117,6 +131,8 @@ public class SliceViewController implements MouseListener, MouseMotionListener
         for ( OrthoViewportController orthoViewportController : orthoViewportControllerList )
             if ( orthoViewportController.getOrthoViewport().isVisible() )
                 orthoViewportController.mousePressed( e.getButton(), e.getX(), sliceCanvas.getViewportHeight() - e.getY() );
+        
+        sliceCanvas.display();
     }
 
     @Override
@@ -125,6 +141,19 @@ public class SliceViewController implements MouseListener, MouseMotionListener
         for ( OrthoViewportController orthoViewportController : orthoViewportControllerList )
             if ( orthoViewportController.getOrthoViewport().isVisible() )
                 orthoViewportController.mouseReleased( e.getButton(), e.getX(), sliceCanvas.getViewportHeight() - e.getY() );
+        
+        if ( transferFrame != null )
+            transferFrame.updateValues();
+    }
+
+    public void setTransferFrame( TransferFrame transferFrame )
+    {
+        this.transferFrame = transferFrame;
+    }
+
+    public void setVolumeView( GPUVolumeView volumeView )
+    {
+        this.volumeView = volumeView;
     }
 
 }

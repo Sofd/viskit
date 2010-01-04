@@ -2,51 +2,66 @@ package de.sofd.viskit.model;
 
 public class Windowing implements ITransferFunction
 {
-    protected float windowCenter;
-    protected float windowWidth;
+    protected short windowCenter;
+    protected short windowWidth;
 
-    public Windowing( float windowCenter, float windowWidth )
+    public Windowing( short windowCenter, short windowWidth )
     {
         super();
-        
+
         this.windowCenter = windowCenter;
         this.windowWidth = windowWidth;
     }
 
-    public float getWindowCenter()
+    public short getWindowCenter()
     {
         return windowCenter;
     }
 
-    public float getWindowWidth()
+    public short getWindowWidth()
     {
         return windowWidth;
     }
 
-    public void setWindowCenter( float windowCenter )
+    public void setWindowCenter( short windowCenter )
     {
         this.windowCenter = windowCenter;
     }
 
-    public void setWindowWidth( float windowWidth )
+    public void setWindowWidth( short windowWidth )
     {
         this.windowWidth = windowWidth;
     }
 
     @Override
-    public short getX(float y) {
-        return (short)(y * windowWidth + windowCenter - windowWidth / 2);
+    public short getX( float y )
+    {
+        return (short)( y * windowWidth + windowCenter - windowWidth / 2 );
     }
 
     @Override
-    public float getY(short x) {
-        if ( x < windowCenter - windowWidth / 2 )
+    public float getY( short x )
+    {
+        return getY( x, windowCenter, windowWidth );
+    }
+
+    public static float getY(    short x,
+                                short windowCenter,
+                                short windowWidth )
+    {
+        if ( x < windowCenter - windowWidth / 2.0f )
             return 0;
 
-        if ( x > windowCenter + windowWidth / 2 )
+        if ( x > windowCenter + windowWidth / 2.0f )
             return 1;
 
-        return ( x - windowCenter + windowWidth / 2 ) / ( windowWidth );
+        return ( x - windowCenter + windowWidth / 2.0f ) / ( windowWidth );
+    }
+
+    @Override
+    public String toString()
+    {
+        return "windowWidth : " + windowWidth + ", windowCenter : " + windowCenter;
     }
 
 }

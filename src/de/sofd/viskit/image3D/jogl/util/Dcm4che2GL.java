@@ -19,6 +19,8 @@ public class Dcm4che2GL
 {
     public static int[] get2DTexturStack(GL2 gl, GLU glu, Collection<DicomObject> dicomList) throws Exception {
         
+        gl.glEnable( GL_TEXTURE_2D );
+        
         int colors = 1;
         
         if ( colors != 1 && colors != 3 )
@@ -68,6 +70,8 @@ public class Dcm4che2GL
             
             z++;
         }
+        
+        gl.glDisable( GL_TEXTURE_2D );
         
         return texIds;
     }

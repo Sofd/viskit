@@ -65,6 +65,8 @@ public class Vtk2GL
             }
             dataBuf.rewind();
 
+            gl.glEnable( GL_TEXTURE_2D );
+            
             gl.glPixelStorei( GL_UNPACK_ALIGNMENT, 1 );
 
             int[] texid = new int[ 1 ];
@@ -91,6 +93,8 @@ public class Vtk2GL
             gl.glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
             gl.glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
             gl.glTexEnvf( GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE );
+            
+            gl.glDisable( GL_TEXTURE_2D );
         }
 
         return texIds;

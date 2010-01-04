@@ -1,12 +1,10 @@
 package de.sofd.viskit.image3D.jogl.view;
 
 import static de.sofd.viskit.image3D.jogl.util.GLUtil.*;
-import static de.sofd.viskit.image3D.jogl.util.Vtk2GL.*;
 import static javax.media.opengl.GL.*;
 import static javax.media.opengl.GL2.*;
 
 import java.awt.*;
-import java.nio.*;
 import java.util.*;
 
 import javax.media.opengl.*;
@@ -21,12 +19,10 @@ import vtk.*;
 import com.sun.opengl.util.*;
 import com.sun.opengl.util.gl2.*;
 
+import de.sofd.util.*;
 import de.sofd.viskit.image3D.jogl.model.*;
 import de.sofd.viskit.image3D.jogl.util.*;
 import de.sofd.viskit.image3D.util.*;
-import de.sofd.viskit.model.*;
-import de.sofd.viskit.util.*;
-
 
 @SuppressWarnings("serial")
 public class ARBSliceView extends GLJPanel implements GLEventListener
@@ -119,7 +115,7 @@ public class ARBSliceView extends GLJPanel implements GLEventListener
         gl.glEnable(GL_BLEND);
         gl.glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
         gl.glBindTexture(GL_TEXTURE_2D, texStack[currentSlice-1]);
-        texQuad2DCentered(gl, (float)(volumeObject.getSizeX()/volumeObject.getSizeMax())*2.0f, (float)(volumeObject.getSizeY()/volumeObject.getSizeMax())*2.0f);
+        texQuad2DCentered(gl, (float)(volumeObject.getSizeX()/volumeObject.getSizeRange().getMax())*2.0f, (float)(volumeObject.getSizeY()/volumeObject.getSizeRange().getMax())*2.0f);
         ShaderManager.unbindARB(shaderToUse);
         
         //show fps
@@ -175,7 +171,7 @@ public class ARBSliceView extends GLJPanel implements GLEventListener
         }
         
         try {
-            volumeObject = new VolumeObject( dicomList, null, null );
+            volumeObject = new VolumeObject( dicomList, null, null, Image3DUtil.getzStride(), new ShortRange((short)1000, (short)2000) );
             
             texStack = get2DTexturStack(gl, glu, dicomList, volumeObject);
         } catch (Exception e) {

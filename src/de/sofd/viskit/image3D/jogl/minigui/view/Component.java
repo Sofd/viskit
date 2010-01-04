@@ -62,6 +62,16 @@ public class Component
         return new Size( prefWidth, prefHeight );
     }
 
+    public float getRelativeX( int x )
+    {
+        return ( ( x - this.x ) * 1.0f / width );
+    }
+
+    public float getRelativeY( int y )
+    {
+        return ( ( y - this.y ) * 1.0f / height );
+    }
+
     public int getWidth()
     {
         return width;
@@ -75,6 +85,11 @@ public class Component
     public int getY()
     {
         return y;
+    }
+
+    public void glCreate() throws Exception
+    {
+
     }
 
     public boolean isInBounds(    int x,
@@ -111,6 +126,20 @@ public class Component
             this.width = size.getWidth();
             this.height = size.getHeight();
             layout.pack( x, y, width, height );
+        }
+    }
+
+    public synchronized void pack(    int x,
+                                    int y,
+                                    int width,
+                                    int height )
+    {
+        if ( layout == null )
+            this.resize( x, y, width, height );
+        else
+        {
+            setSize( x, y, width, height );
+            pack();
         }
     }
 

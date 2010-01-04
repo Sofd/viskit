@@ -9,7 +9,7 @@ public class SliceViewportController extends OrthoViewportController
 
     protected DragController sliderPinController;
 
-    protected TransferComponentController transferComponentController;
+    //protected TransferComponentController transferComponentController;
 
     public SliceViewportController( SliceViewport sliceViewport, java.awt.Component awtParent )
     {
@@ -19,7 +19,7 @@ public class SliceViewportController extends OrthoViewportController
 
         sliderPinController = new SliderController( sliceViewport.getSlider() );
 
-        transferComponentController = new TransferComponentController( sliceViewport.getTransferComp() );
+        //transferComponentController = new TransferComponentController( sliceViewport.getTransferComp() );
     }
 
     protected SliceViewport getSliceViewport()
@@ -54,15 +54,14 @@ public class SliceViewportController extends OrthoViewportController
                                 int mX,
                                 int mY )
     {
-        if ( orthoViewport.isInBounds( mX, mY ) )
-        {
-            int mouseX = orthoViewport.getRelativeMouseX( mX );
-            int mouseY = orthoViewport.getRelativeMouseY( mY );
+        int mouseX = orthoViewport.getRelativeMouseX( mX );
+        int mouseY = orthoViewport.getRelativeMouseY( mY );
 
-            sliderPinController.dragged( button, mouseX, mouseY );
+        sliderPinController.dragged( button, mouseX, mouseY );
+        slicePlaneController.mouseDragged( button, mouseX, mouseY );
+        
+        getSliceViewport().getPlane().setCurrentSlice( getSliceViewport().getSlider().getValue() - 1 );
 
-            getSliceViewport().getPlane().setCurrentSlice( getSliceViewport().getSlider().getValue() - 1 );
-        }
     }
 
     @Override
@@ -89,6 +88,8 @@ public class SliceViewportController extends OrthoViewportController
             int mouseY = orthoViewport.getRelativeMouseY( mY );
 
             sliderPinController.pressed( button, mouseX, mouseY );
+            
+            slicePlaneController.mousePressed( button, mouseX, mouseY );
         }
     }
 
@@ -97,21 +98,21 @@ public class SliceViewportController extends OrthoViewportController
                                 int mX,
                                 int mY )
     {
-        if ( orthoViewport.isInBounds( mX, mY ) )
-        {
-            sliderPinController.released( button );
-        }
-
+        sliderPinController.released( button );
+        
+        slicePlaneController.mouseReleased( button, mX, mY );
     }
 
     public synchronized void updateComponents()
     {
         slicePlaneController.updateComponents();
-
-        getSliceViewport().getSlider().setValue( getSliceViewport().getPlane().getCurrentSlice() + 1 );
-
-        transferComponentController.getTransferComponent().setRelativeValue(
-                getSliceViewport().getVolumeObject().getRelativeCursorValue() );
+        
+        getSliceViewport().updateSlider();
+        //getSliceViewport().updateTransferComponent();
+        
+        
     }
+
+    
 
 }

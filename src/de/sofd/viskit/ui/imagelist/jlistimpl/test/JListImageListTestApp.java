@@ -60,13 +60,11 @@ public class JListImageListTestApp {
     public JListImageListTestApp() throws Exception {
         final DefaultListModel model = new DefaultListModel();
         //final DefaultListModel model = getViewerListModelForDirectory(new File("/home/olaf/gi/resources/DICOM-Testbilder/1578"));
-        //final DefaultListModel model = getViewerListModelForDirectory(new File("/shares/projects/DICOM-Testbilder/1578"));
         //final DefaultListModel model = getViewerListModelForDirectory(new File("/shares/shared/projekts/disk312043/Images/cd822__center4001"));
         //final DefaultListModel model = getViewerListModelForDirectory(new File("/shares/shared/projekts/disk312043/Images/cd836__center4001"));
-        for (int i = 10; i < 30; i++) {
+        for (int i = 0; i < 20; i++) {
             model.addElement(new TestImageModelElement(i));
-            //model.addElement(new FileBasedDicomImageListViewModelElement("/home/olaf/gi/resources/DICOM-Testbilder/1578/f0003563_006"+i+".dcm"));
-            //model.addElement(new FileBasedDicomImageListViewModelElement("/shares/projects/DICOM-Testbilder/1578/f0003563_006"+i+".dcm"));
+            //model.addElement(new FileBasedDicomImageListViewModelElement("/home/olaf/gi/resources/DICOM-Testbilder/1578/f0003563_00623.dcm"));
             //model.addElement(new FileBasedDicomImageListViewModelElement("/home/olaf/gi/resources/DICOM-Testbilder/24-bit Uncompressed Color.dcm"));
         }
 
@@ -84,7 +82,7 @@ public class JListImageListTestApp {
 
         //final JImageListView viewer = new JListImageListView();
         final JImageListView viewer = new JGridImageListView(); viewer.setScaleMode(JGridImageListView.MyScaleMode.newCellGridMode(2, 2));
-        ((JGridImageListView)viewer).setRendererType(JGridImageListView.RendererType.OPENGL);
+        ((JGridImageListView)viewer).setRendererType(JGridImageListView.RendererType.JAVA2D);
         viewer.addImageListViewListener(new ImageListViewListener() {
             @Override
             public void onImageListViewEvent(ImageListViewEvent e) {

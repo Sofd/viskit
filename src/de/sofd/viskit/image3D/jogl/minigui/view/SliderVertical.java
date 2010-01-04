@@ -7,10 +7,10 @@ import de.sofd.util.*;
 public class SliderVertical extends Slider
 {
 
-    public SliderVertical( int x, int y, int width, int height, Texture bgTex, Texture pinTex, float rangeMin,
+    public SliderVertical( int x, int y, int width, int height, TextureData pinTex, float rangeMin,
             float rangeMax, float value, float[] color )
     {
-        super( x, y, width, height, bgTex, pinTex, rangeMin, rangeMax, color );
+        super( x, y, width, height, rangeMin, rangeMax, color );
 
         int pinX = x + ( width - pinTex.getWidth() );
         pin = new SliderPin( pinX, y, pinTex, color, new Bounds( pinX, y, pinX, y + height - pinTex.getHeight() ) );
@@ -21,7 +21,6 @@ public class SliderVertical extends Slider
     @Override
     public float getRelativeValue()
     {
-        System.out.println(" " + pin.getY() + " " + getY() + " " + getHeight() + " " + pin.getHeight() );
         return ( pin.getY() - getY() ) * 1.0f / ( getHeight() - pin.getHeight() );
     }
 
@@ -36,7 +35,7 @@ public class SliderVertical extends Slider
     {
         return 1.0f;
     }
-
+    
     @Override
     public void resize( int x,
                         int y,

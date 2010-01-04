@@ -2,7 +2,7 @@ package de.sofd.viskit.image3D.jogl.minigui.view;
 
 import static javax.media.opengl.GL.*;
 
-import com.sun.opengl.util.texture.*;
+import de.sofd.viskit.image3D.jogl.minigui.util.*;
 
 public class ReticleCross extends TexComponent
 {
@@ -10,25 +10,21 @@ public class ReticleCross extends TexComponent
     protected int posX;
     protected int posY;
 
-    public ReticleCross( Texture tex, float[] color, int posX, int posY )
+    public ReticleCross( float[] color, int posX, int posY )
     {
-        super(    posX - tex.getImageWidth() / 2,
-                posY - tex.getImageHeight() / 2,
-                tex.getImageWidth(),
-                tex.getImageHeight(),
-                tex,
+        super(    posX - 4,
+                posY - 4,
+                9,
+                9,
+                null,
                 color );
-        setTex( tex );
         setPosX( posX );
         setPosY( posY );
         setColor( color );
 
-        tex.setTexParameteri( GL_TEXTURE_MIN_FILTER, GL_NEAREST );
-        tex.setTexParameteri( GL_TEXTURE_MAG_FILTER, GL_NEAREST );
-        tex.setTexParameteri( GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE );
-        tex.setTexParameteri( GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE );
+        
     }
-
+    
     public int getPosX()
     {
         return posX;
@@ -37,6 +33,19 @@ public class ReticleCross extends TexComponent
     public int getPosY()
     {
         return posY;
+    }
+
+    @Override
+    public void glCreate() throws Exception
+    {
+        this.tex = ResourceLoader.getImageTex( "minigui.reticle.center" );
+        
+        this.setSize( posX - tex.getImageWidth() / 2, posY - tex.getImageHeight() / 2, tex.getImageWidth(), tex.getImageHeight() );
+        
+        this.tex.setTexParameteri( GL_TEXTURE_MIN_FILTER, GL_NEAREST );
+        this.tex.setTexParameteri( GL_TEXTURE_MAG_FILTER, GL_NEAREST );
+        this.tex.setTexParameteri( GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE );
+        this.tex.setTexParameteri( GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE );
     }
 
     public void setPosX( int posX )

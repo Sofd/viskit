@@ -17,32 +17,35 @@ public abstract class SlicePlane extends Component
 
     protected ImageAxis axis;
 
+    protected CutterPlane cutter;
+    
     protected Reticle reticle;
 
     protected Component texBounds;
+
     protected ImagePlaneType type;
 
     protected VolumeObject volumeObject;
-
+    
     public SlicePlane( int x, int y, int width, int height, ImageAxis axis, ImagePlaneType type,
-            VolumeObject volumeObject ) throws IOException
+            VolumeObject volumeObject, CutterPlane cutter ) throws IOException
     {
         super( x, y, width, height );
 
         setType( type );
         setVolumeObject( volumeObject );
         setAxis( axis );
-        setTexBounds( texBounds );
+        
         setPreferredAspectRatio( 1.0f );
+        setCutter( cutter );
         
         texBounds = new Component( x + ( width - getTexWidth() ) / 2, y + ( height - getTexHeight() ) / 2,
                 getTexWidth(), getTexHeight() );
 
         reticle = new Reticle( x, y, width, height, x + width / 2, y + height / 2, texBounds );
-        reticle.setColor( 0.2f, 0.2f, 0.2f, 0.2f );
-
+        reticle.setColor( 1.0f, 1.0f, 1.0f, 1.0f );
         
-
+        cutter.resize( texBounds.getX(), texBounds.getY(), texBounds.getWidth(), texBounds.getHeight() );
     }
 
     public ImageAxis getAxis()
@@ -50,7 +53,12 @@ public abstract class SlicePlane extends Component
         return axis;
     }
 
-    public abstract int getCurrentSlice();
+    public abstract double getCurrentSlice();
+    
+    public CutterPlane getCutter()
+    {
+        return cutter;
+    }
 
     public abstract int getHorizontalMaxSlices();
 
@@ -61,13 +69,13 @@ public abstract class SlicePlane extends Component
         return reticle;
     }
 
-    public abstract int getSliceHorizontalFromCursor();
+    public abstract double getSliceHorizontalFromCursor();
 
-    public abstract int getSliceHorizontalFromReticle();
+    public abstract double getSliceHorizontalFromReticle();
 
-    public abstract int getSliceVerticalFromCursor();
+    public abstract double getSliceVerticalFromCursor();
 
-    public abstract int getSliceVerticalFromReticle();
+    public abstract double getSliceVerticalFromReticle();
 
     public Component getTexBounds()
     {
@@ -91,6 +99,13 @@ public abstract class SlicePlane extends Component
     }
 
     @Override
+    public void glCreate() throws Exception
+    {
+        reticle.glCreate();
+        cutter.glCreate();
+    }
+
+    @Override
     public void resize( int x,
                         int y,
                         int width,
@@ -98,23 +113,28 @@ public abstract class SlicePlane extends Component
     {
         super.resize( x, y, width, height );
         
-        float rx = reticle.getRelativeXPosition();
-        float ry = reticle.getRelativeYPosition();
-        
         texBounds.resize( x + ( width - getTexWidth() ) / 2, y + ( height - getTexHeight() ) / 2, getTexWidth(),
                 getTexHeight() );
         
-        reticle.resize( x, y, width, height, rx, ry );
+        reticle.resize( x, y, width, height );
         
+        cutter.resize( texBounds.getX(), texBounds.getY(), texBounds.getWidth(), texBounds.getHeight() );
+        
+        updateReticle();
         
     }
-
+    
     protected void setAxis( ImageAxis axis )
     {
         this.axis = axis;
     }
 
-    public abstract void setCurrentSlice( int currentSlice );
+    public abstract void setCurrentSlice( double currentSlice );
+
+    public void setCutter( CutterPlane cutter )
+    {
+        this.cutter = cutter;
+    }
 
     protected void setTexBounds( Component texBounds )
     {
@@ -135,6 +155,7 @@ public abstract class SlicePlane extends Component
     {
         showTexPlane( gl );
         reticle.show( gl );
+        cutter.show( gl );
     }
 
     protected void showTexPlane( GL2 gl )
@@ -144,23 +165,38 @@ public abstract class SlicePlane extends Component
 
         transformTex( gl );
 
-        float tz = getCurrentSlice() * 1.0f / ( getMaxSlices() - 1 );
+        float tz = (float)getCurrentSlice() * 1.0f / ( getMaxSlices() - 1 );
 
         gl.glMatrixMode( GL_MODELVIEW );
         gl.glLoadIdentity();
+        
+        ShaderManager.bind("sliceView");
 
-        gl.glEnable( GL_TEXTURE_3D );
+        gl.glActiveTexture(GL_TEXTURE2);
         gl.glBindTexture( GL_TEXTURE_3D, volumeObject.getTexId() );
-
+        ShaderManager.get("sliceView").bindUniform("volTex", 2);
+        
+        gl.glActiveTexture(GL_TEXTURE1);
+        volumeObject.bindWindowingTexture( gl );
+        ShaderManager.get("sliceView").bindUniform("winTex", 1);
+        
+        gl.glActiveTexture( GL_TEXTURE3 );
+        volumeObject.bindTransferTexture( gl );
+        ShaderManager.get( "sliceView" ).bindUniform( "transferTex",3 );
+        
         gl.glEnable( GL_BLEND );
         gl.glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA );
 
         gl.glColor4f( 1.0f, 1.0f, 1.0f, 1.0f );
         GLUtil.texQuad3DCentered( gl, texBounds.getX(), texBounds.getY(), texBounds.getWidth(), texBounds.getHeight(),
                 1, 1, tz );
+        
+        ShaderManager.unbind("sliceView");
+        
+        gl.glActiveTexture(GL_TEXTURE0);
+        
         gl.glDisable( GL_BLEND );
-        gl.glDisable( GL_TEXTURE_3D );
-
+                
         gl.glMatrixMode( GL_TEXTURE );
         gl.glPopMatrix();
 
@@ -174,5 +210,7 @@ public abstract class SlicePlane extends Component
     public abstract void updateReticle();
 
     public abstract void updateSliceCursor();
+
+    
 
 }

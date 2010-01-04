@@ -73,13 +73,21 @@ public class DicomInputOutput {
         return null;
     }
     
-    public static ArrayList<DicomObject> readDir( String dirPath, String seriesInstanceUID ) throws IOException
+    public static ArrayList<DicomObject> readDir( String dirPath, String seriesInstanceUID ) throws Exception
     {
-        return readDir( dirPath, seriesInstanceUID, 0, Integer.MAX_VALUE );
+        return readDir( dirPath, seriesInstanceUID, 1 );
     }
     
-    public static ArrayList<DicomObject> readDir( String dirPath, String seriesInstanceUID, int firstSlice, int nrOfSlices ) throws IOException
+    public static ArrayList<DicomObject> readDir( String dirPath, String seriesInstanceUID, int stride ) throws Exception
     {
+        return readDir( dirPath, seriesInstanceUID, 0, Integer.MAX_VALUE, stride );
+    }
+    
+    public static ArrayList<DicomObject> readDir( String dirPath, String seriesInstanceUID, int firstSlice, int nrOfSlices, int stride ) throws Exception
+    {
+        if ( stride <= 0 )
+            throw new Exception("stride have to be a positive number!");
+        
         TreeMap<Integer, DicomObject> dicomSeries
             = new TreeMap<Integer, DicomObject>();
         
@@ -103,7 +111,9 @@ public class DicomInputOutput {
             dis.close();
             dis = null;
             
-            if ( imageNr < firstSlice || imageNr >= firstSlice + nrOfSlices ) continue;
+            System.out.println("file " + file.getAbsolutePath());
+            
+            if ( imageNr < firstSlice || imageNr >= firstSlice + nrOfSlices || ( imageNr - 1 ) % stride != 0 ) continue;
                         
             if ( seriesInstanceUID == null || seriesInstanceUID.equals( headerUID ) )
             {

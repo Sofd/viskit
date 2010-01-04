@@ -1,189 +1,224 @@
 package de.sofd.viskit.test.image3D.jogl;
 
 import java.awt.*;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
+import java.awt.event.*;
 import java.io.*;
 import java.nio.*;
 import java.util.*;
 
+import javax.media.opengl.*;
 import javax.swing.*;
-import javax.swing.event.*;
 
 import org.apache.log4j.*;
 import org.dcm4che2.data.*;
 
-import vtk.*;
-
-import com.sun.opengl.util.Animator;
-
+import de.sofd.util.*;
 import de.sofd.viskit.image.*;
+import de.sofd.viskit.image3D.control.*;
+import de.sofd.viskit.image3D.filter.*;
+import de.sofd.viskit.image3D.jogl.control.*;
 import de.sofd.viskit.image3D.jogl.model.*;
 import de.sofd.viskit.image3D.jogl.view.*;
-import de.sofd.viskit.image3D.vtk.*;
-import de.sofd.viskit.image3D.vtk.util.*;
-import de.sofd.viskit.model.*;
+import de.sofd.viskit.image3D.util.Image3DUtil;
+import de.sofd.viskit.image3D.view.*;
 import de.sofd.viskit.util.*;
 
-@SuppressWarnings("serial")
-public class GPUVolumeViewer extends JFrame implements ChangeListener 
+@SuppressWarnings( "serial" )
+public class GPUVolumeViewer extends JFrame implements MouseListener
 {
-    static final Logger logger = Logger.getLogger(GPUVolumeViewer.class);
-    
-    protected static Animator animator;
-    
-    protected GPUVolumeView volumeView;
-    
-    public GPUVolumeViewer() throws IOException
+    protected static int height = 500;
+
+    static final Logger logger = Logger.getLogger( GPUVolumeViewer.class );
+
+    protected static int width = 700;
+
+    public static int getWinHeight()
     {
-        super("Volume Viewer");
-        
+        return height;
+    }
+
+    public static int getWinWidth()
+    {
+        return width;
+    }
+
+    public static void main( String args[] )
+    {
+        JFrame.setDefaultLookAndFeelDecorated( true );
+        JDialog.setDefaultLookAndFeelDecorated( true );
+
+        SwingUtilities.invokeLater( new Runnable()
+        {
+            public void run()
+            {
+                try
+                {
+                    UIManager.setLookAndFeel( UIManager.getSystemLookAndFeelClassName() );
+
+                }
+                catch ( Exception e )
+                {
+                    e.printStackTrace();
+                }
+            }
+        } );
+
+        SwingUtilities.invokeLater( new Runnable()
+        {
+            public void run()
+            {
+                try
+                {
+                    
+                    
+                    Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
+                    int xSpace = (int)( screenSize.getWidth() - SliceViewer.getWinWidth() - GPUVolumeViewer
+                            .getWinWidth() );
+
+                    int x1 = xSpace / 3;
+                    int y1 = (int)( screenSize.getHeight() - SliceViewer.getWinHeight() ) / 2;
+                    int x2 = x1 + SliceViewer.getWinWidth() + xSpace / 3;
+                    int y2 = (int)( screenSize.getHeight() - GPUVolumeViewer.getWinHeight() ) / 2;
+
+                    final SliceViewer sliceViewer = new SliceViewer();
+                    sliceViewer.setLocation( x1, y1 );
+                    sliceViewer.setVisible( true );
+                    
+                    SliceCanvas sliceCanvas = sliceViewer.getSliceCanvas();
+                    VolumeObject volumeObject = sliceCanvas.getVolumeObject();
+                    
+                    final GPUVolumeViewer volumeViewer = new GPUVolumeViewer( volumeObject, sliceCanvas.getContext() );
+                    volumeViewer.setLocation( x2, y2 );
+                    volumeViewer.setVisible( true );
+                    
+                    GPUVolumeView volumeView = volumeViewer.getVolumeView();
+                    
+                    TransferController transferController
+                        = new TransferController( sliceCanvas, volumeView, volumeObject );
+                    
+                    final TransferFrame transferFrame = new TransferFrame( volumeObject, transferController );
+                    transferFrame.setLocationRelativeTo( null );
+                    transferFrame.setVisible( true );
+                    
+                    transferController.setTransferFrame( transferFrame );
+                    sliceCanvas.getSliceViewController().setTransferFrame( transferFrame );
+                    
+                    VolumeController volumeController = new VolumeController( volumeView, volumeObject );
+                    
+                    final VolumeControlView volumeControlView = new VolumeControlView( volumeObject, volumeController );
+                    volumeControlView.setLocationRelativeTo( null );
+                    volumeControlView.setVisible( true );
+                    
+                    sliceCanvas.getSliceViewController().setVolumeView( volumeView );
+                    
+//                    FilterKernel3D filter = FilterUtil.getGaussFilter( 3 );
+//                    filter.normalize();
+//                    
+//                    System.out.println("gauss filter : " + filter);
+                                        
+                    int ySpace = (int)(screenSize.getHeight() - GPUVolumeViewer.getWinHeight() - transferFrame.getWidth());
+                    y2 = ySpace / 3;
+                    int y3 = 2 * ySpace / 3 + GPUVolumeViewer.getWinHeight();
+                    
+                    volumeViewer.setLocation( x2, y2 );
+                    transferFrame.setLocation( x2, y3 );    
+                    
+                    int x3 = x2 + transferFrame.getWidth();
+                    volumeControlView.setLocation( x3, y3 );
+                    
+                    volumeViewer.getVolumeView().requestFocus();
+                }
+                catch ( IOException e )
+                {
+                    logger.error( e );
+                    e.printStackTrace();
+                }
+                catch ( Exception e )
+                {
+                    logger.error( e );
+                    e.printStackTrace();
+                }
+
+            }
+        } );
+
+    }
+
+    protected GPUVolumeView volumeView;
+
+    public GPUVolumeViewer( VolumeObject sharedVolumeObject, GLContext sharedContext ) throws NumberFormatException, Exception
+    {
+        super( "Volume Viewer" );
+
         setBackground( Color.BLACK );
 
-        ArrayList<DicomObject> dicomList = DicomInputOutput.readDir( "/home/oliver/dicom/series1", null );
-        
-        ShortBuffer dataBuf = DicomUtil.getFilledShortBuffer( dicomList );
-        ArrayList<ITransferFunction> windowing = DicomUtil.getWindowing( dicomList );
+        VolumeObject volumeObject = sharedVolumeObject;
 
-        VolumeObject volumeObject = new VolumeObject( dicomList, windowing, dataBuf );
-        
-        volumeView = new GPUVolumeView(volumeObject); 
-        
-        getContentPane().setLayout(new BorderLayout());
-        getContentPane().add(volumeView, BorderLayout.CENTER);
-        
-        JPanel panel = new JPanel();
-        panel.setLayout(new BoxLayout(panel, BoxLayout.PAGE_AXIS));
-        panel.setPreferredSize(new Dimension(200, 500));
-        panel.setMaximumSize(new Dimension(200, 500));
-        
-        panel.add(getSliderPanel("sliceStep", 1, 1000, 220, 200, 40));
-        panel.add(getSliderPanel("alpha", 0, 100, 50, 20, 4));
-        panel.add(getSliderPanel("bias", 0, 100, 90, 20, 4));
-        
-        panel.add(getSliderPanel("yLevel", 0, 100, 100, 20, 4));
-        panel.add(getSliderPanel("zLevelMin", 0, 100, 0, 20, 4));
-        panel.add(getSliderPanel("zLevelMax", 0, 100, 100, 20, 4));
-        
-        panel.add(Box.createVerticalGlue());
-        
-        getContentPane().add(panel, BorderLayout.EAST);
-        
-        setSize(700, 500);
-        setLocationRelativeTo(null);
-        
-        animator = new Animator(volumeView);
-        addWindowListener(new WindowAdapter() {
-            public void windowClosing(WindowEvent e) {
-              System.exit(0);
-            }
-          });
-    }
-    
-    private JPanel getSliderPanel(String name, int min, int max, int value, int major, int minor) {
-        JPanel panel = new JPanel(new BorderLayout());
-        panel.setPreferredSize(new Dimension(200, 50));
-        panel.setMaximumSize(new Dimension(200, 50));
-        JSlider slider = new JSlider(min, max, value);
-        
-        slider.setName(name);
-        slider.addChangeListener(this);
-        slider.setMajorTickSpacing(major);
-        slider.setMinorTickSpacing(minor);
-        slider.setPaintLabels(true);
-        slider.setPaintTicks(true);
-        slider.setSnapToTicks(true);
-        
-        panel.add(new JLabel(name), BorderLayout.WEST);
-        panel.add(slider, BorderLayout.CENTER);
-        
-        return panel;
+        if ( volumeObject == null )
+        {
+            //ArrayList<DicomObject> dicomList = DicomInputOutput.readDir( "/home/oliver/dicom/series1", null );
+            int zStride = Image3DUtil.getzStride();
+            ArrayList<DicomObject> dicomList = DicomInputOutput.readDir( "/home/oliver/Desktop/Laufwerk_D/dicom/1578", null, Integer.parseInt(System.getProperty("test.zahn.start")), Integer.parseInt(System.getProperty("test.zahn.anzahl")), zStride );
+
+            ShortBuffer dataBuf = DicomUtil.getFilledShortBuffer( dicomList );
+            ShortRange range = ImageUtil.getRange( dataBuf );
+            ShortBuffer windowing = DicomUtil.getWindowing( dicomList, range );
+            
+            volumeObject = new VolumeObject( dicomList, windowing, dataBuf, zStride, range );
+        }
+
+        volumeView = new GPUVolumeView( volumeObject, sharedContext );
+
+        getContentPane().setLayout( new BorderLayout() );
+        getContentPane().add( volumeView, BorderLayout.CENTER );
+                
+        setSize( width, height );
+        setLocationRelativeTo( null );
+
+        addWindowListener( new DefaultWindowAdapter(this) );
+        getContentPane().addMouseListener( this );
+
     }
 
-    public GPUVolumeView getVolumeView() {
+    public GPUVolumeView getVolumeView()
+    {
         return volumeView;
     }
 
     @Override
-    public void stateChanged(ChangeEvent e) {
-        JSlider slider = (JSlider)e.getSource();
-        
-        if ( "sliceStep".equals(slider.getName()))
-        {
-            volumeView.setSliceStep(1.0f/slider.getValue());
-        }
-        else if ( "alpha".equals(slider.getName()))
-        {
-            volumeView.setAlpha(slider.getValue()/25.0f);
-        }
-        else if ( "bias".equals(slider.getName()))
-        {
-            volumeView.setBias(slider.getValue()/100.0f);
-        }
-        else if ( "yLevel".equals(slider.getName()))
-        {
-            volumeView.setYLevel(slider.getValue()/100.0f);
-        }
-        else if ( "zLevelMin".equals(slider.getName()))
-        {
-            volumeView.setZLevelMin(slider.getValue()/100.0f);
-        }
-        else if ( "zLevelMax".equals(slider.getName()))
-        {
-            volumeView.setZLevelMax(slider.getValue()/100.0f);
-        }    
-        
-    }
-    
-    public static void main(String args[])
+    public void mouseClicked( MouseEvent e )
     {
-        JFrame.setDefaultLookAndFeelDecorated(true);
-        JDialog.setDefaultLookAndFeelDecorated(true);
-        
-        SwingUtilities.invokeLater(
-            new Runnable(){
-                public void run()
-                {
-                    try
-                    {
-                        
-                        UIManager.setLookAndFeel( UIManager.getSystemLookAndFeelClassName() );
-                            
-                    } catch ( Exception e )
-                    {
-                        e.printStackTrace();
-                    }
-                }
-            }
-        );
-        
-        SwingUtilities.invokeLater(new Runnable()
-        {
-            public void run()
-            {
-                try {
-                    VTK.init();
-            
-            
-                    final GPUVolumeViewer volumeViewer = new GPUVolumeViewer();
-                    volumeViewer.setVisible(true);
-                    volumeViewer.getVolumeView().requestFocus();
-            
-            
-            
-                    animator.start();
-                } catch (IOException e) {
-                    logger.error(e);
-                    e.printStackTrace();
-                } catch (Exception e) {
-                    logger.error(e);
-                    e.printStackTrace();
-                } 
-        
-            }
-        });
-        
+        // TODO Auto-generated method stub
+
     }
 
-    
+    @Override
+    public void mouseEntered( MouseEvent e )
+    {
+        this.requestFocus();
+        //volumeView.getAnimator().start();
+
+    }
+
+    @Override
+    public void mouseExited( MouseEvent e )
+    {
+        //volumeView.getAnimator().stop();
+
+    }
+
+    @Override
+    public void mousePressed( MouseEvent e )
+    {
+        // TODO Auto-generated method stub
+
+    }
+
+    @Override
+    public void mouseReleased( MouseEvent e )
+    {
+        // TODO Auto-generated method stub
+
+    }
+
 }

@@ -45,62 +45,10 @@ public class BorderLayout extends Layout
                 + sizes[ CENTER ].getWidth() + sizes[ EAST ].getWidth() );
 
         prefHeight = sizes[ NORTH ].getHeight()
-                + Math.min( Math.min( sizes[ EAST ].getHeight(), sizes[ WEST ].getHeight() ), sizes[ CENTER ].getHeight() )
-                + sizes[ SOUTH ].getHeight();
+                + Math.min( Math.min( sizes[ EAST ].getHeight(), sizes[ WEST ].getHeight() ), sizes[ CENTER ]
+                        .getHeight() ) + sizes[ SOUTH ].getHeight();
 
         return new Size( prefWidth, prefHeight );
-    }
-
-    @Override
-    public void pack(    int x,
-                        int y,
-                        int width,
-                        int height )
-    {
-        Size[] sizes = getPreferredSizes( width, height );
-
-        int prefWidth = Math.min( Math.min( sizes[ NORTH ].getWidth(), sizes[ SOUTH ].getWidth() ), sizes[ WEST ]
-                .getWidth()
-                + sizes[ CENTER ].getWidth() + sizes[ EAST ].getWidth() );
-
-        int prefCenHeight = Math.min( Math.min( sizes[ EAST ].getHeight(), sizes[ WEST ].getHeight() ), sizes[ CENTER ]
-                .getHeight() );
-
-        int cx = x;
-        int cy = y;
-
-        int dir = SOUTH;
-        if ( components.get( dir ) != null )
-            components.get( dir ).setSize( cx, cy, prefWidth, sizes[ dir ].getHeight() );
-
-        cy += sizes[ dir ].getHeight();
-
-        dir = WEST;
-        if ( components.get( dir ) != null )
-            components.get( dir ).setSize( cx, cy, sizes[ dir ].getWidth(), prefCenHeight );
-
-        cx += sizes[ dir ].getWidth();
-
-        dir = CENTER;
-        if ( components.get( dir ) != null )
-            components.get( dir ).setSize( cx, cy, sizes[ dir ].getWidth(), prefCenHeight );
-
-        cx += sizes[ dir ].getWidth();
-
-        dir = EAST;
-        if ( components.get( dir ) != null )
-            components.get( dir ).setSize( cx, cy, sizes[ dir ].getWidth(), prefCenHeight );
-
-        cx = x;
-        cy += sizes[ CENTER ].getHeight();
-
-        dir = NORTH;
-        if ( components.get( dir ) != null )
-            components.get( dir ).setSize( cx, cy, prefWidth, sizes[ dir ].getHeight() );
-
-        for ( Component component : components )
-            if ( component != null )
-                component.pack();
     }
 
     protected Size[] getPreferredSizes( int width,
@@ -127,12 +75,59 @@ public class BorderLayout extends Layout
     }
 
     @Override
+    public void pack(    int x,
+                        int y,
+                        int width,
+                        int height )
+    {
+        Size[] sizes = getPreferredSizes( width, height );
+
+        int prefWidth = Math.min( Math.min( sizes[ NORTH ].getWidth(), sizes[ SOUTH ].getWidth() ), sizes[ WEST ]
+                .getWidth()
+                + sizes[ CENTER ].getWidth() + sizes[ EAST ].getWidth() );
+
+        int prefCenHeight = Math.min( Math.min( sizes[ EAST ].getHeight(), sizes[ WEST ].getHeight() ), sizes[ CENTER ]
+                .getHeight() );
+
+        int cx = x;
+        int cy = y;
+
+        int dir = SOUTH;
+        if ( components.get( dir ) != null )
+            components.get( dir ).pack( cx, cy, prefWidth, sizes[ dir ].getHeight() );
+
+        cy += sizes[ dir ].getHeight();
+
+        dir = WEST;
+        if ( components.get( dir ) != null )
+            components.get( dir ).pack( cx, cy, sizes[ dir ].getWidth(), prefCenHeight );
+
+        cx += sizes[ dir ].getWidth();
+
+        dir = CENTER;
+        if ( components.get( dir ) != null )
+            components.get( dir ).pack( cx, cy, sizes[ dir ].getWidth(), prefCenHeight );
+
+        cx += sizes[ dir ].getWidth();
+
+        dir = EAST;
+        if ( components.get( dir ) != null )
+            components.get( dir ).pack( cx, cy, sizes[ dir ].getWidth(), prefCenHeight );
+
+        cx = x;
+        cy += sizes[ CENTER ].getHeight();
+
+        dir = NORTH;
+        if ( components.get( dir ) != null )
+            components.get( dir ).pack( cx, cy, prefWidth, sizes[ dir ].getHeight() );
+    }
+
+    @Override
     public void resize( int x,
                         int y,
                         int width,
                         int height )
     {
-
         int w1 = margin[ 3 ];
         int w2 = width - margin[ 1 ] - margin[ 3 ];
         int w3 = margin[ 1 ];

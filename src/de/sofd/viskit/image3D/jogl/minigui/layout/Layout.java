@@ -26,11 +26,6 @@ public abstract class Layout
         this.components.add( component );
     }
 
-    public ArrayList<Component> getComponents()
-    {
-        return components;
-    }
-    
     public void checkMaximized()
     {
         boolean oneIsMaximized = false;
@@ -60,13 +55,18 @@ public abstract class Layout
             }
         }
     }
+    
+    public ArrayList<Component> getComponents()
+    {
+        return components;
+    }
+
+    public abstract Size getPreferredSize(    int width, int height );
+
+    public abstract void pack( int x, int y, int width, int height );
 
     public abstract void resize(    int x,
                                     int y,
                                     int width,
                                     int height );
-
-    public abstract Size getPreferredSize(    int width, int height );
-
-    public abstract void pack( int x, int y, int width, int height );
 }

@@ -120,7 +120,7 @@ public class TexSliceVolumeView extends GLCanvas implements GLEventListener, Mou
         
         float adjAlpha = alpha/slices;
                 
-        double maxDim = volumeObject.getSizeMax();
+        double maxDim = volumeObject.getSizeRange().getMax();
         double x1 = -volumeObject.getSizeX()/maxDim*zoom;
         double x2 = volumeObject.getSizeX()/maxDim*zoom;
         double y1 = -volumeObject.getSizeY()/maxDim*zoom;
@@ -193,7 +193,16 @@ public class TexSliceVolumeView extends GLCanvas implements GLEventListener, Mou
         gl.glEnable(GL_BLEND);
         gl.glEnable(GL_TEXTURE_3D);
                 
-        volumeObject.loadTexture(gl);
+        try
+        {
+            volumeObject.loadTexture(gl);
+        }
+        catch ( Exception e )
+        {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+            System.exit(0);
+        }
         
         fpsCounter = new FPSCounter();
         

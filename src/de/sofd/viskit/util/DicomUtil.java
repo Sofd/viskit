@@ -7,7 +7,8 @@ import org.dcm4che2.data.*;
 
 import com.sun.opengl.util.*;
 
-import de.sofd.viskit.model.*;
+import de.sofd.util.*;
+import de.sofd.viskit.model.Windowing;
 
 public class DicomUtil
 {
@@ -34,7 +35,7 @@ public class DicomUtil
 
         return dataBuf;
     }
-    
+
     public static ShortBuffer getFilledShortBuffer( DicomObject dicomObject )
     {
         int[] dim = new int[ 2 ];
@@ -50,17 +51,41 @@ public class DicomUtil
         return dataBuf;
     }
 
-    public static ArrayList<ITransferFunction> getWindowing( ArrayList<DicomObject> dicomList )
+    public static ShortBuffer getWindowing( ArrayList<DicomObject> dicomList, ShortRange range )
     {
-        ArrayList<ITransferFunction> windowing = new ArrayList<ITransferFunction>();
+        ShortBuffer windowing = ShortBuffer.allocate( dicomList.size() * 2 );
 
         for ( DicomObject dicomObject : dicomList )
         {
-            windowing.add( new Windowing( dicomObject.getFloat( Tag.WindowCenter ), dicomObject
-                    .getFloat( Tag.WindowWidth ) ) );
+            short winCenter = (short)dicomObject.getFloat( Tag.WindowCenter );
+            short winWidth = (short)dicomObject.getFloat( Tag.WindowWidth ); 
+            
+            if ( winCenter == 0 && winWidth == 0 )
+            {
+                winWidth = (short)Math.min( range.getDelta(), Short.MAX_VALUE );
+                winCenter = (short)(range.getMin() + range.getDelta() / 2);
+            }
+                
+            windowing.put( winCenter );
+            windowing.put( winWidth );
+            
         }
+        
+        windowing.rewind();
 
         return windowing;
+    }
+
+    public static ArrayList<Windowing> getWindowing( ShortBuffer windowing )
+    {
+        ArrayList<Windowing> windowingList = new ArrayList<Windowing>();
+
+        for ( int i = 0; i < windowing.capacity() / 2; ++i )
+        {
+            windowingList.add( new Windowing( windowing.get( i * 2 + 0 ), windowing.get( i * 2 + 1 ) ) );
+        }
+
+        return windowingList;
     }
 
 }
