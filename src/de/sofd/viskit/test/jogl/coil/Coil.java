@@ -86,8 +86,8 @@ public class Coil implements GLDrawableObject {
                     try {
                         System.out.print("(READING TEXTURE DATA)... ");
                         long t0 = System.currentTimeMillis();
-                        //coilTextureData = TextureIO.newTextureData(Coil.class.getResourceAsStream("mri_brain.jpg"), true, "jpg");
-                        coilTextureData = TextureIO.newTextureData(new FileInputStream("/home/olaf/gi/resources/DICOM-Testbilder/1578/f0003563_00620.dcm"), true, "dcm");
+                        coilTextureData = TextureIO.newTextureData(Coil.class.getResourceAsStream("mri_brain.jpg"), true, "jpg");
+                        //coilTextureData = TextureIO.newTextureData(new FileInputStream("/home/olaf/gi/resources/DICOM-Testbilder/1578/f0003563_00620.dcm"), true, "dcm");
                         long t1 = System.currentTimeMillis();
                         System.out.println("" + (t1-t0) + " ms.");
                     } catch (IOException ex) {
