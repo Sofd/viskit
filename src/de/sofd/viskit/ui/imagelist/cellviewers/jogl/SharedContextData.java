@@ -1,6 +1,5 @@
 package de.sofd.viskit.ui.imagelist.cellviewers.jogl;
 
-import de.sofd.viskit.test.jogl.coil.*;
 import de.sofd.lang.Runnable2;
 import java.util.Collection;
 import java.util.HashMap;

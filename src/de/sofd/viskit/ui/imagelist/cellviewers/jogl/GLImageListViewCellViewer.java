@@ -29,7 +29,6 @@ import javax.media.opengl.GLContext;
 import javax.media.opengl.GLEventListener;
 import javax.media.opengl.GLProfile;
 import javax.media.opengl.awt.GLCanvas;
-import javax.swing.JComboBox;
 import javax.swing.JPopupMenu;
 import javax.swing.SwingUtilities;
 import javax.swing.ToolTipManager;
@@ -332,6 +331,8 @@ public class GLImageListViewCellViewer extends BaseImageListViewCellViewer {
 
         @Override
         public void dispose(GLAutoDrawable glAutoDrawable) {
+            sharedContextData.unref();
+            instances.remove(GLImageListViewCellViewer.this);
             System.out.println("DELE " + drawableToString(glAutoDrawable));
         }
 
