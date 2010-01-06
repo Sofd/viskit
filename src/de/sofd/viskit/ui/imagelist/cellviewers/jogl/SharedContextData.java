@@ -1,4 +1,4 @@
-package de.sofd.viskit.ui.imagelist.jlistimpl;
+package de.sofd.viskit.ui.imagelist.cellviewers.jogl;
 
 import de.sofd.viskit.test.jogl.coil.*;
 import de.sofd.lang.Runnable2;

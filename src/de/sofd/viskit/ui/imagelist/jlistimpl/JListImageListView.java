@@ -1,5 +1,6 @@
 package de.sofd.viskit.ui.imagelist.jlistimpl;
 
+import de.sofd.viskit.ui.imagelist.cellviewers.java2d.ImageListViewCellViewer;
 import de.sofd.util.Misc;
 import de.sofd.viskit.ui.imagelist.DefaultImageListViewCell;
 import de.sofd.viskit.ui.imagelist.ImageListViewCell;

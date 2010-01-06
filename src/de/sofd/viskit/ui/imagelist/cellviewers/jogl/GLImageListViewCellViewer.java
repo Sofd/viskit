@@ -1,4 +1,4 @@
-package de.sofd.viskit.ui.imagelist.jlistimpl;
+package de.sofd.viskit.ui.imagelist.cellviewers.jogl;
 
 import com.sun.opengl.util.texture.Texture;
 import com.sun.opengl.util.texture.TextureCoords;

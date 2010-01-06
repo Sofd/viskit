@@ -3,7 +3,7 @@
  * and open the template in the editor.
  */
 
-package de.sofd.viskit.ui.imagelist.jlistimpl;
+package de.sofd.viskit.ui.imagelist.cellviewers.java2d;
 
 import de.sofd.viskit.ui.imagelist.ImageListViewCell;
 import java.awt.Dimension;
