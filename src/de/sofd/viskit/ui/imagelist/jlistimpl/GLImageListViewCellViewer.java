@@ -57,6 +57,11 @@ public class GLImageListViewCellViewer extends JPanel {
 
     private GLAutoDrawable glCanvas;
 
+    /**
+     * GLCanvas subclass that "properly" forwards mouse events to the containing list,
+     * which picks them up and delivers them to the controllers. Used for our glCanvas.
+     * Apparently there's no easier way to do this...?
+     */
     private class MouseEventEnableGLCanvas extends GLCanvas {
 
         public MouseEventEnableGLCanvas(GLCapabilities capabilities, GLCapabilitiesChooser chooser, GLContext shareWith, GraphicsDevice device) {
@@ -99,9 +104,15 @@ public class GLImageListViewCellViewer extends JPanel {
         }
 
         private void dispatchEventToList(AWTEvent e) {
-            // TODO: this is an incredibly ugly hack that relies on the assumption that this.getParent().getParent()
-            //   is the list... But it's the only way I got this to work for now
+            // TODO: this is an incredibly ugly hack that relies on the assumption that
+            //   GLImageListViewCellViewer.this.getParent().getParent() is the list...
+            //   But it's the only way I got this to work for now
             Component target = GLImageListViewCellViewer.this.getParent().getParent();
+            if (target == null) {
+                // apparently happens sometimes with MOUSE_EXITED events on just disappeared cells
+                // if the mouse pointer was lilngering over them
+                return;
+            }
             AWTEvent targetEvent;
             if (e instanceof MouseEvent) {
                 MouseEvent me = (MouseEvent) e;
