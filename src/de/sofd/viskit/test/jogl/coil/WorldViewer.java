@@ -20,8 +20,10 @@ import javax.media.opengl.GLEventListener;
 import javax.media.opengl.GLProfile;
 import javax.media.opengl.awt.GLCanvas;
 import javax.swing.JPanel;
+import javax.swing.JPopupMenu;
 import javax.swing.SwingUtilities;
 
+import javax.swing.ToolTipManager;
 import static de.sofd.viskit.test.jogl.coil.Constants.*;
 
 
@@ -33,6 +35,8 @@ public class WorldViewer extends JPanel {
 
     static {
         System.setProperty("sun.awt.noerasebackground", "true");
+        JPopupMenu.setDefaultLightWeightPopupEnabled(false);
+        ToolTipManager.sharedInstance().setLightWeightPopupEnabled(false);
     }
 
     private static final Set<WorldViewer> instances = new IdentityHashSet<WorldViewer>();
