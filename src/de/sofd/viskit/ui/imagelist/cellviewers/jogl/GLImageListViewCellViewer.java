@@ -6,20 +6,17 @@ import com.sun.opengl.util.texture.awt.AWTTextureIO;
 import de.sofd.util.IdentityHashSet;
 import de.sofd.util.Misc;
 import de.sofd.viskit.ui.imagelist.ImageListViewCell;
+import de.sofd.viskit.ui.imagelist.cellviewers.BaseImageListViewCellViewer;
 import java.awt.AWTEvent;
 import java.awt.Component;
 import java.awt.Dimension;
-import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.GraphicsDevice;
 import java.awt.GridLayout;
-import java.awt.Insets;
 import java.awt.Point;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelEvent;
-import java.awt.geom.AffineTransform;
-import java.awt.geom.Point2D;
 import java.awt.image.AffineTransformOp;
 import java.awt.image.BufferedImageOp;
 import java.util.Set;
@@ -32,8 +29,6 @@ import javax.media.opengl.GLContext;
 import javax.media.opengl.GLEventListener;
 import javax.media.opengl.GLProfile;
 import javax.media.opengl.awt.GLCanvas;
-import javax.media.opengl.awt.GLJPanel;
-import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
 
 /**
@@ -42,7 +37,7 @@ import javax.swing.SwingUtilities;
  *
  * @author olaf
  */
-public class GLImageListViewCellViewer extends JPanel {
+public class GLImageListViewCellViewer extends BaseImageListViewCellViewer {
 
     static {
         System.setProperty("sun.awt.noerasebackground", "true");
@@ -52,7 +47,6 @@ public class GLImageListViewCellViewer extends JPanel {
 
     private static final SharedContextData sharedContextData = new SharedContextData();
 
-    private final ImageListViewCell displayedCell;
     private Texture imageTexture;   // TODO: uniquely identifyable images, hash texture objects by them (LRU cache)
 
     private GLAutoDrawable glCanvas;
@@ -150,8 +144,8 @@ public class GLImageListViewCellViewer extends JPanel {
     }
 
     public GLImageListViewCellViewer(ImageListViewCell cell) {
+        super(cell);
         System.out.println("CREA GL drawable: " + this.hashCode());
-        this.displayedCell = cell;
         //enableEvents(AWTEvent.MOUSE_EVENT_MASK);
         //enableEvents(AWTEvent.MOUSE_MOTION_EVENT_MASK);
         //enableEvents(AWTEvent.MOUSE_WHEEL_EVENT_MASK);
@@ -217,51 +211,6 @@ public class GLImageListViewCellViewer extends JPanel {
         if (glCanvas != null && glCanvas instanceof GLCanvas) {
             ((Component)glCanvas).repaint();
         }
-    }
-
-
-    // TODO: following method are copy & paste with ImageListeCellViewer...
-    //       Use a common superclass!
-
-    public ImageListViewCell getDisplayedCell() {
-        return displayedCell;
-    }
-
-    public int getOriginalImageWidth() {
-        return displayedCell.getDisplayedModelElement().getImage().getWidth();
-    }
-
-    public int getOriginalImageHeight() {
-        return displayedCell.getDisplayedModelElement().getImage().getHeight();
-    }
-
-    public double getZoomFactor() {
-        return displayedCell.getScale();
-        // TODO: when it changes, we'd want to recomputeImageOrigin()...
-    }
-
-    protected AffineTransform getDicomToUiTransform() {
-        double z = getZoomFactor();
-        return AffineTransform.getScaleInstance(z, z);
-    }
-
-    public Point2D getScaledImageSize() {
-        return getDicomToUiTransform().transform(new Point2D.Double(getOriginalImageWidth(), getOriginalImageHeight()), null);
-    }
-
-    @Override
-    public Dimension getPreferredSize() {
-        Point2D scaledImageSize = getScaledImageSize();
-        Insets insets = getInsets();  // insets imposed by our getBorder()
-        return new Dimension((int)(scaledImageSize.getX()+insets.left+insets.right),
-                             (int)(scaledImageSize.getY()+insets.top+insets.bottom));
-    }
-
-    public Point2D getImageOffset() {
-        Point2D imgSize = getScaledImageSize();
-        Dimension latestSize = displayedCell.getLatestSize();
-        return new Point2D.Double((latestSize.width + 2 * displayedCell.getCenterOffset().getX() - (int) imgSize.getX()) / 2,
-                                  (latestSize.height + 2 * displayedCell.getCenterOffset().getY() - (int) imgSize.getY()) / 2);
     }
 
 
