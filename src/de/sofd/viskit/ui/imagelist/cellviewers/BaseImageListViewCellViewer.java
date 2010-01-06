@@ -8,10 +8,11 @@ import java.awt.geom.Point2D;
 import javax.swing.JPanel;
 
 /**
+ * Base class for for ImageListView cell viewers (components displaying a {@link ImageListViewCell}).
  *
  * @author olaf
  */
-public class BaseImageListViewCellViewer extends JPanel {
+public abstract class BaseImageListViewCellViewer extends JPanel {
 
     protected final ImageListViewCell displayedCell;
 
