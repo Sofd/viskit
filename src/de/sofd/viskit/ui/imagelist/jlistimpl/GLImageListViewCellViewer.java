@@ -4,6 +4,7 @@ import com.sun.opengl.util.texture.Texture;
 import com.sun.opengl.util.texture.TextureCoords;
 import com.sun.opengl.util.texture.awt.AWTTextureIO;
 import de.sofd.util.IdentityHashSet;
+import de.sofd.util.Misc;
 import de.sofd.viskit.ui.imagelist.ImageListViewCell;
 import java.awt.AWTEvent;
 import java.awt.Component;
@@ -13,6 +14,7 @@ import java.awt.Graphics2D;
 import java.awt.GraphicsDevice;
 import java.awt.GridLayout;
 import java.awt.Insets;
+import java.awt.Point;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelEvent;
@@ -81,39 +83,74 @@ public class GLImageListViewCellViewer extends JPanel {
         protected void processMouseEvent(MouseEvent e) {
             super.processMouseEvent(e);
             System.out.println("GLCanvas processMouseEvent " + e);
-            GLImageListViewCellViewer.this.dispatchEvent(e);
-            //GLImageListViewCellViewer.this.processMouseEvent(e);
+            dispatchEventToList(e);
         }
 
         @Override
         protected void processMouseMotionEvent(MouseEvent e) {
             super.processMouseMotionEvent(e);
-            //GLImageListViewCellViewer.this.processMouseMotionEvent(e);
-            GLImageListViewCellViewer.this.dispatchEvent(e);
+            dispatchEventToList(e);
         }
 
         @Override
         protected void processMouseWheelEvent(MouseWheelEvent e) {
             super.processMouseWheelEvent(e);
-            //GLImageListViewCellViewer.this.processMouseWheelEvent(e);
-            GLImageListViewCellViewer.this.dispatchEvent(e);
+            dispatchEventToList(e);
         }
 
+        private void dispatchEventToList(AWTEvent e) {
+            // TODO: this is an incredibly ugly hack that relies on the assumption that this.getParent().getParent()
+            //   is the list... But it's the only way I got this to work for now
+            Component target = GLImageListViewCellViewer.this.getParent().getParent();
+            AWTEvent targetEvent;
+            if (e instanceof MouseEvent) {
+                MouseEvent me = (MouseEvent) e;
+                Point targetPoint = SwingUtilities.convertPoint(me.getComponent(), me.getPoint(), target);
+                if (e instanceof MouseWheelEvent) {
+                    MouseWheelEvent mwe = (MouseWheelEvent) e;
+                    targetEvent = new MouseWheelEvent(target,
+                            me.getID(),
+                            me.getWhen(),
+                            me.getModifiers(),
+                            targetPoint.x,
+                            targetPoint.y,
+                            me.getClickCount(),
+                            me.isPopupTrigger(),
+                            mwe.getScrollType(),
+                            mwe.getScrollAmount(),
+                            mwe.getWheelRotation());
+                } else {
+                    targetEvent = new MouseEvent(target,
+                            me.getID(),
+                            me.getWhen(),
+                            me.getModifiers(),
+                            targetPoint.x,
+                            targetPoint.y,
+                            me.getClickCount(),
+                            me.isPopupTrigger(),
+                            me.getButton());
+                }
+            } else {
+                targetEvent = Misc.deepCopy(e);
+                targetEvent.setSource(target);
+            }
+            target.dispatchEvent(targetEvent);
+        }
     }
 
     public GLImageListViewCellViewer(ImageListViewCell cell) {
         System.out.println("CREA GL drawable: " + this.hashCode());
         this.displayedCell = cell;
-        enableEvents(AWTEvent.MOUSE_EVENT_MASK);
-        enableEvents(AWTEvent.MOUSE_MOTION_EVENT_MASK);
-        enableEvents(AWTEvent.MOUSE_WHEEL_EVENT_MASK);
+        //enableEvents(AWTEvent.MOUSE_EVENT_MASK);
+        //enableEvents(AWTEvent.MOUSE_MOTION_EVENT_MASK);
+        //enableEvents(AWTEvent.MOUSE_WHEEL_EVENT_MASK);
         setLayout(new GridLayout(1, 1));
         ///*
         if (instances.isEmpty() || sharedContextData.getGlContext() != null) {
             createGlCanvas();
         }
         instances.add(this);
-        // */
+        //*/
         //add(new ImageListViewCellViewer(cell));
         //enableEvents(AWTEvent.MOUSE_EVENT_MASK);
     }
@@ -161,6 +198,16 @@ public class GLImageListViewCellViewer extends JPanel {
     public GLAutoDrawable getGlCanvas() {
         return glCanvas;
     }
+
+    @Override
+    public void repaint() {
+        super.repaint();
+        // TODO: find out why we need to do this to get any repaint at all, and why the repaint flickers...
+        if (glCanvas != null && glCanvas instanceof GLCanvas) {
+            ((Component)glCanvas).repaint();
+        }
+    }
+
 
     // TODO: following method are copy & paste with ImageListeCellViewer...
     //       Use a common superclass!
