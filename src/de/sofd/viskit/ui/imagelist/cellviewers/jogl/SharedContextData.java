@@ -9,6 +9,13 @@ import javax.media.opengl.GL;
 import javax.media.opengl.GLContext;
 
 /**
+ * {@link GLImageListViewCellViewer} uses this class to inform outside parties
+ * that the (shared) OpenGL context that all the cell viewers use was created
+ * (see {@link #registerContextInitCallback(de.sofd.lang.Runnable2) }).
+ * An instance of SharedContextData represents (is associated 1:1 with) a shared
+ * context. Said outside components may associate arbitrary data (display list IDs,
+ * texture IDs etc.) with the context ({@link #setAttribute(java.lang.String, java.lang.Object) })
+ * and retrieve it later.
  *
  * @author olaf
  */
@@ -35,7 +42,7 @@ public class SharedContextData {
     // to be used, re-initialize the context if the mark is missing.
 
     /**
-     * Used by GLContext creators (e.g. GL viewer components) only (when initializing a new context).
+     * Used by GLContext creators (e.g. ) only (when initializing a new context).
      *
      * @param glContext
      */
@@ -47,7 +54,7 @@ public class SharedContextData {
     }
 
     /**
-     * Used by GLContext creators (e.g. GL viewer components) only (when initializing a new context).
+     * Used by GLContext creators (e.g. {@link GLImageListViewCellViewer}) only (when initializing a new context).
      */
     void unref() {
         if (refCount == 0) {
@@ -83,7 +90,7 @@ public class SharedContextData {
     }
 
     /**
-     * Used by GLContext creators (e.g. GL viewer components) only (when initializing a new context).
+     * Used by GLContext creators (e.g. {@link GLImageListViewCellViewer}) only (when initializing a new context).
      */
     static void callContextInitCallbacks(SharedContextData cd, GL gl) {
         for (Runnable2<SharedContextData, GL> callback : contextInitCallbacks) {
