@@ -100,10 +100,10 @@ public abstract class CachingDicomImageListViewModelElement implements DicomImag
     // TODO: unify the two caches into one
 
     private static LRUMemoryCache<Object, DicomObject> rawDcmObjectCache
-        = new LRUMemoryCache<Object, DicomObject>(50);
+        = new LRUMemoryCache<Object, DicomObject>(5);
 
     private static LRUMemoryCache<Object, BufferedImage> rawImageCache
-        = new LRUMemoryCache<Object, BufferedImage>(50);
+        = new LRUMemoryCache<Object, BufferedImage>(5);
 
 
 
@@ -115,6 +115,19 @@ public abstract class CachingDicomImageListViewModelElement implements DicomImag
             rawDcmObjectCache.put(getImageKey(), result);
         }
         return result;
+    }
+
+    public boolean isDicomObjectCached() {
+        return rawDcmObjectCache.containsKey(getImageKey());
+    }
+
+    public boolean isImageCached() {
+        return rawImageCache.containsKey(getImageKey());
+    }
+
+    @Override
+    public DicomObject getDicomImageMetaData() {
+        return getDicomObject();
     }
 
     @Override
