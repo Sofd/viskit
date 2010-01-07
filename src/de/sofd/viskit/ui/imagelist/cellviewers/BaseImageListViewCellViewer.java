@@ -1,11 +1,14 @@
 package de.sofd.viskit.ui.imagelist.cellviewers;
 
+import de.sofd.viskit.model.DicomImageListViewModelElement;
+import de.sofd.viskit.model.ImageListViewModelElement;
 import de.sofd.viskit.ui.imagelist.ImageListViewCell;
 import java.awt.Dimension;
 import java.awt.Insets;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Point2D;
 import javax.swing.JPanel;
+import org.dcm4che2.data.Tag;
 
 /**
  * Base class for for ImageListView cell viewers (components displaying a {@link ImageListViewCell}).
@@ -25,11 +28,25 @@ public abstract class BaseImageListViewCellViewer extends JPanel {
     }
 
     public int getOriginalImageWidth() {
-        return displayedCell.getDisplayedModelElement().getImage().getWidth();
+        ImageListViewModelElement elt = displayedCell.getDisplayedModelElement();
+        if (elt instanceof DicomImageListViewModelElement) {
+            // performance optimization for this case -- read the value from DICOM metadata instead of getting the image
+            DicomImageListViewModelElement dicomElt = (DicomImageListViewModelElement) elt;
+            return dicomElt.getDicomImageMetaData().getInt(Tag.Columns);
+        } else {
+            return elt.getImage().getWidth();
+        }
     }
 
     public int getOriginalImageHeight() {
-        return displayedCell.getDisplayedModelElement().getImage().getHeight();
+        ImageListViewModelElement elt = displayedCell.getDisplayedModelElement();
+        if (elt instanceof DicomImageListViewModelElement) {
+            // performance optimization for this case -- read the value from DICOM metadata instead of getting the image
+            DicomImageListViewModelElement dicomElt = (DicomImageListViewModelElement) elt;
+            return dicomElt.getDicomImageMetaData().getInt(Tag.Rows);
+        } else {
+            return elt.getImage().getHeight();
+        }
     }
 
     public double getZoomFactor() {
