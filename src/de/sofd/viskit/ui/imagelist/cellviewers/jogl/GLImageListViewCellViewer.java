@@ -163,6 +163,7 @@ public class GLImageListViewCellViewer extends BaseImageListViewCellViewer {
 
     private void createGlCanvas() {
         if (getComponentCount() != 0) {
+            // TODO: this is triggered when the user scrolls through the grid quickly. Investigate!
             throw new IllegalStateException("trying to initialize GL canvas more than once");
         }
         GLCapabilities caps = new GLCapabilities(GLProfile.get(GLProfile.GL2));
