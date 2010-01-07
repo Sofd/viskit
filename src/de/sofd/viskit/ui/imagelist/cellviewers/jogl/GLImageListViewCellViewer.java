@@ -1,8 +1,6 @@
 package de.sofd.viskit.ui.imagelist.cellviewers.jogl;
 
-import com.sun.opengl.util.texture.Texture;
 import com.sun.opengl.util.texture.TextureCoords;
-import com.sun.opengl.util.texture.awt.AWTTextureIO;
 import de.sofd.util.IdentityHashSet;
 import de.sofd.util.Misc;
 import de.sofd.viskit.ui.imagelist.ImageListViewCell;
@@ -45,13 +43,12 @@ public class GLImageListViewCellViewer extends BaseImageListViewCellViewer {
         System.setProperty("sun.awt.noerasebackground", "true");
         JPopupMenu.setDefaultLightWeightPopupEnabled(false);
         ToolTipManager.sharedInstance().setLightWeightPopupEnabled(false);
+        ImageTextureManager.init();
     }
 
     private static final Set<GLImageListViewCellViewer> instances = new IdentityHashSet<GLImageListViewCellViewer>();
 
     private static final SharedContextData sharedContextData = new SharedContextData();
-
-    private Texture imageTexture;   // TODO: uniquely identifyable images, hash texture objects by them (LRU cache)
 
     private GLAutoDrawable glCanvas;
 
@@ -267,15 +264,9 @@ public class GLImageListViewCellViewer extends BaseImageListViewCellViewer {
             gl.glLoadIdentity();
             gl.glTranslated(displayedCell.getCenterOffset().getX(), -displayedCell.getCenterOffset().getY(), 0);
             gl.glScaled(displayedCell.getScale(), displayedCell.getScale(), 0);
-            if (imageTexture == null) {
-                System.out.println("(CREATING TEXTURE)");
-                imageTexture = AWTTextureIO.newTexture(getDisplayedCell().getDisplayedModelElement().getImage(), true);
-            }
-            //gl.glAreTexturesResident(WIDTH, arg1, WIDTH, arg3, WIDTH);
-            imageTexture.enable();
-            imageTexture.bind();
+            ImageTextureManager.TextureRef texRef = ImageTextureManager.bindImageTexture(sharedContextData, getDisplayedCell().getDisplayedModelElement());
             gl.glTexEnvi(GL2.GL_TEXTURE_ENV, GL2.GL_TEXTURE_ENV_MODE, gl.GL_REPLACE);
-            TextureCoords coords = imageTexture.getImageTexCoords();
+            TextureCoords coords = texRef.getCoords();
             gl.glColor3f(0, 1, 0);
             float w2 = (float) getOriginalImageWidth() / 2, h2 = (float) getOriginalImageHeight() / 2;
             gl.glBegin(GL2.GL_QUADS);
@@ -288,7 +279,7 @@ public class GLImageListViewCellViewer extends BaseImageListViewCellViewer {
             gl.glTexCoord2f(coords.left(), coords.bottom());
             gl.glVertex2f(-w2, -h2);
             gl.glEnd();
-            imageTexture.disable();
+            ImageTextureManager.unbindCurrentImageTexture(sharedContextData);
             //gl.glFlush();
             //glAutoDrawable.swapBuffers();
         }
