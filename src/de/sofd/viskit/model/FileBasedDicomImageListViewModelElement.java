@@ -142,15 +142,22 @@ public class FileBasedDicomImageListViewModelElement extends CachingDicomImageLi
         ImageReader reader = (ImageReader) it.next();
 
         try {
-            ImageInputStream in = ImageIO.createImageInputStream(url.openStream());
-            if (null == in) {
-                throw new IllegalStateException("The DICOM image I/O filter (from dcm4che1) must be available to read images.");
-            }
+            // the ImageInputStream below does NOT close the wrapped URL input stream on close(). Thus
+            // we have to keep a reference to the URL input stream and close it ourselves.
+            InputStream urlIn = url.openStream();
             try {
-                reader.setInput(in);
-                return reader.read(0);
+                ImageInputStream in = ImageIO.createImageInputStream(urlIn);
+                if (null == in) {
+                    throw new IllegalStateException("The DICOM image I/O filter (from dcm4che1) must be available to read images.");
+                }
+                try {
+                    reader.setInput(in);
+                    return reader.read(0);
+                } finally {
+                    in.close();
+                }
             } finally {
-                in.close();
+                urlIn.close();
             }
         } catch (IOException e) {
             throw new IllegalStateException("error trying to extract image from DICOM object", e);
@@ -170,15 +177,22 @@ public class FileBasedDicomImageListViewModelElement extends CachingDicomImageLi
         ImageReader reader = (ImageReader) it.next();
 
         try {
-            ImageInputStream in = ImageIO.createImageInputStream(url.openStream());
-            if (null == in) {
-                throw new IllegalStateException("The DICOM image I/O filter (from dcm4che1) must be available to read images.");
-            }
+            // the ImageInputStream below does NOT close the wrapped URL input stream on close(). Thus
+            // we have to keep a reference to the URL input stream and close it ourselves.
+            InputStream urlIn = url.openStream();
             try {
-                reader.setInput(in);
-                return ((DicomStreamMetaData) reader.getStreamMetadata()).getDicomObject();
+                ImageInputStream in = ImageIO.createImageInputStream(urlIn);
+                if (null == in) {
+                    throw new IllegalStateException("The DICOM image I/O filter (from dcm4che1) must be available to read images.");
+                }
+                try {
+                    reader.setInput(in);
+                    return ((DicomStreamMetaData) reader.getStreamMetadata()).getDicomObject();
+                } finally {
+                    in.close();
+                }
             } finally {
-                in.close();
+                urlIn.close();
             }
         } catch (IOException e) {
             throw new IllegalStateException("error trying to extract image from DICOM object", e);
