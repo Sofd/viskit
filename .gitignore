@@ -1,0 +1,4 @@
+*.[oa]
+*.class
+build/
+dist/
