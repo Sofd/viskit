@@ -50,6 +50,7 @@ class ImageTextureManager {
             @Override
             protected boolean removeEldestEntry(Entry<Object, TextureRef> eldest) {
                 return size() > 50;   // TODO: account for texture memory consumption here
+                   // TODO: glDeleteTexture textures as their IDs are evicted from the cache
             }
         };
 

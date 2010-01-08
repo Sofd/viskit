@@ -12,6 +12,7 @@ import java.util.Map.Entry;
 import javax.imageio.ImageIO;
 import javax.imageio.ImageReader;
 import javax.imageio.stream.ImageInputStream;
+import org.dcm4che2.data.BasicDicomObject;
 import org.dcm4che2.data.DicomObject;
 import org.dcm4che2.data.Tag;
 import org.dcm4che2.data.UID;
@@ -20,7 +21,7 @@ import org.dcm4che2.media.FileMetaInformation;
 
 /**
  * Implements getDicomObject(), getImage() as caching delegators to the (subclass-provided)
- * methods getImageKey(), getBackendImage(), getBackendDicomObject().
+ * methods getImageKey(), getBackendDicomObject(), and optionally getBackendImage() and getBackendDicomObjectMetaData().
  *
  * @author olaf
  */
@@ -105,6 +106,8 @@ public abstract class CachingDicomImageListViewModelElement implements DicomImag
     private static LRUMemoryCache<Object, BufferedImage> rawImageCache
         = new LRUMemoryCache<Object, BufferedImage>(5);
 
+    private static LRUMemoryCache<Object, DicomObject> rawDicomImageMetadataCache
+        = new LRUMemoryCache<Object, DicomObject>(2000);
 
 
     @Override
@@ -127,7 +130,33 @@ public abstract class CachingDicomImageListViewModelElement implements DicomImag
 
     @Override
     public DicomObject getDicomImageMetaData() {
-        return getDicomObject();
+        DicomObject result = rawDicomImageMetadataCache.get(getImageKey());
+        if (result == null) {
+            result = getBackendDicomImageMetaData();
+            rawDicomImageMetadataCache.put(getImageKey(), result);
+        }
+        return result;
+    }
+
+    /**
+     * Same as {@link #getBackendDicomObject() }, but for the DICOM metadata ({@link #getDicomImageMetaData() }).
+     * Default implementation extracts the metadata from the getBackendDicomObject().
+     *
+     * @return
+     */
+    public DicomObject getBackendDicomImageMetaData() {
+        // even though the getDicomObject() could serve as the metadata object
+        // (it's a superset of it -- essentially, it's the metadata plus the pixel data),
+        // we extract the metadata subset and return that, because it will be much smaller
+        // in terms of memory footprint and thus many more of these objects fit in the
+        // dicomMetadataCache. Alternatively, we might also not have a dicomMetadataCache
+        // at all and always return the getDicomObject() directly, relying on its cache --
+        // but it contains fewer elements, and the returned complete getDicomObject()s
+        // would be large and may consume large amounts of heap space depending on how
+        // long the caller keeps those DicomObjects referenced
+        DicomObject result = new BasicDicomObject();
+        getBackendDicomObject().subSet(0, Tag.PixelData - 1).copyTo(result);  // make a deep copy so no reference to the PixelData is kept
+        return result;
     }
 
     @Override
