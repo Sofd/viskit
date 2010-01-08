@@ -52,9 +52,11 @@ public class GPUVolumeView extends GLCanvas implements GLEventListener
 
     protected VolumeInputController volumeInputController;
 
-    protected boolean useSmooth = true;
+    protected boolean useSmooth = false;
     
     protected boolean isLocked = false;
+    
+    protected boolean useGradient = false;
 
     public GPUVolumeView( VolumeObject volumeObject, GLContext sharedContext )
     {
@@ -138,9 +140,12 @@ public class GPUVolumeView extends GLCanvas implements GLEventListener
         volumeObject.bindTransferTexturePreIntegrated( gl );
         ShaderManager.get( "volView" ).bindUniform( "transferTex", 4 );
         
-        gl.glActiveTexture( GL_TEXTURE5 );
-        gl.glBindTexture( GL_TEXTURE_3D, volumeObject.getGradientTex() );
-        ShaderManager.get( "volView" ).bindUniform( "gradientTex", 5 );
+        if ( useGradient )
+        {
+            gl.glActiveTexture( GL_TEXTURE5 );
+            gl.glBindTexture( GL_TEXTURE_3D, volumeObject.getGradientTex() );
+            ShaderManager.get( "volView" ).bindUniform( "gradientTex", 5 );
+        }
 
         ShaderManager.get( "volView" ).bindUniform( "screenWidth", viewport[ 2 ] );
         ShaderManager.get( "volView" ).bindUniform( "screenHeight", viewport[ 3 ] );
@@ -237,8 +242,13 @@ public class GPUVolumeView extends GLCanvas implements GLEventListener
         {
             ShaderManager.read( gl, "tc2col" );
             ShaderManager.read( gl, "volView" );
-            ShaderManager.read(gl, "convolution");
-            ShaderManager.read( gl, "gradient" );
+            
+            if ( useSmooth )
+                ShaderManager.read(gl, "convolution");
+            
+            if ( useGradient )
+                ShaderManager.read( gl, "gradient" );
+            
             ShaderManager.read( gl, "transferIntegration" );
 
             ShaderManager.get( "volView" ).addProgramUniform( "screenWidth" );
@@ -249,7 +259,9 @@ public class GPUVolumeView extends GLCanvas implements GLEventListener
             ShaderManager.get( "volView" ).addProgramUniform( "backTex" );
             ShaderManager.get( "volView" ).addProgramUniform( "winTex" );
             ShaderManager.get( "volView" ).addProgramUniform( "transferTex" );
-            ShaderManager.get( "volView" ).addProgramUniform( "gradientTex" );
+            
+            if ( useGradient )
+                ShaderManager.get( "volView" ).addProgramUniform( "gradientTex" );
 
             if ( sharedContext == null )
             {
@@ -258,8 +270,11 @@ public class GPUVolumeView extends GLCanvas implements GLEventListener
                 volumeObject.createTransferTexture( gl );
             }
 
-            volumeObject.loadFilteredTexture( gl, ShaderManager.get( "convolution" ) );
-            volumeObject.loadGradientTexture( gl, ShaderManager.get( "gradient" ) );
+            if ( useSmooth )
+                volumeObject.loadFilteredTexture( gl, ShaderManager.get( "convolution" ) );
+            
+            if ( useGradient )
+                volumeObject.loadGradientTexture( gl, ShaderManager.get( "gradient" ) );
             
             volumeObject.createTransferFbo( gl );
 

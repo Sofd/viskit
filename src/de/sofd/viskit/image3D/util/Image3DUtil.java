@@ -5,7 +5,7 @@ public class Image3DUtil
     public static int getzStride()
     {
         int zStride = 0;
-        
+                
         try
         {
             zStride = Integer.parseInt(System.getProperty("de.sofd.viskit.image3d.sliceStride"));

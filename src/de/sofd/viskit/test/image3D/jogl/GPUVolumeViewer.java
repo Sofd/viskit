@@ -15,7 +15,6 @@ import org.dcm4che2.data.*;
 import de.sofd.util.*;
 import de.sofd.viskit.image.*;
 import de.sofd.viskit.image3D.control.*;
-import de.sofd.viskit.image3D.filter.*;
 import de.sofd.viskit.image3D.jogl.control.*;
 import de.sofd.viskit.image3D.jogl.model.*;
 import de.sofd.viskit.image3D.jogl.view.*;
@@ -69,8 +68,22 @@ public class GPUVolumeViewer extends JFrame implements MouseListener
             {
                 try
                 {
+                
+                    int zStride = Image3DUtil.getzStride();
+                    //ArrayList<DicomObject> dicomList = DicomInputOutput.readDir( "/home/oliver/dicom/series1", null, zStride );
+                    ArrayList<DicomObject> dicomList = DicomInputOutput.readDir( "/home/oliver/dicom/1578", null, Integer.parseInt(System.getProperty("de.sofd.viskit.image3d.sliceStart")), Integer.parseInt(System.getProperty("de.sofd.viskit.image3d.sliceCount")), Integer.parseInt(System.getProperty("de.sofd.viskit.image3d.sliceStride")) );
+                    //ArrayList<DicomObject> dicomList = DicomInputOutput.readDir( "/home/oliver/dicom/1578", null, Integer.parseInt(System.getProperty("de.sofd.viskit.image3d.sliceStride")) );
+
+                    //ArrayList<ShortBuffer> dataBufList = DicomUtil.getFilledShortBufferList( dicomList );
+                    //ShortRange range = ImageUtil.getRangeFromDicomObjects( dicomList );
+                    ShortRange range = new ShortRange((short)-32000, (short)32000);
                     
+                    ShortBuffer windowing = DicomUtil.getWindowing( dicomList, range );
                     
+                    VolumeObject volumeObject = new VolumeObject( dicomList, windowing, zStride, range );
+                    
+                    dicomList = null;
+                                        
                     Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
                     int xSpace = (int)( screenSize.getWidth() - SliceViewer.getWinWidth() - GPUVolumeViewer
                             .getWinWidth() );
@@ -80,13 +93,12 @@ public class GPUVolumeViewer extends JFrame implements MouseListener
                     int x2 = x1 + SliceViewer.getWinWidth() + xSpace / 3;
                     int y2 = (int)( screenSize.getHeight() - GPUVolumeViewer.getWinHeight() ) / 2;
 
-                    final SliceViewer sliceViewer = new SliceViewer();
+                    final SliceViewer sliceViewer = new SliceViewer(volumeObject);
                     sliceViewer.setLocation( x1, y1 );
                     sliceViewer.setVisible( true );
                     
                     SliceCanvas sliceCanvas = sliceViewer.getSliceCanvas();
-                    VolumeObject volumeObject = sliceCanvas.getVolumeObject();
-                    
+                                        
                     final GPUVolumeViewer volumeViewer = new GPUVolumeViewer( volumeObject, sliceCanvas.getContext() );
                     volumeViewer.setLocation( x2, y2 );
                     volumeViewer.setVisible( true );
@@ -153,20 +165,7 @@ public class GPUVolumeViewer extends JFrame implements MouseListener
         setBackground( Color.BLACK );
 
         VolumeObject volumeObject = sharedVolumeObject;
-
-        if ( volumeObject == null )
-        {
-            //ArrayList<DicomObject> dicomList = DicomInputOutput.readDir( "/home/oliver/dicom/series1", null );
-            int zStride = Image3DUtil.getzStride();
-            ArrayList<DicomObject> dicomList = DicomInputOutput.readDir( "/home/oliver/Desktop/Laufwerk_D/dicom/1578", null, Integer.parseInt(System.getProperty("test.zahn.start")), Integer.parseInt(System.getProperty("test.zahn.anzahl")), zStride );
-
-            ShortBuffer dataBuf = DicomUtil.getFilledShortBuffer( dicomList );
-            ShortRange range = ImageUtil.getRange( dataBuf );
-            ShortBuffer windowing = DicomUtil.getWindowing( dicomList, range );
-            
-            volumeObject = new VolumeObject( dicomList, windowing, dataBuf, zStride, range );
-        }
-
+        
         volumeView = new GPUVolumeView( volumeObject, sharedContext );
 
         getContentPane().setLayout( new BorderLayout() );

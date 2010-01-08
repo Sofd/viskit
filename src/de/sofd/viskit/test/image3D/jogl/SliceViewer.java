@@ -19,159 +19,136 @@ import de.sofd.viskit.image3D.jogl.view.*;
 import de.sofd.viskit.image3D.util.Image3DUtil;
 import de.sofd.viskit.util.*;
 
-@SuppressWarnings( "serial" )
-public class SliceViewer extends JFrame implements MouseListener 
-{
-    static final Logger logger = Logger.getLogger( SliceViewer.class );
+@SuppressWarnings("serial")
+public class SliceViewer extends JFrame implements MouseListener {
+    static final Logger logger = Logger.getLogger(SliceViewer.class);
 
-    public static int getWinHeight()
-    {
+    public static int getWinHeight() {
         return height;
     }
 
-    public static int getWinWidth()
-    {
+    public static int getWinWidth() {
         return width;
     }
-    
-    public static void main( String args[] )
-    {
-        JFrame.setDefaultLookAndFeelDecorated( true );
-        JDialog.setDefaultLookAndFeelDecorated( true );
 
-        SwingUtilities.invokeLater( new Runnable()
-        {
-            public void run()
-            {
-                try
-                {
+    public static void main(String args[]) {
+        JFrame.setDefaultLookAndFeelDecorated(true);
+        JDialog.setDefaultLookAndFeelDecorated(true);
 
-                    UIManager.setLookAndFeel( UIManager.getSystemLookAndFeelClassName() );
+        SwingUtilities.invokeLater(new Runnable() {
+            public void run() {
+                try {
 
-                }
-                catch ( Exception e )
-                {
+                    UIManager.setLookAndFeel(UIManager
+                            .getSystemLookAndFeelClassName());
+
+                } catch (Exception e) {
                     e.printStackTrace();
                 }
             }
-        } );
+        });
 
-        try
-        {
-            SwingUtilities.invokeLater( new Runnable()
-            {
-                public void run()
-                {
-                    try
-                    {
-                        SliceViewer sliceViewer = new SliceViewer();
+        try {
+            SwingUtilities.invokeLater(new Runnable() {
+                public void run() {
+                    try {
+                        int zStride = Image3DUtil.getzStride();
+                        //ArrayList<DicomObject> dicomList = DicomInputOutput.readDir( "/home/oliver/dicom/series1", null, zStride );
+                        //ArrayList<DicomObject> dicomList = DicomInputOutput.readDir( "/home/oliver/Desktop/Laufwerk_D/dicom/1578", null, Integer.parseInt(System.getProperty("de.sofd.viskit.image3d.sliceStart")), Integer.parseInt(System.getProperty("de.sofd.viskit.image3d.sliceCount")), Integer.parseInt(System.getProperty("de.sofd.viskit.image3d.sliceStride")) );
+                        ArrayList<DicomObject> dicomList = DicomInputOutput.readDir( "/home/oliver/dicom/1578", null, Integer.parseInt(System.getProperty("de.sofd.viskit.image3d.sliceStride")) );
+
+                        //ArrayList<ShortBuffer> dataBufList = DicomUtil.getFilledShortBufferList( dicomList );
+                        ShortRange range = ImageUtil.getRangeFromDicomObjects( dicomList );
+                        ShortBuffer windowing = DicomUtil.getWindowing( dicomList, range );
                         
-                        sliceViewer.setVisible( true );
+                        VolumeObject volumeObject = new VolumeObject( dicomList, windowing, zStride, range );
+                        
+                        SliceViewer sliceViewer = new SliceViewer(volumeObject);
+
+                        sliceViewer.setVisible(true);
                         sliceViewer.getSliceCanvas().requestFocus();
-                    }
-                    catch ( Exception e )
-                    {
+                    } catch (Exception e) {
                         e.printStackTrace();
                     }
                     // sliceViewer.pack();
                 }
-            } );
-        }
-        catch ( Exception e )
-        {
-            logger.error( e );
+            });
+        } catch (Exception e) {
+            logger.error(e);
             e.printStackTrace();
         }
 
     }
-    
+
     protected SliceCanvas sliceCanvas;
 
     protected static int height = 650;
-    
+
     protected static int width = 600;
 
-    public SliceViewer() throws Exception
-    {
-        super( "Slice Viewer" );
+    public SliceViewer( VolumeObject volumeObject ) throws Exception {
+        super("Slice Viewer");
 
-        setBackground( Color.BLACK );
+        setBackground(Color.BLACK);
 
-        int zStride = Image3DUtil.getzStride();
-        ArrayList<DicomObject> dicomList = DicomInputOutput.readDir( "/home/oliver/dicom/series1", null, zStride );
-        //ArrayList<DicomObject> dicomList = DicomInputOutput.readDir( "/home/oliver/Desktop/Laufwerk_D/dicom/1578", null, Integer.parseInt(System.getProperty("de.sofd.viskit.image3d.sliceStart")), Integer.parseInt(System.getProperty("de.sofd.viskit.image3d.sliceCount")), Integer.parseInt(System.getProperty("de.sofd.viskit.image3d.sliceStride")) );
-        //ArrayList<DicomObject> dicomList = DicomInputOutput.readDir( "/home/oliver/Desktop/Laufwerk_D/dicom/1578", null, Integer.parseInt(System.getProperty("de.sofd.viskit.image3d.sliceStride")) );
+        sliceCanvas = new SliceCanvas(volumeObject);
 
-        ShortBuffer dataBuf = DicomUtil.getFilledShortBuffer( dicomList );
-        ShortRange range = ImageUtil.getRange( dataBuf );
-        ShortBuffer windowing = DicomUtil.getWindowing( dicomList, range );
-        
-        VolumeObject volumeObject = new VolumeObject( dicomList, windowing, dataBuf, zStride, range );
-        sliceCanvas = new SliceCanvas( volumeObject );
-        
-        getContentPane().setLayout( new BorderLayout() );
-        getContentPane().setBackground( Color.BLACK );
-        getContentPane().add( sliceCanvas, BorderLayout.CENTER );
+        getContentPane().setLayout(new BorderLayout());
+        getContentPane().setBackground(Color.BLACK);
+        getContentPane().add(sliceCanvas, BorderLayout.CENTER);
 
-        this.setSize( new Dimension( width, height ) );
-        //this.setMinimumSize( new Dimension( width, height ) );
+        this.setSize(new Dimension(width, height));
+        // this.setMinimumSize( new Dimension( width, height ) );
 
-        setLocationRelativeTo( null );
+        setLocationRelativeTo(null);
 
-        addWindowListener( new DefaultWindowAdapter(this) );
-        addMouseListener( this );
-        
-        GraphicsDevice[] devices
-            = GraphicsEnvironment.getLocalGraphicsEnvironment().getScreenDevices();
-        
-        for ( GraphicsDevice device : devices )
-        {
-            logger.info( "device : " + device.getIDstring() );
-            logger.info( device.toString() );
-            logger.info( "acc memory : " + device.getAvailableAcceleratedMemory() );
+        addWindowListener(new DefaultWindowAdapter(this));
+        addMouseListener(this);
+
+        GraphicsDevice[] devices = GraphicsEnvironment
+                .getLocalGraphicsEnvironment().getScreenDevices();
+
+        for (GraphicsDevice device : devices) {
+            logger.info("device : " + device.getIDstring());
+            logger.info(device.toString());
+            logger.info("acc memory : "
+                    + device.getAvailableAcceleratedMemory());
         }
 
     }
 
-    public SliceCanvas getSliceCanvas()
-    {
+    public SliceCanvas getSliceCanvas() {
         return sliceCanvas;
     }
 
     @Override
-    public void mouseClicked( MouseEvent arg0 )
-    {
+    public void mouseClicked(MouseEvent arg0) {
         // TODO Auto-generated method stub
-        
+
     }
 
     @Override
-    public void mouseEntered( MouseEvent arg0 )
-    {
+    public void mouseEntered(MouseEvent arg0) {
         this.requestFocus();
-        
+
     }
 
     @Override
-    public void mouseExited( MouseEvent arg0 )
-    {
+    public void mouseExited(MouseEvent arg0) {
         // TODO Auto-generated method stub
-        
+
     }
 
     @Override
-    public void mousePressed( MouseEvent arg0 )
-    {
+    public void mousePressed(MouseEvent arg0) {
         // TODO Auto-generated method stub
-        
+
     }
 
     @Override
-    public void mouseReleased( MouseEvent arg0 )
-    {
+    public void mouseReleased(MouseEvent arg0) {
         // TODO Auto-generated method stub
-        
+
     }
 
-    
 }

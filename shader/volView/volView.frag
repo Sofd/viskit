@@ -1,7 +1,7 @@
 #version 130
 
 uniform sampler3D volTex;
-uniform sampler3D gradientTex;
+//uniform sampler3D gradientTex;
 uniform sampler2D backTex;
 uniform sampler2D winTex;
 uniform sampler2D transferTex;
@@ -62,7 +62,7 @@ void main() {
 	
 	vec4 tfColor = vec4(0.0f);
 	vec2 tfCoord = vec2(0.0f);
-	vec4 gradColor = vec4(0.0f);
+	//vec4 gradColor = vec4(0.0f);
 	
 	for ( int i=0; i<steps; ++i )
 	{
@@ -73,7 +73,8 @@ void main() {
 		//tfCoord.y = texture(volTex, rayPos).r;
 		
 		tfColor = texture2D( transferTex, tfCoord );
-		if ( tfColor.a > 0.0f )
+		
+		/* if ( tfColor.a > 0.0f )
 		{
 			
 			vec4 G = ( texture( gradientTex, rayPos.xyz ) - vec4( 0.5f, 0.5f, 0.5f, 0.0f ) ) * vec4( 2.0f, 2.0f, 2.0f, 1.0f );
@@ -92,7 +93,7 @@ void main() {
 			}
 			
 			//tfColor.rgb = vec3(G.a) * tfColor.a;
-		}
+		}*/
 				
 		
 		

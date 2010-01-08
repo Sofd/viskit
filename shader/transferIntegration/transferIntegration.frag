@@ -23,8 +23,8 @@ void main() {
 	if ( tcMax != tcMin )
 	{
 		float delta = intTableSize * ( tcMax - tcMin );
-		ivec4 minCol = texture( intTable, tcMin );
-		ivec4 maxCol = texture( intTable, tcMax );
+		ivec4 minCol = ivec4(texture( intTable, tcMin ));
+		ivec4 maxCol = ivec4(texture( intTable, tcMax ));
 		
 		color.rgb = ( maxCol.rgb - minCol.rgb ) / ( 255.0f * delta );
 		color.a = 1 - exp( - ( maxCol.a - minCol.a ) / ( 255.0f * delta ) );

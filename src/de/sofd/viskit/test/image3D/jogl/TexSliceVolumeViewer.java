@@ -40,11 +40,11 @@ public class TexSliceVolumeViewer extends JFrame implements ChangeListener
 
         ArrayList<DicomObject> dicomList = DicomInputOutput.readDir( "/home/oliver/dicom/series1", null );
         
-        ShortBuffer dataBuf = DicomUtil.getFilledShortBuffer( dicomList );
-        ShortRange range = ImageUtil.getRange( dataBuf );
+        //ArrayList<ShortBuffer> dataBufList = DicomUtil.getFilledShortBufferList( dicomList );
+        ShortRange range = ImageUtil.getRangeFromDicomObjects( dicomList );
         ShortBuffer windowing = DicomUtil.getWindowing( dicomList, range );
         
-        VolumeObject volumeObject = new VolumeObject( dicomList, windowing, dataBuf, Image3DUtil.getzStride(), range );
+        VolumeObject volumeObject = new VolumeObject( dicomList, windowing, Image3DUtil.getzStride(), range );
         
         volumeView = new TexSliceVolumeView(volumeObject); 
         

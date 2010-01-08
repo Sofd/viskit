@@ -27,7 +27,7 @@ public class VolumeObject
     /**
      * Databuffer for 3D-Texture.
      */
-    protected ShortBuffer dataBuf;
+    protected ArrayList<DicomObject> dicomList;
 
     protected IntRange dimRange;
 
@@ -90,7 +90,7 @@ public class VolumeObject
     
     protected TransferIntegrationFrameBuffer tfFbo;
     
-    public VolumeObject( ArrayList<DicomObject> dicomList, ShortBuffer windowing, ShortBuffer dataBuf, int zStride,
+    public VolumeObject( ArrayList<DicomObject> dicomList, ShortBuffer windowing, int zStride,
             ShortRange range )
     {
         DicomObject refDicom = dicomList.get( 0 );
@@ -109,7 +109,7 @@ public class VolumeObject
         setSizeRange( new DoubleRange( Math.min( Math.min( getSizeX(), getSizeY() ), getSizeZ() ), Math.max( Math.max(
                 getSizeX(), getSizeY() ), getSizeZ() ) ) );
 
-        setDataBuf( dataBuf );
+        setDicomList( dicomList );
 
         setSliceCursor( new double[]
         {
@@ -132,7 +132,7 @@ public class VolumeObject
 
     }
 
-    public VolumeObject( vtkImageData imageData, ShortBuffer dataBuf, double[] sliceCursor )
+    public VolumeObject( vtkImageData imageData, ArrayList<ShortBuffer> dataBufList, double[] sliceCursor )
     {
         int[] dim = imageData.GetDimensions();
         double[] spacing = imageData.GetSpacing();
@@ -151,7 +151,7 @@ public class VolumeObject
 
         setRange( new ShortRange( (short)range[ 0 ], (short)range[ 1 ] ) );
 
-        setDataBuf( dataBuf );
+        setDicomList( dicomList );
         setSliceCursor( sliceCursor );
 
     }
@@ -278,13 +278,13 @@ public class VolumeObject
     public short getCursorValue()
     {
         double[] pos = getSliceCursor();
-        return dataBuf.get( getCurrentImage() * imageDim.getWidth() * imageDim.getHeight() + (int)pos[ 1 ]
-                * imageDim.getWidth() + (int)pos[ 0 ] );
+        //return dicomList.get( getCurrentImage() ).getShorts(Tag.PixelData)[ (int)pos[ 1 ] * imageDim.getWidth() + (int)pos[ 0 ] ];
+        return 0;
     }
 
-    public ShortBuffer getDataBuf()
+    public ArrayList<DicomObject> getDicomList()
     {
-        return dataBuf;
+        return dicomList;
     }
 
     public IntRange getDimRange()
@@ -444,7 +444,7 @@ public class VolumeObject
     
     public void loadTexture( GL2 gl ) 
     {
-        setTexId( GLUtil.get3DTexture( gl, dataBuf, imageDim.getWidth(), imageDim.getHeight(), getNrOfImages(), true ) );
+        setTexId( GLUtil.get3DTexture( gl, dicomList, imageDim.getWidth(), imageDim.getHeight(), getNrOfImages(), true ) );
     }
     
     public void loadTransferTexturePreIntegrated( GL2 gl ) throws Exception
@@ -475,9 +475,9 @@ public class VolumeObject
             windowing.put( i, orgWindowing.get( i ) );
     }
 
-    protected void setDataBuf( ShortBuffer dataBuf )
+    protected void setDicomList( ArrayList<DicomObject> dicomList )
     {
-        this.dataBuf = dataBuf;
+        this.dicomList = dicomList;
     }
 
     public void setDimRange( IntRange dimRange )

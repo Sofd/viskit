@@ -27,7 +27,7 @@ import de.sofd.viskit.image3D.util.*;
 public class SliceCanvas extends GLCanvas implements GLEventListener
 {
     protected static GLCapabilities caps;
-
+    
     protected static GLUgl2 glu;
     protected static GLUT glut;
 
