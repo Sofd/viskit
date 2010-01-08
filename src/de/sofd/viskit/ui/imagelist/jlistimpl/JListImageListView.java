@@ -2,6 +2,7 @@ package de.sofd.viskit.ui.imagelist.jlistimpl;
 
 import de.sofd.viskit.ui.imagelist.cellviewers.java2d.ImageListViewCellViewer;
 import de.sofd.util.Misc;
+import de.sofd.viskit.model.DicomImageListViewModelElement;
 import de.sofd.viskit.ui.imagelist.DefaultImageListViewCell;
 import de.sofd.viskit.ui.imagelist.ImageListViewCell;
 import de.sofd.viskit.model.ImageListViewModelElement;
@@ -34,6 +35,7 @@ import javax.swing.border.Border;
 import javax.swing.event.ListDataEvent;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
+import org.dcm4che2.data.Tag;
 
 /**
  * JImageListView implementation that uses an aggreagated {@link JList}.
@@ -141,9 +143,20 @@ public class JListImageListView extends JImageListView {
         }
         // TODO: possibly pull this up into the superclass and get rid of MyImageListViewCell
         public Dimension getUnscaledPreferredSize() {
-            BufferedImage img = getDisplayedModelElement().getImage();
-            return new Dimension(img.getWidth() + 2 * WrappedListCellRenderer.BORDER_WIDTH,
-                                 img.getHeight() + 2 * WrappedListCellRenderer.BORDER_WIDTH);
+            int w, h;
+            ImageListViewModelElement elt = getDisplayedModelElement();
+            if (elt instanceof DicomImageListViewModelElement) {
+                // performance optimization for this case -- read the values from DICOM metadata instead of getting the image
+                DicomImageListViewModelElement dicomElt = (DicomImageListViewModelElement) elt;
+                w = dicomElt.getDicomImageMetaData().getInt(Tag.Columns);
+                h = dicomElt.getDicomImageMetaData().getInt(Tag.Rows);
+            } else {
+                BufferedImage img = elt.getImage();
+                w = img.getWidth();
+                h = img.getHeight();
+            }
+            return new Dimension(w + 2 * WrappedListCellRenderer.BORDER_WIDTH,
+                                 h + 2 * WrappedListCellRenderer.BORDER_WIDTH);
         }
     }
 
@@ -422,9 +435,9 @@ public class JListImageListView extends JImageListView {
                     cell.setCenterOffset(0, 0);
                 }
                 if (resetImageSizes) {
-                    BufferedImage img = cell.getDisplayedModelElement().getImage();
-                    double scalex = ((double) wrappedList.getFixedCellWidth() - 2 * WrappedListCellRenderer.BORDER_WIDTH) / img.getWidth();
-                    double scaley = ((double) wrappedList.getFixedCellHeight() - 2 * WrappedListCellRenderer.BORDER_WIDTH) / img.getHeight();
+                    Dimension cz = cell.getUnscaledPreferredSize();
+                    double scalex = ((double) wrappedList.getFixedCellWidth() - 2 * WrappedListCellRenderer.BORDER_WIDTH) / cz.width;
+                    double scaley = ((double) wrappedList.getFixedCellHeight() - 2 * WrappedListCellRenderer.BORDER_WIDTH) / cz.height;
                     double scale = Math.min(scalex, scaley);
                     cell.setScale(scale);
                 }

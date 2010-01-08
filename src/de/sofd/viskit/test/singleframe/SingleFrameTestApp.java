@@ -73,7 +73,7 @@ public class SingleFrameTestApp {
 
     private static void setWindowingToDcm(ImageListViewCell cell) {
         DicomImageListViewModelElement elt = (DicomImageListViewModelElement) cell.getDisplayedModelElement();
-        DicomObject dobj = elt.getDicomObject();
+        DicomObject dobj = elt.getDicomImageMetaData();
         if (dobj.contains(Tag.WindowCenter) && dobj.contains(Tag.WindowWidth)) {
             cell.setWindowLocation((int) dobj.getFloat(Tag.WindowCenter));
             cell.setWindowWidth((int) dobj.getFloat(Tag.WindowWidth));
@@ -85,6 +85,7 @@ public class SingleFrameTestApp {
         File[] files = dir.listFiles();
         Arrays.sort(files);
         for (File f: files) {
+            if (!f.getName().toLowerCase().endsWith(".dcm")) { continue; }
             result.addElement(new FileBasedDicomImageListViewModelElement(f));
         }
         System.err.println("" + result.size() + " images found in " + dir);
