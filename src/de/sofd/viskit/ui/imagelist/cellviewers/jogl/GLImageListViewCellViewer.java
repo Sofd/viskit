@@ -197,6 +197,12 @@ public class GLImageListViewCellViewer extends BaseImageListViewCellViewer {
     }
 
     @Override
+    public void setDisplayedCell(ImageListViewCell displayedCell) {
+        super.setDisplayedCell(displayedCell);
+        repaint();
+    }
+
+    @Override
     protected void processMouseEvent(MouseEvent e) {
         System.out.println("GLImgCellViewer processMouseEvent " + e);
         super.processMouseEvent(e);

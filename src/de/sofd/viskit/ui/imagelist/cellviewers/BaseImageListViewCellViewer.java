@@ -17,7 +17,7 @@ import org.dcm4che2.data.Tag;
  */
 public abstract class BaseImageListViewCellViewer extends JPanel {
 
-    protected final ImageListViewCell displayedCell;
+    protected ImageListViewCell displayedCell;
 
     public BaseImageListViewCellViewer(ImageListViewCell cell) {
         this.displayedCell = cell;
@@ -25,6 +25,10 @@ public abstract class BaseImageListViewCellViewer extends JPanel {
 
     public ImageListViewCell getDisplayedCell() {
         return displayedCell;
+    }
+
+    public void setDisplayedCell(ImageListViewCell displayedCell) {
+        this.displayedCell = displayedCell;
     }
 
     public int getOriginalImageWidth() {

@@ -26,6 +26,11 @@ public class ImageListViewCellViewer extends BaseImageListViewCellViewer {
         super(cell);
     }
 
+    @Override
+    public void setDisplayedCell(ImageListViewCell displayedCell) {
+        super.setDisplayedCell(displayedCell);
+        repaint();
+    }
 
     protected BufferedImage getWindowedImage() {
         // TODO: caching of windowed images, probably using

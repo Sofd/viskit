@@ -225,24 +225,36 @@ public class JGridImageListView extends JImageListView {
     class WrappedGridListComponentFactory extends AbstractFramedSelectionGridListComponentFactory {
 
         @Override
+        public boolean canReuseComponents() {
+            return rendererType == RendererType.OPENGL;
+        }
+
+        @Override
         public JComponent createComponent(JGridList source, JPanel parent, Object modelItem) {
             ImageListViewModelElement elt = (ImageListViewModelElement) modelItem;
             ImageListViewCell cell = getCellForElement(elt);
             JComponent resultComponent = null;
-            switch (rendererType) {
-                case JAVA2D:
-                    resultComponent = new ImageListViewCellViewer(cell);
-                    break;
+            if (parent.getComponentCount() == 0) {
+                switch (rendererType) {
+                    case JAVA2D:
+                        resultComponent = new ImageListViewCellViewer(cell);
+                        break;
 
-                case OPENGL:
-                    resultComponent = new GLImageListViewCellViewer(cell);
-                    break;
+                    case OPENGL:
+                        resultComponent = new GLImageListViewCellViewer(cell);
+                        break;
+                }
+                resultComponent.setVisible(true);
+                parent.add(resultComponent);
+                //resultComponent.addMouseListener(gridComponentMouseHandler);
+                //resultComponent.addMouseMotionListener(gridComponentMouseHandler);
+                //resultComponent.addMouseWheelListener(gridComponentMouseHandler);
+            } else {
+                assert(rendererType == RendererType.OPENGL);
+                resultComponent = (JComponent) parent.getComponent(0);
+                ((GLImageListViewCellViewer) resultComponent).setDisplayedCell(cell);
             }
-            resultComponent.setVisible(true);
-            parent.add(resultComponent);
-            //resultComponent.addMouseListener(gridComponentMouseHandler);
-            //resultComponent.addMouseMotionListener(gridComponentMouseHandler);
-            //resultComponent.addMouseWheelListener(gridComponentMouseHandler);
+
             return resultComponent;
         }
 
