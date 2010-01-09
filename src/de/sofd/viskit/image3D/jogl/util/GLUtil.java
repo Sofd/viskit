@@ -140,7 +140,7 @@ public class GLUtil {
         return texId[0];
     }
 
-    public static int get3DTexture(GL2 gl, ArrayList<DicomObject> dicomList, int width, int height, int depth, boolean trilinear) {
+    public static int get3DTexture(GL2 gl, ShortBuffer dataBuf, int width, int height, int depth, boolean trilinear) {
         int[] texId = new int[1];
 
         gl.glEnable(GL_TEXTURE_3D);
@@ -156,25 +156,8 @@ public class GLUtil {
         gl.glGenTextures(1, texId, 0);
         gl.glBindTexture(GL_TEXTURE_3D, texId[0]);
 
-        // gl.glTexImage3D(GL_TEXTURE_3D, 0, GL_LUMINANCE16F, width, height,
-        // depth, 0, GL_LUMINANCE, GL_SHORT, null);
-        gl.glTexImage3D(GL_TEXTURE_3D, 0, GL_LUMINANCE8, width, height, depth, 0, GL_LUMINANCE, GL_SHORT, null);
-
-        try {
-            int zOffSet = 0;
-            for (DicomObject dicomObject : dicomList) {
-                System.out.println("load buffer " + zOffSet);
-                
-                ShortBuffer buffer = ShortBuffer.allocate(width * height);
-                buffer.put(dicomObject.getShorts(Tag.PixelData));
-                buffer.rewind();
-                
-                gl.glTexSubImage3D(GL_TEXTURE_3D, 0, 0, 0, zOffSet++, width, height, 1, GL_LUMINANCE, GL_SHORT, buffer);
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-            System.exit(-1);
-        }
+        gl.glTexImage3D(GL_TEXTURE_3D, 0, GL_LUMINANCE16F, width, height, depth, 0, GL_LUMINANCE, GL_SHORT, dataBuf);
+        //gl.glTexImage3D(GL_TEXTURE_3D, 0, GL_LUMINANCE8, width, height, depth, 0, GL_LUMINANCE, GL_SHORT, dataBuf);
 
         gl.glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
         gl.glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);

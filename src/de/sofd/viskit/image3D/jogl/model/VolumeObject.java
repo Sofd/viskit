@@ -27,7 +27,7 @@ public class VolumeObject
     /**
      * Databuffer for 3D-Texture.
      */
-    protected ArrayList<DicomObject> dicomList;
+    protected ShortBuffer dataBuf;
 
     protected IntRange dimRange;
 
@@ -90,7 +90,7 @@ public class VolumeObject
     
     protected TransferIntegrationFrameBuffer tfFbo;
     
-    public VolumeObject( ArrayList<DicomObject> dicomList, ShortBuffer windowing, int zStride,
+    public VolumeObject( ArrayList<DicomObject> dicomList, ShortBuffer windowing, ShortBuffer dataBuf, int zStride,
             ShortRange range )
     {
         DicomObject refDicom = dicomList.get( 0 );
@@ -109,7 +109,7 @@ public class VolumeObject
         setSizeRange( new DoubleRange( Math.min( Math.min( getSizeX(), getSizeY() ), getSizeZ() ), Math.max( Math.max(
                 getSizeX(), getSizeY() ), getSizeZ() ) ) );
 
-        setDicomList( dicomList );
+        setDataBuf( dataBuf );
 
         setSliceCursor( new double[]
         {
@@ -151,7 +151,7 @@ public class VolumeObject
 
         setRange( new ShortRange( (short)range[ 0 ], (short)range[ 1 ] ) );
 
-        setDicomList( dicomList );
+        setDataBuf( dataBuf );
         setSliceCursor( sliceCursor );
 
     }
@@ -278,13 +278,13 @@ public class VolumeObject
     public short getCursorValue()
     {
         double[] pos = getSliceCursor();
-        //return dicomList.get( getCurrentImage() ).getShorts(Tag.PixelData)[ (int)pos[ 1 ] * imageDim.getWidth() + (int)pos[ 0 ] ];
-        return 0;
+        
+        return dataBuf.get( getCurrentImage() * imageDim.getWidth() * imageDim.getHeight() +  (int)pos[ 1 ] * imageDim.getWidth() + (int)pos[ 0 ] );
     }
 
-    public ArrayList<DicomObject> getDicomList()
+    public ShortBuffer getDataBuf()
     {
-        return dicomList;
+        return dataBuf;
     }
 
     public IntRange getDimRange()
@@ -444,7 +444,7 @@ public class VolumeObject
     
     public void loadTexture( GL2 gl ) 
     {
-        setTexId( GLUtil.get3DTexture( gl, dicomList, imageDim.getWidth(), imageDim.getHeight(), getNrOfImages(), true ) );
+        setTexId( GLUtil.get3DTexture( gl, dataBuf, imageDim.getWidth(), imageDim.getHeight(), getNrOfImages(), true ) );
     }
     
     public void loadTransferTexturePreIntegrated( GL2 gl ) throws Exception
@@ -475,9 +475,9 @@ public class VolumeObject
             windowing.put( i, orgWindowing.get( i ) );
     }
 
-    protected void setDicomList( ArrayList<DicomObject> dicomList )
+    protected void setDataBuf( ShortBuffer dataBuf )
     {
-        this.dicomList = dicomList;
+        this.dataBuf = dataBuf;
     }
 
     public void setDimRange( IntRange dimRange )

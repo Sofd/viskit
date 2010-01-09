@@ -70,17 +70,16 @@ public class GPUVolumeViewer extends JFrame implements MouseListener
                 {
                 
                     int zStride = Image3DUtil.getzStride();
-                    //ArrayList<DicomObject> dicomList = DicomInputOutput.readDir( "/home/oliver/dicom/series1", null, zStride );
-                    ArrayList<DicomObject> dicomList = DicomInputOutput.readDir( "/home/oliver/dicom/1578", null, Integer.parseInt(System.getProperty("de.sofd.viskit.image3d.sliceStart")), Integer.parseInt(System.getProperty("de.sofd.viskit.image3d.sliceCount")), Integer.parseInt(System.getProperty("de.sofd.viskit.image3d.sliceStride")) );
+                    ArrayList<DicomObject> dicomList = DicomInputOutput.readDir( "/home/oliver/dicom/series1", null, zStride );
+                    //ArrayList<DicomObject> dicomList = DicomInputOutput.readDir( "/home/oliver/dicom/1578", null, Integer.parseInt(System.getProperty("de.sofd.viskit.image3d.sliceStart")), Integer.parseInt(System.getProperty("de.sofd.viskit.image3d.sliceCount")), Integer.parseInt(System.getProperty("de.sofd.viskit.image3d.sliceStride")) );
                     //ArrayList<DicomObject> dicomList = DicomInputOutput.readDir( "/home/oliver/dicom/1578", null, Integer.parseInt(System.getProperty("de.sofd.viskit.image3d.sliceStride")) );
 
-                    //ArrayList<ShortBuffer> dataBufList = DicomUtil.getFilledShortBufferList( dicomList );
-                    //ShortRange range = ImageUtil.getRangeFromDicomObjects( dicomList );
-                    ShortRange range = new ShortRange((short)-32000, (short)32000);
+                    ShortBuffer dataBuf = DicomUtil.getFilledShortBuffer( dicomList );
+                    ShortRange range = ImageUtil.getRange( dataBuf );
                     
                     ShortBuffer windowing = DicomUtil.getWindowing( dicomList, range );
                     
-                    VolumeObject volumeObject = new VolumeObject( dicomList, windowing, zStride, range );
+                    VolumeObject volumeObject = new VolumeObject( dicomList, windowing, dataBuf, zStride, range );
                     
                     dicomList = null;
                                         
