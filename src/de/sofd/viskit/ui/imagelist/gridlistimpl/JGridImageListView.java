@@ -3,17 +3,22 @@ package de.sofd.viskit.ui.imagelist.gridlistimpl;
 import de.sofd.swing.AbstractFramedSelectionGridListComponentFactory;
 import de.sofd.swing.JGridList;
 import de.sofd.util.Misc;
+import de.sofd.viskit.model.DicomImageListViewModelElement;
 import de.sofd.viskit.ui.imagelist.ImageListViewCell;
 import de.sofd.viskit.model.ImageListViewModelElement;
 import de.sofd.viskit.ui.imagelist.JImageListView;
 import de.sofd.viskit.ui.imagelist.cellviewers.jogl.GLImageListViewCellViewer;
 import de.sofd.viskit.ui.imagelist.cellviewers.java2d.ImageListViewCellViewer;
+import java.awt.Dimension;
 import java.awt.GridLayout;
 import java.awt.Point;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
 import java.awt.event.InputEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelEvent;
+import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 import java.util.Collection;
 import javax.swing.DefaultListModel;
@@ -22,6 +27,7 @@ import javax.swing.JPanel;
 import javax.swing.ListModel;
 import javax.swing.SwingUtilities;
 import javax.swing.event.ListDataEvent;
+import org.dcm4che2.data.Tag;
 
 /**
  * JImageListView implementation that uses an aggreagated {@link JGridList}.
@@ -61,6 +67,17 @@ public class JGridImageListView extends JImageListView {
         wrappedGridList.addMouseListener(wholeGridTestMouseHandler);
         wrappedGridList.addMouseMotionListener(wholeGridTestMouseHandler);
         wrappedGridList.addMouseWheelListener(wholeGridTestMouseHandler);
+        wrappedGridList.addComponentListener(new ComponentAdapter() {
+            @Override
+            public void componentResized(ComponentEvent e) {
+                updateCellSizes(true, false);
+                // TODO: what you may rather want is to reset scale and translation,
+                //   but only if they weren't changed manually before? But when would
+                //   you reset the scale/translation at all then? By manual user
+                //   request? Shouldn't all this logic be externalized into controllers
+                //   as well?
+            }
+        });
     }
 
     @Override
@@ -85,6 +102,7 @@ public class JGridImageListView extends JImageListView {
         for (int i = e.getIndex0(); i <= e.getIndex1(); i++) {
             wrappedGridListModel.add(i, getModel().getElementAt(i));
         }
+        // TODO: set initial scale
     }
 
     @Override
@@ -187,16 +205,51 @@ public class JGridImageListView extends JImageListView {
     protected void doSetScaleMode(ScaleMode oldScaleMode, ScaleMode newScaleMode) {
         MyScaleMode sm = (MyScaleMode) newScaleMode;
         wrappedGridList.setGridSizes(sm.getCellColumnCount(), sm.getCellRowCount());
-        int count = getModel().getSize();
-        for (int i = 0; i < count; i++) {
-            ImageListViewCell cell = getCell(i);
-            cell.setCenterOffset(0, 0);
-            //BufferedImage img = cell.getDisplayedModelElement().getImage();
-            //double scalex = ((double) wrappedList.getFixedCellWidth() - 2 * WrappedListCellRenderer.BORDER_WIDTH) / img.getWidth();
-            //double scaley = ((double) wrappedList.getFixedCellHeight() - 2 * WrappedListCellRenderer.BORDER_WIDTH) / img.getHeight();
-            //double scale = Math.min(scalex, scaley);
-            //cell.setScale(scale);
+        updateCellSizes(true, true);
+    }
+
+
+    protected void updateCellSizes(boolean resetImageSizes, boolean resetImageTranslations) {
+        if (resetImageSizes || resetImageTranslations) {
+            if (getModel() == null || getModel().getSize() == 0) {
+                return;
+            }
+            final int borderWidth = 2;   // border width of the cells -- TODO: get from WrappedGridListComponentFactory
+            Dimension cellImgDisplaySize = new Dimension(wrappedGridList.getSize().width / getScaleMode().getCellColumnCount() - 2 * borderWidth,
+                                                         wrappedGridList.getSize().height / getScaleMode().getCellRowCount()- 2 * borderWidth);
+            int count = getModel().getSize();
+            for (int i = 0; i < count; i++) {
+                ImageListViewCell cell = getCell(i);
+                if (resetImageTranslations) {
+                    cell.setCenterOffset(0, 0);
+                }
+                if (resetImageSizes) {
+                    Dimension cz = getUnscaledPreferredCellSize(cell);
+                    double scalex = ((double) cellImgDisplaySize.width) / (cz.width - 2 * borderWidth);
+                    double scaley = ((double) cellImgDisplaySize.height) / (cz.height - 2 * borderWidth);
+                    double scale = Math.min(scalex, scaley);
+                    cell.setScale(scale);
+                }
+            }
         }
+    }
+
+    protected Dimension getUnscaledPreferredCellSize(ImageListViewCell cell) {
+        int w, h;
+        ImageListViewModelElement elt = cell.getDisplayedModelElement();
+        if (elt instanceof DicomImageListViewModelElement) {
+            // performance optimization for this case -- read the values from DICOM metadata instead of getting the image
+            DicomImageListViewModelElement dicomElt = (DicomImageListViewModelElement) elt;
+            w = dicomElt.getDicomImageMetaData().getInt(Tag.Columns);
+            h = dicomElt.getDicomImageMetaData().getInt(Tag.Rows);
+        } else {
+            BufferedImage img = elt.getImage();
+            w = img.getWidth();
+            h = img.getHeight();
+        }
+        final int borderWidth = 2;   // border width of the cells -- TODO: get from WrappedGridListComponentFactory
+        return new Dimension(w + 2 * borderWidth,
+                             h + 2 * borderWidth);
     }
 
     @Override
