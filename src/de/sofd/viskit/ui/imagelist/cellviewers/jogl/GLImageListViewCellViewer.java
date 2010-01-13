@@ -314,8 +314,15 @@ public class GLImageListViewCellViewer extends BaseImageListViewCellViewer {
             gl.glScaled(displayedCell.getScale(), displayedCell.getScale(), 0);
             rescaleShader.bind();  // TODO: rescaleShader's internal gl may be outdated here...?
             rescaleShader.bindUniform("tex", 0);
-            rescaleShader.bindUniform("scale", 1.0f);
-            rescaleShader.bindUniform("offset", 0.0f);
+            {
+                float nGrayvalues = 65536F;
+                float wl = displayedCell.getWindowLocation() / nGrayvalues;
+                float ww = displayedCell.getWindowWidth() / nGrayvalues;
+                float scale = 1F/ww;
+                float offset = (ww/2-wl)*scale;
+                rescaleShader.bindUniform("scale", scale);
+                rescaleShader.bindUniform("offset", offset);
+            }
             ImageTextureManager.TextureRef texRef = ImageTextureManager.bindImageTexture(sharedContextData, getDisplayedCell().getDisplayedModelElement());
             gl.glTexEnvi(GL2.GL_TEXTURE_ENV, GL2.GL_TEXTURE_ENV_MODE, gl.GL_REPLACE);
             TextureCoords coords = texRef.getCoords();
