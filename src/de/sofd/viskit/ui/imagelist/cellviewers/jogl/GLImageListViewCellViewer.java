@@ -242,7 +242,8 @@ public class GLImageListViewCellViewer extends BaseImageListViewCellViewer {
             @Override
             public void run(SharedContextData cd, GL gl1) {
                 try {
-                    GL2 gl = new DebugGL2(gl1.getGL2());
+                    //GL2 gl = new DebugGL2(gl1.getGL2());
+                    GL2 gl = gl1.getGL2();
                     ShaderManager.read(gl, "rescaleop");
                     GLShader rescaleShader = (GLShader) ShaderManager.get("rescaleop");
                     cd.setAttribute("rescaleShader", rescaleShader);
