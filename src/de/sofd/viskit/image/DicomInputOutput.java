@@ -10,6 +10,7 @@ import org.dcm4che2.data.*;
 import org.dcm4che2.io.DicomInputStream;
 import org.dcm4che2.io.StopTagInputHandler;
 
+import de.sofd.util.properties.*;
 import de.sofd.viskit.image3D.model.*;
 
 /**
@@ -149,7 +150,7 @@ public class DicomInputOutput {
 
     public static VolumeConfig readVolumeConfig(String dirPath)
             throws Exception {
-        VolumeConfig volumeConfig = new VolumeConfig();
+        VolumeConfig volumeConfig = new VolumeConfig(new ExtendedProperties("volume-config.properties"));
 
         File dir = new File(dirPath);
 
@@ -160,6 +161,8 @@ public class DicomInputOutput {
         int nrOfImages = 0;
         double thickness = 0;
 
+        VolumeBasicConfig basicConfig = volumeConfig.getBasicConfig();
+        
         for (File file : dir.listFiles()) {
             if (file.isDirectory())
                 continue;
@@ -174,38 +177,38 @@ public class DicomInputOutput {
             dis = null;
 
             nrOfImages++;
-
+            
             if (imageNr == 1) {
                 dis = new DicomInputStream(file);
                 DicomObject dicomObject = dis.readDicomObject();
 
-                volumeConfig.setSeriesName(dicomObject
+                basicConfig.setSeriesName(dicomObject
                         .getString(Tag.SeriesDescription));
-                volumeConfig.setPixelWidth(dicomObject.getInt(Tag.Columns));
-                volumeConfig.setPixelHeight(dicomObject.getInt(Tag.Rows));
+                basicConfig.setPixelWidth(dicomObject.getInt(Tag.Columns));
+                basicConfig.setPixelHeight(dicomObject.getInt(Tag.Rows));
 
                 double[] ps = dicomObject.getDoubles(Tag.PixelSpacing);
                 thickness = dicomObject.getDouble(Tag.SliceThickness);
 
-                volumeConfig.setWidth(ps[0] * volumeConfig.getPixelWidth());
-                volumeConfig.setHeight(ps[1] * volumeConfig.getPixelHeight());
+                basicConfig.setWidth(ps[0] * basicConfig.getPixelWidth());
+                basicConfig.setHeight(ps[1] * basicConfig.getPixelHeight());
                 
-                volumeConfig.setPixelFormatBits(dicomObject.getInt(Tag.BitsAllocated));
-                volumeConfig.setInternalPixelFormatBits(volumeConfig.getPixelFormatBits());
-                volumeConfig.setWindowingTargetPixelFormat(volumeConfig.getPixelFormatBits());
+                basicConfig.setPixelFormatBits(dicomObject.getInt(Tag.BitsAllocated));
+                basicConfig.setInternalPixelFormatBits(basicConfig.getPixelFormatBits());
+                volumeConfig.getWindowingConfig().setTargetPixelFormat(basicConfig.getPixelFormatBits());
                 
                 short windowCenter = (short)dicomObject.getFloat(Tag.WindowCenter);
                 short windowWidth = (short)dicomObject.getFloat(Tag.WindowWidth);
-                volumeConfig.setOriginalWindowingExists(windowCenter != 0 || windowWidth != 0);
+                basicConfig.setOriginalWindowingExists(windowCenter != 0 || windowWidth != 0);
                 
                 dis.close();
             }
         }
 
-        volumeConfig.setSlices(nrOfImages);
-        volumeConfig.setDepth(nrOfImages * thickness);
+        basicConfig.setSlices(nrOfImages);
+        basicConfig.setDepth(nrOfImages * thickness);
         
-        volumeConfig.setImageEnd(nrOfImages);
+        basicConfig.setImageEnd(nrOfImages);
 
         return volumeConfig;
     }

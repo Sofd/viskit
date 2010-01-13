@@ -23,6 +23,6 @@ void main() {
 		
 	vec3 color = texture( transferTex, tfCoord ).rgb;	
 	
-	//gl_FragColor = vec4( color.r, color.g, color.b, 1.0f );
-	gl_FragColor = vec4( tfCoord, tfCoord, tfCoord, 1.0f );
+	gl_FragColor = vec4( color.r, color.g, color.b, 1.0f );
+	//gl_FragColor = vec4( tfCoord, tfCoord, tfCoord, 1.0f );
 } 

@@ -1,228 +1,122 @@
 package de.sofd.viskit.image3D.model;
 
+import de.sofd.util.properties.*;
+import de.sofd.viskit.image3D.model.VolumeGradientsConfig.*;
+import de.sofd.viskit.image3D.model.VolumeSmoothingConfig.*;
+import de.sofd.viskit.image3D.model.VolumeWindowingConfig.*;
+
 public class VolumeConfig {
 
-    public enum TransferModification {
-        TRANSFER_MODIFICATION_INTERACTIVE, TRANSFER_MODIFICATION_PREDEFINED_ONLY, TRANSFER_MODIFICATION_NO
+    protected int availableGraphicsMemory = 768;
+    
+    protected VolumeBasicConfig basicConfig;
+
+    protected VolumeGradientsConfig gradientsConfig;
+
+    protected VolumeSmoothingConfig smoothingConfig;
+
+    protected VolumeTransferConfig transferConfig;
+
+    protected VolumeWindowingConfig windowingConfig;
+
+    public VolumeConfig(ExtendedProperties properties) {
+        basicConfig = new VolumeBasicConfig(properties);
+        gradientsConfig = new VolumeGradientsConfig(properties);
+        smoothingConfig = new VolumeSmoothingConfig(properties);
+        transferConfig = new VolumeTransferConfig(properties);
+        windowingConfig = new VolumeWindowingConfig(properties);
+        
+        this.availableGraphicsMemory = properties.getI("volumeConfig.availableGraphicsMemory");
     }
 
-    public enum TransferType {
-        TRANSFER_TYPE_1D_AND_2D, TRANSFER_TYPE_1D_ONLY, TRANSFER_TYPE_2D_ONLY
+    public int getAvailableGraphicsMemory() {
+        return availableGraphicsMemory;
     }
 
-    public enum WindowingModification {
-        WINDOWING_MODIFICATION_SLICE_AND_VOLUME_VIEW, WINDOWING_MODIFICATION_SLICE_VIEW_ONLY, WINDOWING_MODIFICATION_NO
+    public VolumeBasicConfig getBasicConfig() {
+        return basicConfig;
     }
 
-    public enum WindowingUsage {
-        WINDOWING_USAGE_ORIGINAL, WINDOWING_USAGE_RANGE_GLOBAL, WINDOWING_USAGE_NO
+    public VolumeGradientsConfig getGradientsConfig() {
+        return gradientsConfig;
     }
 
-    protected String seriesName;
-
-    protected int pixelWidth;
-    protected int pixelHeight;
-    protected int slices;
-
-    protected int pixelFormatBits;
-
-    protected double width;
-    protected double height;
-    protected double depth;
-
-    protected int imageStart = 1;
-    protected int imageEnd;
-    protected int imageStride = 1;
-
-    protected int internalPixelFormatBits;
-
-    protected boolean originalWindowingExists;
-    protected WindowingUsage windowingUsage;
-    protected boolean usePreCalculatedWindowing = false;
-    protected int windowingTargetPixelFormat;
-    protected WindowingModification windowingModification;
-
-    protected boolean transferApplyOnlyInVolumeView = false;
-    protected TransferModification transferModification;
-    protected TransferType transferType;
-
-    public double getDepth() {
-        return depth;
-    }
-
-    public double getHeight() {
-        return height;
-    }
-
-    public int getImageEnd() {
-        return imageEnd;
-    }
-
-    public int getImageStart() {
-        return imageStart;
-    }
-
-    public int getImageStride() {
-        return imageStride;
-    }
-
-    public int getInternalPixelFormatBits() {
-        return internalPixelFormatBits;
-    }
-
-    private int getNrOfLoadedImages() {
-        return ((imageEnd - imageStart + 1) / imageStride);
-    }
-
-    public int getPixelFormatBits() {
-        return pixelFormatBits;
-    }
-
-    public int getPixelHeight() {
-        return pixelHeight;
-    }
-
-    public int getPixelWidth() {
-        return pixelWidth;
-    }
-
-    public String getSeriesName() {
-        return seriesName;
-    }
-
-    public int getSlices() {
-        return slices;
-    }
-
-    public TransferModification getTransferModification() {
-        return transferModification;
-    }
-
-    public TransferType getTransferType() {
-        return transferType;
-    }
-
-    public int getVolumeStorage() {
-        int nrOfLoadedImages = getNrOfLoadedImages();
-
-        return (int) (pixelWidth * pixelHeight * nrOfLoadedImages * (internalPixelFormatBits / 8.0));
-    }
-
-    public double getWidth() {
-        return width;
-    }
-
-    public WindowingModification getWindowingModification() {
-        return windowingModification;
-    }
-
-    public int getWindowingStorage() {
-        if (windowingUsage == WindowingUsage.WINDOWING_USAGE_NO || !usePreCalculatedWindowing)
+    public long getGradientsMemory() {
+        if (!gradientsConfig.isUsing() || gradientsConfig.getStorage() == GradientsStorage.GRADIENTS_STORAGE_NO)
             return 0;
 
-        int nrOfLoadedImages = getNrOfLoadedImages();
+        int nrOfLoadedImages = basicConfig.getNrOfLoadedImages();
 
-        return (int) (pixelWidth * pixelHeight * nrOfLoadedImages * (windowingTargetPixelFormat / 8.0));
+        int nrOfComponents = (gradientsConfig.getStorage() == GradientsStorage.GRADIENTS_STORAGE_4_COMPONENTS ? 4 : 3);
+        int nrOfBytes = (getGradientsConfig().getInternalFormat() == 32 ? 4 : getGradientsConfig().getInternalFormat() / 4 - 1);
+        
+        System.out.println("size " + basicConfig.getPixelWidth() * basicConfig.getPixelHeight());
+        System.out.println("images " + nrOfLoadedImages + " comp : " + nrOfComponents + ", bytes : " + nrOfBytes);
+        System.out.println("mem " + ((long)basicConfig.getPixelWidth() * basicConfig.getPixelHeight() * nrOfLoadedImages * nrOfComponents * nrOfBytes));
+
+        return ((long)basicConfig.getPixelWidth() * basicConfig.getPixelHeight() * nrOfLoadedImages * nrOfComponents * nrOfBytes);
     }
 
-    public int getWindowingTargetPixelFormat() {
-        return windowingTargetPixelFormat;
+    public VolumeSmoothingConfig getSmoothingConfig() {
+        return smoothingConfig;
     }
 
-    public WindowingUsage getWindowingUsage() {
-        return windowingUsage;
+    public long getSmoothingMemory() {
+        if (smoothingConfig.getUsage() == SmoothingUsage.SMOOTHING_USAGE_NO)
+            return 0;
+
+        int nrOfLoadedImages = basicConfig.getNrOfLoadedImages();
+
+        int nrOfBit = (smoothingConfig.getCalculation() == SmoothingCalculation.SMOOTHING_CALCULATION_ON_ORIGINAL_DATA ? basicConfig.getInternalPixelFormatBits() : windowingConfig.getTargetPixelFormat()  );
+
+        return (((long)basicConfig.getPixelWidth() * basicConfig.getPixelHeight() * nrOfLoadedImages * nrOfBit ) / 8);
     }
 
-    public boolean isOriginalWindowingExists() {
-        return originalWindowingExists;
+    public VolumeTransferConfig getTransferConfig() {
+        return transferConfig;
     }
 
-    public boolean isTransferApplyOnlyInVolumeView() {
-        return transferApplyOnlyInVolumeView;
+    public long getVolumeMemory() {
+        int nrOfLoadedImages = basicConfig.getNrOfLoadedImages();
+
+        return (((long)basicConfig.getPixelWidth() * basicConfig.getPixelHeight() * nrOfLoadedImages * basicConfig.getInternalPixelFormatBits() )/ 8);
     }
 
-    public boolean isUsePreCalculatedWindowing() {
-        return usePreCalculatedWindowing;
+    public VolumeWindowingConfig getWindowingConfig() {
+        return windowingConfig;
     }
 
-    public void setDepth(double depth) {
-        this.depth = depth;
+    public long getWindowingMemory() {
+        if (windowingConfig.getUsage() == WindowingUsage.WINDOWING_USAGE_NO || !windowingConfig.isUsePreCalculated())
+            return 0;
+
+        int nrOfLoadedImages = basicConfig.getNrOfLoadedImages();
+
+        return (((long)basicConfig.getPixelWidth() * basicConfig.getPixelHeight() * nrOfLoadedImages * windowingConfig.getTargetPixelFormat()) / 8);
     }
 
-    public void setHeight(double height) {
-        this.height = height;
+    public void setAvailableGraphicsMemory(int availableGraphicsMemory) {
+        this.availableGraphicsMemory = availableGraphicsMemory;
     }
 
-    public void setImageEnd(int imageEnd) {
-        this.imageEnd = imageEnd;
+    public void setBasicConfig(VolumeBasicConfig basicConfig) {
+        this.basicConfig = basicConfig;
     }
 
-    public void setImageStart(int imageStart) {
-        this.imageStart = imageStart;
+    public void setGradientsConfig(VolumeGradientsConfig gradientsConfig) {
+        this.gradientsConfig = gradientsConfig;
     }
 
-    public void setImageStride(int imageStride) {
-        this.imageStride = imageStride;
+    public void setSmoothingConfig(VolumeSmoothingConfig smoothingConfig) {
+        this.smoothingConfig = smoothingConfig;
     }
 
-    public void setInternalPixelFormatBits(int internalPixelFormatBits) {
-        this.internalPixelFormatBits = internalPixelFormatBits;
+    public void setTransferConfig(VolumeTransferConfig transferConfig) {
+        this.transferConfig = transferConfig;
     }
 
-    public void setOriginalWindowingExists(boolean originalWindowingExists) {
-        this.originalWindowingExists = originalWindowingExists;
-    }
-
-    public void setPixelFormatBits(int pixelFormatBits) {
-        this.pixelFormatBits = pixelFormatBits;
-    }
-
-    public void setPixelHeight(int pixelHeight) {
-        this.pixelHeight = pixelHeight;
-    }
-
-    public void setPixelWidth(int pixelWidth) {
-        this.pixelWidth = pixelWidth;
-    }
-
-    public void setSeriesName(String seriesName) {
-        this.seriesName = seriesName;
-    }
-
-    public void setSlices(int slices) {
-        this.slices = slices;
-    }
-
-    public void setTransferApplyOnlyInVolumeView(boolean transferApplyOnlyInVolumeView) {
-        this.transferApplyOnlyInVolumeView = transferApplyOnlyInVolumeView;
-    }
-
-    public void setTransferModification(TransferModification transferModification) {
-        this.transferModification = transferModification;
-    }
-
-    public void setTransferType(TransferType transferType) {
-        this.transferType = transferType;
-    }
-
-    public void setUsePreCalculatedWindowing(boolean usePreCalculatedWindowing) {
-        this.usePreCalculatedWindowing = usePreCalculatedWindowing;
-    }
-
-    public void setWidth(double width) {
-        this.width = width;
-    }
-
-    public void setWindowingModification(WindowingModification windowingModification) {
-        this.windowingModification = windowingModification;
-    }
-
-    public void setWindowingTargetPixelFormat(int windowingTargetPixelFormat) {
-        this.windowingTargetPixelFormat = windowingTargetPixelFormat;
-    }
-
-    public void setWindowingUsage(WindowingUsage windowingUsage) {
-        this.windowingUsage = windowingUsage;
+    public void setWindowingConfig(VolumeWindowingConfig windowingConfig) {
+        this.windowingConfig = windowingConfig;
     }
 
 }
