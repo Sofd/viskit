@@ -43,8 +43,7 @@ public class VolumeConfigFrame extends JFrame {
             public void run() {
 
                 try {
-                    VolumeConfig volumeConfig = DicomInputOutput.readVolumeConfig("/home/oliver/dicom/series1");
-                    //VolumeConfig volumeConfig = DicomInputOutput.readVolumeConfig("/home/oliver/dicom/1578");
+                    VolumeConfig volumeConfig = DicomInputOutput.readVolumeConfig();
 
                     VolumeConfigFrame volumeConfigFrame = new VolumeConfigFrame(volumeConfig);
                     volumeConfigFrame.setVisible(true);
@@ -121,13 +120,15 @@ public class VolumeConfigFrame extends JFrame {
     public JTextField getAvailableGraphicsMemoryTextField() {
         return availableGraphicsMemoryTextField;
     }
+    
     private Component getButtonPanel() {
         JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEFT));
 
         startButton = new JButton("Start");
         startButton.setMaximumSize(new Dimension(100, 30));
         startButton.setPreferredSize(new Dimension(100, 30));
-
+        startButton.addActionListener(new VolumeViewStartController(this, volumeConfig));
+        
         panel.add(startButton);
 
         return panel;
@@ -300,8 +301,6 @@ public class VolumeConfigFrame extends JFrame {
         panel.add(Box.createVerticalGlue());
 
         panel.add(getInfoMemoryPanel());
-        
-        
 
         return panel;
     }
@@ -552,7 +551,8 @@ public class VolumeConfigFrame extends JFrame {
         panel.setLayout(new BoxLayout(panel, BoxLayout.PAGE_AXIS));
         panel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
 
-        panel.add(getSelectBoxPanel("Modification : ", new String[]{"Interactively", "Select only predefined", "No modification(use greylevel)"}, volumeConfig.getTransferConfig().getModification().value()));
+        panel.add(getSelectBoxPanel("Modification : ", new String[]{"Interactively", "Select only predefined", "No modification(use greylevel)"}, volumeConfig
+                .getTransferConfig().getModification().value()));
         panel.add(getTranferTypePanel());
         panel.add(getTranferApplicationPanel());
 
@@ -632,14 +632,11 @@ public class VolumeConfigFrame extends JFrame {
 
         String options[] = null;
 
-        int index=-1;
-        if (volumeConfig.getBasicConfig().isOriginalWindowingExists())
-        {
+        int index = -1;
+        if (volumeConfig.getBasicConfig().isOriginalWindowingExists()) {
             options = new String[]{"Use original windowing", "Min-max windowing (only global)", "No windowing"};
             index = volumeConfig.getWindowingConfig().getUsage().value();
-        }
-        else
-        {
+        } else {
             options = new String[]{"Min-max windowing (only global)", "No windowing"};
             index = volumeConfig.getWindowingConfig().getUsage().value() - 1;
         }
@@ -659,9 +656,9 @@ public class VolumeConfigFrame extends JFrame {
         JPanel panel = getStandardPanelWithLabel("Pre-calculated : ", LINE_HEIGHT_2);
 
         windowingPreCalculationCheckBox = new JCheckBox("Use pre-calculation ( extra space )");
-        
+
         windowingPreCalculationCheckBox.setSelected(volumeConfig.getWindowingConfig().isUsePreCalculated());
-        
+
         windowingPreCalculationCheckBox.setActionCommand("windowing pre-calculation");
         windowingPreCalculationCheckBox.addActionListener(controller);
         panel.add(windowingPreCalculationCheckBox);
@@ -781,9 +778,7 @@ public class VolumeConfigFrame extends JFrame {
 
         smoothingCalculationComboBox.setModel(new DefaultComboBoxModel(smoothingCalculation));
         smoothingCalculationComboBox.setSelectedIndex(volumeConfig.getSmoothingConfig().getCalculation().value());
-        
-        System.out.println("usage "+volumeConfig.getSmoothingConfig().getUsage().value());
-        
+
         switch (volumeConfig.getSmoothingConfig().getUsage()) {
             case SMOOTHING_USAGE_ACTIVATE :
                 smoothingUsageComboBox.setSelectedIndex(0);
@@ -792,7 +787,6 @@ public class VolumeConfigFrame extends JFrame {
                 smoothingUsageComboBox.setSelectedIndex(1);
                 break;
             case SMOOTHING_USAGE_NO :
-                System.out.println("size "+smoothingUsageComboBox.getModel().getSize());
                 smoothingUsageComboBox.setSelectedIndex(smoothingUsageComboBox.getModel().getSize() - 1);
                 break;
         }

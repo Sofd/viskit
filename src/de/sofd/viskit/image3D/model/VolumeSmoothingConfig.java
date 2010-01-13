@@ -72,7 +72,6 @@ public class VolumeSmoothingConfig {
     }
     
     public void setUsage(SmoothingUsage usage) {
-        System.out.println("usage new "+usage.value());
         this.usage = usage;
     }
 

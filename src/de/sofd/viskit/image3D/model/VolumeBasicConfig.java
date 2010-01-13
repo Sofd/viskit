@@ -6,34 +6,41 @@ public class VolumeBasicConfig
 {
     protected double depth;
     protected double height;
+
+    protected String imageDirectory;
+    
     protected int imageEnd;
 
     protected int imageStart = 1;
     protected int imageStride = 1;
     protected int internalPixelFormatBits;
-
     protected boolean originalWindowingExists;
 
     protected int pixelFormatBits;
+
     protected int pixelHeight;
     protected int pixelWidth;
     protected String seriesName;
-
     protected int slices;
 
     protected double width;
-    
+
     public VolumeBasicConfig(ExtendedProperties properties) {
         imageStart=properties.getI("volumeConfig.basic.image.start");
         imageStride=properties.getI("volumeConfig.basic.image.stride");
+        imageDirectory=properties.getProperty("volumeConfig.basic.image.dir");
     }
-
+    
     public double getDepth() {
         return depth;
     }
-    
+
     public double getHeight() {
         return height;
+    }
+    
+    public String getImageDirectory() {
+        return imageDirectory;
     }
 
     public int getImageEnd() {

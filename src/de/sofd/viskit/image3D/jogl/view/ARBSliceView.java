@@ -171,7 +171,7 @@ public class ARBSliceView extends GLJPanel implements GLEventListener
         }
         
         try {
-            volumeObject = new VolumeObject( dicomList, null, null, Image3DUtil.getzStride(), new ShortRange((short)1000, (short)2000) );
+            volumeObject = new VolumeObject( dicomList, null, null, null, new ShortRange((short)1000, (short)2000) );
             
             texStack = get2DTexturStack(gl, glu, dicomList, volumeObject);
         } catch (Exception e) {

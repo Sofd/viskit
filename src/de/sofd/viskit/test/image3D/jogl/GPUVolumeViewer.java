@@ -18,16 +18,15 @@ import de.sofd.viskit.image3D.control.*;
 import de.sofd.viskit.image3D.jogl.control.*;
 import de.sofd.viskit.image3D.jogl.model.*;
 import de.sofd.viskit.image3D.jogl.view.*;
-import de.sofd.viskit.image3D.util.Image3DUtil;
 import de.sofd.viskit.image3D.view.*;
 import de.sofd.viskit.util.*;
 
 @SuppressWarnings( "serial" )
 public class GPUVolumeViewer extends JFrame implements MouseListener
 {
-    protected static int height = 500;
-
     static final Logger logger = Logger.getLogger( GPUVolumeViewer.class );
+    
+    protected static int height = 500;
 
     protected static int width = 700;
 
@@ -69,7 +68,7 @@ public class GPUVolumeViewer extends JFrame implements MouseListener
                 try
                 {
                 
-                    int zStride = Image3DUtil.getzStride();
+                    int zStride = 1;
                     ArrayList<DicomObject> dicomList = DicomInputOutput.readDir( "/home/oliver/dicom/series1", null, zStride );
                     //ArrayList<DicomObject> dicomList = DicomInputOutput.readDir( "/home/oliver/dicom/1578", null, Integer.parseInt(System.getProperty("de.sofd.viskit.image3d.sliceStart")), Integer.parseInt(System.getProperty("de.sofd.viskit.image3d.sliceCount")), Integer.parseInt(System.getProperty("de.sofd.viskit.image3d.sliceStride")) );
                     //ArrayList<DicomObject> dicomList = DicomInputOutput.readDir( "/home/oliver/dicom/1578", null, Integer.parseInt(System.getProperty("de.sofd.viskit.image3d.sliceStride")) );
@@ -79,7 +78,7 @@ public class GPUVolumeViewer extends JFrame implements MouseListener
                     
                     ShortBuffer windowing = DicomUtil.getWindowing( dicomList, range );
                     
-                    VolumeObject volumeObject = new VolumeObject( dicomList, windowing, dataBuf, zStride, range );
+                    VolumeObject volumeObject = new VolumeObject( dicomList, windowing, dataBuf, null, range );
                     
                     dicomList = null;
                                         

@@ -19,7 +19,7 @@ public class Reticle extends Component
 
     protected float[] color =
     {
-            1.0f, 1.0f, 1.0f, 1.0f
+            0.2f, 0.2f, 0.2f, 0.2f
     };
 
     protected ReticleCross cross;

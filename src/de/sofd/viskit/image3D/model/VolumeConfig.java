@@ -50,10 +50,6 @@ public class VolumeConfig {
         int nrOfComponents = (gradientsConfig.getStorage() == GradientsStorage.GRADIENTS_STORAGE_4_COMPONENTS ? 4 : 3);
         int nrOfBytes = (getGradientsConfig().getInternalFormat() == 32 ? 4 : getGradientsConfig().getInternalFormat() / 4 - 1);
         
-        System.out.println("size " + basicConfig.getPixelWidth() * basicConfig.getPixelHeight());
-        System.out.println("images " + nrOfLoadedImages + " comp : " + nrOfComponents + ", bytes : " + nrOfBytes);
-        System.out.println("mem " + ((long)basicConfig.getPixelWidth() * basicConfig.getPixelHeight() * nrOfLoadedImages * nrOfComponents * nrOfBytes));
-
         return ((long)basicConfig.getPixelWidth() * basicConfig.getPixelHeight() * nrOfLoadedImages * nrOfComponents * nrOfBytes);
     }
 

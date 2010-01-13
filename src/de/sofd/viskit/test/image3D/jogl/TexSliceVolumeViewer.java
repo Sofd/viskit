@@ -19,7 +19,6 @@ import de.sofd.util.*;
 import de.sofd.viskit.image.*;
 import de.sofd.viskit.image3D.jogl.model.*;
 import de.sofd.viskit.image3D.jogl.view.*;
-import de.sofd.viskit.image3D.util.Image3DUtil;
 import de.sofd.viskit.image3D.vtk.*;
 import de.sofd.viskit.util.*;
 
@@ -44,7 +43,7 @@ public class TexSliceVolumeViewer extends JFrame implements ChangeListener
         ShortRange range = ImageUtil.getRange( dataBuf );
         ShortBuffer windowing = DicomUtil.getWindowing( dicomList, range );
         
-        VolumeObject volumeObject = new VolumeObject( dicomList, windowing, dataBuf, Image3DUtil.getzStride(), range );
+        VolumeObject volumeObject = new VolumeObject( dicomList, windowing, dataBuf, null, range );
         
         volumeView = new TexSliceVolumeView(volumeObject); 
         

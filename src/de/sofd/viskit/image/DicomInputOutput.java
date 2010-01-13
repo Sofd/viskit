@@ -93,7 +93,7 @@ public class DicomInputOutput {
     }
 
     public static ArrayList<DicomObject> readDir(String dirPath,
-            String seriesInstanceUID, int firstSlice, int nrOfSlices, int stride)
+            String seriesInstanceUID, int firstSlice, int lastSlice, int stride)
             throws Exception {
         if (stride <= 0)
             throw new Exception("stride have to be a positive number!");
@@ -122,7 +122,7 @@ public class DicomInputOutput {
 
             System.out.println("file " + file.getAbsolutePath());
 
-            if (imageNr < firstSlice || imageNr >= firstSlice + nrOfSlices
+            if (imageNr < firstSlice || imageNr > lastSlice
                     || (imageNr - 1) % stride != 0)
                 continue;
 
@@ -148,10 +148,12 @@ public class DicomInputOutput {
         return dicomList;
     }
 
-    public static VolumeConfig readVolumeConfig(String dirPath)
+    public static VolumeConfig readVolumeConfig()
             throws Exception {
         VolumeConfig volumeConfig = new VolumeConfig(new ExtendedProperties("volume-config.properties"));
 
+        String dirPath = volumeConfig.getBasicConfig().getImageDirectory();
+        
         File dir = new File(dirPath);
 
         if (!dir.isDirectory())

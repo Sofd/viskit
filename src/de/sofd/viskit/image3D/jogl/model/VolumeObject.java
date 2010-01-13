@@ -74,6 +74,8 @@ public class VolumeObject
     protected int gradientTex;
 
     protected ShortBuffer orgWindowing;
+    
+    protected VolumeConfig volumeConfig;
 
     protected ShortBuffer windowing;
 
@@ -82,21 +84,21 @@ public class VolumeObject
      */
     protected int windowingTexId;
 
-    protected int zStride;
-
     protected VolumeConstraint constraint;
 
     protected boolean loadTransferFunctionPreIntegrated = true;
     
     protected TransferIntegrationFrameBuffer tfFbo;
     
-    public VolumeObject( ArrayList<DicomObject> dicomList, ShortBuffer windowing, ShortBuffer dataBuf, int zStride,
+    public VolumeObject( ArrayList<DicomObject> dicomList, ShortBuffer windowing, ShortBuffer dataBuf, VolumeConfig volumeConfig,
             ShortRange range )
     {
         DicomObject refDicom = dicomList.get( 0 );
 
-        setImageDim( new IntDimension3D( refDicom.getInt( Tag.Columns ), refDicom.getInt( Tag.Rows ), dicomList.size()
-                * zStride ) );
+        this.volumeConfig = volumeConfig;
+        VolumeBasicConfig basicConfig = volumeConfig.getBasicConfig();
+        
+        setImageDim( new IntDimension3D( basicConfig.getPixelWidth(), basicConfig.getPixelHeight(), basicConfig.getSlices() ));
 
         setSpacing( new DoubleDimension3D( refDicom.getDoubles( Tag.PixelSpacing )[ 0 ], refDicom
                 .getDoubles( Tag.PixelSpacing )[ 1 ], refDicom.getDouble( Tag.SliceThickness ) ) );
@@ -120,8 +122,6 @@ public class VolumeObject
 
         this.windowing = BufferUtil.copyShortBuffer( windowing );
         this.windowing.rewind();
-
-        setzStride( zStride );
 
         setRange( range );
         System.out.println( "range : " + range.toString() );
@@ -247,7 +247,7 @@ public class VolumeObject
 
     public int getCurrentImage()
     {
-        return ( getCurrentSlice() / zStride );
+        return ( getCurrentSlice() / volumeConfig.getBasicConfig().getImageStride() );
     }
 
     public int getCurrentSlice()
@@ -304,7 +304,7 @@ public class VolumeObject
 
     public int getNrOfImages()
     {
-        return ( getImageDim().getDepth() / zStride );
+        return ( getImageDim().getDepth() / volumeConfig.getBasicConfig().getImageStride() );
     }
 
     public ShortRange getRange()
@@ -391,11 +391,6 @@ public class VolumeObject
     public ShortBuffer getWindowing()
     {
         return windowing;
-    }
-
-    public int getzStride()
-    {
-        return zStride;
     }
 
     public void loadFilteredTexture( GL2 gl, GLShader shader ) throws Exception
@@ -546,11 +541,6 @@ public class VolumeObject
     public void setWindowing( ShortBuffer windowing )
     {
         this.windowing = windowing;
-    }
-
-    public void setzStride( int zStride )
-    {
-        this.zStride = zStride;
     }
 
     public void updateWindowCenter( short value,
