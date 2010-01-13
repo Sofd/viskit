@@ -56,6 +56,8 @@ public class GLImageListViewCellViewer extends BaseImageListViewCellViewer {
 
     private GLAutoDrawable glCanvas;
 
+    private GLShader rescaleShader;
+
     /**
      * GLCanvas subclass that "properly" forwards mouse events to the containing list,
      * which picks them up and delivers them to the controllers. Used for our glCanvas.
@@ -268,7 +270,7 @@ public class GLImageListViewCellViewer extends BaseImageListViewCellViewer {
         @Override
         public void init(GLAutoDrawable glAutoDrawable) {
             // Use debug pipeline
-            //glAutoDrawable.setGL(new DebugGL2(glAutoDrawable.getGL().getGL2()));
+            glAutoDrawable.setGL(new DebugGL2(glAutoDrawable.getGL().getGL2()));
             System.out.println("INIT " + drawableToString(glAutoDrawable));
             GL2 gl = glAutoDrawable.getGL().getGL2();
             gl.setSwapInterval(1);
@@ -288,6 +290,17 @@ public class GLImageListViewCellViewer extends BaseImageListViewCellViewer {
                     }
                 });
             }
+            try {
+                ShaderManager.read(gl, "rescaleop");
+                rescaleShader = ShaderManager.get("rescaleop");
+                rescaleShader.addProgramUniform("scale");
+                rescaleShader.addProgramUniform("offset");
+                rescaleShader.addProgramUniform("tex");
+            } catch (Exception e) {
+                System.err.println("FATAL");
+                e.printStackTrace();
+                System.exit(1);
+            }
         }
 
         @Override
@@ -299,13 +312,12 @@ public class GLImageListViewCellViewer extends BaseImageListViewCellViewer {
             gl.glLoadIdentity();
             gl.glTranslated(displayedCell.getCenterOffset().getX(), -displayedCell.getCenterOffset().getY(), 0);
             gl.glScaled(displayedCell.getScale(), displayedCell.getScale(), 0);
-            ImageTextureManager.TextureRef texRef = ImageTextureManager.bindImageTexture(sharedContextData, getDisplayedCell().getDisplayedModelElement());
-            gl.glTexEnvi(GL2.GL_TEXTURE_ENV, GL2.GL_TEXTURE_ENV_MODE, gl.GL_REPLACE);
-            GLShader rescaleShader = (GLShader) sharedContextData.getAttribute("rescaleShader");
-            rescaleShader.bind();  // TODO: rescaleShader's internal gl may be outdated here...? it is. see exception.
-            rescaleShader.bindUniform("tex", 1);
+            rescaleShader.bind();  // TODO: rescaleShader's internal gl may be outdated here...?
+            rescaleShader.bindUniform("tex", 0);
             rescaleShader.bindUniform("scale", 1.0f);
             rescaleShader.bindUniform("offset", 0.0f);
+            ImageTextureManager.TextureRef texRef = ImageTextureManager.bindImageTexture(sharedContextData, getDisplayedCell().getDisplayedModelElement());
+            gl.glTexEnvi(GL2.GL_TEXTURE_ENV, GL2.GL_TEXTURE_ENV_MODE, gl.GL_REPLACE);
             TextureCoords coords = texRef.getCoords();
             gl.glColor3f(0, 1, 0);
             float w2 = (float) getOriginalImageWidth() / 2, h2 = (float) getOriginalImageHeight() / 2;
@@ -319,7 +331,7 @@ public class GLImageListViewCellViewer extends BaseImageListViewCellViewer {
             gl.glTexCoord2f(coords.left(), coords.bottom());
             gl.glVertex2f(-w2, -h2);
             gl.glEnd();
-            rescaleShader.unbind();
+            //rescaleShader.unbind();
             ImageTextureManager.unbindCurrentImageTexture(sharedContextData);
             //gl.glFlush();
             //glAutoDrawable.swapBuffers();
