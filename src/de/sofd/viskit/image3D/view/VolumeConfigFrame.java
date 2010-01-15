@@ -9,6 +9,7 @@ import de.sofd.viskit.image.*;
 import de.sofd.viskit.image3D.control.*;
 import de.sofd.viskit.image3D.jogl.control.*;
 import de.sofd.viskit.image3D.model.*;
+
 import de.sofd.viskit.image3D.model.VolumeGradientsConfig.*;
 import de.sofd.viskit.image3D.model.VolumeSmoothingConfig.*;
 import de.sofd.viskit.image3D.model.VolumeTransferConfig.*;
@@ -20,7 +21,8 @@ public class VolumeConfigFrame extends JFrame {
     protected final static int LABEL_WIDTH = 150;
 
     protected final static int LINE_HEIGHT_1 = 20;
-    protected final static int LINE_HEIGHT_2 = 30;
+    protected final static int LINE_HEIGHT_2 = 25;
+    protected final static int LINE_HEIGHT_3 = 30;
 
     protected final static int WIDTH = 650;
 
@@ -111,7 +113,7 @@ public class VolumeConfigFrame extends JFrame {
         contentPane.add(getMemoryPanel(200), BorderLayout.EAST);
         contentPane.add(getTabPanel(), BorderLayout.CENTER);
 
-        addWindowListener(new DefaultWindowAdapter(this));
+        addWindowListener(new DefaultWindowClosingAdapter(this));
 
         setSize(WIDTH, HEIGHT);
         setLocationRelativeTo(null);
@@ -135,7 +137,7 @@ public class VolumeConfigFrame extends JFrame {
     }
 
     private Component getCheckBoxPanel(String title, String title2, boolean state) {
-        JPanel panel = getStandardPanelWithLabel(title, LINE_HEIGHT_2);
+        JPanel panel = getStandardPanelWithLabel(title, LINE_HEIGHT_3);
 
         JCheckBox checkBox = new JCheckBox(title2);
         checkBox.setSelected(state);
@@ -168,7 +170,7 @@ public class VolumeConfigFrame extends JFrame {
     }
 
     private Component getGradientsCalculationPanel() {
-        JPanel panel = getStandardPanelWithLabel("Calculation : ", LINE_HEIGHT_2);
+        JPanel panel = getStandardPanelWithLabel("Calculation : ", LINE_HEIGHT_3);
 
         gradientsCalculationComboBox = new JComboBox();
 
@@ -180,7 +182,7 @@ public class VolumeConfigFrame extends JFrame {
     }
 
     private Component getGradientsFormatPanel() {
-        JPanel panel = getStandardPanelWithLabel("Internal Format : ", LINE_HEIGHT_2);
+        JPanel panel = getStandardPanelWithLabel("Internal Format : ", LINE_HEIGHT_3);
 
         gradientsFormatComboBox = new JComboBox(new String[]{"8 Bit", "12 Bit", "16 Bit", "32 Bit"});
         gradientsFormatComboBox.setSelectedIndex(volumeConfig.getGradientsConfig().getInternalFormatAsIndex());
@@ -204,7 +206,7 @@ public class VolumeConfigFrame extends JFrame {
     }
 
     private Component getGradientsStoragePanel() {
-        JPanel panel = getStandardPanelWithLabel("Storage : ", LINE_HEIGHT_2);
+        JPanel panel = getStandardPanelWithLabel("Storage : ", LINE_HEIGHT_3);
 
         gradientsStorageComboBox = new JComboBox(new String[]{"4-Components", "3-Components (slower)", "No storage (calculate on-the-fly)"});
         gradientsStorageComboBox.setSelectedIndex(volumeConfig.getGradientsConfig().getStorage().value());
@@ -220,13 +222,13 @@ public class VolumeConfigFrame extends JFrame {
     }
 
     private Component getImageRangePanel() {
-        JPanel panel = getStandardPanelWithLabel("Image range : ", LINE_HEIGHT_2);
+        JPanel panel = getStandardPanelWithLabel("Image range : ", LINE_HEIGHT_3);
 
         imageStartTextField = new JTextField("" + volumeConfig.getBasicConfig().getImageStart(), 4);
         imageStartTextField.getDocument().putProperty("name", "Image start");
         imageStartTextField.getDocument().addDocumentListener(controller);
-        imageStartTextField.setMaximumSize(new Dimension(50, LINE_HEIGHT_1));
-        imageStartTextField.setPreferredSize(new Dimension(50, LINE_HEIGHT_1));
+        imageStartTextField.setMaximumSize(new Dimension(50, LINE_HEIGHT_2));
+        imageStartTextField.setPreferredSize(new Dimension(50, LINE_HEIGHT_2));
 
         panel.add(imageStartTextField);
 
@@ -235,8 +237,8 @@ public class VolumeConfigFrame extends JFrame {
         imageEndTextField = new JTextField("" + volumeConfig.getBasicConfig().getImageEnd(), 4);
         imageEndTextField.getDocument().putProperty("name", "Image end");
         imageEndTextField.getDocument().addDocumentListener(controller);
-        imageEndTextField.setMaximumSize(new Dimension(50, LINE_HEIGHT_1));
-        imageEndTextField.setPreferredSize(new Dimension(50, LINE_HEIGHT_1));
+        imageEndTextField.setMaximumSize(new Dimension(50, LINE_HEIGHT_2));
+        imageEndTextField.setPreferredSize(new Dimension(50, LINE_HEIGHT_2));
         panel.add(imageEndTextField);
 
         return panel;
@@ -247,13 +249,13 @@ public class VolumeConfigFrame extends JFrame {
     }
 
     private Component getImageStridePanel() {
-        JPanel panel = getStandardPanelWithLabel("Image stride : ", LINE_HEIGHT_2);
+        JPanel panel = getStandardPanelWithLabel("Image stride : ", LINE_HEIGHT_3);
 
         imageStrideTextField = new JTextField("" + volumeConfig.getBasicConfig().getImageStride(), 2);
         imageStrideTextField.getDocument().putProperty("name", "Image stride : ");
         imageStrideTextField.getDocument().addDocumentListener(controller);
-        imageStrideTextField.setMaximumSize(new Dimension(50, LINE_HEIGHT_1));
-        imageStrideTextField.setPreferredSize(new Dimension(50, LINE_HEIGHT_1));
+        imageStrideTextField.setMaximumSize(new Dimension(50, LINE_HEIGHT_2));
+        imageStrideTextField.setPreferredSize(new Dimension(50, LINE_HEIGHT_2));
         panel.add(imageStrideTextField);
 
         return panel;
@@ -339,8 +341,8 @@ public class VolumeConfigFrame extends JFrame {
     private Component getMemoryAvailablePanel(int panelWidth) {
         JPanel panel = new JPanel(new BorderLayout());
 
-        panel.setMaximumSize(new Dimension(panelWidth, 25));
-        panel.setPreferredSize(new Dimension(panelWidth, 25));
+        panel.setMaximumSize(new Dimension(panelWidth, LINE_HEIGHT_2));
+        panel.setPreferredSize(new Dimension(panelWidth, LINE_HEIGHT_2));
 
         JLabel label = new JLabel("Available : ");
         label.setMaximumSize(new Dimension(100, LINE_HEIGHT_1));
@@ -398,7 +400,7 @@ public class VolumeConfigFrame extends JFrame {
     }
 
     private Component getSelectBoxPanel(String labelTitle, String[] options, int selectedIndex) {
-        JPanel panel = getStandardPanelWithLabel(labelTitle, LINE_HEIGHT_2);
+        JPanel panel = getStandardPanelWithLabel(labelTitle, LINE_HEIGHT_3);
 
         JComboBox comboBox = new JComboBox(options);
         comboBox.setSelectedIndex(selectedIndex);
@@ -412,7 +414,7 @@ public class VolumeConfigFrame extends JFrame {
     }
 
     private Component getSmoothingCalculationPanel() {
-        JPanel panel = getStandardPanelWithLabel("Calculation : ", LINE_HEIGHT_2);
+        JPanel panel = getStandardPanelWithLabel("Calculation : ", LINE_HEIGHT_3);
 
         smoothingCalculationComboBox = new JComboBox();
         smoothingCalculationComboBox.setActionCommand("smoothing calculation");
@@ -453,7 +455,7 @@ public class VolumeConfigFrame extends JFrame {
     }
 
     private Component getSmoothingUsagePanel() {
-        JPanel panel = getStandardPanelWithLabel("Usage : ", LINE_HEIGHT_2);
+        JPanel panel = getStandardPanelWithLabel("Usage : ", LINE_HEIGHT_3);
 
         smoothingUsageComboBox = new JComboBox();
         smoothingUsageComboBox.setActionCommand("smoothing usage");
@@ -463,17 +465,19 @@ public class VolumeConfigFrame extends JFrame {
         return panel;
     }
 
-    private Component getStandardLabel(String labelTitle, int height) {
+    private Component getStandardLabel(String labelTitle) {
         JLabel label = new JLabel(labelTitle);
         // label.setBorder(BorderFactory.createLineBorder(Color.GREEN));
-        label.setMaximumSize(new Dimension(LABEL_WIDTH, height));
-        label.setPreferredSize(new Dimension(LABEL_WIDTH, height));
+        label.setMaximumSize(new Dimension(LABEL_WIDTH, LINE_HEIGHT_1));
+        label.setPreferredSize(new Dimension(LABEL_WIDTH, LINE_HEIGHT_1));
 
         return label;
     }
 
     private JPanel getStandardPanel(int height) {
-        JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
+        JPanel panel = new JPanel();
+        //panel.setLayout(new FlowLayout(FlowLayout.LEFT, 0, 0));
+        panel.setLayout(new BoxLayout(panel, BoxLayout.LINE_AXIS));
 
         // panel.setBorder(BorderFactory.createLineBorder(Color.BLUE));
         panel.setMaximumSize(new Dimension(450, height));
@@ -485,7 +489,7 @@ public class VolumeConfigFrame extends JFrame {
     private JPanel getStandardPanelWithLabel(String labelTitle, int height) {
         JPanel panel = getStandardPanel(height);
 
-        panel.add(getStandardLabel(labelTitle, height));
+        panel.add(getStandardLabel(labelTitle));
 
         return panel;
     }
@@ -508,7 +512,7 @@ public class VolumeConfigFrame extends JFrame {
     }
 
     private Component getTextFieldPanel(String labelTitle, String defaultValue, int columns) {
-        JPanel panel = getStandardPanelWithLabel(labelTitle, LINE_HEIGHT_2);
+        JPanel panel = getStandardPanelWithLabel(labelTitle, LINE_HEIGHT_3);
 
         JTextField textField = new JTextField(defaultValue, columns);
         textField.getDocument().putProperty("name", labelTitle);
@@ -521,7 +525,7 @@ public class VolumeConfigFrame extends JFrame {
     }
 
     private Component getTranferApplicationPanel() {
-        JPanel panel = getStandardPanelWithLabel("Application : ", LINE_HEIGHT_2);
+        JPanel panel = getStandardPanelWithLabel("Application : ", LINE_HEIGHT_3);
 
         transferApplicationCheckBox = new JCheckBox("Apply only in VolumeView");
         transferApplicationCheckBox.setSelected(volumeConfig.getTransferConfig().isApplyOnlyInVolumeView());
@@ -533,7 +537,7 @@ public class VolumeConfigFrame extends JFrame {
     }
 
     private Component getTranferTypePanel() {
-        JPanel panel = getStandardPanelWithLabel("Type : ", LINE_HEIGHT_2);
+        JPanel panel = getStandardPanelWithLabel("Type : ", LINE_HEIGHT_3);
 
         transferTypeComboBox = new JComboBox();
 
@@ -580,7 +584,7 @@ public class VolumeConfigFrame extends JFrame {
     }
 
     private Component getWindowingModificationPanel() {
-        JPanel panel = getStandardPanelWithLabel("Modification : ", LINE_HEIGHT_2);
+        JPanel panel = getStandardPanelWithLabel("Modification : ", LINE_HEIGHT_3);
 
         windowingModificationFormatComboBox = new JComboBox(new String[]{"Slice- and Volumeview", "Only Sliceview", "No modification"});
         windowingModificationFormatComboBox.setSelectedIndex(volumeConfig.getWindowingConfig().getModification().value());
@@ -615,7 +619,7 @@ public class VolumeConfigFrame extends JFrame {
     }
 
     private Component getWindowingTargetPixelFormatPanel() {
-        JPanel panel = getStandardPanelWithLabel("Target pixel format : ", LINE_HEIGHT_2);
+        JPanel panel = getStandardPanelWithLabel("Target pixel format : ", LINE_HEIGHT_3);
 
         windowingTargetPixelFormatComboBox = new JComboBox();
 
@@ -628,7 +632,7 @@ public class VolumeConfigFrame extends JFrame {
     }
 
     private Component getWindowingUsagePanel() {
-        JPanel panel = getStandardPanelWithLabel("Usage : ", LINE_HEIGHT_2);
+        JPanel panel = getStandardPanelWithLabel("Usage : ", LINE_HEIGHT_3);
 
         String options[] = null;
 
@@ -653,7 +657,7 @@ public class VolumeConfigFrame extends JFrame {
     }
 
     private Component getWindowingUsePrecalculatedPanel() {
-        JPanel panel = getStandardPanelWithLabel("Pre-calculated : ", LINE_HEIGHT_2);
+        JPanel panel = getStandardPanelWithLabel("Pre-calculated : ", LINE_HEIGHT_3);
 
         windowingPreCalculationCheckBox = new JCheckBox("Use pre-calculation ( extra space )");
 

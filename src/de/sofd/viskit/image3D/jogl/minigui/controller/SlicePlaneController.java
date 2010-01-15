@@ -78,6 +78,8 @@ public class SlicePlaneController
                                 int mouseY )
     {
         cutterController.mouseReleased( button, mouseX, mouseY );
+        
+        slicePlane.getVolumeObject().setUpdateGradientTexture(true);
     }
 
     public void updateComponents()

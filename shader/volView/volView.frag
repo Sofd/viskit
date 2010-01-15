@@ -1,7 +1,7 @@
 #version 130
 
 uniform sampler3D volTex;
-//uniform sampler3D gradientTex;
+uniform sampler3D gradientTex;
 uniform sampler2D backTex;
 uniform sampler2D winTex;
 uniform sampler2D transferTex;
@@ -22,17 +22,17 @@ out vec4 gl_FragColor;
 
 vec3 shading( in vec3 N, in vec3 V, in vec3 L, in vec3 color )
 {
-	vec3 spec = vec3(0.7f);
+	vec3 spec = vec3(10.0f);
 		
 	vec3 ambient = color * vec3(0.3f);
 	
 	float dotNL = max(dot(L, N), 0);
-	vec3 diffuse = color * dotNL;
+	vec3 diffuse = color * vec3(0.7f) * dotNL;
 	
 	vec3 H = normalize( L + V );
 	float dotNH = max(dot(N, H), 0);
-	float sf = pow( dotNH, 100 );
-	vec3 specular = spec * sf;
+	float sf = pow( dotNH, 32 );
+	vec3 specular = spec * sf * color;
 	
 	return min(max(ambient + diffuse + specular, vec3(0.0f)), 1.0f);
 }
@@ -55,7 +55,7 @@ void main() {
 	vec4 sumColor = vec4(0.0f);
 	
 	float texValue;
-	float decay = alpha * sliceStep * 1000;
+	float decay = 1.0f * sliceStep * 1000;
 		
 	float windowCenter = texture2D(winTex, vec2(0, 0.5f) ).a * 2.0f;
 	float windowWidth = texture2D(winTex, vec2(1, 0.5f) ).a * 2.0f;
@@ -74,14 +74,15 @@ void main() {
 		
 		tfColor = texture2D( transferTex, tfCoord );
 		
-		/* if ( tfColor.a > 0.0f )
+		if ( tfColor.a > 0 )
 		{
 			
 			vec4 G = ( texture( gradientTex, rayPos.xyz ) - vec4( 0.5f, 0.5f, 0.5f, 0.0f ) ) * vec4( 2.0f, 2.0f, 2.0f, 1.0f );
-			if ( G.a > 0.07 )
-			{
 			
-				vec3 N = normalize( gl_NormalMatrix * (vec4( G.x, G.y, G.z, 1.0f )).xyz );
+			if ( G.a > 0.01 )
+			{			
+				G.xyz = normalize(G.xyz);
+				vec3 N = normalize( gl_NormalMatrix * G.xyz );
 				vec3 V = normalize( eyePosition - position );
 				vec3 L = normalize( lightPosition - position );
 							
@@ -90,10 +91,13 @@ void main() {
 				//tfColor.r = max(0.0f, N.r) * tfColor.a;	
 				//tfColor.b = max(0.0f, N.b) * tfColor.a;	
 				//tfColor.g = max(0.0f, N.g) * tfColor.a;
+				
+				
+				//tfColor.a = G.a;
+				//tfColor.rgb = G.rgb * tfColor.a;
 			}
 			
-			//tfColor.rgb = vec3(G.a) * tfColor.a;
-		}*/
+		}
 				
 		
 		

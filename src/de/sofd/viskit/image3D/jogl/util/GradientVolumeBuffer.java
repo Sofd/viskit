@@ -6,41 +6,65 @@ import static javax.media.opengl.GL2GL3.*;
 import javax.media.opengl.*;
 
 import de.sofd.util.*;
+import de.sofd.viskit.image3D.jogl.model.*;
+import de.sofd.viskit.image3D.model.*;
 
 public class GradientVolumeBuffer extends VolumeBuffer
 {
 
     protected GLShader shader;
 
-    protected int volumeTex;
-
-    public GradientVolumeBuffer( IntDimension3D size, GLShader shader, int volumeTex )
+    protected VolumeObject volumeObject;
+    
+    public GradientVolumeBuffer( IntDimension3D size, GLShader shader, VolumeObject volumeObject )
     {
         super( size );
         this.shader = shader;
-        this.volumeTex = volumeTex;
+        this.volumeObject = volumeObject;
         
         shader.addProgramUniform( "volTex" );
+        shader.addProgramUniform( "winTex" );
         shader.addProgramUniform( "xStep" );
         shader.addProgramUniform( "yStep" );
         shader.addProgramUniform( "zStep" );
+        shader.addProgramUniform( "xMin" );
+        shader.addProgramUniform( "xMax" );
+        shader.addProgramUniform( "yMin" );
+        shader.addProgramUniform( "yMax" );
+        shader.addProgramUniform( "zMin" );
+        shader.addProgramUniform( "zMax" );
+        
+        
+        
     }
 
-    @Override
-    public void run( GL2 gl )
+    public void run( GL2 gl, float alpha )
     {
         super.begin( gl );
 
         shader.bind();
 
         gl.glActiveTexture( GL_TEXTURE1 );
-        gl.glBindTexture( GL_TEXTURE_3D, volumeTex );
+        gl.glBindTexture( GL_TEXTURE_3D, volumeObject.getTexId() );
         
         shader.bindUniform( "volTex", 1 );
         
-        shader.bindUniform( "xStep", 1.0f / getSize().getWidth() );
-        shader.bindUniform( "yStep", 1.0f / getSize().getHeight() );
-        shader.bindUniform( "zStep", 1.0f / getSize().getDepth() );
+        gl.glActiveTexture( GL_TEXTURE2 );
+        volumeObject.bindWindowingTexture(gl);
+        
+        shader.bindUniform( "winTex", 2 );
+        
+        shader.bindUniform( "xStep", 5.0f * alpha / getSize().getWidth() );
+        shader.bindUniform( "yStep", 5.0f * alpha / getSize().getHeight() );
+        shader.bindUniform( "zStep", 5.0f * alpha / getSize().getDepth() );
+        
+        VolumeConstraint constraint = volumeObject.getConstraint();
+        shader.bindUniform( "xMin", constraint.getX().getMin());
+        shader.bindUniform( "xMax", constraint.getX().getMax());
+        shader.bindUniform( "yMin", constraint.getY().getMin());
+        shader.bindUniform( "yMax", constraint.getY().getMax());
+        shader.bindUniform( "zMin", constraint.getZ().getMin());
+        shader.bindUniform( "zMax", constraint.getZ().getMax());
         
         for ( int z = 0; z < getSize().getDepth(); z++ )
         {

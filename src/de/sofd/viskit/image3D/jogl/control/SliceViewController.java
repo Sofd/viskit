@@ -144,6 +144,8 @@ public class SliceViewController implements MouseListener, MouseMotionListener
         
         if ( transferFrame != null )
             transferFrame.updateValues();
+        
+        volumeView.display();
     }
 
     public void setTransferFrame( TransferFrame transferFrame )

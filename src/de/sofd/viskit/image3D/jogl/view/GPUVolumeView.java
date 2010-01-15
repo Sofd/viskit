@@ -56,7 +56,7 @@ public class GPUVolumeView extends GLCanvas implements GLEventListener
     
     protected boolean isLocked = false;
     
-    protected boolean useGradient = false;
+    protected boolean useGradient = true;
 
     public GPUVolumeView( VolumeObject volumeObject, GLContext sharedContext )
     {
@@ -199,6 +199,7 @@ public class GPUVolumeView extends GLCanvas implements GLEventListener
             // load pre integrated transfer texture if necessary
             volumeObject.loadTransferTexturePreIntegrated( gl );
 
+            volumeObject.updateGradientTexture(gl, alpha);
             
         }
         catch ( Exception e )
@@ -274,7 +275,7 @@ public class GPUVolumeView extends GLCanvas implements GLEventListener
                 volumeObject.loadFilteredTexture( gl, ShaderManager.get( "convolution" ) );
             
             if ( useGradient )
-                volumeObject.loadGradientTexture( gl, ShaderManager.get( "gradient" ) );
+                volumeObject.createGradientTexture( gl, ShaderManager.get( "gradient" ) );
             
             volumeObject.createTransferFbo( gl );
 

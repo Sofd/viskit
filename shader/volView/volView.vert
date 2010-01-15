@@ -16,7 +16,7 @@ void main() {
 	//lightPosition = (gl_ModelViewMatrix * vec4(-4, -4, -4, 0)).xyz;
 	
 	eyePosition = vec3(0, 0, 0);
-	lightPosition = vec3(4, 4, 0);
+	lightPosition = vec3(0, 0, 0);
 
 	gl_Position = gl_ModelViewProjectionMatrix * gl_Vertex;
 }

@@ -25,14 +25,18 @@ public class VolumeController implements ChangeListener, ActionListener
     {
         final JSlider slider = (JSlider)event.getSource();
         
-        if ( "slices".equals( slider.getName() ) && ! slider.getValueIsAdjusting()  )
+        if ( "slices".equals( slider.getName() ) /*&& ! slider.getValueIsAdjusting()*/  )
         {
             volumeView.setSliceStep( 1.0f / slider.getValue() );
             volumeView.display();
         }
-        else if ( "alpha".equals( slider.getName() ) && ! slider.getValueIsAdjusting() )
+        else if ( "alpha".equals( slider.getName() ) /*&& ! slider.getValueIsAdjusting()*/ )
         {
             volumeView.setAlpha( slider.getValue() / 1000.0f );
+            
+            if ( ! slider.getValueIsAdjusting() )
+                volumeObject.setUpdateGradientTexture(true);
+            
             volumeView.display();
         }
         

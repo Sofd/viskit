@@ -88,47 +88,46 @@ public class VolumeObject
 
     protected boolean loadTransferFunctionPreIntegrated = true;
     
+    
     protected TransferIntegrationFrameBuffer tfFbo;
     
-    public VolumeObject( ArrayList<DicomObject> dicomList, ShortBuffer windowing, ShortBuffer dataBuf, VolumeConfig volumeConfig,
-            ShortRange range )
-    {
-        DicomObject refDicom = dicomList.get( 0 );
+    protected GradientVolumeBuffer gradientVolumeBuffer;
+    
+    protected boolean updateGradientTexture = true;
+    
+    public VolumeObject(ArrayList<DicomObject> dicomList, ShortBuffer windowing, ShortBuffer dataBuf, VolumeConfig volumeConfig, ShortRange range) {
+        DicomObject refDicom = dicomList.get(0);
 
         this.volumeConfig = volumeConfig;
         VolumeBasicConfig basicConfig = volumeConfig.getBasicConfig();
-        
-        setImageDim( new IntDimension3D( basicConfig.getPixelWidth(), basicConfig.getPixelHeight(), basicConfig.getSlices() ));
 
-        setSpacing( new DoubleDimension3D( refDicom.getDoubles( Tag.PixelSpacing )[ 0 ], refDicom
-                .getDoubles( Tag.PixelSpacing )[ 1 ], refDicom.getDouble( Tag.SliceThickness ) ) );
+        setImageDim(new IntDimension3D(basicConfig.getPixelWidth(), basicConfig.getPixelHeight(), basicConfig.getSlices()));
 
-        System.out.println( "spacing : " + spacing.toString() );
-        System.out.println( "dimensions : " + imageDim.toString() );
+        setSpacing(new DoubleDimension3D(refDicom.getDoubles(Tag.PixelSpacing)[0], refDicom.getDoubles(Tag.PixelSpacing)[1], refDicom
+                .getDouble(Tag.SliceThickness)));
 
-        setDimRange( new IntRange( imageDim.getMin(), imageDim.getMax() ) );
+        System.out.println("spacing : " + spacing.toString());
+        System.out.println("dimensions : " + imageDim.toString());
 
-        setSizeRange( new DoubleRange( Math.min( Math.min( getSizeX(), getSizeY() ), getSizeZ() ), Math.max( Math.max(
-                getSizeX(), getSizeY() ), getSizeZ() ) ) );
+        setDimRange(new IntRange(imageDim.getMin(), imageDim.getMax()));
 
-        setDataBuf( dataBuf );
+        setSizeRange(new DoubleRange(Math.min(Math.min(getSizeX(), getSizeY()), getSizeZ()), Math.max(Math.max(getSizeX(), getSizeY()), getSizeZ())));
 
-        setSliceCursor( new double[]
-        {
-                imageDim.getWidth() / 2, imageDim.getHeight() / 2, imageDim.getDepth() / 2
-        } );
+        setDataBuf(dataBuf);
+
+        setSliceCursor(new double[] { imageDim.getWidth() / 2, imageDim.getHeight() / 2, imageDim.getDepth() / 2 });
 
         this.orgWindowing = windowing;
 
-        this.windowing = BufferUtil.copyShortBuffer( windowing );
+        this.windowing = BufferUtil.copyShortBuffer(windowing);
         this.windowing.rewind();
 
-        setRange( range );
-        System.out.println( "range : " + range.toString() );
+        setRange(range);
+        System.out.println("range : " + range.toString());
 
         this.constraint = new VolumeConstraint();
 
-        setTransferFunction( ImageUtil.getRGBATransferFunction( Color.BLACK, Color.WHITE, 0.0f, 1.0f ) );
+        setTransferFunction(ImageUtil.getRGBATransferFunction(Color.BLACK, Color.WHITE, 0.0f, 1.0f));
 
     }
 
@@ -174,6 +173,15 @@ public class VolumeObject
 
         gl.glBindTexture( GL_TEXTURE_2D, windowingTexId );
         gl.glTexImage2D( GL_TEXTURE_2D, 0, GL_ALPHA16F, 2, windowing.capacity() / 2, 0, GL_ALPHA, GL_SHORT, windowing );
+    }
+
+    public void createGradientTexture( GL2 gl, GLShader shader ) throws Exception
+    {
+        
+        gradientVolumeBuffer = new GradientVolumeBuffer( new IntDimension3D(
+                imageDim.getWidth(), imageDim.getHeight(), getNrOfImages() ), shader, this );
+        gradientVolumeBuffer.createTexture( gl, GL_RGBA32F, GL_RGBA );
+        gradientVolumeBuffer.createFBO( gl );
     }
     
     public void createTransferFbo( GL2 gl ) throws Exception
@@ -414,34 +422,12 @@ public class VolumeObject
         System.out.println( "offscreen gauss filtering in " + ( time2 - time1 ) + " ms" );
         
     }
-
-    public void loadGradientTexture( GL2 gl, GLShader shader ) throws Exception
-    {
-        
-        long time1 = System.currentTimeMillis();
-
-        GradientVolumeBuffer volumeBuffer = new GradientVolumeBuffer( new IntDimension3D(
-                imageDim.getWidth(), imageDim.getHeight(), getNrOfImages() ), shader, getTexId2() );
-        volumeBuffer.createTexture( gl, GL_RGBA32F, GL_RGBA );
-        volumeBuffer.createFBO( gl );
-
-        volumeBuffer.run( gl );
-
-        gradientTex = volumeBuffer.getTex();
-
-        volumeBuffer.cleanUp( gl );
-
-        long time2 = System.currentTimeMillis();
-
-        System.out.println( "gradient computed in " + ( time2 - time1 ) + " ms" );
-        
-    }
     
     public void loadTexture( GL2 gl ) 
     {
         setTexId( GLUtil.get3DTexture( gl, dataBuf, imageDim.getWidth(), imageDim.getHeight(), getNrOfImages(), true ) );
     }
-    
+
     public void loadTransferTexturePreIntegrated( GL2 gl ) throws Exception
     {
         if ( loadTransferFunctionPreIntegrated )
@@ -463,17 +449,17 @@ public class VolumeObject
         }
     }
     
-
     public synchronized void reloadOriginalWindowing()
     {
         for ( int i = 0; i < windowing.capacity(); ++i )
             windowing.put( i, orgWindowing.get( i ) );
     }
-
+    
     protected void setDataBuf( ShortBuffer dataBuf )
     {
         this.dataBuf = dataBuf;
     }
+    
 
     public void setDimRange( IntRange dimRange )
     {
@@ -538,9 +524,32 @@ public class VolumeObject
         this.transferTexPreIntegratedId = transferTexPreIntegratedId;
     }
 
+    public void setUpdateGradientTexture(boolean updateGradientTexture) {
+        this.updateGradientTexture = updateGradientTexture;
+    }
+
     public void setWindowing( ShortBuffer windowing )
     {
         this.windowing = windowing;
+    }
+
+    public void updateGradientTexture( GL2 gl, float alpha ) throws Exception
+    {
+        if ( updateGradientTexture )
+        {
+            updateGradientTexture = false;
+            
+            long time1 = System.currentTimeMillis();
+    
+            gradientVolumeBuffer.run( gl, alpha );
+    
+            gradientTex = gradientVolumeBuffer.getTex();
+    
+            long time2 = System.currentTimeMillis();
+    
+            System.out.println( "gradient computed in " + ( time2 - time1 ) + " ms" );
+        }
+        
     }
 
     public void updateWindowCenter( short value,

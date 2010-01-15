@@ -101,7 +101,7 @@ public class SliceViewer extends JFrame implements MouseListener {
 
         setLocationRelativeTo(null);
 
-        addWindowListener(new DefaultWindowAdapter(this));
+        addWindowListener(new DefaultWindowClosingAdapter(this));
         addMouseListener(this);
 
         GraphicsDevice[] devices = GraphicsEnvironment

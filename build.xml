@@ -89,17 +89,14 @@
 
 	<target name="run-volume" depends="init">
 		<echo message="${run.classpath}" />
-		<java classname="de.sofd.viskit.test.image3D.jogl.GPUVolumeViewer" fork="true" dir=".">
+		<java classname="de.sofd.viskit.image3D.view.VolumeConfigFrame" fork="true" dir=".">
 			<classpath>
 				<pathelement path="${run.classpath}" />
 			</classpath>
 			<jvmarg value="-Djava.library.path=lib/jogl/linux64" />
 			<!-- jvmarg value="-Dsun.java2d.noddraw=true"/ -->
-			<jvmarg value="-XX:MaxDirectMemorySize=2500m" />
-			<jvmarg value="-Xmx4500M" />
-			<jvmarg value="-Dde.sofd.viskit.image3d.sliceStart=60" />
-			<jvmarg value="-Dde.sofd.viskit.image3d.sliceCount=960" />
-			<jvmarg value="-Dde.sofd.viskit.image3d.sliceStride=1" />
+			<jvmarg value="-XX:MaxDirectMemorySize=1000m" />
+			<jvmarg value="-Xmx1000M" />
 		</java>
 	</target>
 </project>
