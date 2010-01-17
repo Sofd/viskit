@@ -6,7 +6,9 @@ import com.sun.opengl.util.texture.TextureData;
 import com.sun.opengl.util.texture.awt.AWTTextureIO;
 import de.sofd.lang.Runnable2;
 import de.sofd.viskit.model.ImageListViewModelElement;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.LinkedList;
 import java.util.Map;
 import java.util.Map.Entry;
 import javax.media.opengl.GL;
@@ -46,13 +48,14 @@ class ImageTextureManager {
     }
 
     private static class TextureRefStore {
-        private Map<Object, TextureRef> texRefsByImageKey = new LinkedHashMap<Object, TextureRef>() {
-            @Override
-            protected boolean removeEldestEntry(Entry<Object, TextureRef> eldest) {
-                return size() > 50;   // TODO: account for texture memory consumption here
-                   // TODO: glDeleteTexture textures as their IDs are evicted from the cache
-            }
-        };
+        private long totalMemConsumption = 0;
+        private final long maxMemConsumption;
+
+        private final LinkedHashMap<Object, TextureRef> texRefsByImageKey = new LinkedHashMap<Object, TextureRef>(256, 0.75F, true);
+
+        public TextureRefStore(long maxMemConsumption) {
+            this.maxMemConsumption = maxMemConsumption;
+        }
 
         public boolean containsTextureFor(ImageListViewModelElement elt) {
             return texRefsByImageKey.containsKey(elt.getImageKey());
@@ -66,9 +69,29 @@ class ImageTextureManager {
             return texRefsByImageKey.get(imageKey);
         }
 
-        public void putTexRef(ImageListViewModelElement elt, TextureRef texRef) {
+        public void putTexRef(ImageListViewModelElement elt, TextureRef texRef, GL gl) {
             texRefsByImageKey.put(elt.getImageKey(), texRef);
+            totalMemConsumption += texRef.getMemorySize();
+            freeExcessTextureMemory(gl);
         }
+
+        public void freeExcessTextureMemory(GL gl) {
+            while ((totalMemConsumption > maxMemConsumption) && (texRefsByImageKey.size() > 1)) {
+                // ^^^ ensure size >= 1 to always keep at least the latest texture in, even if it alone exceeds maxMemConsumption
+                //   (if that one wasn't loaded, we couldn't render it)
+                Map.Entry<Object, TextureRef> oldestEntry = texRefsByImageKey.entrySet().iterator().next();
+                logger.info("deleting texture to free up memory: " + oldestEntry.getKey());
+                TextureRef oldestTexRef = oldestEntry.getValue();
+                gl.glDeleteTextures(1, new int[]{oldestTexRef.getTexId()}, 0);
+                totalMemConsumption -= oldestTexRef.getMemorySize();
+                texRefsByImageKey.remove(oldestEntry.getKey());
+            }
+        }
+
+        public long getTotalMemConsumption() {
+            return totalMemConsumption;
+        }
+
     }
 
     // TODO: ugly staticnesses in here...
@@ -81,7 +104,7 @@ class ImageTextureManager {
         SharedContextData.registerContextInitCallback(new Runnable2<SharedContextData, GL>() {
             @Override
             public void run(SharedContextData cd, GL gl1) {
-                TextureRefStore texturesStore = new TextureRefStore();
+                TextureRefStore texturesStore = new TextureRefStore(256*1024*1024);  // <<== configure max. GL texture memory consumption here (for now)
                 cd.setAttribute(TEX_STORE, texturesStore);
             }
         });
@@ -95,12 +118,13 @@ class ImageTextureManager {
         TextureRefStore texRefStore = (TextureRefStore) cd.getAttribute(TEX_STORE);
         TextureRef texRef = texRefStore.getTexRef(elt);
         if (null == texRef) {
-            logger.info("need to re-create texture for image " + elt.getImageKey());
+            logger.info("need to create texture for: " + elt.getImageKey());
             TextureData imageTextureData = AWTTextureIO.newTextureData(elt.getImage(), true);
             imageTextureData.flush();
             Texture imageTexture = new Texture(imageTextureData);
             texRef = new TextureRef(imageTexture.getTextureObject(), imageTexture.getImageTexCoords(), imageTexture.getEstimatedMemorySize());
-            texRefStore.putTexRef(elt, texRef);
+            texRefStore.putTexRef(elt, texRef, cd.getGlContext().getCurrentGL());
+            logger.info("GL texture memory consumption now (est.): " + (texRefStore.getTotalMemConsumption()/1024/1024) + " MB");
         }
         cd.getGlContext().getCurrentGL().glEnable(GL.GL_TEXTURE_2D);
         cd.getGlContext().getCurrentGL().glBindTexture(GL.GL_TEXTURE_2D, texRef.getTexId());
