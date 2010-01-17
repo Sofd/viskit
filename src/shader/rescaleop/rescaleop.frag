@@ -1,4 +1,4 @@
-#version 130
+//#version 130
 
 uniform float scale;
 uniform float offset;
