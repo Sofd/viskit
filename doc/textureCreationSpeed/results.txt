@@ -1,0 +1,182 @@
+Kopf-JPG (mri_brain.jpg):
+
+(CREATING TEXTURE)... glTexImage2D() call in glTexImage2D0__IIIIIIIILjava_lang_Object_2I took 0.000039 sec
+target: 3553
+level: 0
+internalFormat: 6407
+width: 512
+height: 512
+border: 0
+format: 6407  (GL_RGB)
+type: 5121    (GL_UNSIGNED_BYTE)
+data: (nil)
+glTexSubImage2D() call in glTexSubImage2D1__IIIIIIIILjava_lang_Object_2I took 0.001056 sec
+target: 3553
+level: 0
+xoffset: 0
+yoffset: 0
+width: 512
+height: 512
+format: 6407  (GL_RGB)
+type: 5121    (GL_UNSIGNED_BYTE)
+4 ms. Texture 512x512, size (est.): 786432
+
+
+
+Zahnbild:
+
+(CREATING TEXTURE)... glTexImage2D() call in glTexImage2D0__IIIIIIIILjava_lang_Object_2I took 0.000076 sec
+target: 3553
+level: 0
+internalFormat: 6407  (GL_RGB)
+width: 819
+height: 999
+border: 0
+format: 6409  (GL_LUMINANCE)
+type: 5121    (GL_UNSIGNED_BYTE)
+data: (nil)
+glTexSubImage2D() call in glTexSubImage2D1__IIIIIIIILjava_lang_Object_2I took 0.113677 sec
+target: 3553
+level: 0
+xoffset: 0
+yoffset: 0
+width: 819
+height: 999
+format: 6409  (GL_LUMINANCE)
+type: 5121    (GL_UNSIGNED_BYTE)
+117 ms. Texture 819x999, size (est.): 818181
+
+
+selbstgenerierte Textur, Format wie Zahnbild, 819x999:
+
+(CREATING TEXTURE)... glTexImage2D() call in glTexImage2D0__IIIIIIIILjava_lang_Object_2I took 0.000052 sec
+target: 3553
+level: 0
+internalFormat: 6407
+width: 819
+height: 999
+border: 0
+format: 6409  (GL_LUMINANCE)
+type: 5121    (GL_UNSIGNED_BYTE)
+data: (nil)
+glTexSubImage2D() call in glTexSubImage2D0__IIIIIIIILjava_lang_Object_2I took 0.115683 sec
+target: 3553
+level: 0
+xoffset: 0
+yoffset: 0
+width: 819
+height: 999
+format: 6409  (GL_LUMINANCE)
+type: 5121    (GL_UNSIGNED_BYTE)
+119 ms. Texture 819x999, size (est.): 818181
+
+
+selbstgenerierte Textur, Format wie Zahnbild, 832x1024:
+
+(CREATING TEXTURE)... glTexImage2D() call in glTexImage2D0__IIIIIIIILjava_lang_Object_2I took 0.000081 sec
+target: 3553
+level: 0
+internalFormat: 6407  (GL_RGB)
+width: 832
+height: 1024
+border: 0
+format: 6409  (GL_LUMINANCE)
+type: 5121    (GL_UNSIGNED_BYTE)
+data: (nil)
+glTexSubImage2D() call in glTexSubImage2D0__IIIIIIIILjava_lang_Object_2I took 0.064568 sec
+target: 3553
+level: 0
+xoffset: 0
+yoffset: 0
+width: 832
+height: 1024
+format: 6409  (GL_LUMINANCE)
+type: 5121    (GL_UNSIGNED_BYTE)
+67 ms. Texture 832x1024, size (est.): 851968
+
+
+selbstgenerierte Textur, Format wie Zahnbild, 1024x1024:
+
+(CREATING TEXTURE)... glTexImage2D() call in glTexImage2D0__IIIIIIIILjava_lang_Object_2I took 0.000068 sec
+target: 3553
+level: 0
+internalFormat: 6407  (GL_RGB)
+width: 1024
+height: 1024
+border: 0
+format: 6409
+type: 5121
+data: (nil)
+glTexSubImage2D() call in glTexSubImage2D0__IIIIIIIILjava_lang_Object_2I took 0.005812 sec
+target: 3553
+level: 0
+xoffset: 0
+yoffset: 0
+width: 1024
+height: 1024
+format: 6409  (GL_LUMINANCE)
+type: 5121    (GL_UNSIGNED_BYTE)
+9 ms. Texture 1024x1024, size (est.): 1048576
+
+
+selbstgenerierte Textur, Format wie Zahnbild, 819x999, ===KEIN Mipmapping===:
+
+(CREATING TEXTURE)... glTexImage2D() call in glTexImage2D0__IIIIIIIILjava_lang_Object_2I took 0.000066 sec
+target: 3553
+level: 0
+internalFormat: 6407
+width: 819
+height: 999
+border: 0
+format: 6409  (GL_LUMINANCE)
+type: 5121    (GL_UNSIGNED_BYTE)
+data: (nil)
+glTexSubImage2D() call in glTexSubImage2D0__IIIIIIIILjava_lang_Object_2I took 0.003056 sec
+target: 3553
+level: 0
+xoffset: 0
+yoffset: 0
+width: 819
+height: 999
+format: 6409  (GL_LUMINANCE)
+type: 5121    (GL_UNSIGNED_BYTE)
+6 ms. Texture 819x999, size (est.): 818181
+
+
+Zahnbild, KEIN Mipmapping:
+
+(CREATING TEXTURE)... glTexImage2D() call in glTexImage2D0__IIIIIIIILjava_lang_Object_2I took 0.000076 sec
+target: 3553
+level: 0
+internalFormat: 6407
+width: 819
+height: 999
+border: 0
+format: 6409  (GL_LUMINANCE)
+type: 5121    (GL_UNSIGNED_BYTE)
+data: (nil)
+glTexSubImage2D() call in glTexSubImage2D1__IIIIIIIILjava_lang_Object_2I took 0.003951 sec
+target: 3553
+level: 0
+xoffset: 0
+yoffset: 0
+width: 819
+height: 999
+format: 6409  (GL_LUMINANCE)
+type: 5121    (GL_UNSIGNED_BYTE)
+6 ms. Texture 819x999, size (est.): 818181
+
+(aber es sieht bei verkleinert gerenderter Textur deutlich schlechter
+-- "krisselig" -- aus. Offenbar macht er einfache
+nearest-neighbour-Filterung einmal pro Ausgabepixel)
+
+===> Mipmapping abschalten macht die Sache ebenfalls viel schneller.
+     Allerdings sieht man je nach Textur auch einen deutl. Unterschied.
+
+===> Also: Es ist schnell, wenn kein Mipmapping oder Texturgroßen
+     Zweierpotenzen (oder beides)
+
+GL_LUMINANCE oder GL_LUMINANCE16 statt GL_RGB als internalFormat
+bringt auch nochmal ca. 40% Zeiteinsparung
+
+TODO: format GL_LUMINANCE16 testen

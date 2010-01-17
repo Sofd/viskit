@@ -7,6 +7,8 @@ import com.sun.opengl.util.texture.TextureIO;
 import de.sofd.lang.Runnable2;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.nio.Buffer;
+import java.nio.ByteBuffer;
 import javax.media.opengl.GL;
 import javax.media.opengl.GL2;
 
@@ -86,12 +88,27 @@ public class Coil implements GLDrawableObject {
                     try {
                         System.out.print("(READING TEXTURE DATA)... ");
                         long t0 = System.currentTimeMillis();
-                        coilTextureData = TextureIO.newTextureData(Coil.class.getResourceAsStream("mri_brain.jpg"), true, "jpg");
-                        //coilTextureData = TextureIO.newTextureData(new FileInputStream("/home/olaf/gi/resources/DICOM-Testbilder/1578/f0003563_00620.dcm"), true, "dcm");
+                        //coilTextureData = TextureIO.newTextureData(Coil.class.getResourceAsStream("mri_brain.jpg"), true, "jpg");
+                        //coilTextureData = TextureIO.newTextureData(new FileInputStream("/home/olaf/gi/resources/DICOM-Testbilder/1578/f0003563_00620.dcm"), true, "dcm");  // with mipmapping
+                        //coilTextureData = TextureIO.newTextureData(new FileInputStream("/home/olaf/gi/resources/DICOM-Testbilder/1578/f0003563_00620.dcm"), false, "dcm"); // w/o mipmapping
                         //coilTextureData = TextureIO.newTextureData(new FileInputStream("/shares/projects/DICOM-Testbilder/1578/f0003563_00620.dcm"), true, "dcm");
+                        ///*
+                        coilTextureData = new TextureData(GL.GL_RGB, // int internalFormat,
+                                                          TEX_W, // int width,
+                                                          TEX_H, // int height,
+                                                          0,     // int border,
+                                                          GL.GL_LUMINANCE, // int pixelFormat,
+                                                          GL.GL_UNSIGNED_BYTE, // int pixelType,
+                                                          true, // boolean mipmap,
+                                                          false, // boolean dataIsCompressed,
+                                                          false, // boolean mustFlipVertically,  // TODO: correct?
+                                                          createTextureData8bitLuminance(), // Buffer buffer,
+                                                          null // Flusher flusher);
+                                                          );
+                        //*/
                         long t1 = System.currentTimeMillis();
                         System.out.println("" + (t1-t0) + " ms.");
-                    } catch (IOException ex) {
+                    } catch (Exception ex) {
                         throw new RuntimeException("FATAL", ex);
                     }
                     coilTextureData.flush();
@@ -101,6 +118,10 @@ public class Coil implements GLDrawableObject {
                 Texture coilTexture = new Texture(coilTextureData);
                 long t1 = System.currentTimeMillis();
                 System.out.println("" + (t1-t0) + " ms. Texture " + coilTexture.getWidth() + "x" + coilTexture.getHeight() + ", size (est.): " + coilTexture.getEstimatedMemorySize());
+                // ===> Es ist schnell, wenn kein Mipmapping oder Texturgrößen
+                //      Zweierpotenzen (oder beides). Kein Mipmapping hat jedoch deutlich sichtbare Qualitaetseinbussen zur Folge.
+                // ===> Man sollte Mipmapping machen und Texturgroessen auf Zweierpotenzen aufrunden.
+
                 cd.setAttribute(COIL_TEXTURE, coilTexture);
 
                 System.out.println("shared context set to " + getId(cd.getGlContext()) + ", creating GL canvasses of other viewers...");
@@ -188,6 +209,31 @@ public class Coil implements GLDrawableObject {
         } else {
             gl.glPopAttrib();
         }
+    }
+
+
+    //private static final int TEX_W = 512, TEX_H = 512;
+    private static final int TEX_W = 819, TEX_H = 999;
+    //private static final int TEX_W = 1024, TEX_H = 1024;
+    //private static final int TEX_W = 832, TEX_H = 1024;
+
+    private static ByteBuffer createTextureData8bitLuminance() {
+        int bumpW = TEX_W / 4, bumpH = TEX_H / 4;
+        ByteBuffer result = ByteBuffer.allocateDirect(TEX_W * TEX_H);
+        byte[] row = new byte[TEX_W];
+        for (int y = 0; y < TEX_H; y++) {
+            double yfac = Math.sin((double)y/bumpH*Math.PI);
+            yfac *= yfac;
+            for (int x = 0; x < TEX_W; x++) {
+                double xfac = Math.sin((double)x/bumpW*Math.PI);
+                xfac *= xfac;
+                double grayvalue = yfac * xfac;
+                row[x] = (byte)(grayvalue * 255);
+            }
+            result.put(row);
+        }
+        result.rewind();
+        return result;
     }
 
 }
