@@ -1,7 +1,7 @@
 Kopf-JPG (mri_brain.jpg):
 
 (CREATING TEXTURE)... glTexImage2D() call in glTexImage2D0__IIIIIIIILjava_lang_Object_2I took 0.000039 sec
-target: 3553
+target: 3553  (GL_TEXTURE_2D)
 level: 0
 internalFormat: 6407
 width: 512
@@ -11,7 +11,7 @@ format: 6407  (GL_RGB)
 type: 5121    (GL_UNSIGNED_BYTE)
 data: (nil)
 glTexSubImage2D() call in glTexSubImage2D1__IIIIIIIILjava_lang_Object_2I took 0.001056 sec
-target: 3553
+target: 3553  (GL_TEXTURE_2D)
 level: 0
 xoffset: 0
 yoffset: 0
@@ -26,7 +26,7 @@ type: 5121    (GL_UNSIGNED_BYTE)
 Zahnbild:
 
 (CREATING TEXTURE)... glTexImage2D() call in glTexImage2D0__IIIIIIIILjava_lang_Object_2I took 0.000076 sec
-target: 3553
+target: 3553  (GL_TEXTURE_2D)
 level: 0
 internalFormat: 6407  (GL_RGB)
 width: 819
@@ -36,7 +36,7 @@ format: 6409  (GL_LUMINANCE)
 type: 5121    (GL_UNSIGNED_BYTE)
 data: (nil)
 glTexSubImage2D() call in glTexSubImage2D1__IIIIIIIILjava_lang_Object_2I took 0.113677 sec
-target: 3553
+target: 3553  (GL_TEXTURE_2D)
 level: 0
 xoffset: 0
 yoffset: 0
@@ -50,7 +50,7 @@ type: 5121    (GL_UNSIGNED_BYTE)
 selbstgenerierte Textur, Format wie Zahnbild, 819x999:
 
 (CREATING TEXTURE)... glTexImage2D() call in glTexImage2D0__IIIIIIIILjava_lang_Object_2I took 0.000052 sec
-target: 3553
+target: 3553  (GL_TEXTURE_2D)
 level: 0
 internalFormat: 6407
 width: 819
@@ -60,7 +60,7 @@ format: 6409  (GL_LUMINANCE)
 type: 5121    (GL_UNSIGNED_BYTE)
 data: (nil)
 glTexSubImage2D() call in glTexSubImage2D0__IIIIIIIILjava_lang_Object_2I took 0.115683 sec
-target: 3553
+target: 3553  (GL_TEXTURE_2D)
 level: 0
 xoffset: 0
 yoffset: 0
@@ -74,7 +74,7 @@ type: 5121    (GL_UNSIGNED_BYTE)
 selbstgenerierte Textur, Format wie Zahnbild, 832x1024:
 
 (CREATING TEXTURE)... glTexImage2D() call in glTexImage2D0__IIIIIIIILjava_lang_Object_2I took 0.000081 sec
-target: 3553
+target: 3553  (GL_TEXTURE_2D)
 level: 0
 internalFormat: 6407  (GL_RGB)
 width: 832
@@ -84,7 +84,7 @@ format: 6409  (GL_LUMINANCE)
 type: 5121    (GL_UNSIGNED_BYTE)
 data: (nil)
 glTexSubImage2D() call in glTexSubImage2D0__IIIIIIIILjava_lang_Object_2I took 0.064568 sec
-target: 3553
+target: 3553  (GL_TEXTURE_2D)
 level: 0
 xoffset: 0
 yoffset: 0
@@ -98,7 +98,7 @@ type: 5121    (GL_UNSIGNED_BYTE)
 selbstgenerierte Textur, Format wie Zahnbild, 1024x1024:
 
 (CREATING TEXTURE)... glTexImage2D() call in glTexImage2D0__IIIIIIIILjava_lang_Object_2I took 0.000068 sec
-target: 3553
+target: 3553  (GL_TEXTURE_2D)
 level: 0
 internalFormat: 6407  (GL_RGB)
 width: 1024
@@ -108,7 +108,7 @@ format: 6409
 type: 5121
 data: (nil)
 glTexSubImage2D() call in glTexSubImage2D0__IIIIIIIILjava_lang_Object_2I took 0.005812 sec
-target: 3553
+target: 3553  (GL_TEXTURE_2D)
 level: 0
 xoffset: 0
 yoffset: 0
@@ -122,9 +122,9 @@ type: 5121    (GL_UNSIGNED_BYTE)
 selbstgenerierte Textur, Format wie Zahnbild, 819x999, ===KEIN Mipmapping===:
 
 (CREATING TEXTURE)... glTexImage2D() call in glTexImage2D0__IIIIIIIILjava_lang_Object_2I took 0.000066 sec
-target: 3553
+target: 3553  (GL_TEXTURE_2D)
 level: 0
-internalFormat: 6407
+internalFormat: 6407  (GL_RGB)
 width: 819
 height: 999
 border: 0
@@ -146,9 +146,9 @@ type: 5121    (GL_UNSIGNED_BYTE)
 Zahnbild, KEIN Mipmapping:
 
 (CREATING TEXTURE)... glTexImage2D() call in glTexImage2D0__IIIIIIIILjava_lang_Object_2I took 0.000076 sec
-target: 3553
+target: 3553  (GL_TEXTURE_2D)
 level: 0
-internalFormat: 6407
+internalFormat: 6407  (GL_RGB)
 width: 819
 height: 999
 border: 0
@@ -156,7 +156,7 @@ format: 6409  (GL_LUMINANCE)
 type: 5121    (GL_UNSIGNED_BYTE)
 data: (nil)
 glTexSubImage2D() call in glTexSubImage2D1__IIIIIIIILjava_lang_Object_2I took 0.003951 sec
-target: 3553
+target: 3553  (GL_TEXTURE_2D)
 level: 0
 xoffset: 0
 yoffset: 0
@@ -179,4 +179,49 @@ nearest-neighbour-Filterung einmal pro Ausgabepixel)
 GL_LUMINANCE oder GL_LUMINANCE16 statt GL_RGB als internalFormat
 bringt auch nochmal ca. 40% Zeiteinsparung
 
-TODO: format GL_LUMINANCE16 testen
+
+selbstgenerierte Textur, 819x999, Mipmapping, extern
+GL_LUMINANCE/GL_SHORT, intern GL_LUMINANCE16:
+
+(CREATING TEXTURE)... glTexImage2D() call in glTexImage2D0__IIIIIIIILjava_lang_Object_2I took 0.000063 sec
+target: 3553  (GL_TEXTURE_2D)
+level: 0
+internalFormat: 32834  (GL_LUMINANCE16)
+width: 819
+height: 999
+border: 0
+format: 6409  (GL_LUMINANCE)
+type: 5122    (GL_SHORT)
+data: (nil)
+glTexSubImage2D() call in glTexSubImage2D1__IIIIIIIILjava_lang_Object_2I took 0.071917 sec
+target: 3553  (GL_TEXTURE_2D)
+level: 0
+xoffset: 0
+yoffset: 0
+width: 819
+height: 999
+format: 6409  (GL_LUMINANCE)
+type: 5122    (GL_SHORT)
+75 ms. Texture 819x999, size (est.): 1636362
+
+
+
+04:01 -!- multi_io [n=olaf@port-87-193-172-154.static.qsc.de] has joined #OpenGL
+
+02:56 < multi_io> hm, it looks here like glTex(Sub)Image2D with type=GL_SHORT interprets negative texel values as zero.
+02:57 < multi_io> e.g. with GL_LUMINANCE format, all texels with negative values are drawn black
+02:57 < h3r3tic> you're probably using an internal format that is clamped to 0..1
+02:58 < multi_io> h3r3tic: ah
+02:58 <@RTFM_FTW> - don't use UNORM data if you want support for signed texel types
+02:58 <@RTFM_FTW> - use SNORM, or SINT
+02:58 < h3r3tic> ( consult the spec :D )
+02:59 <@RTFM_FTW> - furthermore don't use the FF pipeline if you are going to use either of the above < format, type > 
+                  combinations
+02:59 <@RTFM_FTW> - UNORM as per the spec is [0, ..., 1] FP
+02:59 < multi_io> will the shader then see texel values between -1 and 1?
+02:59 < multi_io> (with SNORM)
+02:59 <@RTFM_FTW> - - SNORM is [-1, ..., 1] FP
+03:00 <@RTFM_FTW> - http://www.opengl.org/registry/specs/EXT/texture_snorm.txt
+03:00 <@RTFM_FTW> - start there
+03:03 < multi_io> thanks
+03:03 <@RTFM_FTW> - no problem

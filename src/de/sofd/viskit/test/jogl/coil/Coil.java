@@ -9,6 +9,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.Buffer;
 import java.nio.ByteBuffer;
+import java.nio.ShortBuffer;
 import javax.media.opengl.GL;
 import javax.media.opengl.GL2;
 
@@ -92,20 +93,8 @@ public class Coil implements GLDrawableObject {
                         //coilTextureData = TextureIO.newTextureData(new FileInputStream("/home/olaf/gi/resources/DICOM-Testbilder/1578/f0003563_00620.dcm"), true, "dcm");  // with mipmapping
                         //coilTextureData = TextureIO.newTextureData(new FileInputStream("/home/olaf/gi/resources/DICOM-Testbilder/1578/f0003563_00620.dcm"), false, "dcm"); // w/o mipmapping
                         //coilTextureData = TextureIO.newTextureData(new FileInputStream("/shares/projects/DICOM-Testbilder/1578/f0003563_00620.dcm"), true, "dcm");
-                        ///*
-                        coilTextureData = new TextureData(GL.GL_RGB, // int internalFormat,
-                                                          TEX_W, // int width,
-                                                          TEX_H, // int height,
-                                                          0,     // int border,
-                                                          GL.GL_LUMINANCE, // int pixelFormat,
-                                                          GL.GL_UNSIGNED_BYTE, // int pixelType,
-                                                          true, // boolean mipmap,
-                                                          false, // boolean dataIsCompressed,
-                                                          false, // boolean mustFlipVertically,  // TODO: correct?
-                                                          createTextureData8bitLuminance(), // Buffer buffer,
-                                                          null // Flusher flusher);
-                                                          );
-                        //*/
+                        //coilTextureData = createByteLuminanceTexData();
+                        coilTextureData = createShortLuminanceTexData();
                         long t1 = System.currentTimeMillis();
                         System.out.println("" + (t1-t0) + " ms.");
                     } catch (Exception ex) {
@@ -212,13 +201,46 @@ public class Coil implements GLDrawableObject {
     }
 
 
+    private static TextureData createByteLuminanceTexData() {
+        return new TextureData(   GL.GL_RGB, // int internalFormat,
+                                  TEX_W, // int width,
+                                  TEX_H, // int height,
+                                  0,     // int border,
+                                  GL.GL_LUMINANCE, // int pixelFormat,
+                                  GL.GL_UNSIGNED_BYTE, // int pixelType,
+                                  true, // boolean mipmap,
+                                  false, // boolean dataIsCompressed,
+                                  false, // boolean mustFlipVertically,  // TODO: correct?
+                                  createTextureDataUnsigned8bitLuminance(), // Buffer buffer,
+                                  null // Flusher flusher);
+                                  );
+    }
+
+    private static TextureData createShortLuminanceTexData() {
+        return new TextureData(   GL2.GL_LUMINANCE16, // int internalFormat,
+                                  TEX_W, // int width,
+                                  TEX_H, // int height,
+                                  0,     // int border,
+                                  GL.GL_LUMINANCE, // int pixelFormat,
+                                  GL.GL_SHORT, // int pixelType,
+                                  true, // boolean mipmap,
+                                  false, // boolean dataIsCompressed,
+                                  false, // boolean mustFlipVertically,  // TODO: correct?
+                                  createTextureDataSigned16bitLuminance(), // Buffer buffer,
+                                  null // Flusher flusher);
+                                  );
+        // interprets all negative texel values as 0 (black).
+        // AFAICS, only internalFormat=LUMINANCE16_SNORM (from GL 3.2) would remedy this,
+        // but that isn't available in JOGL. :-( See IRC discussion in doc/textureCreationSpeed/results.txt. (TODO)
+    }
+
     //private static final int TEX_W = 512, TEX_H = 512;
     private static final int TEX_W = 819, TEX_H = 999;
     //private static final int TEX_W = 1024, TEX_H = 1024;
     //private static final int TEX_W = 832, TEX_H = 1024;
 
-    private static ByteBuffer createTextureData8bitLuminance() {
-        int bumpW = TEX_W / 4, bumpH = TEX_H / 4;
+    private static ByteBuffer createTextureDataUnsigned8bitLuminance() {
+        int bumpW = TEX_W / 2, bumpH = TEX_H / 2;
         ByteBuffer result = ByteBuffer.allocateDirect(TEX_W * TEX_H);
         byte[] row = new byte[TEX_W];
         for (int y = 0; y < TEX_H; y++) {
@@ -228,7 +250,33 @@ public class Coil implements GLDrawableObject {
                 double xfac = Math.sin((double)x/bumpW*Math.PI);
                 xfac *= xfac;
                 double grayvalue = yfac * xfac;
-                row[x] = (byte)(grayvalue * 255);
+                row[x] = (byte)(grayvalue * 255);  // byte is signed, but is used to hold unsigned 8-bit values here
+            }
+            result.put(row);
+        }
+        result.rewind();
+        return result;
+    }
+
+    private static ShortBuffer createTextureDataSigned16bitLuminance() {
+        int bumpW = TEX_W / 2, bumpH = TEX_H / 4;
+        ShortBuffer result = ShortBuffer.allocate(TEX_W * TEX_H);
+        short[] row = new short[TEX_W];
+        for (int y = 0; y < TEX_H; y++) {
+            double yfac = Math.sin((double)y/bumpH*Math.PI);
+            yfac *= yfac;
+            for (int x = 0; x < TEX_W; x++) {
+                double xfac = Math.sin((double)x/bumpW*Math.PI);
+                xfac *= xfac;
+                double grayvalue = yfac * xfac;
+                row[x] = (short)(grayvalue * 65535 - 32768);
+                if (row[x] < -32000) {
+                    if (row[x] < -32600) {
+                        row[x] = 0;
+                    } else {
+                        row[x] = 16384;
+                    }
+                }
             }
             result.put(row);
         }
