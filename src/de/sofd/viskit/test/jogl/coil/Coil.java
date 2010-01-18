@@ -106,6 +106,15 @@ public class Coil implements GLDrawableObject {
                     coilTextureData.flush();
                 }
                 System.out.print("(CREATING TEXTURE)... ");
+
+                // force Texture to create POT texture dimensions because they're faster to create
+                // TODO: texture looks wrong (too dark), apparently because of a faulty manual mipmap generation in Texture.java
+                //       (these following two lines make Texture.java think that automatic mipmap creation isn't available,
+                //       so it'll create mipmaps manually (using gluBuild2DMipmaps), which results in these faulty-looking textures).
+                //       Maybe this is the point where the Texture class is no longer suitable to use.
+                //System.setProperty("jogl.texture.nonpot", "true");
+                //System.setProperty("jogl.texture.notexrect", "true");
+
                 long t0 = System.currentTimeMillis();
                 Texture coilTexture = new Texture(coilTextureData);
                 long t1 = System.currentTimeMillis();
@@ -228,7 +237,7 @@ public class Coil implements GLDrawableObject {
     }
 
     private static TextureData createShortLuminanceTexData() {
-        return new TextureData(   GL3.GL_RGB, // int internalFormat,  // GL_*_SNORM result in GL_INVALID_ENUM and all-white texels on tack (GeForce 8600 GT/nvidia 190.42)
+        return new TextureData(   GL2.GL_LUMINANCE16, // int internalFormat,  // GL_*_SNORM result in GL_INVALID_ENUM and all-white texels on tack (GeForce 8600 GT/nvidia 190.42)
                                   TEX_W, // int width,
                                   TEX_H, // int height,
                                   0,     // int border,
