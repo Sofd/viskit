@@ -13,6 +13,8 @@ import java.nio.ShortBuffer;
 import javax.media.opengl.GL;
 import javax.media.opengl.GL2;
 
+import javax.media.opengl.GL3;
+import javax.media.opengl.glu.GLU;
 import static de.sofd.viskit.test.jogl.coil.Constants.*;
 
 
@@ -56,6 +58,7 @@ public class Coil implements GLDrawableObject {
             @Override
             public void run(SharedContextData cd, GL gl1) {
                 GL2 gl = gl1.getGL2();
+                GLU glu = GLU.createGLU(gl);
 
                 System.out.println("initializing coil texture...");
                 // initialize the Texture's underlying TextureData (which doesn't need a GL context)
@@ -111,6 +114,14 @@ public class Coil implements GLDrawableObject {
                 //      Zweierpotenzen (oder beides). Kein Mipmapping hat jedoch deutlich sichtbare Qualitaetseinbussen zur Folge.
                 // ===> Man sollte Mipmapping machen und Texturgroessen auf Zweierpotenzen aufrunden.
 
+                int err = gl.glGetError();
+                if (err != GL.GL_NO_ERROR) {
+                    System.err.println("After texture creation:");
+                }
+                while (err != GL.GL_NO_ERROR) {
+                    System.err.println("GL error: " + glu.gluErrorString(err));
+                    err = gl.glGetError();
+                }
                 cd.setAttribute(COIL_TEXTURE, coilTexture);
 
                 System.out.println("shared context set to " + getId(cd.getGlContext()) + ", creating GL canvasses of other viewers...");
@@ -217,7 +228,7 @@ public class Coil implements GLDrawableObject {
     }
 
     private static TextureData createShortLuminanceTexData() {
-        return new TextureData(   GL2.GL_LUMINANCE16, // int internalFormat,
+        return new TextureData(   GL3.GL_RGB, // int internalFormat,  // GL_*_SNORM result in GL_INVALID_ENUM and all-white texels on tack (GeForce 8600 GT/nvidia 190.42)
                                   TEX_W, // int width,
                                   TEX_H, // int height,
                                   0,     // int border,

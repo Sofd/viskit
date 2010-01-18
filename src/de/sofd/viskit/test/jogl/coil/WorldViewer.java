@@ -12,6 +12,7 @@ import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Set;
+import javax.media.opengl.DebugGL2;
 import javax.media.opengl.GL2;
 import javax.media.opengl.GLAutoDrawable;
 import javax.media.opengl.GLCapabilities;
@@ -189,7 +190,8 @@ public class WorldViewer extends JPanel {
         @Override
         public void init(GLAutoDrawable glAutoDrawable) {
             System.out.println("INIT " + getId(glAutoDrawable) + ", its context is now: " + getId(((GLAutoDrawable)glAutoDrawable).getContext()));
-            GL2 gl = (GL2) glAutoDrawable.getGL();
+            GL2 gl = glAutoDrawable.getGL().getGL2();
+            //GL2 gl = new DebugGL2(glAutoDrawable.getGL().getGL2());
             LinAlg.fillIdentity(worldToEyeCoordTransform);
             setupEye2ViewportTransformation(gl);
             gl.glEnable(gl.GL_DEPTH_TEST);
@@ -268,7 +270,8 @@ public class WorldViewer extends JPanel {
 
         @Override
         public void display(GLAutoDrawable glAutoDrawable) {
-            GL2 gl = (GL2) glAutoDrawable.getGL();
+            GL2 gl = glAutoDrawable.getGL().getGL2();
+            //GL2 gl = new DebugGL2((GL2) glAutoDrawable.getGL());
             gl.glClear(gl.GL_COLOR_BUFFER_BIT | gl.GL_DEPTH_BUFFER_BIT);
             gl.glMatrixMode(gl.GL_MODELVIEW);
             gl.glLoadIdentity();
