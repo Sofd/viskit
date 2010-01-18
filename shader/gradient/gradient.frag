@@ -45,11 +45,6 @@ void main() {
 		float fak2 = 0.5f;
 		float fak3 = 0.25f;
 		
-		//central differences
-		/*gradient.x =  ( getValue(tc.x - xStep, tc.y, tc.z) - getValue(tc.x + xStep, tc.y, tc.z) );
-		gradient.y =  ( getValue(tc.x, tc.y + yStep, tc.z) - getValue(tc.x, tc.y - yStep, tc.z) );
-		gradient.z =  ( getValue(tc.x, tc.y, tc.z - zStep) - getValue(tc.x, tc.y, tc.z + zStep) );*/
-		
 		//sobel
 		value = fak3 * getValue(tc.x - xStep, tc.y - yStep, tc.z - zStep);
 		gradient.x += value; gradient.y -= value; gradient.z += value;

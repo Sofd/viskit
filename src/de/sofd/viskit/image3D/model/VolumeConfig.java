@@ -9,10 +9,16 @@ public class VolumeConfig {
 
     protected int availableGraphicsMemory = 768;
     
+    protected ExtendedProperties properties;
+    
     protected VolumeBasicConfig basicConfig;
 
     protected VolumeGradientsConfig gradientsConfig;
 
+    protected VolumeLightingConfig lightingConfig;
+    
+    protected VolumeRenderConfig renderConfig;
+    
     protected VolumeSmoothingConfig smoothingConfig;
 
     protected VolumeTransferConfig transferConfig;
@@ -20,8 +26,12 @@ public class VolumeConfig {
     protected VolumeWindowingConfig windowingConfig;
 
     public VolumeConfig(ExtendedProperties properties) {
+        this.properties = properties;
+        
         basicConfig = new VolumeBasicConfig(properties);
         gradientsConfig = new VolumeGradientsConfig(properties);
+        lightingConfig = new VolumeLightingConfig(properties);
+        renderConfig = new VolumeRenderConfig(properties);
         smoothingConfig = new VolumeSmoothingConfig(properties);
         transferConfig = new VolumeTransferConfig(properties);
         windowingConfig = new VolumeWindowingConfig(properties);
@@ -51,6 +61,18 @@ public class VolumeConfig {
         int nrOfBytes = (getGradientsConfig().getInternalFormat() == 32 ? 4 : getGradientsConfig().getInternalFormat() / 4 - 1);
         
         return ((long)basicConfig.getPixelWidth() * basicConfig.getPixelHeight() * nrOfLoadedImages * nrOfComponents * nrOfBytes);
+    }
+
+    public VolumeLightingConfig getLightingConfig() {
+        return lightingConfig;
+    }
+
+    public ExtendedProperties getProperties() {
+        return properties;
+    }
+
+    public VolumeRenderConfig getRenderConfig() {
+        return renderConfig;
     }
 
     public VolumeSmoothingConfig getSmoothingConfig() {

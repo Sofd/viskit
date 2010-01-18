@@ -98,7 +98,7 @@ public class VolumeViewStartController implements ActionListener
                     
                     VolumeController volumeController = new VolumeController( volumeView, volumeObject );
                     
-                    final VolumeControlView volumeControlView = new VolumeControlView( volumeObject, volumeController );
+                    final VolumeControlFrame volumeControlView = new VolumeControlFrame( volumeObject.getVolumeConfig(), volumeController );
                     volumeControlView.setLocationRelativeTo( null );
                     volumeControlView.setVisible( true );
                     

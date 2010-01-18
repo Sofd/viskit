@@ -87,9 +87,9 @@ public class VolumeObject
     protected VolumeConstraint constraint;
 
     protected boolean loadTransferFunctionPreIntegrated = true;
-    
-    
+
     protected TransferIntegrationFrameBuffer tfFbo;
+    
     
     protected GradientVolumeBuffer gradientVolumeBuffer;
     
@@ -130,7 +130,7 @@ public class VolumeObject
         setTransferFunction(ImageUtil.getRGBATransferFunction(Color.BLACK, Color.WHITE, 0.0f, 1.0f));
 
     }
-
+    
     public VolumeObject( vtkImageData imageData, ArrayList<ShortBuffer> dataBufList, double[] sliceCursor )
     {
         int[] dim = imageData.GetDimensions();
@@ -183,14 +183,14 @@ public class VolumeObject
         gradientVolumeBuffer.createTexture( gl, GL_RGBA32F, GL_RGBA );
         gradientVolumeBuffer.createFBO( gl );
     }
-    
+
     public void createTransferFbo( GL2 gl ) throws Exception
     {
         tfFbo = new TransferIntegrationFrameBuffer( ShaderManager.get( "transferIntegration" ), transferFunction, transferTexId );
         tfFbo.createTexture( gl, GL_RGBA32F, GL_RGBA );
         tfFbo.createFBO( gl );
     }
-
+    
     public void createTransferTexture( GL2 gl ) throws Exception
     {
         gl.glEnable( GL_TEXTURE_1D );
@@ -213,7 +213,7 @@ public class VolumeObject
 
         gl.glDisable( GL_TEXTURE_1D );
     }
-    
+
     public void createWindowingTexture( GL2 gl )
     {
         gl.glEnable( GL_TEXTURE_2D );
@@ -247,7 +247,7 @@ public class VolumeObject
         gl.glDisable( GL_TEXTURE_2D );
 
     }
-
+    
     public VolumeConstraint getConstraint()
     {
         return constraint;
@@ -396,6 +396,10 @@ public class VolumeObject
         return transferTexPreIntegratedId;
     }
 
+    public VolumeConfig getVolumeConfig() {
+        return volumeConfig;
+    }
+
     public ShortBuffer getWindowing()
     {
         return windowing;
@@ -533,7 +537,7 @@ public class VolumeObject
         this.windowing = windowing;
     }
 
-    public void updateGradientTexture( GL2 gl, float alpha ) throws Exception
+    public void updateGradientTexture( GL2 gl ) throws Exception
     {
         if ( updateGradientTexture )
         {
@@ -541,7 +545,7 @@ public class VolumeObject
             
             long time1 = System.currentTimeMillis();
     
-            gradientVolumeBuffer.run( gl, alpha );
+            gradientVolumeBuffer.run( gl );
     
             gradientTex = gradientVolumeBuffer.getTex();
     

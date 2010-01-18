@@ -60,6 +60,11 @@ public class GLShader extends Shader
         gl.glUseProgram(this.program);
     }
     
+    public void bindUniform(String name, boolean value)
+    {
+        gl.glUniform1i(uniformMap.get(name), ( value ? 1 : 0 ));
+    }
+    
     public void bindUniform(String name, float value)
     {
         gl.glUniform1f(uniformMap.get(name), value);

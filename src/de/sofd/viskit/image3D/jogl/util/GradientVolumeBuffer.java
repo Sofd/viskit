@@ -38,7 +38,7 @@ public class GradientVolumeBuffer extends VolumeBuffer
         
     }
 
-    public void run( GL2 gl, float alpha )
+    public void run( GL2 gl )
     {
         super.begin( gl );
 
@@ -54,9 +54,10 @@ public class GradientVolumeBuffer extends VolumeBuffer
         
         shader.bindUniform( "winTex", 2 );
         
-        shader.bindUniform( "xStep", 5.0f * alpha / getSize().getWidth() );
-        shader.bindUniform( "yStep", 5.0f * alpha / getSize().getHeight() );
-        shader.bindUniform( "zStep", 5.0f * alpha / getSize().getDepth() );
+        float gradientLength = volumeObject.getVolumeConfig().getLightingConfig().getGradientLength();
+        shader.bindUniform( "xStep", gradientLength / getSize().getWidth() );
+        shader.bindUniform( "yStep", gradientLength / getSize().getHeight() );
+        shader.bindUniform( "zStep", gradientLength / getSize().getDepth() );
         
         VolumeConstraint constraint = volumeObject.getConstraint();
         shader.bindUniform( "xMin", constraint.getX().getMin());

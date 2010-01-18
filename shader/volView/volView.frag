@@ -18,20 +18,25 @@ uniform int screenHeight;
 uniform float sliceStep;
 uniform float alpha;
 
+uniform float ambient;
+uniform float diffuse;
+uniform float specExp;
+uniform int useLighting;
+
 out vec4 gl_FragColor;
 
 vec3 shading( in vec3 N, in vec3 V, in vec3 L, in vec3 color )
 {
-	vec3 spec = vec3(10.0f);
+	vec3 spec = vec3(1.0f);
 		
-	vec3 ambient = color * vec3(0.3f);
+	vec3 ambient = color * vec3(ambient);
 	
 	float dotNL = max(dot(L, N), 0);
-	vec3 diffuse = color * vec3(0.7f) * dotNL;
+	vec3 diffuse = color * vec3(diffuse) * dotNL;
 	
 	vec3 H = normalize( L + V );
 	float dotNH = max(dot(N, H), 0);
-	float sf = pow( dotNH, 32 );
+	float sf = pow( dotNH, specExp );
 	vec3 specular = spec * sf * color;
 	
 	return min(max(ambient + diffuse + specular, vec3(0.0f)), 1.0f);
@@ -40,41 +45,38 @@ vec3 shading( in vec3 N, in vec3 V, in vec3 L, in vec3 color )
 void main() {
 	if ( gl_FrontFacing )
 		discard;
-		
-	vec2 tc;
-	tc.x = gl_FragCoord.x / screenWidth;
-	tc.y = gl_FragCoord.y / screenHeight;
+	
 	vec3 rayStart = texCoord.xyz;
 	vec3 rayPos = rayStart;
+	
+	vec2 tc = vec2( gl_FragCoord.x / screenWidth, gl_FragCoord.y / screenHeight );
+	
 	vec3 dir = texture(backTex, tc).rgb - rayStart.xyz;
-	float dirLength = length(dir);
 	vec3 moveDir = normalize(dir) * sliceStep;
 	
+	float dirLength = length(dir);
 	float steps = floor(dirLength/sliceStep); 
 	
 	vec4 sumColor = vec4(0.0f);
 	
 	float texValue;
-	float decay = 1.0f * sliceStep * 1000;
-		
-	float windowCenter = texture2D(winTex, vec2(0, 0.5f) ).a * 2.0f;
-	float windowWidth = texture2D(winTex, vec2(1, 0.5f) ).a * 2.0f;
+	float decay = alpha * sliceStep * 1000;
 	
 	vec4 tfColor = vec4(0.0f);
 	vec2 tfCoord = vec2(0.0f);
-	//vec4 gradColor = vec4(0.0f);
+	
+	vec3 V = normalize( eyePosition - position );
+	vec3 L = normalize( lightPosition - position );
 	
 	for ( int i=0; i<steps; ++i )
 	{
-		//windowCenter = texture2D(winTex, vec2(0, rayPos.z) ).a * 2.0f;
-		//windowWidth = texture2D(winTex, vec2(1, rayPos.z) ).a * 2.0f;
-		
+		float windowCenter = texture2D(winTex, vec2(0, rayPos.z) ).a * 2.0f;
+		float windowWidth = texture2D(winTex, vec2(1, rayPos.z) ).a * 2.0f;
 		tfCoord.y = 0.5f + ( texture(volTex, rayPos).r - windowCenter ) / windowWidth;
-		//tfCoord.y = texture(volTex, rayPos).r;
 		
 		tfColor = texture2D( transferTex, tfCoord );
 		
-		if ( tfColor.a > 0 )
+		if ( useLighting == 1 && tfColor.a > 0 )
 		{
 			
 			vec4 G = ( texture( gradientTex, rayPos.xyz ) - vec4( 0.5f, 0.5f, 0.5f, 0.0f ) ) * vec4( 2.0f, 2.0f, 2.0f, 1.0f );
@@ -83,23 +85,11 @@ void main() {
 			{			
 				G.xyz = normalize(G.xyz);
 				vec3 N = normalize( gl_NormalMatrix * G.xyz );
-				vec3 V = normalize( eyePosition - position );
-				vec3 L = normalize( lightPosition - position );
-							
+											
 				tfColor.rgb = shading(N, V, L, tfColor.rgb);
-				
-				//tfColor.r = max(0.0f, N.r) * tfColor.a;	
-				//tfColor.b = max(0.0f, N.b) * tfColor.a;	
-				//tfColor.g = max(0.0f, N.g) * tfColor.a;
-				
-				
-				//tfColor.a = G.a;
-				//tfColor.rgb = G.rgb * tfColor.a;
 			}
 			
 		}
-				
-		
 		
 		sumColor.rgb = sumColor.rgb + (1 - sumColor.a) * tfColor.rgb * decay;
 		sumColor.a = sumColor.a + (1 - sumColor.a) * tfColor.a * decay;

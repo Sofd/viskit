@@ -36,6 +36,8 @@ public class VolumeSmoothingConfig {
 
     protected SmoothingCalculation calculation = SmoothingCalculation.SMOOTHING_CALCULATION_ON_ORIGINAL_DATA;
     protected SmoothingUsage usage = SmoothingUsage.SMOOTHING_USAGE_ACTIVATE;
+    
+    protected boolean enabled;
 
     public VolumeSmoothingConfig(ExtendedProperties properties) {
         String cal = properties.getProperty("volumeConfig.smoothing.calculation");
@@ -56,19 +58,27 @@ public class VolumeSmoothingConfig {
             usage = SmoothingUsage.SMOOTHING_USAGE_NO;
         }
         
-        System.out.println("usagee " + usage.value());
+        enabled = properties.getB("volumeConfig.smoothing.enabled");
     }
 
     public SmoothingCalculation getCalculation() {
         return calculation;
     }
-    
+
     public SmoothingUsage getUsage() {
         return usage;
+    }
+
+    public boolean isEnabled() {
+        return enabled;
     }
     
     public void setCalculation(SmoothingCalculation calculation) {
         this.calculation = calculation;
+    }
+    
+    public void setEnabled(boolean enabled) {
+        this.enabled = enabled;
     }
     
     public void setUsage(SmoothingUsage usage) {
