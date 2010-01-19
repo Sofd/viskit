@@ -1,7 +1,10 @@
 package de.sofd.viskit.test.jogl.coil;
 
 import de.sofd.lang.Runnable1;
+import de.sofd.util.DynScope;
 import de.sofd.util.IdentityHashSet;
+import de.sofd.viskit.image3D.jogl.util.GLShader;
+import de.sofd.viskit.image3D.jogl.util.ShaderManager;
 import java.awt.Component;
 import java.awt.GridLayout;
 import java.awt.Point;
@@ -38,6 +41,7 @@ public class WorldViewer extends JPanel {
         System.setProperty("sun.awt.noerasebackground", "true");
         JPopupMenu.setDefaultLightWeightPopupEnabled(false);
         ToolTipManager.sharedInstance().setLightWeightPopupEnabled(false);
+        ShaderManager.init("shader");
     }
 
     private static final Set<WorldViewer> instances = new IdentityHashSet<WorldViewer>();
@@ -51,6 +55,8 @@ public class WorldViewer extends JPanel {
     private GLAutoDrawable glCanvas;
 
     private static Collection<Runnable1<WorldViewer>> glCanvasCreatedCallbacks = new ArrayList<Runnable1<WorldViewer>>();
+
+    private GLShader shader;
 
     public static void addGlCanvasCreatedCallback(Runnable1<WorldViewer> callback) {
         glCanvasCreatedCallbacks.add(callback);
@@ -216,6 +222,21 @@ public class WorldViewer extends JPanel {
                     }
                 });
             }
+
+            // initialize shader for Coil. TODO: belongs to Coil.java -- use context-init callback
+            // for this as well to be able to move this code into Coil.java. (shaders are per-context,
+            // i.e. they aren't via context sharing, which is why this can't be handled in a
+            // a SharedContextData.ContextInitCallback called above)
+            try {
+                ShaderManager.read(gl, "coiltest");
+                shader = ShaderManager.get("coiltest");
+                shader.addProgramUniform("tex");
+            } catch (Exception e) {
+                System.err.println("FATAL");
+                e.printStackTrace();
+                System.exit(1);
+            }
+
         }
 
         private void setupEye2ViewportTransformation(GL2 gl) {
@@ -270,13 +291,19 @@ public class WorldViewer extends JPanel {
 
         @Override
         public void display(GLAutoDrawable glAutoDrawable) {
-            GL2 gl = glAutoDrawable.getGL().getGL2();
+            final GL2 gl = glAutoDrawable.getGL().getGL2();
             //GL2 gl = new DebugGL2((GL2) glAutoDrawable.getGL());
             gl.glClear(gl.GL_COLOR_BUFFER_BIT | gl.GL_DEPTH_BUFFER_BIT);
             gl.glMatrixMode(gl.GL_MODELVIEW);
             gl.glLoadIdentity();
             gl.glMultMatrixf(worldToEyeCoordTransform, 0);
-            viewedWorld.draw(sharedContextData, gl);
+            // use DynScope to pass shader down the callstack to Coil for now. See above TODO for better future approach
+            DynScope.runWith(new DynScope.Tuple("shader", shader), new Runnable() {
+                @Override
+                public void run() {
+                    viewedWorld.draw(sharedContextData, gl);
+                }
+            });
 
             glAutoDrawable.swapBuffers();
         }
