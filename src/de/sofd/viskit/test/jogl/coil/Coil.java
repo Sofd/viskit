@@ -96,8 +96,10 @@ public class Coil implements GLDrawableObject {
                         //coilTextureData = TextureIO.newTextureData(new FileInputStream("/home/olaf/gi/resources/DICOM-Testbilder/1578/f0003563_00620.dcm"), true, "dcm");  // with mipmapping
                         //coilTextureData = TextureIO.newTextureData(new FileInputStream("/home/olaf/gi/resources/DICOM-Testbilder/1578/f0003563_00620.dcm"), false, "dcm"); // w/o mipmapping
                         //coilTextureData = TextureIO.newTextureData(new FileInputStream("/shares/projects/DICOM-Testbilder/1578/f0003563_00620.dcm"), true, "dcm");
-                        //coilTextureData = createByteLuminanceTexData();
-                        coilTextureData = createShortLuminanceTexData();
+                        //coilTextureData = createByteLuminanceTexData(true);  // with mipmapping
+                        //coilTextureData = createByteLuminanceTexData(false);  // without mipmapping
+                        //coilTextureData = createShortLuminanceTexData(true);  // with mipmapping
+                        coilTextureData = createShortLuminanceTexData(false);  // without mipmapping
                         long t1 = System.currentTimeMillis();
                         System.out.println("" + (t1-t0) + " ms.");
                     } catch (Exception ex) {
@@ -133,9 +135,14 @@ public class Coil implements GLDrawableObject {
                 }
                 cd.setAttribute(COIL_TEXTURE, coilTexture);
 
+                //gl.glTexParameteri(coilTexture.getTarget(), GL.GL_TEXTURE_MIN_FILTER, GL.GL_LINEAR);  // Texture class's default without mipmapping
+                //gl.glTexParameteri(coilTexture.getTarget(), GL.GL_TEXTURE_MIN_FILTER, GL.GL_LINEAR_MIPMAP_LINEAR);  // Texture class's default with mipmapping
+
+                //gl.glTexParameteri(coilTexture.getTarget(), GL.GL_TEXTURE_MAG_FILTER, GL.GL_LINEAR);  // Texture class's default in any case
+
                 System.out.println("shared context set to " + getId(cd.getGlContext()) + ", creating GL canvasses of other viewers...");
                 System.out.println("initializing coil display list...");
-                TextureCoords coords = coilTexture.getImageTexCoords();
+                TextureCoords coords = coilTexture.getImageTexCoords();  // TODO: use this
                 int coilDisplayList = gl.glGenLists(1);  //TODO: error handling
                 cd.setAttribute(COIL_DISP_LIST_ID, coilDisplayList);
                 gl.glNewList(coilDisplayList, gl.GL_COMPILE);
@@ -221,14 +228,14 @@ public class Coil implements GLDrawableObject {
     }
 
 
-    private static TextureData createByteLuminanceTexData() {
+    private static TextureData createByteLuminanceTexData(boolean mipmap) {
         return new TextureData(   GL.GL_RGB, // int internalFormat,
                                   TEX_W, // int width,
                                   TEX_H, // int height,
                                   0,     // int border,
                                   GL.GL_LUMINANCE, // int pixelFormat,
                                   GL.GL_UNSIGNED_BYTE, // int pixelType,
-                                  true, // boolean mipmap,
+                                  mipmap, // boolean mipmap,
                                   false, // boolean dataIsCompressed,
                                   false, // boolean mustFlipVertically,  // TODO: correct?
                                   createTextureDataUnsigned8bitLuminance(), // Buffer buffer,
@@ -236,14 +243,14 @@ public class Coil implements GLDrawableObject {
                                   );
     }
 
-    private static TextureData createShortLuminanceTexData() {
+    private static TextureData createShortLuminanceTexData(boolean mipmap) {
         return new TextureData(   GL2.GL_LUMINANCE16, // int internalFormat,  // GL_*_SNORM result in GL_INVALID_ENUM and all-white texels on tack (GeForce 8600 GT/nvidia 190.42)
                                   TEX_W, // int width,
                                   TEX_H, // int height,
                                   0,     // int border,
                                   GL.GL_LUMINANCE, // int pixelFormat,
                                   GL.GL_SHORT, // int pixelType,
-                                  true, // boolean mipmap,
+                                  mipmap, // boolean mipmap,
                                   false, // boolean dataIsCompressed,
                                   false, // boolean mustFlipVertically,  // TODO: correct?
                                   createTextureDataSigned16bitLuminance(), // Buffer buffer,
@@ -260,7 +267,7 @@ public class Coil implements GLDrawableObject {
     //private static final int TEX_W = 832, TEX_H = 1024;
 
     private static ByteBuffer createTextureDataUnsigned8bitLuminance() {
-        int bumpW = TEX_W / 2, bumpH = TEX_H / 2;
+        int bumpW = TEX_W / 2, bumpH = TEX_H / 4;
         ByteBuffer result = ByteBuffer.allocateDirect(TEX_W * TEX_H);
         byte[] row = new byte[TEX_W];
         for (int y = 0; y < TEX_H; y++) {

@@ -119,7 +119,8 @@ class ImageTextureManager {
         TextureRef texRef = texRefStore.getTexRef(elt);
         if (null == texRef) {
             logger.info("need to create texture for: " + elt.getImageKey());
-            TextureData imageTextureData = AWTTextureIO.newTextureData(elt.getImage(), true);
+            //TextureData imageTextureData = AWTTextureIO.newTextureData(elt.getImage(), true);  // with mipmapping
+            TextureData imageTextureData = AWTTextureIO.newTextureData(elt.getImage(), false);   // w/o mipmapping
             imageTextureData.flush();
             Texture imageTexture = new Texture(imageTextureData);
             texRef = new TextureRef(imageTexture.getTextureObject(), imageTexture.getImageTexCoords(), imageTexture.getEstimatedMemorySize());
