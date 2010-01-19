@@ -27,7 +27,19 @@ public class DicomUtil {
         ShortBuffer dataBuf = BufferUtil.newShortBuffer(dim[0] * dim[1] * dim[2]);
 
         for (DicomObject dicomObject : dicomList)
-            dataBuf.put(dicomObject.getShorts(Tag.PixelData));
+        {
+            short[] pixData = dicomObject.getShorts(Tag.PixelData);
+            float rescaleIntercept = dicomObject.getFloat(Tag.RescaleIntercept);
+            float rescaleSlope = dicomObject.getFloat(Tag.RescaleSlope);
+            
+            if ( rescaleSlope != 0 || rescaleIntercept != 0)
+            {
+                for ( int i = 0; i < pixData.length; ++i )
+                    pixData[i] = (short)(pixData[i]*rescaleSlope + rescaleIntercept); 
+            }
+            
+            dataBuf.put(pixData);
+        }
 
         dataBuf.rewind();
 

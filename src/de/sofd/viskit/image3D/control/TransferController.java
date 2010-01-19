@@ -1,16 +1,15 @@
 package de.sofd.viskit.image3D.control;
 
-import java.awt.*;
 import java.awt.event.*;
 
 import javax.swing.*;
 import javax.swing.event.*;
 
+import de.sofd.viskit.image3D.jogl.control.*;
 import de.sofd.viskit.image3D.jogl.model.*;
 import de.sofd.viskit.image3D.jogl.view.*;
 import de.sofd.viskit.image3D.model.*;
 import de.sofd.viskit.image3D.view.*;
-import de.sofd.viskit.util.*;
 
 public class TransferController implements ActionListener, ChangeListener
 {
@@ -75,19 +74,8 @@ public class TransferController implements ActionListener, ChangeListener
             JComboBox comboBox = (JComboBox)event.getSource();
             String tf = (String)comboBox.getSelectedItem();
 
-            if ( "Greyscale".equals( tf ) )
-            {
-                volumeObject.setTransferFunction( ImageUtil.getRGBATransferFunction( Color.BLACK, Color.WHITE, 0.0, 1.0 ) );
-            }
-            else if ( "Gold".equals( tf ) )
-            {
-                volumeObject.setTransferFunction(  ImageUtil.getRGBATransferFunction( Color.BLACK, Color.ORANGE, 0.0, 1.0 ) );
-            }
-            else if ( "Rainbow".equals( tf ) )
-            {
-                volumeObject.setTransferFunction( ImageUtil.getRainbowTransferFunction( 0.0, 1.0 ) );
-            }
-
+            volumeObject.setTransferFunction( LutController.getLutMap().get(tf) );
+            
             sliceCanvas.display();
             volumeView.display();
         }

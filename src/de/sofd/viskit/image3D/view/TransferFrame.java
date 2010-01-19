@@ -1,10 +1,12 @@
 package de.sofd.viskit.image3D.view;
 
 import java.awt.*;
+import java.util.*;
 
 import javax.swing.*;
 
 import de.sofd.viskit.image3D.control.*;
+import de.sofd.viskit.image3D.jogl.control.*;
 import de.sofd.viskit.image3D.jogl.model.*;
 
 @SuppressWarnings( "serial" )
@@ -97,9 +99,13 @@ public class TransferFrame extends JFrame
         comboBox.setActionCommand("transferFunction");
         comboBox.addActionListener( transferController );
         
-        comboBox.addItem( "Greyscale" );
-        comboBox.addItem( "Gold" );
-        comboBox.addItem( "Rainbow" );
+        ArrayList<String> lutIdList = new ArrayList<String>(LutController.getLutMap().keySet());
+        Collections.sort(lutIdList);
+                
+        for ( String lutId : lutIdList )
+        {
+            comboBox.addItem( lutId );
+        }
 
         panel.add( comboBox );
 
