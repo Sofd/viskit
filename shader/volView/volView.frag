@@ -1,7 +1,7 @@
 #version 130
 
 uniform sampler3D volTex;
-//uniform sampler3D gradientTex;
+uniform sampler3D gradientTex;
 uniform sampler2D backTex;
 uniform sampler2D winTex;
 uniform sampler2D transferTex;
@@ -42,17 +42,23 @@ vec3 shading( in vec3 N, in vec3 V, in vec3 L, in vec3 color )
 	return min(max(ambient + diffuse + specular, vec3(0.0f)), 1.0f);
 }
 
+float random(in vec3 seed) {
+	return fract(sin(seed.x * 12.9898 + seed.y * 78.233 + 23 * seed.z) * 43758.5453 );
+}
+
 void main() {
 	if ( gl_FrontFacing )
 		discard;
 	
 	vec3 rayStart = texCoord.xyz;
-	vec3 rayPos = rayStart;
-	
+		
 	vec2 tc = vec2( gl_FragCoord.x / screenWidth, gl_FragCoord.y / screenHeight );
 	
 	vec3 dir = texture(backTex, tc).rgb - rayStart.xyz;
 	vec3 moveDir = normalize(dir) * sliceStep;
+	
+	vec3 rayPos = rayStart + random(texCoord.xyz) * moveDir;
+	//vec3 rayPos = rayStart;
 	
 	float dirLength = length(dir);
 	float steps = floor(dirLength/sliceStep); 
@@ -76,7 +82,7 @@ void main() {
 		
 		tfColor = texture2D( transferTex, tfCoord );
 				
-		/*if ( useLighting == 1 && tfColor.a > 0 )
+		if ( useLighting == 1 && tfColor.a > 0 )
 		{
 			
 			vec4 G = ( texture( gradientTex, rayPos.xyz ) - vec4( 0.5f, 0.5f, 0.5f, 0.0f ) ) * vec4( 2.0f, 2.0f, 2.0f, 1.0f );
@@ -89,7 +95,7 @@ void main() {
 				tfColor.rgb = shading(N, V, L, tfColor.rgb);
 			}
 			
-		}*/
+		}
 		
 		sumColor.rgb = sumColor.rgb + (1 - sumColor.a) * tfColor.rgb * decay;
 		sumColor.a = sumColor.a + (1 - sumColor.a) * tfColor.a * decay;
@@ -105,5 +111,6 @@ void main() {
 	//gl_FragColor.rgb = normal;
 	//gl_FragColor.rgb = vec3(texture(gradientTex, texCoord.xyz).a);
 	//gl_FragColor.rgb = vec3(texture(transferTex, texCoord.xy).a);
+	
 	gl_FragColor.a = 1.0f;
 } 

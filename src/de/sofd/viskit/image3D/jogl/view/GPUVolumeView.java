@@ -53,7 +53,7 @@ public class GPUVolumeView extends GLCanvas implements GLEventListener
 
     protected boolean isLocked = false;
     
-    protected boolean useGradient = false;
+    protected boolean useGradient = true;
 
     public GPUVolumeView( VolumeObject volumeObject, GLContext sharedContext )
     {
