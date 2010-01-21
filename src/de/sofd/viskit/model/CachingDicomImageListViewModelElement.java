@@ -25,7 +25,7 @@ import org.dcm4che2.media.FileMetaInformation;
  *
  * @author olaf
  */
-public abstract class CachingDicomImageListViewModelElement implements DicomImageListViewModelElement {
+public abstract class CachingDicomImageListViewModelElement extends AbstractImageListViewModelElement implements DicomImageListViewModelElement {
 
     static {
         RawDicomImageReader.registerWithImageIO();

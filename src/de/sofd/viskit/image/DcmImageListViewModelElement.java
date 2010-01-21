@@ -1,7 +1,6 @@
 package de.sofd.viskit.image;
 
-import de.sofd.draw2d.Drawing;
-import de.sofd.viskit.model.ImageListViewModelElement;
+import de.sofd.viskit.model.AbstractImageListViewModelElement;
 import java.awt.image.BufferedImage;
 import org.apache.log4j.Logger;
 import org.dcm4che2.data.Tag;
@@ -9,16 +8,19 @@ import org.dcm4che2.data.Tag;
 /**
  *
  */
-public class DcmImageListViewModelElement implements ImageListViewModelElement {
+public class DcmImageListViewModelElement extends AbstractImageListViewModelElement {
 
     static final Logger log4jLogger = Logger.getLogger(DcmImageListViewModelElement.class);
     private Dcm dcm;
     private String label;
-    private final Drawing roiDrawing;
 
     public DcmImageListViewModelElement(Dcm dcm) {
         this.dcm = dcm;
-        roiDrawing = new Drawing();        
+    }
+
+    @Override
+    public boolean hasBufferedImage() {
+        return true;
     }
 
     @Override
@@ -29,11 +31,6 @@ public class DcmImageListViewModelElement implements ImageListViewModelElement {
     @Override
     public Object getImageKey() {
         return dcm.getBasicDicomObject().getString(Tag.SOPInstanceUID);
-    }
-
-    @Override
-    public Drawing getRoiDrawing() {
-        return roiDrawing;
     }
 
     public Dcm getDcm() {
