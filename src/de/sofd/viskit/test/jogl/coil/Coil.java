@@ -255,7 +255,7 @@ public class Coil implements GLDrawableObject {
                                   TEX_W, // int width,
                                   TEX_H, // int height,
                                   0,     // int border,
-                                  GL.GL_LUMINANCE, // int pixelFormat,
+                                  GL3.GL_RED, // int pixelFormat,
                                   GL.GL_SHORT, // int pixelType,
                                   mipmap, // boolean mipmap,
                                   false, // boolean dataIsCompressed,
