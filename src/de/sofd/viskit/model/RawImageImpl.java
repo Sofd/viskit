@@ -1,0 +1,53 @@
+package de.sofd.viskit.model;
+
+import java.nio.Buffer;
+
+/**
+ * Trivial implementation of {@link RawImage}.
+ *
+ * @author olaf
+ */
+public class RawImageImpl implements RawImage {
+
+    protected int width, height, pixelFormat, pixelType;
+    protected Buffer pixelData;
+
+    public RawImageImpl(int width, int height, int pixelFormat, int pixelType, Buffer pixelData) {
+        this.width = width;
+        this.height = height;
+        this.pixelFormat = pixelFormat;
+        this.pixelType = pixelType;
+        this.pixelData = pixelData;
+        int eltPerPixel = (getPixelFormat() == PIXEL_FORMAT_RGB ? 3 : 1);
+        int totalEltsCount = eltPerPixel * getWidth() * getHeight();
+        if (pixelData.remaining() < totalEltsCount) {
+            throw new IllegalArgumentException("supplied pixelData buffer too small: " + totalEltsCount + " needed, " + pixelData.remaining() + " available");
+        }
+    }
+
+    @Override
+    public int getWidth() {
+        return width;
+    }
+
+    @Override
+    public int getHeight() {
+        return height;
+    }
+
+    @Override
+    public int getPixelFormat() {
+        return pixelFormat;
+    }
+
+    @Override
+    public int getPixelType() {
+        return pixelType;
+    }
+
+    @Override
+    public Buffer getPixelData() {
+        return pixelData;
+    }
+
+}

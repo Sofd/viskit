@@ -23,6 +23,8 @@ import org.dcm4che2.media.FileMetaInformation;
  * Implements getDicomObject(), getImage() as caching delegators to the (subclass-provided)
  * methods getImageKey(), getBackendDicomObject(), and optionally getBackendImage() and getBackendDicomObjectMetaData().
  *
+ * TODO: Optional caching of #getRawImage()?
+ *
  * @author olaf
  */
 public abstract class CachingDicomImageListViewModelElement extends AbstractImageListViewModelElement implements DicomImageListViewModelElement {
