@@ -5,6 +5,8 @@ import de.sofd.lang.Runnable1;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.event.ActionEvent;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.util.Timer;
@@ -40,6 +42,7 @@ public class Main {
 
     private final World world;
     private JFrame controllerFrame;
+    private boolean animRunning = true;
 
     public Main() {
         world = new World();
@@ -116,15 +119,19 @@ public class Main {
             private long lastAnimStepTime = -1;
 
             private void animateCoils() {
-                final long now = System.currentTimeMillis();
-                if (lastAnimStepTime > 0) {
-                    float dt = (float) (now - lastAnimStepTime) / 1000;
-                    for (Coil c : world.getCoils()) {
-                        c.rotAngle += dt * c.rotAngularVelocity;
-                        c.rotAngle -= 360 * (int)(c.rotAngle / 360);
+                if (animRunning) {
+                    final long now = System.currentTimeMillis();
+                    if (lastAnimStepTime > 0) {
+                        float dt = (float) (now - lastAnimStepTime) / 1000;
+                        for (Coil c : world.getCoils()) {
+                            c.rotAngle += dt * c.rotAngularVelocity;
+                            c.rotAngle -= 360 * (int)(c.rotAngle / 360);
+                        }
                     }
+                    lastAnimStepTime = now;
+                } else {
+                    lastAnimStepTime = -1;
                 }
-                lastAnimStepTime = now;
             }
         }, 0, 1000/FPS);
     }
@@ -147,6 +154,17 @@ public class Main {
             @Override
             public void windowClosing(WindowEvent e) {
                 //glViewer.dispose();
+            }
+        });
+        glViewer.addKeyListener(new KeyAdapter() {
+            @Override
+            public void keyPressed(KeyEvent e) {
+                System.out.println("external keyPressed " + e.getKeyCode());
+                switch (e.getKeyCode()) {
+                    case KeyEvent.VK_SPACE:
+                        animRunning = !animRunning;
+                        break;
+                }
             }
         });
     }

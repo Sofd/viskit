@@ -14,6 +14,7 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 import java.util.Set;
 import javax.media.opengl.DebugGL2;
 import javax.media.opengl.GL2;
@@ -54,6 +55,8 @@ public class WorldViewer extends JPanel {
 
     private GLAutoDrawable glCanvas;
 
+    private List<KeyListener> externalCanvasKeyListeners = new ArrayList<KeyListener>();
+
     private static Collection<Runnable1<WorldViewer>> glCanvasCreatedCallbacks = new ArrayList<Runnable1<WorldViewer>>();
 
     private GLShader shader;
@@ -86,6 +89,9 @@ public class WorldViewer extends JPanel {
         glCanvasComp.addMouseListener(canvasMouseAndKeyHandler);
         glCanvasComp.addMouseMotionListener(canvasMouseAndKeyHandler);
         glCanvasComp.addKeyListener(canvasMouseAndKeyHandler);
+        for (KeyListener l : externalCanvasKeyListeners) {
+            glCanvasComp.addKeyListener(l);
+        }
         System.out.println("CREATED CANVAS " + getId(glCanvas) + " of viewer " + getId(this) + ", its context is now: " + getId(glCanvas.getContext()));
         for (Runnable1<WorldViewer> callback : glCanvasCreatedCallbacks) {
             callback.run(this);
@@ -151,6 +157,16 @@ public class WorldViewer extends JPanel {
         @Override
         public void keyReleased(KeyEvent e) {
             System.out.println("keyReleased " + e.getKeyCode());
+        }
+    }
+
+    @Override
+    public synchronized void addKeyListener(KeyListener l) {
+        super.addKeyListener(l);
+        if (null != glCanvas) {
+            ((Component)glCanvas).addKeyListener(l);
+        } else {
+            externalCanvasKeyListeners.add(l);
         }
     }
 
