@@ -251,11 +251,11 @@ public class Coil implements GLDrawableObject {
     }
 
     private static TextureData createShortLuminanceTexData(boolean mipmap) {
-        return new TextureData(   GL3.GL_R16_SNORM, // int internalFormat,  // GL_*_SNORM result in GL_INVALID_ENUM and all-white texels on tack (GeForce 8600 GT/nvidia 190.42)
+        return new TextureData(   GL2.GL_LUMINANCE16F, // int internalFormat,  // GL_*_SNORM result in GL_INVALID_ENUM and all-white texels on tack (GeForce 8600 GT/nvidia 190.42)
                                   TEX_W, // int width,
                                   TEX_H, // int height,
                                   0,     // int border,
-                                  GL3.GL_RED, // int pixelFormat,
+                                  GL3.GL_LUMINANCE, // int pixelFormat,
                                   GL.GL_SHORT, // int pixelType,
                                   mipmap, // boolean mipmap,
                                   false, // boolean dataIsCompressed,
