@@ -20,11 +20,8 @@ public class RawImageImpl implements RawImage {
         this.height = height;
         this.pixelFormat = pixelFormat;
         this.pixelType = pixelType;
-        this.pixelData = pixelData;
-        int eltPerPixel = (getPixelFormat() == PIXEL_FORMAT_RGB ? 3 : 1);
-        int totalEltsCount = eltPerPixel * getWidth() * getHeight();
-        if (pixelData.remaining() < totalEltsCount) {
-            throw new IllegalArgumentException("supplied pixelData buffer too small: " + totalEltsCount + " needed, " + pixelData.remaining() + " available");
+        if (pixelData != null) {
+            setPixelData(pixelData);
         }
     }
 
@@ -70,6 +67,11 @@ public class RawImageImpl implements RawImage {
     }
 
     public void setPixelData(Buffer pixelData) {
+        int eltsPerPixel = (getPixelFormat() == PIXEL_FORMAT_RGB ? 3 : 1);
+        int totalEltsCount = eltsPerPixel * getWidth() * getHeight();
+        if (pixelData.remaining() < totalEltsCount) {
+            throw new IllegalArgumentException("supplied pixelData buffer too small: " + totalEltsCount + " needed, " + pixelData.remaining() + " available");
+        }
         this.pixelData = pixelData;
     }
 

@@ -67,6 +67,11 @@ public abstract class AbstractImageListViewModelElement implements ImageListView
     }
 
     @Override
+    public RawImage getProxyRawImage() {
+        throw new UnsupportedOperationException("getProxyRawImage() not supported by this model element.");
+    }
+
+    @Override
     public Drawing getRoiDrawing() {
         return roiDrawing;
     }

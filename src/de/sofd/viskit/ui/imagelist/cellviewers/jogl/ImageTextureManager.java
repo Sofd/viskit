@@ -6,12 +6,14 @@ import com.sun.opengl.util.texture.TextureData;
 import com.sun.opengl.util.texture.awt.AWTTextureIO;
 import de.sofd.lang.Runnable2;
 import de.sofd.viskit.model.ImageListViewModelElement;
+import de.sofd.viskit.model.RawImage;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.Map;
 import java.util.Map.Entry;
 import javax.media.opengl.GL;
+import javax.media.opengl.GL2;
 import org.apache.log4j.Logger;
 
 /**
@@ -119,10 +121,38 @@ class ImageTextureManager {
         TextureRef texRef = texRefStore.getTexRef(elt);
         if (null == texRef) {
             logger.info("need to create texture for: " + elt.getImageKey());
-            //TextureData imageTextureData = AWTTextureIO.newTextureData(elt.getImage(), true);  // with mipmapping
-            TextureData imageTextureData = AWTTextureIO.newTextureData(elt.getImage(), false);   // w/o mipmapping
-            imageTextureData.flush();
-            Texture imageTexture = new Texture(imageTextureData);
+            Texture imageTexture = null;
+            if (elt.hasRawImage() && elt.isRawImagePreferable()) {
+                RawImage rawImgProxy = elt.getProxyRawImage();
+                if (rawImgProxy.getPixelFormat() == RawImage.PIXEL_FORMAT_LUMINANCE &&
+                        rawImgProxy.getPixelType() == RawImage.PIXEL_TYPE_SIGNED_16BIT) {
+                    // we only support texture creation from the RawImage for this case for now
+                    logger.info("(creating texture from raw image pixel data)");
+                    RawImage rawImg = elt.getRawImage();
+                    TextureData imageTextureData =
+                        new TextureData(  GL2.GL_LUMINANCE16F, // int internalFormat,  // GL_*_SNORM result in GL_INVALID_ENUM and all-white texels on tack (GeForce 8600 GT/nvidia 190.42)
+                                          rawImg.getWidth(), // int width,
+                                          rawImg.getHeight(), // int height,
+                                          0,     // int border,
+                                          GL.GL_LUMINANCE, // int pixelFormat,
+                                          GL.GL_SHORT, // int pixelType,
+                                          false, // boolean mipmap,
+                                          false, // boolean dataIsCompressed,
+                                          false, // boolean mustFlipVertically,  // TODO: correct?
+                                          rawImg.getPixelData(), // Buffer buffer,
+                                          null // Flusher flusher);
+                                          );
+                    imageTextureData.flush();
+                    imageTexture = new Texture(imageTextureData);
+                }
+                
+            }
+            if (null == imageTexture) {
+                //TextureData imageTextureData = AWTTextureIO.newTextureData(elt.getImage(), true);  // with mipmapping
+                TextureData imageTextureData = AWTTextureIO.newTextureData(elt.getImage(), false);   // w/o mipmapping
+                imageTextureData.flush();
+                imageTexture = new Texture(imageTextureData);
+            }
             texRef = new TextureRef(imageTexture.getTextureObject(), imageTexture.getImageTexCoords(), imageTexture.getEstimatedMemorySize());
             texRefStore.putTexRef(elt, texRef, cd.getGlContext().getCurrentGL());
             logger.info("GL texture memory consumption now (est.): " + (texRefStore.getTotalMemConsumption()/1024/1024) + " MB");

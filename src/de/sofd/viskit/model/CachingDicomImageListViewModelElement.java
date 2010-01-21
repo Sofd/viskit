@@ -174,7 +174,7 @@ public abstract class CachingDicomImageListViewModelElement extends AbstractImag
 
     @Override
     public boolean hasRawImage() {
-        return null != maybeGetRawImageMetadata();
+        return null != maybeGetProxyRawImage();
     }
 
     @Override
@@ -184,15 +184,21 @@ public abstract class CachingDicomImageListViewModelElement extends AbstractImag
 
     @Override
     public RawImage getRawImage() {
-        RawImageImpl result = maybeGetRawImageMetadata();
-        if (null == result) {
-            throw new IllegalStateException("this model element can't provide a raw image");
-        }
-        result.setPixelData(ShortBuffer.wrap(getDicomObject().getShorts(Tag.PixelData)));
+        RawImageImpl result = (RawImageImpl) getProxyRawImage();
+        result.setPixelData(ShortBuffer.wrap(getDicomObject().getShorts(Tag.PixelData))); // type of buffer may later depend on image metadata
         return result;
     }
 
-    protected RawImageImpl maybeGetRawImageMetadata() {
+    @Override
+    public RawImage getProxyRawImage() {
+        RawImageImpl result = maybeGetProxyRawImage();
+        if (null == result) {
+            throw new IllegalStateException("this model element can't provide a raw image");
+        }
+        return result;
+    }
+
+    protected RawImageImpl maybeGetProxyRawImage() {
         DicomObject imgMetadata = getDicomImageMetaData();
         int bitsAllocated = imgMetadata.getInt(Tag.BitsAllocated);
         if (bitsAllocated <= 0) {
