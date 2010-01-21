@@ -12,6 +12,9 @@ public class RawImageImpl implements RawImage {
     protected int width, height, pixelFormat, pixelType;
     protected Buffer pixelData;
 
+    public RawImageImpl() {
+    }
+
     public RawImageImpl(int width, int height, int pixelFormat, int pixelType, Buffer pixelData) {
         this.width = width;
         this.height = height;
@@ -30,14 +33,30 @@ public class RawImageImpl implements RawImage {
         return width;
     }
 
+    public void setWidth(int width) {
+        this.width = width;
+    }
+
     @Override
     public int getHeight() {
         return height;
     }
 
+    public void setHeight(int height) {
+        this.height = height;
+    }
+
     @Override
     public int getPixelFormat() {
         return pixelFormat;
+    }
+
+    public void setPixelFormat(int pixelFormat) {
+        this.pixelFormat = pixelFormat;
+    }
+
+    public void setPixelType(int pixelType) {
+        this.pixelType = pixelType;
     }
 
     @Override
@@ -48,6 +67,10 @@ public class RawImageImpl implements RawImage {
     @Override
     public Buffer getPixelData() {
         return pixelData;
+    }
+
+    public void setPixelData(Buffer pixelData) {
+        this.pixelData = pixelData;
     }
 
 }

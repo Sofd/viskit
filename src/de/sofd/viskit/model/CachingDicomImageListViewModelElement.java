@@ -6,6 +6,7 @@ import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.nio.ShortBuffer;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Map.Entry;
@@ -102,10 +103,10 @@ public abstract class CachingDicomImageListViewModelElement extends AbstractImag
 
     // TODO: unify the two caches into one
 
-    private static LRUMemoryCache<Object, DicomObject> rawDcmObjectCache
+    private static LRUMemoryCache<Object, DicomObject> dcmObjectCache
         = new LRUMemoryCache<Object, DicomObject>(5);
 
-    private static LRUMemoryCache<Object, BufferedImage> rawImageCache
+    private static LRUMemoryCache<Object, BufferedImage> imageCache
         = new LRUMemoryCache<Object, BufferedImage>(5);
 
     private static LRUMemoryCache<Object, DicomObject> rawDicomImageMetadataCache
@@ -114,20 +115,20 @@ public abstract class CachingDicomImageListViewModelElement extends AbstractImag
 
     @Override
     public DicomObject getDicomObject() {
-        DicomObject result = rawDcmObjectCache.get(getImageKey());
+        DicomObject result = dcmObjectCache.get(getImageKey());
         if (result == null) {
             result = getBackendDicomObject();
-            rawDcmObjectCache.put(getImageKey(), result);
+            dcmObjectCache.put(getImageKey(), result);
         }
         return result;
     }
 
     public boolean isDicomObjectCached() {
-        return rawDcmObjectCache.containsKey(getImageKey());
+        return dcmObjectCache.containsKey(getImageKey());
     }
 
     public boolean isImageCached() {
-        return rawImageCache.containsKey(getImageKey());
+        return imageCache.containsKey(getImageKey());
     }
 
     @Override
@@ -163,12 +164,72 @@ public abstract class CachingDicomImageListViewModelElement extends AbstractImag
 
     @Override
     public BufferedImage getImage() {
-        BufferedImage result = rawImageCache.get(getImageKey());
+        BufferedImage result = imageCache.get(getImageKey());
         if (result == null) {
             result = getBackendImage();
-            rawImageCache.put(getImageKey(), result);
+            imageCache.put(getImageKey(), result);
         }
         return result;
+    }
+
+    @Override
+    public boolean hasRawImage() {
+        return null != maybeGetRawImageMetadata();
+    }
+
+    @Override
+    public boolean isRawImagePreferable() {
+        return hasRawImage();
+    }
+
+    @Override
+    public RawImage getRawImage() {
+        RawImageImpl result = maybeGetRawImageMetadata();
+        if (null == result) {
+            throw new IllegalStateException("this model element can't provide a raw image");
+        }
+        result.setPixelData(ShortBuffer.wrap(getDicomObject().getShorts(Tag.PixelData)));
+        return result;
+    }
+
+    protected RawImageImpl maybeGetRawImageMetadata() {
+        DicomObject imgMetadata = getDicomImageMetaData();
+        int bitsAllocated = imgMetadata.getInt(Tag.BitsAllocated);
+        if (bitsAllocated <= 0) {
+            return null;
+        }
+        int bitsStored = imgMetadata.getInt(Tag.BitsStored);
+        if (bitsStored <= 0) {
+            return null;
+        }
+        boolean isSigned = (1 == imgMetadata.getInt(Tag.PixelRepresentation));
+        // TODO: return null if compressed
+        // TODO: support for RGB (at least don't misinterpret it as luminance)
+        // TODO: account for endianness (Tag.HighBit)
+        int pixelFormat, pixelType;
+        // TODO: maybe use static multidimensional tables instead of nested switch statements
+        switch (bitsAllocated) {
+            case 8:
+                return null;
+            case 16:
+                pixelFormat = RawImage.PIXEL_FORMAT_LUMINANCE;
+                switch (bitsStored) {
+                    case 12:
+                        pixelType = (isSigned ? RawImage.PIXEL_TYPE_SIGNED_12BIT : RawImage.PIXEL_TYPE_UNSIGNED_12BIT);
+                        break;
+                    case 16:
+                        pixelType = (isSigned ? RawImage.PIXEL_TYPE_SIGNED_16BIT : RawImage.PIXEL_TYPE_UNSIGNED_16BIT);
+                        break;
+                    default:
+                        return null;
+                }
+                break;
+            default:
+                return null;
+        }
+        int width = imgMetadata.getInt(Tag.Columns);
+        int height = imgMetadata.getInt(Tag.Rows);
+        return new RawImageImpl(width, height, pixelFormat, pixelType, null);
     }
 
     @Override
