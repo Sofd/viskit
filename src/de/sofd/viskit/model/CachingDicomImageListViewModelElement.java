@@ -1,6 +1,7 @@
 package de.sofd.viskit.model;
 
 import de.sofd.draw2d.Drawing;
+import de.sofd.util.FloatRange;
 import de.sofd.viskit.test.windowing.RawDicomImageReader;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
@@ -85,7 +86,7 @@ public abstract class CachingDicomImageListViewModelElement extends AbstractImag
         }
     }
 
-    private final Drawing roiDrawing = new Drawing();
+    protected FloatRange pixelValuesRange, usedPixelValuesRange;
 
 
     // TODO: use a utility library for the cache
@@ -239,8 +240,65 @@ public abstract class CachingDicomImageListViewModelElement extends AbstractImag
     }
 
     @Override
-    public Drawing getRoiDrawing() {
-        return roiDrawing;
+    public FloatRange getPixelValuesRange() {
+        if (null == pixelValuesRange) {
+            setPixelValuesRange();
+        }
+        return pixelValuesRange;
+    }
+
+    protected void setPixelValuesRange() {
+        if (hasRawImage() && isRawImagePreferable()) {
+            RawImage imgMetaData = getProxyRawImage();
+            // TODO: maybe use static multidimensional tables instead of nested switch statements
+            switch (imgMetaData.getPixelType()) {
+                case RawImage.PIXEL_TYPE_UNSIGNED_BYTE:
+                    pixelValuesRange = new FloatRange(0, 255);
+                    break;
+                case RawImage.PIXEL_TYPE_UNSIGNED_12BIT:
+                    pixelValuesRange = new FloatRange(0, 4095);
+                    break;
+                case RawImage.PIXEL_TYPE_UNSIGNED_16BIT:
+                    pixelValuesRange = new FloatRange(0, 65535);
+                    break;
+                case RawImage.PIXEL_TYPE_SIGNED_12BIT:
+                    pixelValuesRange = new FloatRange(-2048, 2047);
+                    break;
+                case RawImage.PIXEL_TYPE_SIGNED_16BIT:
+                    pixelValuesRange = new FloatRange(-32768, 32767);
+                    break;
+            }
+        } else {
+            // TODO: obtain from getImage();
+            pixelValuesRange = new FloatRange(0, 4095);
+        }
+    }
+
+    @Override
+    public FloatRange getUsedPixelValuesRange() {
+        if (null == usedPixelValuesRange) {
+            setUsedPixelValuesRange();
+        }
+        return usedPixelValuesRange;
+    }
+
+    protected void setUsedPixelValuesRange() {
+        if (hasRawImage() && isRawImagePreferable()) {
+            RawImage img = getRawImage();  // we rely on this being fast after the first call b/c of BasicDicomObject's internal caching of getShorts(Tag.PixelData)
+            short min = Short.MAX_VALUE;
+            short max = Short.MIN_VALUE;
+            int pxCount = (img.getPixelFormat() == RawImage.PIXEL_FORMAT_RGB ? 3 : 1) * img.getWidth() * img.getHeight();
+            ShortBuffer buf = (ShortBuffer) img.getPixelData();
+            for (int i = 0; i < pxCount; i++) {
+                short val = buf.get(i);
+                if (val < min) { min = val; }
+                if (val > max) { max = val; }
+            }
+            usedPixelValuesRange = new FloatRange(min, max);
+        } else {
+            // TODO: obtain from getImage();
+            usedPixelValuesRange = new FloatRange(200, 800);
+        }
     }
 
 }

@@ -1,6 +1,7 @@
 package de.sofd.viskit.model;
 
 import de.sofd.draw2d.Drawing;
+import de.sofd.util.FloatRange;
 import java.awt.image.BufferedImage;
 import java.util.Collection;
 import java.util.HashMap;
@@ -70,6 +71,17 @@ public abstract class AbstractImageListViewModelElement implements ImageListView
     public RawImage getProxyRawImage() {
         throw new UnsupportedOperationException("getProxyRawImage() not supported by this model element.");
     }
+
+    @Override
+    public FloatRange getPixelValuesRange() {
+        throw new UnsupportedOperationException("Implement me");
+    }
+
+    @Override
+    public FloatRange getUsedPixelValuesRange() {
+        throw new UnsupportedOperationException("Implement me");
+    }
+
 
     @Override
     public Drawing getRoiDrawing() {

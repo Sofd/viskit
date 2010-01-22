@@ -1,5 +1,6 @@
 package de.sofd.viskit.controllers;
 
+import de.sofd.util.FloatRange;
 import de.sofd.viskit.ui.imagelist.ImageListViewCell;
 import de.sofd.viskit.ui.imagelist.JImageListView;
 import java.awt.Point;
@@ -75,9 +76,11 @@ public class ImageListViewMouseWindowingController {
             if (e.getButton() == WINDOWING_MOUSE_BUTTON || (e.getModifiers() & WINDOWING_MOUSE_MASK) != 0) {
                 ImageListViewCell sourceCell = (ImageListViewCell) e.getSource();
                 if (sourceCell != null && sourceCell == currentCell) {
+                    FloatRange usedPxRange = sourceCell.getDisplayedModelElement().getUsedPixelValuesRange();
+                    int mouseIncrement = 1 + (int)(usedPxRange.getDelta() / 300);
                     Point sourcePosition = e.getPoint();
-                    sourceCell.setWindowLocation(sourceCell.getWindowLocation() + sourcePosition.x - lastPosition.x);
-                    sourceCell.setWindowWidth(sourceCell.getWindowWidth() + sourcePosition.y - lastPosition.y);
+                    sourceCell.setWindowLocation(sourceCell.getWindowLocation() + mouseIncrement * (sourcePosition.x - lastPosition.x));
+                    sourceCell.setWindowWidth(sourceCell.getWindowWidth() + mouseIncrement * (sourcePosition.y - lastPosition.y));
                     lastPosition = sourcePosition;
                     e.consume();
                 }

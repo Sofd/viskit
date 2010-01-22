@@ -1,6 +1,7 @@
 package de.sofd.viskit.model;
 
 import de.sofd.draw2d.Drawing;
+import de.sofd.util.FloatRange;
 import de.sofd.viskit.ui.imagelist.JImageListView;
 import java.awt.image.BufferedImage;
 import java.util.Collection;
@@ -76,6 +77,10 @@ public interface ImageListViewModelElement {
      * @return
      */
     Object getImageKey();
+
+    FloatRange getPixelValuesRange();
+
+    FloatRange getUsedPixelValuesRange();
 
     /**
      * 
