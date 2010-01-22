@@ -6,21 +6,24 @@ import static javax.media.opengl.GL2GL3.*;
 import javax.media.opengl.*;
 
 import de.sofd.util.*;
+import de.sofd.viskit.image3D.jogl.model.*;
+import de.sofd.viskit.image3D.model.*;
 
 public class ConvolutionVolumeBuffer extends VolumeBuffer
 {
 
     protected GLShader shader;
 
-    protected int orgVolumeTex;
+    protected VolumeObject volumeObject;
 
-    public ConvolutionVolumeBuffer( IntDimension3D size, GLShader shader, int orgVolumeTex )
+    public ConvolutionVolumeBuffer( IntDimension3D size, GLShader shader, VolumeObject volumeObject )
     {
         super( size );
         this.shader = shader;
-        this.orgVolumeTex = orgVolumeTex;
+        this.volumeObject = volumeObject;
         
         shader.addProgramUniform( "volTex" );
+        shader.addProgramUniform( "winTex" );
         shader.addProgramUniform( "xStep" );
         shader.addProgramUniform( "yStep" );
         shader.addProgramUniform( "zStep" );
@@ -34,10 +37,15 @@ public class ConvolutionVolumeBuffer extends VolumeBuffer
         shader.bind();
 
         gl.glActiveTexture( GL_TEXTURE1 );
-        gl.glBindTexture( GL_TEXTURE_3D, orgVolumeTex );
+        gl.glBindTexture( GL_TEXTURE_3D, volumeObject.getTexId() );
         
         shader.bindUniform( "volTex", 1 );
+        
+        gl.glActiveTexture( GL_TEXTURE2 );
+        volumeObject.bindWindowingTexture(gl);
 
+        shader.bindUniform( "winTex", 2 );
+        
         shader.bindUniform( "xStep", 1.0f / getSize().getWidth() );
         shader.bindUniform( "yStep", 1.0f / getSize().getHeight() );
         shader.bindUniform( "zStep", 1.0f / getSize().getDepth() );

@@ -11,7 +11,11 @@ public class VolumeLightingConfig
     protected float specularExponent;
     
     protected float gradientLength;
-
+    protected float gradientLimit;
+    
+    protected float nDiff;
+    
+    protected float lightPos;
 
     public VolumeLightingConfig(ExtendedProperties properties)
     {
@@ -21,6 +25,10 @@ public class VolumeLightingConfig
         specularExponent = properties.getF("volumeConfig.lighting.specularExponent");
         
         gradientLength = properties.getF("volumeConfig.lighting.gradientLength");
+        gradientLimit = properties.getF("volumeConfig.lighting.gradientLimit");
+        
+        nDiff = properties.getF("volumeConfig.lighting.nDiff");
+        lightPos = properties.getF("volumeConfig.lighting.lightPos");
     }
 
     public float getAmbient() {
@@ -33,6 +41,18 @@ public class VolumeLightingConfig
 
     public float getGradientLength() {
         return gradientLength;
+    }
+
+    public float getGradientLimit() {
+        return gradientLimit;
+    }
+
+    public float getLightPos() {
+        return lightPos;
+    }
+
+    public float getnDiff() {
+        return nDiff;
     }
 
     public float getSpecularExponent() {
@@ -50,13 +70,25 @@ public class VolumeLightingConfig
     public void setDiffuse(float diffuse) {
         this.diffuse = diffuse;
     }
-    
+
     public void setEnabled(boolean enabled) {
         this.enabled = enabled;
     }
-    
+
     public void setGradientLength(float gradientLength) {
         this.gradientLength = gradientLength;
+    }
+
+    public void setGradientLimit(float gradientLimit) {
+        this.gradientLimit = gradientLimit;
+    }
+    
+    public void setLightPos(float lightPos) {
+        this.lightPos = lightPos;
+    }
+    
+    public void setnDiff(float nDiff) {
+        this.nDiff = nDiff;
     }
     
     public void setSpecularExponent(float specularExponent) {

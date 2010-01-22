@@ -70,16 +70,35 @@ public class GLShader extends Shader
         gl.glUniform1f(uniformMap.get(name), value);
     }
     
+    public void bindUniform(String name, float[] value) {
+        switch ( value.length )
+        {
+            case 1 :
+                gl.glUniform1f(uniformMap.get(name), value[0]);
+                break;
+            case 2 :
+                gl.glUniform2f(uniformMap.get(name), value[0], value[1]);
+                break;
+            case 3 :
+                gl.glUniform3f(uniformMap.get(name), value[0], value[1], value[2]);
+                break;
+            case 4 :
+                gl.glUniform4f(uniformMap.get(name), value[0], value[1], value[2], value[3]);
+                break;
+        }
+        
+    }
+    
     public void bindUniform(String name, int value)
     {
         gl.glUniform1i(uniformMap.get(name), value);
     }
-    
+
     public int getProgram()
     {
         return program;
     }
-
+    
     public void setProgram(int program)
     {
         this.program = program;
@@ -171,12 +190,11 @@ public class GLShader extends Shader
         
         return s;
     }
-    
+
     @Override
-    public void unbind()
-    {
+    public void unbind() {
         gl.glUseProgram(0);
-        
+
     }
     
 }

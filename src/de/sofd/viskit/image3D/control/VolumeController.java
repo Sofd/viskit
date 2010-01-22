@@ -49,7 +49,22 @@ public class VolumeController implements ChangeListener, ActionListener {
                 volumeObject.setUpdateGradientTexture(true);
             
             volumeView.display();
+        } else if ("Gradient limit :".equals(slider.getName())) {
+            volumeObject.getVolumeConfig().getLightingConfig().setGradientLimit(slider.getValue() / 10000.0f);
+            System.out.println("gradient limit : " + volumeObject.getVolumeConfig().getLightingConfig().getGradientLimit());
+            volumeView.display();
+        } else if ("Normal diff :".equals(slider.getName())) {
+            volumeObject.getVolumeConfig().getLightingConfig().setnDiff(slider.getValue() / 100.0f);
+            
+            volumeView.display();
+        } else if ("Light Pos :".equals(slider.getName())) {
+            volumeObject.getVolumeConfig().getLightingConfig().setLightPos(slider.getValue() / 100.0f);
+            
+            volumeView.display();
         }
+        
+        
+        
 
     }
 

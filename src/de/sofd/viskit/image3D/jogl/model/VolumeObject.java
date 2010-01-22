@@ -93,8 +93,11 @@ public class VolumeObject
     
     protected GradientVolumeBuffer gradientVolumeBuffer;
     
-    protected boolean updateGradientTexture = true;
+    protected ConvolutionVolumeBuffer convolutionVolumeBuffer;
     
+    protected boolean updateConvolutionTexture = true;
+    protected boolean updateGradientTexture = true;
+
     public VolumeObject(ArrayList<DicomObject> dicomList, ShortBuffer windowing, ShortBuffer dataBuf, VolumeConfig volumeConfig, ShortRange range) {
         DicomObject refDicom = dicomList.get(0);
 
@@ -130,7 +133,7 @@ public class VolumeObject
         setTransferFunction(ImageUtil.getRGBATransferFunction(Color.BLACK, Color.WHITE, 0.0f, 1.0f));
 
     }
-    
+
     public VolumeObject( vtkImageData imageData, ArrayList<ShortBuffer> dataBufList, double[] sliceCursor )
     {
         int[] dim = imageData.GetDimensions();
@@ -154,14 +157,14 @@ public class VolumeObject
         setSliceCursor( sliceCursor );
 
     }
-
+    
     public void bindTransferTexture( GL2 gl )
     {
         gl.glBindTexture( GL_TEXTURE_1D, transferTexId );
         gl.glTexImage1D( GL_TEXTURE_1D, 0, GL_RGBA32F, transferSize, 0, GL_RGBA, GL_FLOAT, transferFunction );
 
     }
-
+    
     public void bindTransferTexturePreIntegrated( GL2 gl ) 
     {
         gl.glBindTexture( GL_TEXTURE_2D, transferTexPreIntegratedId );
@@ -173,6 +176,15 @@ public class VolumeObject
 
         gl.glBindTexture( GL_TEXTURE_2D, windowingTexId );
         gl.glTexImage2D( GL_TEXTURE_2D, 0, GL_ALPHA16F, 2, windowing.capacity() / 2, 0, GL_ALPHA, GL_SHORT, windowing );
+    }
+
+    public void createConvolutionTexture( GL2 gl, GLShader shader ) throws Exception
+    {
+        
+        convolutionVolumeBuffer = new ConvolutionVolumeBuffer( new IntDimension3D(
+                imageDim.getWidth(), imageDim.getHeight(), getNrOfImages() ), shader, this );
+        convolutionVolumeBuffer.createTexture( gl, GL_LUMINANCE16F, GL_LUMINANCE );
+        convolutionVolumeBuffer.createFBO( gl );
     }
 
     public void createGradientTexture( GL2 gl, GLShader shader ) throws Exception
@@ -190,7 +202,7 @@ public class VolumeObject
         tfFbo.createTexture( gl, GL_RGBA32F, GL_RGBA );
         tfFbo.createFBO( gl );
     }
-    
+
     public void createTransferTexture( GL2 gl ) throws Exception
     {
         gl.glEnable( GL_TEXTURE_1D );
@@ -213,7 +225,7 @@ public class VolumeObject
 
         gl.glDisable( GL_TEXTURE_1D );
     }
-
+    
     public void createWindowingTexture( GL2 gl )
     {
         gl.glEnable( GL_TEXTURE_2D );
@@ -247,12 +259,12 @@ public class VolumeObject
         gl.glDisable( GL_TEXTURE_2D );
 
     }
-    
+
     public VolumeConstraint getConstraint()
     {
         return constraint;
     }
-
+    
     public int getCurrentImage()
     {
         return ( getCurrentSlice() / volumeConfig.getBasicConfig().getImageStride() );
@@ -405,33 +417,15 @@ public class VolumeObject
         return windowing;
     }
 
-    public void loadFilteredTexture( GL2 gl, GLShader shader ) throws Exception
-    {
-        
-        long time1 = System.currentTimeMillis();
-
-        ConvolutionVolumeBuffer volumeBuffer = new ConvolutionVolumeBuffer( new IntDimension3D(
-                imageDim.getWidth(), imageDim.getHeight(), getNrOfImages() ), shader, getTexId() );
-        volumeBuffer.createTexture( gl, GL_LUMINANCE16F, GL_LUMINANCE );
-        volumeBuffer.createFBO( gl );
-
-        volumeBuffer.run( gl );
-
-        texId2 = volumeBuffer.getTex();
-
-        volumeBuffer.cleanUp( gl );
-
-        long time2 = System.currentTimeMillis();
-
-        System.out.println( "offscreen gauss filtering in " + ( time2 - time1 ) + " ms" );
-        
+    public boolean isUpdateConvolutionTexture() {
+        return updateConvolutionTexture;
     }
-    
+
     public void loadTexture( GL2 gl ) 
     {
         setTexId( GLUtil.get3DTexture( gl, dataBuf, imageDim.getWidth(), imageDim.getHeight(), getNrOfImages(), true ) );
     }
-
+    
     public void loadTransferTexturePreIntegrated( GL2 gl ) throws Exception
     {
         if ( loadTransferFunctionPreIntegrated )
@@ -457,23 +451,26 @@ public class VolumeObject
     {
         for ( int i = 0; i < windowing.capacity(); ++i )
             windowing.put( i, orgWindowing.get( i ) );
+        
+        setUpdateConvolutionTexture(true);
+        setUpdateGradientTexture(true);
     }
-    
+
     protected void setDataBuf( ShortBuffer dataBuf )
     {
         this.dataBuf = dataBuf;
     }
     
-
     public void setDimRange( IntRange dimRange )
     {
         this.dimRange = dimRange;
     }
-
+    
     public void setImageDim( IntDimension3D imageDim )
     {
         this.imageDim = imageDim;
     }
+    
 
     protected void setRange( ShortRange range )
     {
@@ -528,6 +525,10 @@ public class VolumeObject
         this.transferTexPreIntegratedId = transferTexPreIntegratedId;
     }
 
+    public void setUpdateConvolutionTexture(boolean updateConvolutionTexture) {
+        this.updateConvolutionTexture = updateConvolutionTexture;
+    }
+
     public void setUpdateGradientTexture(boolean updateGradientTexture) {
         this.updateGradientTexture = updateGradientTexture;
     }
@@ -535,6 +536,25 @@ public class VolumeObject
     public void setWindowing( ShortBuffer windowing )
     {
         this.windowing = windowing;
+    }
+
+    public void updateConvolutionTexture( GL2 gl ) throws Exception
+    {
+        
+        if ( updateConvolutionTexture ) {
+            updateConvolutionTexture = false;
+            
+            long time1 = System.currentTimeMillis();
+            
+            convolutionVolumeBuffer.run( gl );
+    
+            texId2 = convolutionVolumeBuffer.getTex();
+            
+            long time2 = System.currentTimeMillis();
+    
+            System.out.println( "offscreen gauss filtering in " + ( time2 - time1 ) + " ms" );
+        }
+        
     }
 
     public void updateGradientTexture( GL2 gl ) throws Exception
@@ -593,6 +613,9 @@ public class VolumeObject
     {
         updateWindowCenter( getCurrentWindowCenter(), windowingMode );
         updateWindowWidth( getCurrentWindowWidth(), windowingMode );
+        
+        setUpdateConvolutionTexture(true);
+        setUpdateGradientTexture(true);
     }
 
     public void updateWindowWidth(    short value,

@@ -7,6 +7,7 @@ public class VolumeRenderConfig
     protected int slices;
     protected float alpha;
     
+    
     public VolumeRenderConfig(ExtendedProperties properties) {
         slices = properties.getI("volumeConfig.render.slices");
         alpha = properties.getF("volumeConfig.render.alpha");

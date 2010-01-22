@@ -103,7 +103,10 @@ public class TransferController implements ActionListener, ChangeListener
             sliceCanvas.display();
             
             if ( ! slider.getValueIsAdjusting() )
+            {
                 volumeObject.setUpdateGradientTexture(true);
+                volumeObject.setUpdateConvolutionTexture(true);
+            }
             
             volumeView.display();
         }
@@ -112,8 +115,10 @@ public class TransferController implements ActionListener, ChangeListener
             volumeObject.updateWindowWidth( (short)slider.getValue(), windowingMode );
             sliceCanvas.display();
             
-            if ( ! slider.getValueIsAdjusting() )
+            if ( ! slider.getValueIsAdjusting() ) {
                 volumeObject.setUpdateGradientTexture(true);
+                volumeObject.setUpdateConvolutionTexture(true);
+            }
             
             volumeView.display();
         }

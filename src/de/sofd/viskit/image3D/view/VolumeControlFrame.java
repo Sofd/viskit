@@ -69,6 +69,9 @@ public class VolumeControlFrame extends JFrame
         panel.add( getSliderPanel("Diffuse :", 0, 1000, (int)(volumeConfig.getLightingConfig().getDiffuse() * 1000)) );
         panel.add( getSliderPanel("Specular exponent :", 1, 200, (int)(volumeConfig.getLightingConfig().getSpecularExponent())) );
         panel.add( getSliderPanel("Gradient length :", 0, 5000, (int)(volumeConfig.getLightingConfig().getGradientLength() * 1000)) );
+        panel.add( getSliderPanel("Gradient limit :", 0, 2000, (int)(volumeConfig.getLightingConfig().getGradientLimit() * 10000)) );
+        panel.add( getSliderPanel("Normal diff :", 1, 1000, (int)(volumeConfig.getLightingConfig().getnDiff() * 100)) );
+        panel.add( getSliderPanel("Light Pos :", -400, 400, (int)(volumeConfig.getLightingConfig().getLightPos() * 100)) );
 
         panel.add( Box.createVerticalGlue() );
         

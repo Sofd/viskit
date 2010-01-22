@@ -1,5 +1,6 @@
 package de.sofd.viskit.image3D.jogl.control;
 
+import static de.sofd.viskit.util.ViskitMath.*;
 import de.sofd.viskit.image3D.jogl.view.*;
 
 import java.awt.event.*;
@@ -48,7 +49,10 @@ public class VolumeInputController implements MouseListener, MouseMotionListener
     @Override
     public void mouseClicked( MouseEvent e )
     {
-        // TODO Auto-generated method stub
+        if ( e.getButton() == MouseEvent.BUTTON2 )
+        {
+            volumeView.debugVectors();
+        }
 
     }
 
@@ -130,5 +134,12 @@ public class VolumeInputController implements MouseListener, MouseMotionListener
         gl.glRotatef( phi, 0.0f, 1.0f, 0.0f );
         gl.glRotatef( phi2, 1.0f, 0.0f, 0.0f );
         
+    }
+    
+    public void setUpCameraInv( GL2 gl )
+    {
+        gl.glRotatef( -phi2, 1.0f, 0.0f, 0.0f );
+        gl.glRotatef( -phi, 0.0f, 1.0f, 0.0f );
+        gl.glTranslatef( 0.0f, 0.0f, dist );
     }
 }

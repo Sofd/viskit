@@ -1,6 +1,7 @@
 package de.sofd.viskit.image3D.jogl.view;
 
 import static de.sofd.viskit.image3D.jogl.util.GLUtil.*;
+import static de.sofd.viskit.util.ViskitMath.*;
 import static javax.media.opengl.GL.*;
 import static javax.media.opengl.GL2.*;
 
@@ -18,6 +19,7 @@ import de.sofd.viskit.image3D.jogl.model.*;
 import de.sofd.viskit.image3D.jogl.util.*;
 import de.sofd.viskit.image3D.model.*;
 import de.sofd.viskit.image3D.util.*;
+import de.sofd.viskit.util.*;
 
 @SuppressWarnings( "serial" )
 public class GPUVolumeView extends GLCanvas implements GLEventListener
@@ -53,7 +55,15 @@ public class GPUVolumeView extends GLCanvas implements GLEventListener
 
     protected boolean isLocked = false;
     
-    protected boolean useGradient = true;
+    protected boolean useGradient = false;
+    
+    //modelview matrix inverse
+    protected float[] MVinv = new float[16];
+    
+    protected float[] L = {0.0f, 0.0f, 0.0f, 1.0f};
+    protected float[] E = {0.0f, 0.0f, 0.0f, 1.0f};
+    protected float[] Linv = new float[4];
+    protected float[] Einv = new float[4];
 
     public GPUVolumeView( VolumeObject volumeObject, GLContext sharedContext )
     {
@@ -125,9 +135,9 @@ public class GPUVolumeView extends GLCanvas implements GLEventListener
 
         ShaderManager.get( "volView" ).bindUniform( "volTex", 3 );
 
-        gl.glActiveTexture( GL_TEXTURE2 );
-        volumeObject.bindWindowingTexture( gl );
-        ShaderManager.get( "volView" ).bindUniform( "winTex", 2 );
+//        gl.glActiveTexture( GL_TEXTURE2 );
+//        volumeObject.bindWindowingTexture( gl );
+//        ShaderManager.get( "volView" ).bindUniform( "winTex", 2 );
 
         gl.glActiveTexture( GL_TEXTURE1 );
         gl.glBindTexture( GL_TEXTURE_2D, theBackFaceTex );
@@ -152,7 +162,36 @@ public class GPUVolumeView extends GLCanvas implements GLEventListener
         ShaderManager.get( "volView" ).bindUniform( "diffuse", volumeObject.getVolumeConfig().getLightingConfig().getDiffuse() );
         ShaderManager.get( "volView" ).bindUniform( "specExp", volumeObject.getVolumeConfig().getLightingConfig().getSpecularExponent() );
         ShaderManager.get( "volView" ).bindUniform( "useLighting", volumeObject.getVolumeConfig().getLightingConfig().isEnabled() );
+        ShaderManager.get( "volView" ).bindUniform( "nDiff", volumeObject.getVolumeConfig().getLightingConfig().getnDiff() );
+        ShaderManager.get( "volView" ).bindUniform( "gradientLimit", volumeObject.getVolumeConfig().getLightingConfig().getGradientLimit() );
         
+        VolumeConstraint constraint = volumeObject.getConstraint();
+        ShaderManager.get( "volView" ).bindUniform( "xMin", constraint.getX().getMin());
+        ShaderManager.get( "volView" ).bindUniform( "xMax", constraint.getX().getMax());
+        ShaderManager.get( "volView" ).bindUniform( "yMin", constraint.getY().getMin());
+        ShaderManager.get( "volView" ).bindUniform( "yMax", constraint.getY().getMax());
+        ShaderManager.get( "volView" ).bindUniform( "zMin", constraint.getZ().getMin());
+        ShaderManager.get( "volView" ).bindUniform( "zMax", constraint.getZ().getMax());
+        
+        L[1] = volumeObject.getVolumeConfig().getLightingConfig().getLightPos();
+        
+        gl.glPushMatrix();
+            gl.glLoadIdentity();
+            volumeInputController.setUpCameraInv(gl);
+            
+//            gl.glGetFloatv(GL2.GL_TRANSPOSE_MODELVIEW_MATRIX, MVinv, 0);
+//            matMul(Linv, MVinv, L);
+//            matMul(Einv, MVinv, E);
+            
+            gl.glLightfv(GL_LIGHT0, GL_POSITION, L, 0);
+            gl.glGetLightfv(GL_LIGHT0, GL_POSITION, Linv, 0);
+            gl.glLightfv(GL_LIGHT0, GL_POSITION, E, 0);
+            gl.glGetLightfv(GL_LIGHT0, GL_POSITION, Einv, 0);
+            
+        gl.glPopMatrix();
+        
+        ShaderManager.get( "volView" ).bindUniform( "eyePos", Einv );
+        ShaderManager.get( "volView" ).bindUniform( "lightPos", Linv );
         
         theCube.show( volumeObject.getConstraint() );
         ShaderManager.unbind( "volView" );
@@ -193,6 +232,9 @@ public class GPUVolumeView extends GLCanvas implements GLEventListener
 
             if ( useGradient )
                 volumeObject.updateGradientTexture(gl);
+            
+            if ( volumeObject.getVolumeConfig().getSmoothingConfig().isEnabled() )
+                volumeObject.updateConvolutionTexture( gl );
             
         }
         catch ( Exception e )
@@ -251,13 +293,24 @@ public class GPUVolumeView extends GLCanvas implements GLEventListener
             ShaderManager.get( "volView" ).addProgramUniform( "alpha" );
             ShaderManager.get( "volView" ).addProgramUniform( "volTex" );
             ShaderManager.get( "volView" ).addProgramUniform( "backTex" );
-            ShaderManager.get( "volView" ).addProgramUniform( "winTex" );
+            //ShaderManager.get( "volView" ).addProgramUniform( "winTex" );
             ShaderManager.get( "volView" ).addProgramUniform( "transferTex" );
             ShaderManager.get( "volView" ).addProgramUniform( "ambient" );
             ShaderManager.get( "volView" ).addProgramUniform( "diffuse" );
             ShaderManager.get( "volView" ).addProgramUniform( "specExp" );
             ShaderManager.get( "volView" ).addProgramUniform( "useLighting" );
+            ShaderManager.get( "volView" ).addProgramUniform( "gradientLimit" );
+            ShaderManager.get( "volView" ).addProgramUniform( "eyePos" );
+            ShaderManager.get( "volView" ).addProgramUniform( "lightPos" );
+            ShaderManager.get( "volView" ).addProgramUniform( "xMin" );
+            ShaderManager.get( "volView" ).addProgramUniform( "xMax" );
+            ShaderManager.get( "volView" ).addProgramUniform( "yMin" );
+            ShaderManager.get( "volView" ).addProgramUniform( "yMax" );
+            ShaderManager.get( "volView" ).addProgramUniform( "zMin" );
+            ShaderManager.get( "volView" ).addProgramUniform( "zMax" );
+            ShaderManager.get( "volView" ).addProgramUniform( "nDiff" );
             
+                        
             if ( useGradient )
                 ShaderManager.get( "volView" ).addProgramUniform( "gradientTex" );
 
@@ -269,7 +322,7 @@ public class GPUVolumeView extends GLCanvas implements GLEventListener
             }
 
             if ( volumeObject.getVolumeConfig().getSmoothingConfig().isEnabled() )
-                volumeObject.loadFilteredTexture( gl, ShaderManager.get( "convolution" ) );
+                volumeObject.createConvolutionTexture( gl, ShaderManager.get( "convolution" ) );
             
             if ( useGradient )
                 volumeObject.createGradientTexture( gl, ShaderManager.get( "gradient" ) );
@@ -335,6 +388,12 @@ public class GPUVolumeView extends GLCanvas implements GLEventListener
         theBackFaceTex = initScreenTex( gl, width, height );
         
         gl.glGetIntegerv( GL_VIEWPORT, viewport, 0 );
+    }
+
+    public void debugVectors() {
+        vecPrintnf(System.out, "L : ", Linv, 4);
+        vecPrintnf(System.out, "E : ", Einv, 4);
+        
     }
 
     
