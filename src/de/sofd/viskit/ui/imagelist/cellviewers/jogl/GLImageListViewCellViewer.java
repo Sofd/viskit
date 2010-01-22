@@ -315,8 +315,10 @@ public class GLImageListViewCellViewer extends BaseImageListViewCellViewer {
             rescaleShader.bind();  // TODO: rescaleShader's internal gl may be outdated here...?
             rescaleShader.bindUniform("tex", 0);
             {
+                // TODO: determine the following from the image
+                float minGrayvalue = -32768;
                 float nGrayvalues = 65536F;
-                float wl = displayedCell.getWindowLocation() / nGrayvalues;
+                float wl = (displayedCell.getWindowLocation() - minGrayvalue) / nGrayvalues;
                 float ww = displayedCell.getWindowWidth() / nGrayvalues;
                 float scale = 1F/ww;
                 float offset = (ww/2-wl)*scale;

@@ -4,6 +4,7 @@ import de.sofd.draw2d.Drawing;
 import de.sofd.draw2d.DrawingObject;
 import de.sofd.draw2d.viewer.tools.EllipseTool;
 import de.sofd.draw2d.viewer.tools.SelectorTool;
+import de.sofd.util.FloatRange;
 import de.sofd.viskit.controllers.ImageListViewMouseWindowingController;
 import de.sofd.viskit.controllers.ImageListViewMouseZoomPanController;
 import de.sofd.viskit.controllers.ImageListViewRoiInputEventController;
@@ -37,6 +38,8 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.URL;
 import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
 import javax.swing.AbstractAction;
 import javax.swing.DefaultListModel;
 import javax.swing.JComboBox;
@@ -82,6 +85,22 @@ public class JListImageListTestApp {
 
         //final JImageListView viewer = new JListImageListView();
         final JImageListView viewer = new JGridImageListView(); viewer.setScaleMode(JGridImageListView.MyScaleMode.newCellGridMode(2, 2));
+        // set up initial windowing for all cell to optimal values.
+        // happens on cell creation, i.e. right at the start, thus increasing initialization time very much.
+        // Might use a controller that does this in the first cellPaint event for the cell instead
+        // (once we have cellPaint events)
+        viewer.addImageListViewListener(new ImageListViewListener() {
+            @Override
+            public void onImageListViewEvent(ImageListViewEvent e) {
+                if (e instanceof ImageListViewCellAddEvent) {
+                    ImageListViewCellAddEvent cae = (ImageListViewCellAddEvent) e;
+                    ImageListViewCell addedCell = cae.getCell();
+                    FloatRange usedRange = addedCell.getDisplayedModelElement().getUsedPixelValuesRange();
+                    addedCell.setWindowWidth((int) usedRange.getDelta());
+                    addedCell.setWindowLocation((int) (usedRange.getMin() + usedRange.getMax()) / 2);
+                }
+            }
+        });
         ((JGridImageListView)viewer).setRendererType(JGridImageListView.RendererType.JAVA2D);
         viewer.addImageListViewListener(new ImageListViewListener() {
             @Override
