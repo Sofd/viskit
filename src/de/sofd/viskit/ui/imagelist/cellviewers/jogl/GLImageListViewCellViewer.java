@@ -11,15 +11,12 @@ import de.sofd.viskit.ui.imagelist.cellviewers.BaseImageListViewCellViewer;
 import java.awt.AWTEvent;
 import java.awt.Component;
 import java.awt.Dimension;
-import java.awt.Graphics2D;
 import java.awt.GraphicsDevice;
 import java.awt.GridLayout;
 import java.awt.Point;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelEvent;
-import java.awt.image.AffineTransformOp;
-import java.awt.image.BufferedImageOp;
 import java.util.Set;
 import javax.media.opengl.DebugGL2;
 import javax.media.opengl.GL;
@@ -227,38 +224,8 @@ public class GLImageListViewCellViewer extends BaseImageListViewCellViewer {
         }
     }
 
-
-    protected void renderImage(Graphics2D g2d) {
-        BufferedImageOp scaleImageOp = new AffineTransformOp(getDicomToUiTransform(), AffineTransformOp.TYPE_BILINEAR);
-        //g2d.drawImage(getWindowedImage(), scaleImageOp, 0, 0);
-    }
-
-    protected void renderOverlays(Graphics2D g2d) {
-        displayedCell.getRoiDrawingViewer().paint(g2d);
-    }
-
-
     static {
         ShaderManager.init("shader");
-        SharedContextData.registerContextInitCallback(new Runnable2<SharedContextData, GL>() {
-            @Override
-            public void run(SharedContextData cd, GL gl1) {
-                try {
-                    //GL2 gl = new DebugGL2(gl1.getGL2());
-                    GL2 gl = gl1.getGL2();
-                    ShaderManager.read(gl, "rescaleop");
-                    GLShader rescaleShader = (GLShader) ShaderManager.get("rescaleop");
-                    cd.setAttribute("rescaleShader", rescaleShader);
-                    rescaleShader.addProgramUniform("scale");
-                    rescaleShader.addProgramUniform("offset");
-                    rescaleShader.addProgramUniform("tex");
-                } catch (Exception e) {
-                    System.err.println("FATAL");
-                    e.printStackTrace();
-                    System.exit(1);
-                }
-            }
-        });
     }
 
     protected class GLEventHandler implements GLEventListener {
