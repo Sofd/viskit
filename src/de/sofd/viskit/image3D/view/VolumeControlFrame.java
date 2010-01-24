@@ -48,7 +48,7 @@ public class VolumeControlFrame extends JFrame
 
         panel.add(getCheckBoxPanel("Smooth filtering :", "enabled", volumeConfig.getSmoothingConfig().isEnabled()));
         
-        panel.add( getSliderPanel("Slices :", 1, volumeConfig.getProperties().getI("volumeConfig.render.slicesMax"), volumeConfig.getRenderConfig().getSlices()) );
+        panel.add( getSliderPanel("Slices :", 1, volumeConfig.getRenderConfig().getSlicesMax(), volumeConfig.getRenderConfig().getSlices()) );
 
         panel.add( getSliderPanel("Alpha :", 0, 1000, (int)(volumeConfig.getRenderConfig().getAlpha() * 1000)) );
 

@@ -8,6 +8,7 @@ import static javax.media.opengl.GL2.*;
 import javax.media.opengl.*;
 import javax.media.opengl.awt.*;
 import javax.media.opengl.glu.gl2.*;
+import javax.swing.*;
 
 import org.apache.log4j.*;
 
@@ -19,7 +20,6 @@ import de.sofd.viskit.image3D.jogl.model.*;
 import de.sofd.viskit.image3D.jogl.util.*;
 import de.sofd.viskit.image3D.model.*;
 import de.sofd.viskit.image3D.util.*;
-import de.sofd.viskit.util.*;
 
 @SuppressWarnings( "serial" )
 public class GPUVolumeView extends GLCanvas implements GLEventListener
@@ -54,17 +54,22 @@ public class GPUVolumeView extends GLCanvas implements GLEventListener
     protected VolumeInputController volumeInputController;
 
     protected boolean isLocked = false;
-    
+
     protected boolean useGradient = false;
     
-    //modelview matrix inverse
+    protected boolean renderFinal = true;
+    
+    // modelview matrix inverse
     protected float[] MVinv = new float[16];
     
     protected float[] L = {0.0f, 0.0f, 0.0f, 1.0f};
+
     protected float[] E = {0.0f, 0.0f, 0.0f, 1.0f};
+    
     protected float[] Linv = new float[4];
     protected float[] Einv = new float[4];
-
+    protected long lastRendering = 0;
+    
     public GPUVolumeView( VolumeObject volumeObject, GLContext sharedContext )
     {
         super( caps, null, sharedContext, null );
@@ -79,11 +84,32 @@ public class GPUVolumeView extends GLCanvas implements GLEventListener
 
         animator = new Animator( this );
     }
+    
+    private void addUniforms(String key, String[] uniforms) {
+        GLShader sh = ShaderManager.get( key );
+        
+        for ( String uniform : uniforms )
+            sh.addProgramUniform( uniform );
+    }
+
+    public void debugVectors() {
+        vecPrintnf(System.out, "L : ", Linv, 4);
+        vecPrintnf(System.out, "E : ", Einv, 4);
+        
+    }
+    
+    public void display(boolean renderFinal)
+    {
+        this.renderFinal = renderFinal;
+        display();
+    }
 
     @Override
     public synchronized void display( GLAutoDrawable drawable )
     {
         isLocked = true;
+    
+        GLShader renderShader = (renderFinal ? ShaderManager.get("volViewFinal") : ShaderManager.get("volView"));
         
         GL2 gl = drawable.getGL().getGL2();
 
@@ -124,7 +150,7 @@ public class GPUVolumeView extends GLCanvas implements GLEventListener
         // volume shading
         gl.glDisable( GL_CULL_FACE );
 
-        ShaderManager.bind( "volView" );
+        renderShader.bind();
 
         gl.glActiveTexture( GL_TEXTURE3 );
 
@@ -133,7 +159,7 @@ public class GPUVolumeView extends GLCanvas implements GLEventListener
         else
             gl.glBindTexture( GL_TEXTURE_3D, volumeObject.getTexId() );
 
-        ShaderManager.get( "volView" ).bindUniform( "volTex", 3 );
+        renderShader.bindUniform( "volTex", 3 );
 
 //        gl.glActiveTexture( GL_TEXTURE2 );
 //        volumeObject.bindWindowingTexture( gl );
@@ -141,47 +167,56 @@ public class GPUVolumeView extends GLCanvas implements GLEventListener
 
         gl.glActiveTexture( GL_TEXTURE1 );
         gl.glBindTexture( GL_TEXTURE_2D, theBackFaceTex );
-        ShaderManager.get( "volView" ).bindUniform( "backTex", 1 );
+        renderShader.bindUniform( "backTex", 1 );
 
         gl.glActiveTexture( GL_TEXTURE4 );
         volumeObject.bindTransferTexturePreIntegrated( gl );
-        ShaderManager.get( "volView" ).bindUniform( "transferTex", 4 );
+        renderShader.bindUniform( "transferTex", 4 );
         
-        if ( useGradient )
+        if ( useGradient && !renderFinal )
         {
             gl.glActiveTexture( GL_TEXTURE5 );
             gl.glBindTexture( GL_TEXTURE_3D, volumeObject.getGradientTex() );
             ShaderManager.get( "volView" ).bindUniform( "gradientTex", 5 );
         }
 
-        ShaderManager.get( "volView" ).bindUniform( "screenWidth", viewport[ 2 ] );
-        ShaderManager.get( "volView" ).bindUniform( "screenHeight", viewport[ 3 ] );
-        ShaderManager.get( "volView" ).bindUniform( "sliceStep", 1.0f / volumeObject.getVolumeConfig().getRenderConfig().getSlices() );
-        ShaderManager.get( "volView" ).bindUniform( "alpha", volumeObject.getVolumeConfig().getRenderConfig().getAlpha() );
-        ShaderManager.get( "volView" ).bindUniform( "ambient", volumeObject.getVolumeConfig().getLightingConfig().getAmbient() );
-        ShaderManager.get( "volView" ).bindUniform( "diffuse", volumeObject.getVolumeConfig().getLightingConfig().getDiffuse() );
-        ShaderManager.get( "volView" ).bindUniform( "specExp", volumeObject.getVolumeConfig().getLightingConfig().getSpecularExponent() );
-        ShaderManager.get( "volView" ).bindUniform( "useLighting", volumeObject.getVolumeConfig().getLightingConfig().isEnabled() );
-        ShaderManager.get( "volView" ).bindUniform( "nDiff", volumeObject.getVolumeConfig().getLightingConfig().getnDiff() );
-        ShaderManager.get( "volView" ).bindUniform( "gradientLimit", volumeObject.getVolumeConfig().getLightingConfig().getGradientLimit() );
+        renderShader.bindUniform( "screenWidth", viewport[ 2 ] );
+        renderShader.bindUniform( "screenHeight", viewport[ 3 ] );
+        
+        if ( renderFinal )
+            renderShader.bindUniform( "sliceStep", 1.0f / volumeObject.getVolumeConfig().getRenderConfig().getSlicesMax() );
+        else
+            renderShader.bindUniform( "sliceStep", 1.0f / volumeObject.getVolumeConfig().getRenderConfig().getSlices() );
+        
+        renderShader.bindUniform( "alpha", volumeObject.getVolumeConfig().getRenderConfig().getAlpha() );
+        renderShader.bindUniform( "ambient", volumeObject.getVolumeConfig().getLightingConfig().getAmbient() );
+        renderShader.bindUniform( "diffuse", volumeObject.getVolumeConfig().getLightingConfig().getDiffuse() );
+        renderShader.bindUniform( "specExp", volumeObject.getVolumeConfig().getLightingConfig().getSpecularExponent() );
+        renderShader.bindUniform( "useLighting", renderFinal && volumeObject.getVolumeConfig().getLightingConfig().isEnabled() );
+        renderShader.bindUniform( "nDiff", volumeObject.getVolumeConfig().getLightingConfig().getnDiff() );
+        renderShader.bindUniform( "gradientLimit", volumeObject.getVolumeConfig().getLightingConfig().getGradientLimit() );
         
         VolumeConstraint constraint = volumeObject.getConstraint();
-        ShaderManager.get( "volView" ).bindUniform( "xMin", constraint.getX().getMin());
-        ShaderManager.get( "volView" ).bindUniform( "xMax", constraint.getX().getMax());
-        ShaderManager.get( "volView" ).bindUniform( "yMin", constraint.getY().getMin());
-        ShaderManager.get( "volView" ).bindUniform( "yMax", constraint.getY().getMax());
-        ShaderManager.get( "volView" ).bindUniform( "zMin", constraint.getZ().getMin());
-        ShaderManager.get( "volView" ).bindUniform( "zMax", constraint.getZ().getMax());
+        renderShader.bindUniform( "xMin", constraint.getX().getMin());
+        renderShader.bindUniform( "xMax", constraint.getX().getMax());
+        renderShader.bindUniform( "yMin", constraint.getY().getMin());
+        renderShader.bindUniform( "yMax", constraint.getY().getMax());
+        renderShader.bindUniform( "zMin", constraint.getZ().getMin());
+        renderShader.bindUniform( "zMax", constraint.getZ().getMax());
         
-        L[1] = volumeObject.getVolumeConfig().getLightingConfig().getLightPos();
+        if ( renderFinal ) {
+            float alpha = volumeObject.getVolumeConfig().getRenderConfig().getAlpha();
+            renderShader.bindUniform( "xStep", alpha * 2.0f / (float)volumeObject.getSizeX() );
+            renderShader.bindUniform( "yStep", alpha * 2.0f / (float)volumeObject.getSizeY() );
+            renderShader.bindUniform( "zStep", alpha * 2.0f / (float)volumeObject.getSizeZ() );
+        }
+            
+        
+        L[2] = volumeObject.getVolumeConfig().getLightingConfig().getLightPos();
         
         gl.glPushMatrix();
             gl.glLoadIdentity();
             volumeInputController.setUpCameraInv(gl);
-            
-//            gl.glGetFloatv(GL2.GL_TRANSPOSE_MODELVIEW_MATRIX, MVinv, 0);
-//            matMul(Linv, MVinv, L);
-//            matMul(Einv, MVinv, E);
             
             gl.glLightfv(GL_LIGHT0, GL_POSITION, L, 0);
             gl.glGetLightfv(GL_LIGHT0, GL_POSITION, Linv, 0);
@@ -190,11 +225,11 @@ public class GPUVolumeView extends GLCanvas implements GLEventListener
             
         gl.glPopMatrix();
         
-        ShaderManager.get( "volView" ).bindUniform( "eyePos", Einv );
-        ShaderManager.get( "volView" ).bindUniform( "lightPos", Linv );
+        renderShader.bindUniform( "eyePos", Einv );
+        renderShader.bindUniform( "lightPos", Linv );
         
         theCube.show( volumeObject.getConstraint() );
-        ShaderManager.unbind( "volView" );
+        renderShader.unbind();
 
         gl.glActiveTexture( GL_TEXTURE0 );
 
@@ -209,6 +244,9 @@ public class GPUVolumeView extends GLCanvas implements GLEventListener
         
         isLocked = false;
 
+        lastRendering = System.currentTimeMillis();
+        
+        //renderFinal = !renderFinal;
     }
 
     @Override
@@ -221,6 +259,10 @@ public class GPUVolumeView extends GLCanvas implements GLEventListener
     public Animator getAnimator()
     {
         return animator;
+    }
+
+    public VolumeObject getVolumeObject() {
+        return volumeObject;
     }
 
     protected void idle( GL2 gl )
@@ -278,6 +320,7 @@ public class GPUVolumeView extends GLCanvas implements GLEventListener
         {
             ShaderManager.read( gl, "tc2col" );
             ShaderManager.read( gl, "volView" );
+            ShaderManager.read( gl, "volViewFinal" );
             
             if ( volumeObject.getVolumeConfig().getSmoothingConfig().isEnabled() )
                 ShaderManager.read(gl, "convolution");
@@ -287,28 +330,13 @@ public class GPUVolumeView extends GLCanvas implements GLEventListener
             
             ShaderManager.read( gl, "transferIntegration" );
 
-            ShaderManager.get( "volView" ).addProgramUniform( "screenWidth" );
-            ShaderManager.get( "volView" ).addProgramUniform( "screenHeight" );
-            ShaderManager.get( "volView" ).addProgramUniform( "sliceStep" );
-            ShaderManager.get( "volView" ).addProgramUniform( "alpha" );
-            ShaderManager.get( "volView" ).addProgramUniform( "volTex" );
-            ShaderManager.get( "volView" ).addProgramUniform( "backTex" );
-            //ShaderManager.get( "volView" ).addProgramUniform( "winTex" );
-            ShaderManager.get( "volView" ).addProgramUniform( "transferTex" );
-            ShaderManager.get( "volView" ).addProgramUniform( "ambient" );
-            ShaderManager.get( "volView" ).addProgramUniform( "diffuse" );
-            ShaderManager.get( "volView" ).addProgramUniform( "specExp" );
-            ShaderManager.get( "volView" ).addProgramUniform( "useLighting" );
-            ShaderManager.get( "volView" ).addProgramUniform( "gradientLimit" );
-            ShaderManager.get( "volView" ).addProgramUniform( "eyePos" );
-            ShaderManager.get( "volView" ).addProgramUniform( "lightPos" );
-            ShaderManager.get( "volView" ).addProgramUniform( "xMin" );
-            ShaderManager.get( "volView" ).addProgramUniform( "xMax" );
-            ShaderManager.get( "volView" ).addProgramUniform( "yMin" );
-            ShaderManager.get( "volView" ).addProgramUniform( "yMax" );
-            ShaderManager.get( "volView" ).addProgramUniform( "zMin" );
-            ShaderManager.get( "volView" ).addProgramUniform( "zMax" );
-            ShaderManager.get( "volView" ).addProgramUniform( "nDiff" );
+            addUniforms("volView", new String[]{"screenWidth", "screenHeight", "sliceStep", "alpha", "volTex", "backTex",
+                    "transferTex", "ambient", "diffuse", "specExp", "useLighting", "gradientLimit", "eyePos", "lightPos",
+                    "xMin", "xMax", "yMin", "yMax", "zMin", "zMax", "nDiff"});
+            
+            addUniforms("volViewFinal", new String[]{"screenWidth", "screenHeight", "sliceStep", "alpha", "volTex", "backTex",
+                    "transferTex", "ambient", "diffuse", "specExp", "useLighting", "gradientLimit", "eyePos", "lightPos",
+                    "xMin", "xMax", "yMin", "yMax", "zMin", "zMax", "nDiff", "xStep", "yStep", "zStep"});
             
                         
             if ( useGradient )
@@ -342,6 +370,7 @@ public class GPUVolumeView extends GLCanvas implements GLEventListener
         theCube = new Cube( gl, 2.0f * volumeObject.getSizeX() / volumeObject.getSizeRange().getMax(), 2.0f
                 * volumeObject.getSizeY() / volumeObject.getSizeRange().getMax(), 2.0f * volumeObject.getSizeZ()
                 / volumeObject.getSizeRange().getMax() );
+        
     }
 
     public boolean isLocked()
@@ -390,10 +419,8 @@ public class GPUVolumeView extends GLCanvas implements GLEventListener
         gl.glGetIntegerv( GL_VIEWPORT, viewport, 0 );
     }
 
-    public void debugVectors() {
-        vecPrintnf(System.out, "L : ", Linv, 4);
-        vecPrintnf(System.out, "E : ", Einv, 4);
-        
+    public void setRenderFinal(boolean renderFinal) {
+        this.renderFinal = renderFinal;
     }
 
     

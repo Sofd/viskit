@@ -90,7 +90,7 @@ public class SliceViewController implements MouseListener, MouseMotionListener
         sliceCanvas.display();
         
         if ( volumeView != null )
-            volumeView.display();
+            volumeView.display(false);
     }
 
     @Override
@@ -145,7 +145,7 @@ public class SliceViewController implements MouseListener, MouseMotionListener
         if ( transferFrame != null )
             transferFrame.updateValues();
         
-        volumeView.display();
+        volumeView.display(true);
     }
 
     public void setTransferFrame( TransferFrame transferFrame )

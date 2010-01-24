@@ -13,6 +13,54 @@ import de.sofd.viskit.image3D.view.*;
 
 public class TransferController implements ActionListener, ChangeListener
 {
+    
+    public class TransferUpdateRunnable extends Thread {
+
+        protected SliceCanvas sliceCanvas;
+
+        protected GPUVolumeView volumeView;
+        
+        protected boolean isAdjusting;
+        
+        protected boolean running;
+        
+        public void setAdjusting(boolean isAdjusting) {
+            this.isAdjusting = isAdjusting;
+        }
+
+        public TransferUpdateRunnable(SliceCanvas sliceCanvas, GPUVolumeView volumeView)
+        {
+            super();
+            this.sliceCanvas = sliceCanvas;
+            this.volumeView = volumeView;
+        }
+        
+        @Override
+        public void run() {
+            if ( running ) return;
+            
+            running = true;
+            
+            try {
+                Thread.sleep(30);
+            } catch (InterruptedException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            }
+            
+            sliceCanvas.display();
+            
+            if ( !isAdjusting )
+                volumeView.display(true);
+            else
+                volumeView.display(false);
+            
+            running = false;
+            
+        }
+        
+    }
+    
     protected SliceCanvas sliceCanvas;
 
     protected GPUVolumeView volumeView;
@@ -22,6 +70,8 @@ public class TransferController implements ActionListener, ChangeListener
     protected WindowingMode windowingMode;
 
     protected TransferFrame transferFrame;
+    
+    protected TransferUpdateRunnable thread;
 
     public TransferController( SliceCanvas sliceCanvas, GPUVolumeView volumeView, VolumeObject volumeObject )
     {
@@ -30,7 +80,10 @@ public class TransferController implements ActionListener, ChangeListener
         this.volumeObject = volumeObject;
 
         this.windowingMode = WindowingMode.WINDOWING_MODE_LOCAL;
+        
+        this.thread = new TransferUpdateRunnable(sliceCanvas, volumeView);
     }
+    
 
     @Override
     public synchronized void actionPerformed( ActionEvent event )
@@ -54,7 +107,7 @@ public class TransferController implements ActionListener, ChangeListener
             volumeObject.updateWindowing( windowingMode );
 
             sliceCanvas.display();
-            volumeView.display();
+            volumeView.display(true);
         }
         else if ( "restore".equals( cmd ) )
         {
@@ -67,7 +120,7 @@ public class TransferController implements ActionListener, ChangeListener
             transferFrame.updateValues();
 
             sliceCanvas.display();
-            volumeView.display();
+            volumeView.display(true);
         }
         else if ( "transferFunction".equals( cmd ) )
         {
@@ -77,7 +130,7 @@ public class TransferController implements ActionListener, ChangeListener
             volumeObject.setTransferFunction( LutController.getLutMap().get(tf) );
             
             sliceCanvas.display();
-            volumeView.display();
+            volumeView.display(true);
         }
 
     }
@@ -95,33 +148,33 @@ public class TransferController implements ActionListener, ChangeListener
     @Override
     public void stateChanged( ChangeEvent event )
     {
-        JSlider slider = (JSlider)event.getSource();
+        final JSlider slider = (JSlider)event.getSource();
 
         if ( "winCenter".equals( slider.getName() ) )
         {
             volumeObject.updateWindowCenter( (short)slider.getValue(), windowingMode );
-            sliceCanvas.display();
             
-            if ( ! slider.getValueIsAdjusting() )
-            {
+            //if ( ! slider.getValueIsAdjusting() )
+            //{
                 volumeObject.setUpdateGradientTexture(true);
                 volumeObject.setUpdateConvolutionTexture(true);
-            }
-            
-            volumeView.display();
+            //}
         }
         else if ( "winWidth".equals( slider.getName() ) )
         {
             volumeObject.updateWindowWidth( (short)slider.getValue(), windowingMode );
-            sliceCanvas.display();
             
-            if ( ! slider.getValueIsAdjusting() ) {
+            //if ( ! slider.getValueIsAdjusting() ) {
                 volumeObject.setUpdateGradientTexture(true);
                 volumeObject.setUpdateConvolutionTexture(true);
-            }
+            //}
             
-            volumeView.display();
+            
         }
+        
+        thread.setAdjusting(slider.getValueIsAdjusting());
+        
+        SwingUtilities.invokeLater( thread );
 
     }
 

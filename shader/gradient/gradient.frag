@@ -20,7 +20,7 @@ out vec4 gl_FragColor;
 
 float getValue( in float x, in float y, in float z )
 {
-	float windowCenter = texture2D(winTex, vec2(0, z) ).a * 2.0f;
+	/* float windowCenter = texture2D(winTex, vec2(0, z) ).a * 2.0f;
 	float windowWidth = texture2D(winTex, vec2(1, z) ).a * 2.0f;
 	
 	float value = 0.0f;
@@ -31,7 +31,12 @@ float getValue( in float x, in float y, in float z )
 	if ( value < 0.0f ) value = 0.0f;
 	if ( value > 1.0f ) value = 1.0f;	
 		
-	return value;
+	return value;*/
+	
+	if ( x >= xMin && x <= xMax && 1 - y >= yMin && 1 - y <= yMax && z >= zMin && z <= zMax )
+		return texture(volTex, vec3(x, y, z)).r;
+		
+	return 0;
 }
 
 void main() {

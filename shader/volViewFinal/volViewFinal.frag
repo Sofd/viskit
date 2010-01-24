@@ -33,20 +33,32 @@ uniform float yMax;
 uniform float zMin;
 uniform float zMax;
 
+uniform float xStep;
+uniform float yStep;
+uniform float zStep;
+
+
 out vec4 gl_FragColor;
 
-vec4 getNormal( in vec3 texPos ) {
+float getValue( in float x, in float y, in float z ) {
+	//if ( x >= xMin && x <= xMax && 1 - y >= yMin && 1 - y <= yMax && z >= zMin && z <= zMax )
+		return texture(volTex, vec3(x, y, z)).r;
+		
+	//return 0;
+}
+
+/*vec4 getNormal( in vec3 texPos ) {
 	vec4 result;
 
 	vec3 sample1;
 	vec3 sample2;
-	sample1.x = texture(volTex, vec3(texPos.x + 0.02 * alpha, texPos.y, texPos.z) ).r;
-	sample1.y = texture(volTex, vec3(texPos.x, texPos.y - 0.02 * alpha, texPos.z) ).r;
-	sample1.z = texture(volTex, vec3(texPos.x, texPos.y, texPos.z + 0.02 * alpha) ).r;
+	sample1.x = getValue( texPos.x + xStep, texPos.y, texPos.z );
+	sample1.y = getValue( texPos.x, texPos.y - yStep, texPos.z );
+	sample1.z = getValue( texPos.x, texPos.y, texPos.z + zStep );
 	
-	sample2.x = texture(volTex, vec3(texPos.x - 0.02 * alpha, texPos.y, texPos.z) ).r;
-	sample2.y = texture(volTex, vec3(texPos.x, texPos.y + 0.02 * alpha, texPos.z) ).r;
-	sample2.z = texture(volTex, vec3(texPos.x, texPos.y, texPos.z - 0.02 * alpha) ).r;
+	sample2.x = getValue( texPos.x - xStep, texPos.y, texPos.z );
+	sample2.y = getValue( texPos.x, texPos.y + yStep, texPos.z );
+	sample2.z = getValue( texPos.x, texPos.y, texPos.z - zStep );
 	
 	result.xyz = sample2 - sample1;
 	
@@ -58,6 +70,109 @@ vec4 getNormal( in vec3 texPos ) {
 		result = vec4(0.0f);
 	
 	return result;
+}*/
+
+vec4 getNormal( in vec3 tc ) {
+	vec4 gradient = vec4(0.0f);
+	
+	//if ( tc.x >= xMin && tc.x <= xMax && 1 - tc.y >= yMin && 1 - tc.y <= yMax && tc.z >= zMin && tc.z <= zMax )
+	//{
+		float value;
+		float fak2 = 0.5f;
+		float fak3 = 0.25f;
+		
+		//sobel
+		value = fak3 * getValue(tc.x - xStep, tc.y - yStep, tc.z - zStep);
+		gradient.x += value; gradient.y -= value; gradient.z += value;
+		
+		value = fak2 * getValue(tc.x - xStep, tc.y - yStep, tc.z);
+		gradient.x += value; gradient.y -= value;
+		
+		value = fak3 * getValue(tc.x - xStep, tc.y - yStep, tc.z + zStep);
+		gradient.x += value; gradient.y -= value; gradient.z -= value;
+		
+		value = fak2 * getValue(tc.x - xStep, tc.y, tc.z - zStep);
+		gradient.x += value; gradient.z += value;
+		
+		value = getValue(tc.x - xStep, tc.y, tc.z);
+		gradient.x += value;
+		
+		value = fak2 * getValue(tc.x - xStep, tc.y, tc.z + zStep);
+		gradient.x += value; gradient.z -= value;
+		
+		value = fak3 * getValue(tc.x - xStep, tc.y + yStep, tc.z - zStep);
+		gradient.x += value; gradient.y += value; gradient.z += value;
+		
+		value = fak2 * getValue(tc.x - xStep, tc.y + yStep, tc.z);
+		gradient.x += value; gradient.y += value; 
+		
+		value = fak3 * getValue(tc.x - xStep, tc.y + yStep, tc.z + zStep);
+		gradient.x += value; gradient.y += value; gradient.z -= value;
+		
+		
+		value = fak2 * getValue(tc.x, tc.y - yStep, tc.z - zStep);
+		gradient.y -= value; gradient.z += value;
+		
+		value = getValue(tc.x, tc.y - yStep, tc.z);
+		gradient.y -= value;
+		
+		value = fak2 * getValue(tc.x, tc.y - yStep, tc.z + zStep);
+		gradient.y -= value; gradient.z -= value;
+		
+		value = getValue(tc.x, tc.y, tc.z - zStep);
+		gradient.z += value;
+		
+		value = getValue(tc.x, tc.y, tc.z + zStep);
+		gradient.z -= value;
+		
+		value = fak2 * getValue(tc.x, tc.y + yStep, tc.z - zStep);
+		gradient.y += value; gradient.z += value;
+		
+		value = getValue(tc.x, tc.y + yStep, tc.z);
+		gradient.y += value; 
+		
+		value = fak2 * getValue(tc.x, tc.y + yStep, tc.z + zStep);
+		gradient.y += value; gradient.z -= value;
+		
+		
+		value = fak3 * getValue(tc.x + xStep, tc.y - yStep, tc.z - zStep);
+		gradient.x -= value; gradient.y -= value; gradient.z += value;
+		
+		value = fak2 * getValue(tc.x + xStep, tc.y - yStep, tc.z);
+		gradient.x -= value; gradient.y -= value;
+		
+		value = fak3 * getValue(tc.x + xStep, tc.y - yStep, tc.z + zStep);
+		gradient.x -= value; gradient.y -= value; gradient.z -= value;
+		
+		value = fak2 * getValue(tc.x + xStep, tc.y, tc.z - zStep);
+		gradient.x -= value; gradient.z += value;
+		
+		value = getValue(tc.x + xStep, tc.y, tc.z);
+		gradient.x -= value;
+		
+		value = fak2 * getValue(tc.x + xStep, tc.y, tc.z + zStep);
+		gradient.x -= value; gradient.z -= value;
+		
+		value = fak3 * getValue(tc.x + xStep, tc.y + yStep, tc.z - zStep);
+		gradient.x -= value; gradient.y += value; gradient.z += value;
+		
+		value = fak2 * getValue(tc.x + xStep, tc.y + yStep, tc.z);
+		gradient.x -= value; gradient.y += value; 
+		
+		value = fak3 * getValue(tc.x + xStep, tc.y + yStep, tc.z + zStep);
+		gradient.x -= value; gradient.y += value; gradient.z -= value;
+		
+		//gradient.a = length( gradient.xyz ) / sqrt(3*pow(1+4*fak2+4*fak3, 2));
+		gradient.a = length( gradient.xyz ) / 6.93;
+		
+		if ( gradient.a >= gradientLimit * 0.2 )
+			gradient.xyz = normalize( gradient.xyz );
+		else 
+			gradient = vec4(0.0f);
+		
+	//}
+	
+	return gradient;
 }
 
 vec3 shading( in vec3 N, in vec3 E, in vec3 L, in vec4 color )
@@ -78,7 +193,7 @@ vec3 shading( in vec3 N, in vec3 E, in vec3 L, in vec4 color )
 	//float dotER = max(dot(R, E), 0);
 	//float sf = pow( dotER, specExp );
 	
-	vec3 specular = spec * sf * color.rgb;
+	vec3 specular = spec * sf * color.a;
 	
 	return min(max(ambient + diffuse + specular, vec3(0.0f)), 1.0f);
 }
@@ -149,7 +264,7 @@ void main() {
 		
 		tfColor = texture2D( transferTex, tfCoord );
 				
-		if ( useLighting == 1 && tfColor.a > 0 )
+		if ( useLighting == 1 && tfColor.a > 0.1 )
 		{
 			
 			//vec4 G = ( texture( gradientTex, rayPos.xyz ) - vec4( 0.5f, 0.5f, 0.5f, 0.0f ) ) * vec4( 2.0f, 2.0f, 2.0f, 1.0f );

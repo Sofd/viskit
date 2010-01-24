@@ -79,20 +79,20 @@ public class VolumeInputController implements MouseListener, MouseMotionListener
          * lastX = x; lastY = y;
          */
 
-        volumeView.display();
+        volumeView.display(false);
     }
 
     @Override
     public void mouseEntered( MouseEvent e )
     {
         volumeView.requestFocus();
-        volumeView.display();
+        //volumeView.display(false);
     }
 
     @Override
     public void mouseExited( MouseEvent e )
     {
-        
+        //volumeView.display(true);
 
     }
 
@@ -105,7 +105,7 @@ public class VolumeInputController implements MouseListener, MouseMotionListener
         oldPhi = phi;
         oldPhi2 = phi2;
         
-        volumeView.display();
+        //volumeView.display(false);
     }
 
     @Override
@@ -116,7 +116,7 @@ public class VolumeInputController implements MouseListener, MouseMotionListener
         oldPhi2 = phi2;
         lastX = e.getX();
         lastY = e.getY();
-        volumeView.display();
+        volumeView.display(false);
 
         buttonPressed = e.getButton();
     }
@@ -124,7 +124,7 @@ public class VolumeInputController implements MouseListener, MouseMotionListener
     @Override
     public void mouseReleased( MouseEvent e )
     {
-
+        volumeView.display(true);
     }
 
     public void setupCamera( GL2 gl )
