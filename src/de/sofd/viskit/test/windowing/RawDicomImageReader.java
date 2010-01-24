@@ -471,6 +471,7 @@ public class RawDicomImageReader extends ImageReader {
         }
         // (olaf) hack: if pixel values are signed 16-bit, convert... TODO: implement 8 bit too
         //   get rid of this as soon as we have something better
+        /*
         if (1 == ds.getInt(Tag.PixelRepresentation) && 16 == ds.getInt(Tag.BitsAllocated)) {
             WritableRaster raster = bi.getRaster();
             int w = raster.getWidth(), h = raster.getHeight();
@@ -485,6 +486,7 @@ public class RawDicomImageReader extends ImageReader {
                 }
             }
         }
+         */
         /* leave out the windowing -- that's the sole reason this class exists
         if (monochrome) {
             WritableRaster raster = bi.getRaster();

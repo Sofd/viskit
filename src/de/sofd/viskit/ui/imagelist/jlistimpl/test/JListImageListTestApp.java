@@ -101,7 +101,7 @@ public class JListImageListTestApp {
                 }
             }
         });
-        ((JGridImageListView)viewer).setRendererType(JGridImageListView.RendererType.OPENGL);
+        ((JGridImageListView)viewer).setRendererType(JGridImageListView.RendererType.JAVA2D);
         viewer.addImageListViewListener(new ImageListViewListener() {
             @Override
             public void onImageListViewEvent(ImageListViewEvent e) {

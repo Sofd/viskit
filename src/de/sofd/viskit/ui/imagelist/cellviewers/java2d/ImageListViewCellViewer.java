@@ -1,6 +1,8 @@
 package de.sofd.viskit.ui.imagelist.cellviewers.java2d;
 
 import de.sofd.draw2d.viewer.gc.GC;
+import de.sofd.viskit.model.DicomImageListViewModelElement;
+import de.sofd.viskit.model.ImageListViewModelElement;
 import de.sofd.viskit.ui.imagelist.ImageListViewCell;
 import de.sofd.viskit.ui.imagelist.cellviewers.BaseImageListViewCellViewer;
 import java.awt.Graphics;
@@ -14,6 +16,8 @@ import java.awt.image.BufferedImageOp;
 import java.awt.image.Raster;
 import java.awt.image.RescaleOp;
 import java.awt.image.WritableRaster;
+import org.dcm4che2.data.DicomObject;
+import org.dcm4che2.data.Tag;
 
 /**
  * Swing component for displaying a {@link ImageListViewCell}. For use in cell renderers
@@ -38,6 +42,7 @@ public class ImageListViewCellViewer extends BaseImageListViewCellViewer {
         //       displayedCell.getDisplayedModelElement().getImageKey() and the windowing parameters as the cache key
         BufferedImage srcImg = displayedCell.getDisplayedModelElement().getImage();
         BufferedImage windowedImage;
+        // TODO: use the model element's RawImage instead of the BufferedImage when possible
         ///*
         if (srcImg.getColorModel().getColorSpace().getType() == ColorSpace.TYPE_GRAY) {
             windowedImage = windowMonochrome(srcImg, displayedCell.getWindowLocation(), displayedCell.getWindowWidth());
@@ -58,14 +63,31 @@ public class ImageListViewCellViewer extends BaseImageListViewCellViewer {
     }
 
 
-    /**
-     * @pre destImg is of type BufferedImage.TYPE_INT_RGB
-     */
     private BufferedImage windowMonochrome(BufferedImage srcImg, float windowLocation, float windowWidth) {
         BufferedImage destImg = new BufferedImage(srcImg.getWidth(), srcImg.getHeight(), BufferedImage.TYPE_INT_RGB);
+
+        boolean isSigned = false;
+        int minValue = 0;
+        {
+            // hack: try to determine signedness and minValue from DICOM metadata if available --
+            // the BufferedImage's metadata don't contain that information reliably.
+            // Only works for some special cases
+            ImageListViewModelElement elt = displayedCell.getDisplayedModelElement();
+            if (elt instanceof DicomImageListViewModelElement) {
+                DicomImageListViewModelElement delt = (DicomImageListViewModelElement) elt;
+                DicomObject imgMetadata = delt.getDicomImageMetaData();
+                int bitsAllocated = imgMetadata.getInt(Tag.BitsAllocated);
+                isSigned = (1 == imgMetadata.getInt(Tag.PixelRepresentation));
+                if (isSigned && (bitsAllocated > 0)) {
+                    minValue = -(1<<(bitsAllocated-1));
+                }
+            }
+        }
+
+
         final int windowedImageGrayscalesCount = 256;  // for BufferedImage.TYPE_INT_RGB
         float scale = windowedImageGrayscalesCount/windowWidth;
-        float offset = (windowWidth/2-windowLocation)*scale;
+        float offset = (windowWidth/2 - windowLocation)*scale;
         if (! (srcImg.getColorModel().getColorSpace().getType() == ColorSpace.TYPE_GRAY)) {
             throw new IllegalArgumentException("source image must be grayscales");
         }
@@ -77,6 +99,9 @@ public class ImageListViewCellViewer extends BaseImageListViewCellViewer {
         for (int x = 0; x < srcImg.getWidth(); x++) {
             for (int y = 0; y < srcImg.getHeight(); y++) {
                 int srcGrayValue = srcRaster.getSample(x, y, 0);
+                if (isSigned) {
+                    srcGrayValue = (int)(short)srcGrayValue;  // will only work for 16-bit signed...
+                }
                 float destGrayValue = scale * srcGrayValue + offset;
                 // clamp
                 if (destGrayValue < 0) {
@@ -92,9 +117,19 @@ public class ImageListViewCellViewer extends BaseImageListViewCellViewer {
         return destImg;
     }
 
-    /**
-     * @pre destImg is of type BufferedImage.TYPE_INT_RGB
+    /*
+    private void getImageMetadata() {
+        DicomObject imgMetadata = displayedCell.getDisplayedModelElement().getDicomImageMetaData();
+        int bitsAllocated = imgMetadata.getInt(Tag.BitsAllocated);
+        if (bitsAllocated <= 0) {
+        }
+        int bitsStored = imgMetadata.getInt(Tag.BitsStored);
+        if (bitsStored <= 0) {
+        }
+        boolean isSigned = (1 == imgMetadata.getInt(Tag.PixelRepresentation));
+    }
      */
+
     private BufferedImage windowRGB(BufferedImage srcImg, float windowLocation, float windowWidth) {
         BufferedImage destImg = new BufferedImage(srcImg.getWidth(), srcImg.getHeight(), BufferedImage.TYPE_INT_RGB);
         final int windowedImageBandValuesCount = 256;  // for BufferedImage.TYPE_INT_RGB
