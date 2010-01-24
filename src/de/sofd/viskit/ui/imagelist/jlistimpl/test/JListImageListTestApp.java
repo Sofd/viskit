@@ -66,8 +66,8 @@ public class JListImageListTestApp {
         //final DefaultListModel model = getViewerListModelForDirectory(new File("/shares/shared/projekts/disk312043/Images/cd822__center4001"));
         //final DefaultListModel model = getViewerListModelForDirectory(new File("/shares/shared/projekts/disk312043/Images/cd836__center4001"));
         for (int i = 10; i < 90; i++) {
-            model.addElement(new TestImageModelElement(i));
-            //model.addElement(new FileBasedDicomImageListViewModelElement("/home/olaf/gi/resources/DICOM-Testbilder/1578/f0003563_006" + i + ".dcm"));
+            //model.addElement(new TestImageModelElement(i));
+            model.addElement(new FileBasedDicomImageListViewModelElement("/home/olaf/gi/resources/DICOM-Testbilder/1578/f0003563_006" + i + ".dcm"));
             //model.addElement(new FileBasedDicomImageListViewModelElement("/home/olaf/gi/resources/DICOM-Testbilder/24-bit Uncompressed Color.dcm"));
         }
 
@@ -101,7 +101,7 @@ public class JListImageListTestApp {
                 }
             }
         });
-        ((JGridImageListView)viewer).setRendererType(JGridImageListView.RendererType.JAVA2D);
+        ((JGridImageListView)viewer).setRendererType(JGridImageListView.RendererType.OPENGL);
         viewer.addImageListViewListener(new ImageListViewListener() {
             @Override
             public void onImageListViewEvent(ImageListViewEvent e) {
