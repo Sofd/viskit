@@ -1,6 +1,7 @@
 package de.sofd.viskit.ui.imagelist.cellviewers.java2d;
 
 import de.sofd.draw2d.viewer.gc.GC;
+import de.sofd.viskit.draw2d.gc.ViskitGC;
 import de.sofd.viskit.model.DicomImageListViewModelElement;
 import de.sofd.viskit.model.ImageListViewModelElement;
 import de.sofd.viskit.ui.imagelist.ImageListViewCell;
@@ -198,7 +199,7 @@ public class ImageListViewCellViewer extends BaseImageListViewCellViewer {
     }
 
     protected void renderOverlays(Graphics2D g2d) {
-        displayedCell.getRoiDrawingViewer().paint(new GC(g2d));
+        displayedCell.getRoiDrawingViewer().paint(new ViskitGC(g2d));
     }
 
 }

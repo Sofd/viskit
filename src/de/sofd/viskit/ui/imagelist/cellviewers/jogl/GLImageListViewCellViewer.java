@@ -4,6 +4,7 @@ import com.sun.opengl.util.texture.TextureCoords;
 import de.sofd.lang.Runnable2;
 import de.sofd.util.IdentityHashSet;
 import de.sofd.util.Misc;
+import de.sofd.viskit.draw2d.gc.ViskitGC;
 import de.sofd.viskit.image3D.jogl.util.GLShader;
 import de.sofd.viskit.image3D.jogl.util.ShaderManager;
 import de.sofd.viskit.ui.imagelist.ImageListViewCell;
@@ -276,6 +277,7 @@ public class GLImageListViewCellViewer extends BaseImageListViewCellViewer {
             GL2 gl = glAutoDrawable.getGL().getGL2();
             gl.glClear(gl.GL_COLOR_BUFFER_BIT);
             gl.glMatrixMode(gl.GL_MODELVIEW);
+            gl.glPushMatrix();
             gl.glLoadIdentity();
             gl.glTranslated(displayedCell.getCenterOffset().getX(), -displayedCell.getCenterOffset().getY(), 0);
             gl.glScaled(displayedCell.getScale(), displayedCell.getScale(), 0);
@@ -307,8 +309,12 @@ public class GLImageListViewCellViewer extends BaseImageListViewCellViewer {
             gl.glTexCoord2f(coords.left(), coords.bottom());
             gl.glVertex2f(-w2, -h2);
             gl.glEnd();
-            //rescaleShader.unbind();
             ImageTextureManager.unbindCurrentImageTexture(sharedContextData);
+            rescaleShader.unbind();
+            gl.glPopMatrix();
+
+            displayedCell.getRoiDrawingViewer().paint(new ViskitGC(gl));
+
             //gl.glFlush();
             //glAutoDrawable.swapBuffers();
         }
