@@ -6,6 +6,17 @@ import java.awt.Rectangle;
 import javax.media.opengl.GL;
 
 /**
+ * Draw2d GC implementation for Viskit. Wraps either a Java2D Graphics2D or
+ * an OpenGL/Jogl GL (or both at the same time). Instances of this class are
+ * passed aroung in viskit's 2D liste viewer code whenever painting tasks
+ * must be delegated, e.g. when a JImageListView instance wants to delegate
+ * the painting of one of its cells to an external component such as a
+ * controller.
+ * <p>
+ * The painting code can then query the received ViskitGC instance for whether
+ * it wraps a Graphics2D or a GL (or, if  both are present, which one should
+ * be used preferrably). The painting code then goes ahead and paints its
+ * stuff using whatever facility it supports and is available to use.
  *
  * @author olaf
  */
