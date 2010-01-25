@@ -1,6 +1,5 @@
 package de.sofd.viskit.image3D.jogl.control;
 
-import static de.sofd.viskit.util.ViskitMath.*;
 import de.sofd.viskit.image3D.jogl.view.*;
 
 import java.awt.event.*;
@@ -49,10 +48,7 @@ public class VolumeInputController implements MouseListener, MouseMotionListener
     @Override
     public void mouseClicked( MouseEvent e )
     {
-        if ( e.getButton() == MouseEvent.BUTTON2 )
-        {
-            volumeView.debugVectors();
-        }
+        
 
     }
 

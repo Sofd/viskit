@@ -127,25 +127,6 @@ public class FrameBuffer
         gl.glDisable( GL_TEXTURE_2D );
     }
     
-    public void resize( GL2 gl, int internalFormat, int format, Size size ) throws Exception
-    {
-        gl.glEnable( GL_TEXTURE_2D );
-        
-        this.size = size;
-        
-        gl.glBindTexture( GL_TEXTURE_2D, this.theTex );
-        gl.glTexImage2D( GL_TEXTURE_2D, 0, internalFormat, size.getWidth(), size.getHeight(), 0, format, GL_FLOAT, null );
-        
-        bind( gl );
-        attachTexture( gl, 0 );
-
-        checkFBO( gl );
-        
-        unbind( gl );
-        
-        gl.glDisable( GL_TEXTURE_2D );
-    }
-
     protected void drawSlice( GL2 gl )
     {
         GLUtil.texQuad2D( gl, size.getWidth(), size.getHeight() );
@@ -165,6 +146,25 @@ public class FrameBuffer
     public int getTex()
     {
         return theTex;
+    }
+
+    public void resize( GL2 gl, int internalFormat, int format, Size size ) throws Exception
+    {
+        gl.glEnable( GL_TEXTURE_2D );
+        
+        this.size = size;
+        
+        gl.glBindTexture( GL_TEXTURE_2D, this.theTex );
+        gl.glTexImage2D( GL_TEXTURE_2D, 0, internalFormat, size.getWidth(), size.getHeight(), 0, format, GL_FLOAT, null );
+        
+        bind( gl );
+        attachTexture( gl, 0 );
+
+        checkFBO( gl );
+        
+        unbind( gl );
+        
+        gl.glDisable( GL_TEXTURE_2D );
     }
 
     public void run( GL2 gl )

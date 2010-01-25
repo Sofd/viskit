@@ -26,9 +26,9 @@ public class GPUVolumeViewer extends JFrame implements MouseListener
 {
     static final Logger logger = Logger.getLogger( GPUVolumeViewer.class );
     
-    protected static int height = 500;
+    protected static int height = 512;
 
-    protected static int width = 700;
+    protected static int width = 512;
 
     public static int getWinHeight()
     {
@@ -164,7 +164,7 @@ public class GPUVolumeViewer extends JFrame implements MouseListener
 
         VolumeObject volumeObject = sharedVolumeObject;
         
-        volumeView = new GPUVolumeView( volumeObject, sharedContext );
+        volumeView = new GPUVolumeView( volumeObject, sharedContext, new Size(width, height) );
 
         getContentPane().setLayout( new BorderLayout() );
         getContentPane().add( volumeView, BorderLayout.CENTER );
