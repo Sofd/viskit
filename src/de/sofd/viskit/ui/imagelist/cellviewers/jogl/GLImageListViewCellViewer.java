@@ -18,6 +18,7 @@ import java.awt.Point;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelEvent;
+import java.awt.geom.Point2D;
 import java.util.Set;
 import javax.media.opengl.DebugGL2;
 import javax.media.opengl.GL;
@@ -277,10 +278,12 @@ public class GLImageListViewCellViewer extends BaseImageListViewCellViewer {
             GL2 gl = glAutoDrawable.getGL().getGL2();
             gl.glClear(gl.GL_COLOR_BUFFER_BIT);
             gl.glMatrixMode(gl.GL_MODELVIEW);
+
+            // draw the image
             gl.glPushMatrix();
             gl.glLoadIdentity();
             gl.glTranslated(displayedCell.getCenterOffset().getX(), -displayedCell.getCenterOffset().getY(), 0);
-            gl.glScaled(displayedCell.getScale(), displayedCell.getScale(), 0);
+            gl.glScaled(displayedCell.getScale(), -displayedCell.getScale(), 0);
             rescaleShader.bind();  // TODO: rescaleShader's internal gl may be outdated here...?
             rescaleShader.bindUniform("tex", 0);
             {
@@ -313,7 +316,21 @@ public class GLImageListViewCellViewer extends BaseImageListViewCellViewer {
             rescaleShader.unbind();
             gl.glPopMatrix();
 
+
+            // draw the RoiDrawingViewer, with GL coordinate system originating in NW image corner
+            // (as in Java2D/ImageListViewCellViewer)
+            // TODO: move all drawing stuff to external "paint listeners" (in external controllers),
+            // with initial GL/Graphics2D coordinate system corresponding to cell screen coordinates, origin in NW cell corner
+
+            gl.glPushMatrix();
+            gl.glLoadIdentity();
+            Point2D imgSize = getScaledImageSize();
+            gl.glTranslated(-imgSize.getX() / 2, imgSize.getY() / 2, 0);
+            gl.glScalef(1, -1, 1);
+
             displayedCell.getRoiDrawingViewer().paint(new ViskitGC(gl));
+
+            gl.glPopMatrix();
 
             //gl.glFlush();
             //glAutoDrawable.swapBuffers();
