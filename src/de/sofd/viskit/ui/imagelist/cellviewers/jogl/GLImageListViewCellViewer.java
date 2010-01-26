@@ -275,6 +275,9 @@ public class GLImageListViewCellViewer extends BaseImageListViewCellViewer {
         @Override
         public void display(GLAutoDrawable glAutoDrawable) {
             System.out.println("DISP " + drawableToString(glAutoDrawable));
+
+            displayedCell.setLatestSize(getSize());
+            
             GL2 gl = glAutoDrawable.getGL().getGL2();
             gl.glClear(gl.GL_COLOR_BUFFER_BIT);
             gl.glMatrixMode(gl.GL_MODELVIEW);
