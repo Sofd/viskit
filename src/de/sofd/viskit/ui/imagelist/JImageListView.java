@@ -8,6 +8,8 @@ import de.sofd.util.BiMap;
 import de.sofd.util.IdentityHashSet;
 import de.sofd.util.Misc;
 import de.sofd.viskit.ui.imagelist.event.ImageListViewCellAddEvent;
+import de.sofd.viskit.ui.imagelist.event.ImageListViewCellPaintEvent;
+import de.sofd.viskit.ui.imagelist.event.ImageListViewCellPaintListener;
 import de.sofd.viskit.ui.imagelist.event.ImageListViewCellRemoveEvent;
 import de.sofd.viskit.ui.imagelist.event.ImageListViewEvent;
 import de.sofd.viskit.ui.imagelist.event.ImageListViewListener;
@@ -25,7 +27,10 @@ import java.beans.PropertyChangeListener;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Iterator;
 import java.util.List;
+import java.util.TreeSet;
+
 import javax.swing.AbstractListModel;
 import javax.swing.JPanel;
 import javax.swing.ListModel;
@@ -784,4 +789,114 @@ public abstract class JImageListView extends JPanel {
         }
     }
 
+
+    /**
+     * Add a new listener for CellPaintEvents, with default z-order
+     * (PAINT_ZORDER_DEFAULT).
+     * 
+     * @param listener
+     */
+    public void addCellPaintListener(ImageListViewCellPaintListener listener) {
+        addCellPaintListener(PAINT_ZORDER_DEFAULT, listener);
+    }
+
+    /**
+     * Add a new listener to for CellPaintEvents. The listener will be invoked
+     * whenever a cell in this list needs to be (re)painted. The zOrder
+     * parameter determines the order in which the listeners are invoked (if
+     * more than one listener was added). Listeners with higher zOrder numbers
+     * are called after ones with lower zOrder numbers (when the numbers are
+     * equal, insertion order decides). A listener that is called later will end
+     * up drawing on top of what the listeners called earlier have drawn.
+     * <p>
+     * You can pass any of the PAINT_ZORDER_* constants as the zOrder, or any
+     * other number.
+     * 
+     * @param zOrder
+     * @param listener
+     */
+    public void addCellPaintListener(int zOrder, ImageListViewCellPaintListener listener) {
+        cellPaintListeners.add(new PaintListenerRecord(listener, zOrder));
+    }
+    
+    public void removeCellPaintListener(ImageListViewCellPaintListener listener) {
+        for (Iterator<PaintListenerRecord> it = cellPaintListeners.iterator(); it.hasNext();) {
+            if (it.next().listener == listener) {
+                it.remove();
+                return;
+            }
+        }
+    }
+    
+    /**
+     * Paint z-order at which the image is normally drawn. Numerical value is 10, which
+     * is the lowest of all the PAINT_ZORDER_* constants, so the image will normally be drawn
+     * at the bottom of anything else (i.e., everything else will be drawn on top).
+     * 
+     * (TODO: not implemented)
+     */
+    public static final int PAINT_ZORDER_IMAGE = 10;
+
+    /**
+     * Paint z-order at which the ROIs are normally drawn. Numerical value is
+     * 50, which means the ROIs are drawn on top of the image, but below any
+     * labels (see PAINT_ZORDER_LABELS)
+     * 
+     * (TODO: not implemented)
+     */
+    public static final int PAINT_ZORDER_ROI = 50;
+
+    /**
+     * Paint z-order at which any labels are normally drawn. Numerical value is
+     * 200, which is the highest of all the PAINT_ZORDER_* constants, so this
+     * will be drawn on top of everything else unless you specify a z-order
+     * that's not one of the PAINT_ZORDER_* constants, and is higher than
+     * PAINT_ZORDER_LABELS.
+     * 
+     * (TODO: not implemented)
+     */
+    public static final int PAINT_ZORDER_LABELS = 200;
+
+    /**
+     * Default paint z-order. This is used if you call
+     * {@link #addCellPaintListener(ImageListViewCellPaintListener)} (i.e.
+     * without explicitly specifying a z-order). Numerical value is 100,
+     * meaning that this would normally be drawn between the ROIs and any
+     * labels.
+     */
+    public static final int PAINT_ZORDER_DEFAULT = 100;
+    
+    
+    protected void fireCellPaintEvent(ImageListViewCellPaintEvent e) {
+        for (PaintListenerRecord rec : cellPaintListeners) {
+            rec.listener.onCellPaint(e);
+            if (e.isConsumed()) {
+                break;
+            }
+        }
+    }
+
+    private Collection<PaintListenerRecord> cellPaintListeners = new TreeSet<PaintListenerRecord>();
+    
+    private static class PaintListenerRecord implements Comparable<PaintListenerRecord> {
+        ImageListViewCellPaintListener listener;
+        Integer zOrder;
+        Integer instanceNumber;
+        private static int lastInstanceNumber;
+        public PaintListenerRecord(ImageListViewCellPaintListener listener, int zOrder) {
+            this.listener = listener;
+            this.zOrder = zOrder;
+            this.instanceNumber = lastInstanceNumber++;
+        }
+        @Override
+        public int compareTo(PaintListenerRecord o) {
+            int res = zOrder.compareTo(o.zOrder);
+            if (res == 0) {
+                return instanceNumber.compareTo(o.instanceNumber);
+            } else {
+                return res;
+            }
+        }
+    }
+    
 }
