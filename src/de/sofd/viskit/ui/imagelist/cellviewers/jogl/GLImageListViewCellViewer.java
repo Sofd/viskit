@@ -327,9 +327,11 @@ public class GLImageListViewCellViewer extends BaseImageListViewCellViewer {
 
             gl.glPushMatrix();
             gl.glLoadIdentity();
-            Point2D imgSize = getScaledImageSize();
-            gl.glTranslated(-imgSize.getX() / 2, imgSize.getY() / 2, 0);
             gl.glScalef(1, -1, 1);
+            Point2D centerOffset = getDisplayedCell().getCenterOffset();
+            Point2D imgSize = getScaledImageSize();
+            gl.glTranslated(centerOffset.getX(), centerOffset.getY(), 0);
+            gl.glTranslated(-imgSize.getX() / 2, -imgSize.getY() / 2, 0);
 
             displayedCell.getRoiDrawingViewer().paint(new ViskitGC(gl));
 
