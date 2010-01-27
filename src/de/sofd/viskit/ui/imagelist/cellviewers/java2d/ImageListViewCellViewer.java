@@ -5,7 +5,11 @@ import de.sofd.viskit.draw2d.gc.ViskitGC;
 import de.sofd.viskit.model.DicomImageListViewModelElement;
 import de.sofd.viskit.model.ImageListViewModelElement;
 import de.sofd.viskit.ui.imagelist.ImageListViewCell;
+import de.sofd.viskit.ui.imagelist.JImageListView;
 import de.sofd.viskit.ui.imagelist.cellviewers.BaseImageListViewCellViewer;
+import de.sofd.viskit.ui.imagelist.event.ImageListViewCellPaintEvent;
+
+import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.color.ColorSpace;
@@ -181,19 +185,33 @@ public class ImageListViewCellViewer extends BaseImageListViewCellViewer {
 
         displayedCell.setLatestSize(getSize());
 
+        // Call all CellPaintListeners below the image in the z-order.
+        // Eventually all painting, including the image and ROIs, should happen in PaintListeners.
+        getDisplayedCell().getOwner().fireCellPaintEvent(new ImageListViewCellPaintEvent(getDisplayedCell(), new ViskitGC(g2d), null),
+                                                         Integer.MIN_VALUE, JImageListView.PAINT_ZORDER_IMAGE);
+        
         //give the render* methods a Graphics2D whose coordinate system
         //(and eventually, clipping) is already relative to the area in
         //which the image should be drawn
         Graphics2D userGraphics = (Graphics2D)g2d.create();
         Point2D imageOffset = getImageOffset();
         userGraphics.transform(AffineTransform.getTranslateInstance(imageOffset.getX(), imageOffset.getY()));
-        renderImage(userGraphics);
-        renderOverlays(userGraphics);
+
+        // render the image
+        BufferedImageOp scaleImageOp = new AffineTransformOp(getDicomToUiTransform(), AffineTransformOp.TYPE_BILINEAR);
+        userGraphics.drawImage(getWindowedImage(), scaleImageOp, 0, 0);
+
+        // render the ROI DrawingViewer
+        displayedCell.getRoiDrawingViewer().paint(new ViskitGC(userGraphics));
+
+        // image and ROIs have been drawn. Now call all CellPaintListeners above the ROIs in the z-order.
+        // Eventually all painting, including the image and ROIs, should happen in PaintListeners.
+        getDisplayedCell().getOwner().fireCellPaintEvent(new ImageListViewCellPaintEvent(getDisplayedCell(), new ViskitGC(g2d), null),
+                                                         JImageListView.PAINT_ZORDER_ROI + 1, Integer.MAX_VALUE);
     }
 
     protected void renderImage(Graphics2D g2d) {
         BufferedImageOp scaleImageOp = new AffineTransformOp(getDicomToUiTransform(), AffineTransformOp.TYPE_BILINEAR);
-        // TODO: windowing
         g2d.drawImage(getWindowedImage(), scaleImageOp, 0, 0);
         //g2d.drawImage(getObjectImage(), scaleImageOp, 0, 0);
     }

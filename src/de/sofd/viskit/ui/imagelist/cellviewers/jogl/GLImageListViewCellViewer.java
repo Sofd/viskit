@@ -8,7 +8,10 @@ import de.sofd.viskit.draw2d.gc.ViskitGC;
 import de.sofd.viskit.image3D.jogl.util.GLShader;
 import de.sofd.viskit.image3D.jogl.util.ShaderManager;
 import de.sofd.viskit.ui.imagelist.ImageListViewCell;
+import de.sofd.viskit.ui.imagelist.JImageListView;
 import de.sofd.viskit.ui.imagelist.cellviewers.BaseImageListViewCellViewer;
+import de.sofd.viskit.ui.imagelist.event.ImageListViewCellPaintEvent;
+
 import java.awt.AWTEvent;
 import java.awt.Component;
 import java.awt.Dimension;
@@ -277,12 +280,30 @@ public class GLImageListViewCellViewer extends BaseImageListViewCellViewer {
             System.out.println("DISP " + drawableToString(glAutoDrawable));
 
             displayedCell.setLatestSize(getSize());
-            
+
             GL2 gl = glAutoDrawable.getGL().getGL2();
+            
+            ViskitGC gc = new ViskitGC(gl);
+            
             gl.glClear(gl.GL_COLOR_BUFFER_BIT);
             gl.glMatrixMode(gl.GL_MODELVIEW);
 
-            // draw the image
+            // Call all CellPaintListeners below the image in the z-order.
+            // Eventually all painting, including the image and ROIs, should happen in PaintListeners.
+            gl.glPushMatrix();
+            // set coordinate system to NW corner origin, y axis pointing downwards
+            // (this should eventually be the case for all CellPaintListeners)
+            gl.glLoadIdentity();
+            Dimension cellSize = getDisplayedCell().getLatestSize();
+            gl.glTranslated(0, cellSize.getHeight(), 0);
+            gl.glScalef(1, -1, 1);
+            getDisplayedCell().getOwner().fireCellPaintEvent(new ImageListViewCellPaintEvent(getDisplayedCell(), gc, null),
+                                                             Integer.MIN_VALUE, JImageListView.PAINT_ZORDER_IMAGE);
+            gl.glPopMatrix();
+
+            // draw the image.
+            // TODO: move all drawing stuff to external CellPaintListeners (in external controllers),
+            // with initial GL/Graphics2D coordinate system corresponding to cell screen coordinates, origin in NW cell corner
             gl.glPushMatrix();
             gl.glLoadIdentity();
             gl.glTranslated(displayedCell.getCenterOffset().getX(), -displayedCell.getCenterOffset().getY(), 0);
@@ -322,10 +343,12 @@ public class GLImageListViewCellViewer extends BaseImageListViewCellViewer {
 
             // draw the RoiDrawingViewer, with GL coordinate system originating in NW image corner
             // (as in Java2D/ImageListViewCellViewer)
-            // TODO: move all drawing stuff to external "paint listeners" (in external controllers),
+            // TODO: move all drawing stuff to external CellPaintListeners (in external controllers),
             // with initial GL/Graphics2D coordinate system corresponding to cell screen coordinates, origin in NW cell corner
 
             gl.glPushMatrix();
+            // set coordinate system to NW corner origin, y axis pointing downwards
+            // (this should eventually be the case for all CellPaintListeners)
             gl.glLoadIdentity();
             gl.glScalef(1, -1, 1);
             Point2D centerOffset = getDisplayedCell().getCenterOffset();
@@ -333,10 +356,22 @@ public class GLImageListViewCellViewer extends BaseImageListViewCellViewer {
             gl.glTranslated(centerOffset.getX(), centerOffset.getY(), 0);
             gl.glTranslated(-imgSize.getX() / 2, -imgSize.getY() / 2, 0);
 
-            displayedCell.getRoiDrawingViewer().paint(new ViskitGC(gl));
+            displayedCell.getRoiDrawingViewer().paint(gc);
 
             gl.glPopMatrix();
 
+            // image and ROIs have been drawn. Now call all CellPaintListeners above the ROIs in the z-order.
+            // Eventually all painting, including the image and ROIs, should happen in PaintListeners
+            gl.glPushMatrix();
+            // set coordinate system to NW corner origin, y axis pointing downwards
+            gl.glLoadIdentity();
+            cellSize = getDisplayedCell().getLatestSize();
+            gl.glTranslated(0, cellSize.getHeight(), 0);
+            gl.glScalef(1, -1, 1);
+            getDisplayedCell().getOwner().fireCellPaintEvent(new ImageListViewCellPaintEvent(getDisplayedCell(), gc, null),
+                                                             JImageListView.PAINT_ZORDER_ROI + 1, Integer.MAX_VALUE);
+            gl.glPopMatrix();
+            
             //gl.glFlush();
             //glAutoDrawable.swapBuffers();
         }

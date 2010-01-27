@@ -29,6 +29,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
+import java.util.SortedSet;
 import java.util.TreeSet;
 
 import javax.swing.AbstractListModel;
@@ -867,7 +868,13 @@ public abstract class JImageListView extends JPanel {
     public static final int PAINT_ZORDER_DEFAULT = 100;
     
     
-    protected void fireCellPaintEvent(ImageListViewCellPaintEvent e) {
+    /**
+     * NOT A PUBLIC API! DON'T CALL.
+     * 
+     * (method is defined public so internal classes in subpackages can call it)
+     * @param e
+     */
+    public void fireCellPaintEvent(ImageListViewCellPaintEvent e) {
         for (PaintListenerRecord rec : cellPaintListeners) {
             rec.listener.onCellPaint(e);
             if (e.isConsumed()) {
@@ -876,7 +883,29 @@ public abstract class JImageListView extends JPanel {
         }
     }
 
-    private Collection<PaintListenerRecord> cellPaintListeners = new TreeSet<PaintListenerRecord>();
+    /**
+     * NOT A PUBLIC API! DON'T CALL.
+     * 
+     * (method is defined public so internal classes in subpackages can call it)
+     * @param e
+     */
+    public void fireCellPaintEvent(ImageListViewCellPaintEvent e, int minZ, int maxZ) {
+        ImageListViewCellPaintListener dummy = new ImageListViewCellPaintListener() {
+            @Override
+            public void onCellPaint(ImageListViewCellPaintEvent e) {
+            }
+        };
+        PaintListenerRecord min = new PaintListenerRecord(dummy, minZ);
+        PaintListenerRecord max = new PaintListenerRecord(dummy, maxZ);
+        for (PaintListenerRecord rec : cellPaintListeners.subSet(min, max)) {
+            rec.listener.onCellPaint(e);
+            if (e.isConsumed()) {
+                break;
+            }
+        }
+    }
+
+    private SortedSet<PaintListenerRecord> cellPaintListeners = new TreeSet<PaintListenerRecord>();
     
     private static class PaintListenerRecord implements Comparable<PaintListenerRecord> {
         ImageListViewCellPaintListener listener;

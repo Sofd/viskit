@@ -1,60 +1,48 @@
 package de.sofd.viskit.ui.imagelist.jlistimpl.test;
 
-import de.sofd.draw2d.Drawing;
-import de.sofd.draw2d.DrawingObject;
-import de.sofd.draw2d.viewer.tools.EllipseTool;
-import de.sofd.draw2d.viewer.tools.SelectorTool;
-import de.sofd.util.FloatRange;
-import de.sofd.viskit.controllers.ImageListViewMouseWindowingController;
-import de.sofd.viskit.controllers.ImageListViewMouseZoomPanController;
-import de.sofd.viskit.controllers.ImageListViewRoiInputEventController;
-import de.sofd.viskit.controllers.ImageListViewRoiToolApplicationController;
-import de.sofd.viskit.controllers.ImageListViewWindowingApplyToAllController;
-import de.sofd.viskit.image.Dcm;
-import de.sofd.viskit.image.DcmImageListViewModelElement;
-import de.sofd.viskit.image.DicomInputOutput;
-import de.sofd.viskit.model.DicomImageListViewModelElement;
-import de.sofd.viskit.model.FileBasedDicomImageListViewModelElement;
-import de.sofd.viskit.ui.imagelist.ImageListViewCell;
-import de.sofd.viskit.model.ImageListViewModelElement;
-import de.sofd.viskit.ui.RoiToolPanel;
-import de.sofd.viskit.ui.imagelist.JImageListView;
-import de.sofd.viskit.ui.imagelist.event.ImageListViewCellAddEvent;
-import de.sofd.viskit.ui.imagelist.event.ImageListViewEvent;
-import de.sofd.viskit.ui.imagelist.event.ImageListViewListener;
-import de.sofd.viskit.ui.imagelist.gridlistimpl.JGridImageListView;
-import de.sofd.viskit.ui.imagelist.jlistimpl.JListImageListView;
 import java.awt.BorderLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.image.BufferedImage;
-import java.beans.BeanInfo;
-import java.beans.Introspector;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.beans.PropertyDescriptor;
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
 import java.net.URL;
 import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Set;
+
 import javax.swing.AbstractAction;
 import javax.swing.DefaultListModel;
 import javax.swing.JComboBox;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JToolBar;
-import javax.swing.ListModel;
 import javax.swing.SwingUtilities;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
+
 import org.dcm4che2.data.BasicDicomObject;
-import org.dcm4che2.data.DicomObject;
-import org.dcm4che2.data.Tag;
+
+import de.sofd.draw2d.Drawing;
+import de.sofd.draw2d.DrawingObject;
+import de.sofd.draw2d.viewer.tools.EllipseTool;
+import de.sofd.draw2d.viewer.tools.SelectorTool;
+import de.sofd.util.FloatRange;
+import de.sofd.viskit.controllers.ImageListViewInitialWindowingController;
+import de.sofd.viskit.controllers.ImageListViewMouseWindowingController;
+import de.sofd.viskit.controllers.ImageListViewMouseZoomPanController;
+import de.sofd.viskit.controllers.ImageListViewRoiInputEventController;
+import de.sofd.viskit.controllers.ImageListViewRoiToolApplicationController;
+import de.sofd.viskit.image.Dcm;
+import de.sofd.viskit.image.DcmImageListViewModelElement;
+import de.sofd.viskit.image.DicomInputOutput;
+import de.sofd.viskit.model.FileBasedDicomImageListViewModelElement;
+import de.sofd.viskit.model.ImageListViewModelElement;
+import de.sofd.viskit.ui.RoiToolPanel;
+import de.sofd.viskit.ui.imagelist.ImageListViewCell;
+import de.sofd.viskit.ui.imagelist.JImageListView;
+import de.sofd.viskit.ui.imagelist.event.ImageListViewCellAddEvent;
+import de.sofd.viskit.ui.imagelist.event.ImageListViewEvent;
+import de.sofd.viskit.ui.imagelist.event.ImageListViewListener;
+import de.sofd.viskit.ui.imagelist.gridlistimpl.JGridImageListView;
 
 /**
  *
@@ -87,29 +75,8 @@ public class JListImageListTestApp {
 
         //final JImageListView viewer = new JListImageListView();
         final JImageListView viewer = new JGridImageListView(); viewer.setScaleMode(JGridImageListView.MyScaleMode.newCellGridMode(2, 2));
-        // set up initial windowing for all cell to optimal values.
-        // happens on cell creation, i.e. right at the start, thus increasing initialization time very much.
-        // Might use a controller that does this in the first cellPaint event for the cell instead
-        // (once we have cellPaint events)
-        viewer.addImageListViewListener(new ImageListViewListener() {
-            @Override
-            public void onImageListViewEvent(ImageListViewEvent e) {
-                if (e instanceof ImageListViewCellAddEvent) {
-                    ImageListViewCellAddEvent cae = (ImageListViewCellAddEvent) e;
-                    ImageListViewCell addedCell = cae.getCell();
-                    FloatRange usedRange = addedCell.getDisplayedModelElement().getUsedPixelValuesRange();
-                    addedCell.setWindowWidth((int) usedRange.getDelta());
-                    addedCell.setWindowLocation((int) (usedRange.getMin() + usedRange.getMax()) / 2);
-                }
-            }
-        });
+        new ImageListViewInitialWindowingController(viewer).setEnabled(true);
         ((JGridImageListView)viewer).setRendererType(JGridImageListView.RendererType.JAVA2D);
-        viewer.addImageListViewListener(new ImageListViewListener() {
-            @Override
-            public void onImageListViewEvent(ImageListViewEvent e) {
-                System.out.println("ImageListViewEvent: " + e);
-            }
-        });
         viewer.setModel(model);
         viewer.addCellPropertyChangeListener(new PropertyChangeListener() {
             @Override
@@ -225,34 +192,6 @@ public class JListImageListTestApp {
         f.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         f.setSize(700, 700);
         f.setVisible(true);
-    }
-
-    private static void setWindowingToDcm(ImageListViewCell cell) {
-        if (!(cell.getDisplayedModelElement() instanceof DicomImageListViewModelElement)) { return; }
-        DicomImageListViewModelElement elt = (DicomImageListViewModelElement) cell.getDisplayedModelElement();
-        DicomObject dobj = elt.getDicomImageMetaData();
-        if (dobj.contains(Tag.WindowCenter) && dobj.contains(Tag.WindowWidth)) {
-            cell.setWindowLocation((int) dobj.getFloat(Tag.WindowCenter));
-            cell.setWindowWidth((int) dobj.getFloat(Tag.WindowWidth));
-        }
-    }
-
-    private static void setWindowingToOptimal(ImageListViewCell cell) {
-        ImageListViewModelElement elt = cell.getDisplayedModelElement();
-        BufferedImage rawImg = elt.getImage();
-        int numBands = rawImg.getRaster().getNumBands();
-        int min = Integer.MAX_VALUE, max = Integer.MIN_VALUE;
-        for (int x = 0; x < rawImg.getWidth(); x++) {
-            for (int y = 0; y < rawImg.getHeight(); y++) {
-                for (int band = 0; band < numBands; band++) {
-                    int value = rawImg.getRaster().getSample(x, y, band);
-                    if (value < min) { min = value; }
-                    if (value > max) { max = value; }
-                }
-            }
-        }
-        cell.setWindowLocation((min + max) / 2);
-        cell.setWindowWidth(max - min);
     }
 
     protected static DefaultListModel getViewerListModelForDirectory(File dir) {
