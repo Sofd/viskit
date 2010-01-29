@@ -44,6 +44,8 @@ import de.sofd.viskit.ui.imagelist.event.ImageListViewCellAddEvent;
 import de.sofd.viskit.ui.imagelist.event.ImageListViewEvent;
 import de.sofd.viskit.ui.imagelist.event.ImageListViewListener;
 import de.sofd.viskit.ui.imagelist.gridlistimpl.JGridImageListView;
+import java.net.MalformedURLException;
+import javax.swing.JFileChooser;
 
 /**
  *
@@ -75,17 +77,20 @@ public class JListImageListTestApp {
         //model.addElement(new FileBasedDicomImageListViewModelElement("/home/olaf/gi/resources/DICOM-Testbilder/24-bit Uncompressed Color.dcm"));
 
         //final JImageListView viewer = new JListImageListView();
-        final JImageListView viewer = new JGridImageListView(); viewer.setScaleMode(JGridImageListView.MyScaleMode.newCellGridMode(2, 2));
+        final JImageListView viewer = new JGridImageListView();
+        viewer.setScaleMode(JGridImageListView.MyScaleMode.newCellGridMode(2, 2));
         new ImageListViewInitialWindowingController(viewer).setEnabled(true);
-        ((JGridImageListView)viewer).setRendererType(JGridImageListView.RendererType.JAVA2D);
+        ((JGridImageListView) viewer).setRendererType(JGridImageListView.RendererType.JAVA2D);
         viewer.setModel(model);
         viewer.addCellPropertyChangeListener(new PropertyChangeListener() {
+
             @Override
             public void propertyChange(PropertyChangeEvent evt) {
                 //System.out.println("cell propChanged " + evt.getPropertyName() + " => " + evt.getNewValue() + " in cell " + evt.getSource());
             }
         });
         viewer.addListSelectionListener(new ListSelectionListener() {
+
             @Override
             public void valueChanged(ListSelectionEvent evt) {
                 System.out.println("SelectionChanged => {" + evt.getFirstIndex() + "," + evt.getLastIndex() + "} in " + evt.getSource());
@@ -97,6 +102,7 @@ public class JListImageListTestApp {
             //setWindowingToOptimal(viewer.getCell(i));
         }
         viewer.addImageListViewListener(new ImageListViewListener() {
+
             @Override
             public void onImageListViewEvent(ImageListViewEvent e) {
                 if (e instanceof ImageListViewCellAddEvent) {
@@ -106,10 +112,11 @@ public class JListImageListTestApp {
             }
         });
 
-        JFrame f = new JFrame("JListImageListView test");
+        final JFrame f = new JFrame("JListImageListView test");
         JToolBar toolbar = new JToolBar("toolbar");
         toolbar.setFloatable(false);
         toolbar.add(new AbstractAction("+Img") {
+
             @Override
             public void actionPerformed(ActionEvent e) {
                 ImageListViewModelElement newElt = new TestImageModelElement(5);
@@ -118,6 +125,7 @@ public class JListImageListTestApp {
             }
         });
         toolbar.add(new AbstractAction("InsImg") {
+
             @Override
             public void actionPerformed(ActionEvent e) {
                 int idx = viewer.getLeadSelectionIndex();
@@ -129,6 +137,7 @@ public class JListImageListTestApp {
             }
         });
         toolbar.add(new AbstractAction("DelImg") {
+
             @Override
             public void actionPerformed(ActionEvent e) {
                 ImageListViewModelElement elt = viewer.getSelectedValue();
@@ -138,6 +147,7 @@ public class JListImageListTestApp {
             }
         });
         toolbar.add(new AbstractAction("RoiMv") {
+
             @Override
             public void actionPerformed(ActionEvent e) {
                 try {
@@ -151,6 +161,7 @@ public class JListImageListTestApp {
             }
         });
         toolbar.add(new AbstractAction("WndOptim") {
+
             @Override
             public void actionPerformed(ActionEvent e) {
                 ImageListViewModelElement elt = viewer.getSelectedValue();
@@ -160,6 +171,35 @@ public class JListImageListTestApp {
                     cell.setWindowWidth((int) usedRange.getDelta());
                     cell.setWindowLocation((int) (usedRange.getMin() + usedRange.getMax()) / 2);
                 }
+            }
+        });
+        toolbar.add(new AbstractAction("Load From Dir") {
+
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                JFileChooser jFileChooser1 = new javax.swing.JFileChooser();
+                jFileChooser1.setAcceptAllFileFilterUsed(false);
+                jFileChooser1.setFileSelectionMode(javax.swing.JFileChooser.DIRECTORIES_ONLY);
+                jFileChooser1.setName("jFileChooser1");
+                int returnVal = jFileChooser1.showOpenDialog(f);
+                if (returnVal == JFileChooser.APPROVE_OPTION) {
+                    final DefaultListModel model = new DefaultListModel();
+                    File file = new File(jFileChooser1.getSelectedFile().getPath());
+                    String[] children = file.list();
+                    for (int i = 0; i < children.length; i++) {
+                        if (children[i].endsWith(".dcm")) {
+                            System.out.println(children[i]);
+                            try {
+                                model.addElement(new FileBasedDicomImageListViewModelElement(jFileChooser1.getSelectedFile().getPath() + File.separator + children[i]));
+                            } catch (MalformedURLException ex) {
+                                ex.printStackTrace();
+                            }
+                        }
+                    }
+                    viewer.setModel(model);
+                }
+
+
             }
         });
         RoiToolPanel roiToolPanel = new RoiToolPanel();
@@ -175,6 +215,7 @@ public class JListImageListTestApp {
         toolbar.add(scaleModeCombo);
         scaleModeCombo.setEditable(false);
         scaleModeCombo.addActionListener(new ActionListener() {
+
             @Override
             public void actionPerformed(ActionEvent e) {
                 JImageListView.ScaleMode sm = (JImageListView.ScaleMode) scaleModeCombo.getModel().getSelectedItem();
@@ -200,17 +241,19 @@ public class JListImageListTestApp {
         DefaultListModel result = new DefaultListModel();
         File[] files = dir.listFiles();
         Arrays.sort(files);
-        for (File f: files) {
-            if (!f.getName().toLowerCase().endsWith(".dcm")) { continue; }
+        for (File f : files) {
+            if (!f.getName().toLowerCase().endsWith(".dcm")) {
+                continue;
+            }
             result.addElement(new FileBasedDicomImageListViewModelElement(f));
         }
         System.err.println("" + result.size() + " images found in " + dir);
         return result;
     }
 
-
     public static void main(String[] args) throws Exception {
         SwingUtilities.invokeLater(new Runnable() {
+
             @Override
             public void run() {
                 try {
@@ -223,5 +266,4 @@ public class JListImageListTestApp {
             }
         });
     }
-
 }
