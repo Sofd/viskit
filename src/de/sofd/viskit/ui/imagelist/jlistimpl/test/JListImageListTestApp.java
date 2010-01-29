@@ -29,6 +29,7 @@ import de.sofd.util.FloatRange;
 import de.sofd.viskit.controllers.ImageListViewInitialWindowingController;
 import de.sofd.viskit.controllers.ImageListViewMouseWindowingController;
 import de.sofd.viskit.controllers.ImageListViewMouseZoomPanController;
+import de.sofd.viskit.controllers.ImageListViewPrintTextToCellsController;
 import de.sofd.viskit.controllers.ImageListViewRoiInputEventController;
 import de.sofd.viskit.controllers.ImageListViewRoiToolApplicationController;
 import de.sofd.viskit.image.Dcm;
@@ -186,6 +187,7 @@ public class JListImageListTestApp {
         new ImageListViewRoiInputEventController(viewer);
         new ImageListViewRoiToolApplicationController(viewer).setRoiToolPanel(roiToolPanel);
         //new ImageListViewWindowingApplyToAllController(viewer).setEnabled(true);
+        new ImageListViewPrintTextToCellsController(viewer).setEnabled(true);
 
         f.getContentPane().add(viewer, BorderLayout.CENTER);
         f.getContentPane().add(toolbar, BorderLayout.PAGE_START);
