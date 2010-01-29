@@ -99,7 +99,7 @@ public class VolumeRenderFrameBuffer extends FrameBuffer {
         
         GLShader renderShader = (renderFinal ? ShaderManager.get("volViewFinal") : ShaderManager.get("volView"));
         
-        gl.glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
+        gl.glClear( GL_COLOR_BUFFER_BIT );
         volumeInputController.setupCamera( gl );
         
         // draw backfaces of cube with texture coords as color

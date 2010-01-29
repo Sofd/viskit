@@ -299,10 +299,11 @@ void main() {
 		tfCoord.x = tfCoord.y;
 	}
 	
-	gl_FragColor = sumColor;
+	//gl_FragColor = sumColor;
 	//gl_FragColor.rgb = normal;
 	//gl_FragColor.rgb = vec3(texture(gradientTex, texCoord.xyz).a);
 	//gl_FragColor.rgb = vec3(texture(transferTex, texCoord.xy).a);
+	gl_FragColor.rgb = texture(backTex, tc).rgb;
 	
 	gl_FragColor.a = 1.0f;
 } 

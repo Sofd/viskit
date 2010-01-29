@@ -240,7 +240,8 @@ public class GPUVolumeView extends GLCanvas implements GLEventListener
         gl.glMatrixMode( GL_PROJECTION );
         gl.glLoadIdentity();
 
-        glu.gluOrtho2D(0, 0, width, height);
+        
+        glu.gluOrtho2D(0, width, 0, height);
         
         gl.glMatrixMode( GL_MODELVIEW );
         gl.glLoadIdentity();
