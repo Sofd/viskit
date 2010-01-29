@@ -20,6 +20,8 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 
 import org.dcm4che2.data.BasicDicomObject;
+import org.dcm4che2.data.DicomObject;
+import org.dcm4che2.data.Tag;
 
 import de.sofd.draw2d.Drawing;
 import de.sofd.draw2d.DrawingObject;
@@ -35,6 +37,7 @@ import de.sofd.viskit.controllers.ImageListViewRoiToolApplicationController;
 import de.sofd.viskit.image.Dcm;
 import de.sofd.viskit.image.DcmImageListViewModelElement;
 import de.sofd.viskit.image.DicomInputOutput;
+import de.sofd.viskit.model.DicomImageListViewModelElement;
 import de.sofd.viskit.model.FileBasedDicomImageListViewModelElement;
 import de.sofd.viskit.model.ImageListViewModelElement;
 import de.sofd.viskit.ui.RoiToolPanel;
@@ -62,6 +65,7 @@ public class JListImageListTestApp {
             model.addElement(new TestImageModelElement(i));
             //model.addElement(new FileBasedDicomImageListViewModelElement("/home/olaf/gi/resources/DICOM-Testbilder/1578/f0003563_006" + i + ".dcm"));
             //model.addElement(new FileBasedDicomImageListViewModelElement("/home/olaf/gi/resources/DICOM-Testbilder/24-bit Uncompressed Color.dcm"));
+            //model.addElement(new FileBasedDicomImageListViewModelElement("/shares/projects/DICOM-Testbilder/1578/f0003563_006"+i+".dcm"));
         }
 
         URL url = this.getClass().getResource("67010.dcm");
@@ -228,7 +232,20 @@ public class JListImageListTestApp {
         new ImageListViewRoiInputEventController(viewer);
         new ImageListViewRoiToolApplicationController(viewer).setRoiToolPanel(roiToolPanel);
         //new ImageListViewWindowingApplyToAllController(viewer).setEnabled(true);
-        new ImageListViewPrintTextToCellsController(viewer).setEnabled(true);
+        ImageListViewPrintTextToCellsController ptc = new ImageListViewPrintTextToCellsController(viewer) {
+            @Override
+            protected String[] getTextToPrint(ImageListViewCell cell,
+                    DicomImageListViewModelElement elt,
+                    DicomObject dicomImageMetaData) {
+                return new String[] {
+                        "PN: " + dicomImageMetaData.getString(Tag.PatientName),
+                        "SL: " + dicomImageMetaData.getString(Tag.SliceLocation),
+                        "wl/ww: " + cell.getWindowLocation() + "/" + cell.getWindowWidth(),
+                        "Zoom: " + cell.getScale()
+                };
+            }
+        };
+        ptc.setEnabled(true);
 
         f.getContentPane().add(viewer, BorderLayout.CENTER);
         f.getContentPane().add(toolbar, BorderLayout.PAGE_START);
