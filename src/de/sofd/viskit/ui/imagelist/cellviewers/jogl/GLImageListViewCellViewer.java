@@ -295,7 +295,7 @@ public class GLImageListViewCellViewer extends BaseImageListViewCellViewer {
             // (this should eventually be the case for all CellPaintListeners)
             gl.glLoadIdentity();
             Dimension cellSize = getDisplayedCell().getLatestSize();
-            gl.glTranslated(0, cellSize.getHeight(), 0);
+            gl.glTranslated(- cellSize.getWidth() / 2, cellSize.getHeight() / 2, 0);
             gl.glScalef(1, -1, 1);
             getDisplayedCell().getOwner().fireCellPaintEvent(new ImageListViewCellPaintEvent(getDisplayedCell(), gc, null),
                                                              Integer.MIN_VALUE, JImageListView.PAINT_ZORDER_IMAGE);
@@ -366,7 +366,7 @@ public class GLImageListViewCellViewer extends BaseImageListViewCellViewer {
             // set coordinate system to NW corner origin, y axis pointing downwards
             gl.glLoadIdentity();
             cellSize = getDisplayedCell().getLatestSize();
-            gl.glTranslated(0, cellSize.getHeight(), 0);
+            gl.glTranslated(- cellSize.getWidth() / 2, cellSize.getHeight() / 2, 0);
             gl.glScalef(1, -1, 1);
             getDisplayedCell().getOwner().fireCellPaintEvent(new ImageListViewCellPaintEvent(getDisplayedCell(), gc, null),
                                                              JImageListView.PAINT_ZORDER_ROI + 1, Integer.MAX_VALUE);
