@@ -1,18 +1,19 @@
 package de.sofd.viskit.controllers;
 
+import static com.sun.opengl.util.gl2.GLUT.BITMAP_8_BY_13;
+
 import java.awt.Color;
 import java.awt.Graphics2D;
-import java.awt.geom.Rectangle2D;
+import java.awt.geom.Point2D;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 
-import javax.media.opengl.GL;
 import javax.media.opengl.GL2;
 
 import org.dcm4che2.data.DicomObject;
-import org.dcm4che2.data.Tag;
 
-import de.sofd.viskit.draw2d.gc.ViskitGC;
+import com.sun.opengl.util.gl2.GLUT;
+
 import de.sofd.viskit.model.DicomImageListViewModelElement;
 import de.sofd.viskit.model.ImageListViewModelElement;
 import de.sofd.viskit.ui.imagelist.ImageListViewCell;
@@ -22,7 +23,15 @@ import de.sofd.viskit.ui.imagelist.event.ImageListViewCellPaintListener;
 
 /**
  * Controller that references a JImageListView and an "enabled" flag. When
- * enabled, the controller 
+ * enabled, the controller prints text into every cell as it is drawn. The
+ * cell-relative x/y position of the text as well as the text color can be set,
+ * the text to print is obtained through the callback methods
+ * {@link #getTextToPrint(ImageListViewCell, ImageListViewModelElement)} or
+ * {@link #getTextToPrint(ImageListViewCell, DicomImageListViewModelElement, DicomObject)}
+ * , which subclasses must override to print anything useful.
+ * <p>
+ * Normally you'd write a (possibly anonymous) subclass of this controller and
+ * override the getTextToPrint() methods there.
  * 
  * @author olaf
  */
@@ -30,8 +39,12 @@ public class ImageListViewPrintTextToCellsController {
     
     protected JImageListView controlledImageListView;
     public static final String PROP_CONTROLLEDIMAGELISTVIEW = "controlledImageListView";
+    private Color textColor = Color.green;
+    private Point2D textPosition = new Point2D.Double(5, 15);
     private boolean enabled;
     public static final String PROP_ENABLED = "enabled";
+    public static final String PROP_TEXTCOLOR = "textColor";
+    public static final String PROP_TEXTPOSITION = "textPosition";
 
     public ImageListViewPrintTextToCellsController() {
     }
@@ -58,6 +71,30 @@ public class ImageListViewPrintTextToCellsController {
         boolean oldEnabled = this.enabled;
         this.enabled = enabled;
         propertyChangeSupport.firePropertyChange(PROP_ENABLED, oldEnabled, enabled);
+    }
+
+    public Color getTextColor() {
+        return textColor;
+    }
+
+    public void setTextColor(Color textColor) {
+        Color oldValue = this.textColor;
+        this.textColor = textColor;
+        propertyChangeSupport.firePropertyChange(PROP_TEXTCOLOR, oldValue , textColor);
+    }
+
+    public Point2D getTextPosition() {
+        return textPosition;
+    }
+
+    public void setTextPosition(int x, int y) {
+        setTextPosition(new Point2D.Double(x, y));
+    }
+    
+    public void setTextPosition(Point2D textPosition) {
+        Point2D oldValue = this.textPosition;
+        this.textPosition = textPosition;
+        propertyChangeSupport.firePropertyChange(PROP_TEXTPOSITION, oldValue , textPosition);
     }
 
     /**
@@ -98,7 +135,7 @@ public class ImageListViewPrintTextToCellsController {
                 return;
             }
             inProgrammedChange = true;
-            String textToPrint;
+            String[] textToPrint;
             ImageListViewCell cell = e.getSource();
             ImageListViewModelElement elt = cell.getDisplayedModelElement();
             if (!(elt instanceof DicomImageListViewModelElement)) {
@@ -112,21 +149,33 @@ public class ImageListViewPrintTextToCellsController {
                 if (e.getGc().isGraphics2DAvailable() && ! e.getGc().isGlPreferred()) {
                     // paint using Java2D
                     Graphics2D g2d = e.getGc().getGraphics2D();
-                    g2d.setColor(Color.white);
-                    //g2d.drawString("Hello World", 5, 50);
-                    g2d.drawString(textToPrint, 5, 50);
+                    g2d.setColor(textColor);
+                    int posx = (int) textPosition.getX();
+                    int posy = (int) textPosition.getY();
+                    int lineHeight = g2d.getFontMetrics().getHeight();
+                    for (String line : textToPrint) {
+                        g2d.drawString(line, posx, posy);
+                        posy += lineHeight;
+                    }
                } else {
                        // paint using OpenGL
                     // TODO: Impl
                     GL2 gl = e.getGc().getGl().getGL2();
+                    GLUT glut = new GLUT();
                     gl.glPushAttrib(GL2.GL_CURRENT_BIT|GL2.GL_ENABLE_BIT);
                     try {
                         gl.glShadeModel(GL2.GL_FLAT);
-//                        Color c = getDrawingObject().getColor();
-//                        gl.glColor3f((float) c.getRed() / 255F,
-//                                     (float) c.getGreen() / 255F,
-//                                     (float) c.getBlue() / 255F);
-
+                        gl.glColor3f((float) textColor.getRed() / 255F,
+                                     (float) textColor.getGreen() / 255F,
+                                     (float) textColor.getBlue() / 255F);
+                        int posx = (int) textPosition.getX();
+                        int posy = (int) textPosition.getY();
+                        int lineHeight = 13;
+                        for (String line : textToPrint) {
+                            gl.glRasterPos2i(posx, posy);
+                            glut.glutBitmapString(BITMAP_8_BY_13, line);
+                            posy += lineHeight;
+                        }
                     } finally {
                         gl.glPopAttrib();
                     }
@@ -142,22 +191,23 @@ public class ImageListViewPrintTextToCellsController {
      * 
      * @param cell cell to be drawn
      * @param elt == cell.getDisplayedModelElement(). Passed in as an additional parameter for convenience.
-     * @return
+     * @return the text, as a String array (one String per line)
      */
-    protected String getTextToPrint(ImageListViewCell cell, ImageListViewModelElement elt) {
-        return "Hello World";
+    protected String[] getTextToPrint(ImageListViewCell cell, ImageListViewModelElement elt) {
+        return new String[]{"Hello World"};
     }
     
     /**
-     * Called to obtain the text to print, if the cell being drawn does NOT display a DICOM ImageListViewModelElement.
+     * Called to obtain the text to print, if the cell being drawn displays a DICOM ImageListViewModelElement.
      * 
      * @param cell cell to be drawn
      * @param elt == cell.getDisplayedModelElement(). Passed in as an additional parameter for convenience.
-     * @param dicomImageMetaData == delt.getDicomImageMetaData(). Passed in as an additional parameter for convenience.
-     * @return
+     * @param dicomImageMetaData == elt.getDicomImageMetaData(). Passed in as an additional parameter for convenience.
+     * @return the text, as a String array (one String per line)
      */
-    protected String getTextToPrint(ImageListViewCell cell, DicomImageListViewModelElement elt, DicomObject dicomImageMetaData) {
-        return dicomImageMetaData.getString(Tag.PatientName);
+    protected String[] getTextToPrint(ImageListViewCell cell, DicomImageListViewModelElement elt, DicomObject dicomImageMetaData) {
+        return new String[]{"Hello World", "Foobar"};
+        //return dicomImageMetaData.getString(Tag.PatientName);
     }
 
     private PropertyChangeSupport propertyChangeSupport = new PropertyChangeSupport(this);
