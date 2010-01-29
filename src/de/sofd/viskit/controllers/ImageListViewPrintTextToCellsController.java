@@ -98,20 +98,23 @@ public class ImageListViewPrintTextToCellsController {
                 return;
             }
             inProgrammedChange = true;
+            String textToPrint;
             ImageListViewCell cell = e.getSource();
             ImageListViewModelElement elt = cell.getDisplayedModelElement();
             if (!(elt instanceof DicomImageListViewModelElement)) {
-                return;
+                textToPrint = getTextToPrint(cell, elt);
+            } else {
+                DicomImageListViewModelElement delt = (DicomImageListViewModelElement) elt;
+                DicomObject dicomImageMetaData = delt.getDicomImageMetaData();
+                textToPrint = getTextToPrint(cell, delt, dicomImageMetaData);
             }
-            DicomImageListViewModelElement delt = (DicomImageListViewModelElement) elt;
-            DicomObject dicomMetaData = delt.getDicomImageMetaData();
             try {
                 if (e.getGc().isGraphics2DAvailable() && ! e.getGc().isGlPreferred()) {
                     // paint using Java2D
                     Graphics2D g2d = e.getGc().getGraphics2D();
                     g2d.setColor(Color.white);
                     //g2d.drawString("Hello World", 5, 50);
-                    g2d.drawString(dicomMetaData.getString(Tag.PatientName), 5, 50);
+                    g2d.drawString(textToPrint, 5, 50);
                } else {
                        // paint using OpenGL
                     // TODO: Impl
@@ -134,7 +137,29 @@ public class ImageListViewPrintTextToCellsController {
         }
     };
 
+    /**
+     * Called to obtain the text to print, if the cell being drawn does NOT display a DICOM ImageListViewModelElement.
+     * 
+     * @param cell cell to be drawn
+     * @param elt == cell.getDisplayedModelElement(). Passed in as an additional parameter for convenience.
+     * @return
+     */
+    protected String getTextToPrint(ImageListViewCell cell, ImageListViewModelElement elt) {
+        return "Hello World";
+    }
     
+    /**
+     * Called to obtain the text to print, if the cell being drawn does NOT display a DICOM ImageListViewModelElement.
+     * 
+     * @param cell cell to be drawn
+     * @param elt == cell.getDisplayedModelElement(). Passed in as an additional parameter for convenience.
+     * @param dicomImageMetaData == delt.getDicomImageMetaData(). Passed in as an additional parameter for convenience.
+     * @return
+     */
+    protected String getTextToPrint(ImageListViewCell cell, DicomImageListViewModelElement elt, DicomObject dicomImageMetaData) {
+        return dicomImageMetaData.getString(Tag.PatientName);
+    }
+
     private PropertyChangeSupport propertyChangeSupport = new PropertyChangeSupport(this);
 
     /**
