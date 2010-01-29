@@ -234,9 +234,9 @@ public class JListImageListTestApp {
         //new ImageListViewWindowingApplyToAllController(viewer).setEnabled(true);
         ImageListViewPrintTextToCellsController ptc = new ImageListViewPrintTextToCellsController(viewer) {
             @Override
-            protected String[] getTextToPrint(ImageListViewCell cell,
-                    DicomImageListViewModelElement elt,
-                    DicomObject dicomImageMetaData) {
+            protected String[] getTextToPrint(ImageListViewCell cell) {
+                DicomImageListViewModelElement elt = (DicomImageListViewModelElement) cell.getDisplayedModelElement();
+                DicomObject dicomImageMetaData = elt.getDicomImageMetaData();
                 return new String[] {
                         "PN: " + dicomImageMetaData.getString(Tag.PatientName),
                         "SL: " + dicomImageMetaData.getString(Tag.SliceLocation),
