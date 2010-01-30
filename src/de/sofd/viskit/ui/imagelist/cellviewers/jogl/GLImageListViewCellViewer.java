@@ -108,9 +108,9 @@ public class GLImageListViewCellViewer extends BaseImageListViewCellViewer {
 
         private void dispatchEventToList(AWTEvent e) {
             // TODO: this is an incredibly ugly hack that relies on the assumption that
-            //   GLImageListViewCellViewer.this.getParent().getParent() is the list...
+            //   GLImageListViewCellViewer.this.getParent().getParent().getParent() is the list...
             //   But it's the only way I got this to work for now
-            Component target = GLImageListViewCellViewer.this.getParent().getParent();
+            Component target = GLImageListViewCellViewer.this.getParent().getParent().getParent();
             if (target == null) {
                 // apparently happens sometimes with MOUSE_EXITED events on just disappeared cells
                 // if the mouse pointer was lilngering over them
