@@ -250,7 +250,7 @@ public class JListImageListTestApp {
         f.getContentPane().add(viewer, BorderLayout.CENTER);
         f.getContentPane().add(toolbar, BorderLayout.PAGE_START);
         f.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        f.setSize(700, 700);
+        f.setSize(900, 900);
         f.setVisible(true);
     }
 
