@@ -1,18 +1,5 @@
 package de.sofd.viskit.ui.imagelist;
 
-import de.sofd.viskit.model.ImageListViewModelElement;
-import de.sofd.draw2d.viewer.DrawingViewer;
-import de.sofd.draw2d.viewer.backend.DrawingViewerBackend;
-import de.sofd.util.BiIdentityHashMap;
-import de.sofd.util.BiMap;
-import de.sofd.util.IdentityHashSet;
-import de.sofd.util.Misc;
-import de.sofd.viskit.ui.imagelist.event.ImageListViewCellAddEvent;
-import de.sofd.viskit.ui.imagelist.event.ImageListViewCellPaintEvent;
-import de.sofd.viskit.ui.imagelist.event.ImageListViewCellPaintListener;
-import de.sofd.viskit.ui.imagelist.event.ImageListViewCellRemoveEvent;
-import de.sofd.viskit.ui.imagelist.event.ImageListViewEvent;
-import de.sofd.viskit.ui.imagelist.event.ImageListViewListener;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.event.ContainerAdapter;
@@ -27,7 +14,6 @@ import java.beans.PropertyChangeListener;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.IdentityHashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -43,6 +29,20 @@ import javax.swing.event.ListDataEvent;
 import javax.swing.event.ListDataListener;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
+
+import de.sofd.draw2d.viewer.DrawingViewer;
+import de.sofd.draw2d.viewer.backend.DrawingViewerBackend;
+import de.sofd.util.BiIdentityHashMap;
+import de.sofd.util.BiMap;
+import de.sofd.util.IdentityHashSet;
+import de.sofd.util.Misc;
+import de.sofd.viskit.model.ImageListViewModelElement;
+import de.sofd.viskit.ui.imagelist.event.ImageListViewCellAddEvent;
+import de.sofd.viskit.ui.imagelist.event.ImageListViewCellPaintEvent;
+import de.sofd.viskit.ui.imagelist.event.ImageListViewCellPaintListener;
+import de.sofd.viskit.ui.imagelist.event.ImageListViewCellRemoveEvent;
+import de.sofd.viskit.ui.imagelist.event.ImageListViewEvent;
+import de.sofd.viskit.ui.imagelist.event.ImageListViewListener;
 
 /**
  * Base class for GUI components displaying a list of elements, which are objects implementing {@link ImageListViewModelElement}.
@@ -567,7 +567,7 @@ public abstract class JImageListView extends JPanel {
         if (null == getModel()) { return; }
         Integer index = cellToIndexMap.get(cell);
         ImageListViewCell foundCell = null;
-        if (index != null) {
+        if (index != null && index < getModel().getSize()) {
             foundCell = getCell(index);
         }
         if (index != null && foundCell == cell) {
