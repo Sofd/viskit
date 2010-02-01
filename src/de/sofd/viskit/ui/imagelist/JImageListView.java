@@ -27,8 +27,11 @@ import java.beans.PropertyChangeListener;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
+import java.util.IdentityHashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.SortedSet;
 import java.util.TreeSet;
 
@@ -67,6 +70,7 @@ public abstract class JImageListView extends JPanel {
     private String displayName = "";
     public static final String PROP_SCALEMODE = "scaleMode";
     private ScaleMode scaleMode;
+    private final Map<ImageListViewCell, Integer> cellToIndexMap = new IdentityHashMap<ImageListViewCell, Integer>();
 
     public static interface ScaleMode extends Serializable {
         String getDisplayName();
@@ -197,6 +201,7 @@ public abstract class JImageListView extends JPanel {
             ImageListViewCell cell = cellsByElementMap.get(elt);
             beforeCellRemoval(cell, elt);
             cellsByElementMap.remove(elt);
+            cellToIndexMap.remove(cell);
         }
     }
 
@@ -523,42 +528,59 @@ public abstract class JImageListView extends JPanel {
 
     /**
      * Called if a specific cell of this viewer needs to be refreshed. Normally
-     * called internally by subclasses if they determine the need to refresh a cell,
-     * but may also be called explicitly from the outside.
+     * called internally by subclasses if they determine the need to refresh a
+     * cell, but may also be called explicitly from the outside.
      * <p>
-     * Default implementation finds elt in the list of model elements of this list,
-     * then calls {@link #refreshCellForIndex(int) }.
-     *
-     * @param elt model element corresponding to the cell
+     * Default implementation finds the cell displaying elt, then calls
+     * {@link #refreshCell(ImageListViewCell))}.
+     * 
+     * @param elt
+     *            model element corresponding to the cell
      */
     public void refreshCellForElement(ImageListViewModelElement elt) {
         if (null == getModel()) { return; }
-        int eltCount = getModel().getSize();
-        for (int i = 0; i < eltCount; i++) {
-            if (Misc.equal(elt, getModel().getElementAt(i))) {
-                refreshCellForIndex(i);
-                return;
-            }
+        ImageListViewCell cell = cellsByElementMap.get(elt);
+        if (null != cell) {
+            refreshCell(cell);
         }
     }
 
     /**
      * Called if a specific cell of this viewer needs to be refreshed. Normally
-     * called internally by subclasses if they determine the need to refresh a cell,
-     * but may also be called explicitly from the outside.
+     * called internally by subclasses if they determine the need to refresh a
+     * cell, but may also be called explicitly from the outside.
      * <p>
      * Default implementation finds cell in the list of cells of this list,
-     * then calls {@link #refreshCellForIndex(int) }.
-     *
-     * @param cell the cell
+     * using an internal table to look up the index in O(1) rather than O(n) in
+     * most cases, then calls {@link #refreshCellForIndex(int) }.
+     * 
+     * @param cell
+     *            the cell
      */
     public void refreshCell(ImageListViewCell cell) {
+        // use cellToIndexMap to look up cell's index quickly, creating/updating
+        // cellToIndexMap lazily along the way if necessary
+        // in most cases, the cellToIndexMap should contain the correct index for cell.
+        // we optimize for that case (O(1)).
+        // cellToIndexMap will only become temporarily outdated if somebody
+        // adds/removes cells from the list.
         if (null == getModel()) { return; }
-        int eltCount = getModel().getSize();
-        for (int i = 0; i < eltCount; i++) {
-            if (cell == getCell(i)) {
-                refreshCellForIndex(i);
-                return;
+        Integer index = cellToIndexMap.get(cell);
+        ImageListViewCell foundCell = null;
+        if (index != null) {
+            foundCell = getCell(index);
+        }
+        if (index != null && foundCell == cell) {
+            refreshCellForIndex(index);
+        } else {
+            int eltCount = getModel().getSize();
+            for (int i = 0; i < eltCount; i++) {
+                ImageListViewCell c2 = getCell(i);
+                cellToIndexMap.put(c2, i);
+                if (c2 == cell) {
+                    refreshCellForIndex(i);
+                    return;
+                }
             }
         }
     }
