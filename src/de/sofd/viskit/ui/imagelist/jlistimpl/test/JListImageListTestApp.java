@@ -2,16 +2,18 @@ package de.sofd.viskit.ui.imagelist.jlistimpl.test;
 
 import java.awt.BorderLayout;
 import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.File;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Arrays;
 
 import javax.swing.AbstractAction;
 import javax.swing.DefaultListModel;
+import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
+import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JToolBar;
@@ -22,6 +24,9 @@ import javax.swing.event.ListSelectionListener;
 import org.dcm4che2.data.BasicDicomObject;
 import org.dcm4che2.data.DicomObject;
 import org.dcm4che2.data.Tag;
+import org.jdesktop.beansbinding.BeanProperty;
+import org.jdesktop.beansbinding.Bindings;
+import org.jdesktop.beansbinding.AutoBinding.UpdateStrategy;
 
 import de.sofd.draw2d.Drawing;
 import de.sofd.draw2d.DrawingObject;
@@ -34,6 +39,7 @@ import de.sofd.viskit.controllers.ImageListViewMouseZoomPanController;
 import de.sofd.viskit.controllers.ImageListViewPrintTextToCellsController;
 import de.sofd.viskit.controllers.ImageListViewRoiInputEventController;
 import de.sofd.viskit.controllers.ImageListViewRoiToolApplicationController;
+import de.sofd.viskit.controllers.ImageListViewWindowingApplyToAllController;
 import de.sofd.viskit.image.Dcm;
 import de.sofd.viskit.image.DcmImageListViewModelElement;
 import de.sofd.viskit.image.DicomInputOutput;
@@ -47,8 +53,6 @@ import de.sofd.viskit.ui.imagelist.event.ImageListViewCellAddEvent;
 import de.sofd.viskit.ui.imagelist.event.ImageListViewEvent;
 import de.sofd.viskit.ui.imagelist.event.ImageListViewListener;
 import de.sofd.viskit.ui.imagelist.gridlistimpl.JGridImageListView;
-import java.net.MalformedURLException;
-import javax.swing.JFileChooser;
 
 /**
  *
@@ -177,6 +181,9 @@ public class JListImageListTestApp {
                 }
             }
         });
+        JCheckBox wndAllCheckbox = new JCheckBox("WndAll");
+        toolbar.add(wndAllCheckbox);
+        
         toolbar.add(new AbstractAction("Load From Dir") {
 
             @Override
@@ -218,20 +225,19 @@ public class JListImageListTestApp {
         //scaleModeCombo.addItem(JGridImageListView.MyScaleMode.newCellGridMode(8, 8));
         toolbar.add(scaleModeCombo);
         scaleModeCombo.setEditable(false);
-        scaleModeCombo.addActionListener(new ActionListener() {
-
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                JImageListView.ScaleMode sm = (JImageListView.ScaleMode) scaleModeCombo.getModel().getSelectedItem();
-                viewer.setScaleMode(sm);
-            }
-        });
-
+        Bindings.createAutoBinding(UpdateStrategy.READ_WRITE,
+                                   viewer, BeanProperty.create("scaleMode"),
+                                   scaleModeCombo, BeanProperty.create("selectedItem")).bind();
+        
         new ImageListViewMouseWindowingController(viewer);
         new ImageListViewMouseZoomPanController(viewer);
         new ImageListViewRoiInputEventController(viewer);
         new ImageListViewRoiToolApplicationController(viewer).setRoiToolPanel(roiToolPanel);
-        //new ImageListViewWindowingApplyToAllController(viewer).setEnabled(true);
+        final ImageListViewWindowingApplyToAllController wndAllController = new ImageListViewWindowingApplyToAllController(viewer);
+        Bindings.createAutoBinding(UpdateStrategy.READ_WRITE,
+                                   wndAllController, BeanProperty.create("enabled"),
+                                   wndAllCheckbox, BeanProperty.create("selected")).bind();
+
         ImageListViewPrintTextToCellsController ptc = new ImageListViewPrintTextToCellsController(viewer) {
             @Override
             protected String[] getTextToPrint(ImageListViewCell cell) {
