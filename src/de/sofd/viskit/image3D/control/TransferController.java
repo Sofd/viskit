@@ -154,20 +154,20 @@ public class TransferController implements ActionListener, ChangeListener
         {
             volumeObject.updateWindowCenter( (short)slider.getValue(), windowingMode );
             
-            //if ( ! slider.getValueIsAdjusting() )
-            //{
+            if ( ! slider.getValueIsAdjusting() )
+            {
                 volumeObject.setUpdateGradientTexture(true);
                 volumeObject.setUpdateConvolutionTexture(true);
-            //}
+            }
         }
         else if ( "winWidth".equals( slider.getName() ) )
         {
             volumeObject.updateWindowWidth( (short)slider.getValue(), windowingMode );
             
-            //if ( ! slider.getValueIsAdjusting() ) {
+            if ( ! slider.getValueIsAdjusting() ) {
                 volumeObject.setUpdateGradientTexture(true);
                 volumeObject.setUpdateConvolutionTexture(true);
-            //}
+            }
             
             
         }

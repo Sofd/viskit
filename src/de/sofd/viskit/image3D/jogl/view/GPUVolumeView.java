@@ -3,7 +3,6 @@ package de.sofd.viskit.image3D.jogl.view;
 import static de.sofd.viskit.image3D.jogl.util.GLUtil.*;
 import static javax.media.opengl.GL.*;
 import static javax.media.opengl.GL2.*;
-import static javax.media.opengl.GL2GL3.*;
 
 import javax.media.opengl.*;
 import javax.media.opengl.awt.*;
@@ -17,6 +16,7 @@ import de.sofd.util.*;
 import de.sofd.viskit.image3D.jogl.control.*;
 import de.sofd.viskit.image3D.jogl.model.*;
 import de.sofd.viskit.image3D.jogl.util.*;
+import de.sofd.viskit.image3D.model.*;
 import de.sofd.viskit.image3D.util.*;
 
 @SuppressWarnings( "serial" )
@@ -44,6 +44,11 @@ public class GPUVolumeView extends GLCanvas implements GLEventListener
     
     protected int viewport[] = new int[ 4 ];
     
+    protected boolean renderedFinal = false;
+    
+    protected boolean cleanup = false;
+    protected boolean displayable = true;
+    
     public GPUVolumeView( VolumeObject volumeObject, GLContext sharedContext, Size size )
     {
         super( caps, null, sharedContext, null );
@@ -56,7 +61,10 @@ public class GPUVolumeView extends GLCanvas implements GLEventListener
         addMouseListener( volumeInputController );
         addMouseMotionListener( volumeInputController );
         
-        renderFbo = new VolumeRenderFrameBuffer(size, volumeObject, volumeInputController);
+        VolumeRenderConfig renderConfig = volumeObject.getVolumeConfig().getRenderConfig();
+        float quality = renderConfig.getInteractiveQuality();
+                
+        renderFbo = new VolumeRenderFrameBuffer(new Size((int)(size.getWidth()*quality), (int)(size.getHeight()*quality)), volumeObject, volumeInputController);
     }
     
     private void addUniforms(String key, String[] uniforms) {
@@ -66,8 +74,15 @@ public class GPUVolumeView extends GLCanvas implements GLEventListener
             sh.addProgramUniform( uniform );
     }
     
+    public void cleanUp() {
+        this.cleanup = true;
+        display( false );
+    }
+    
     public void display(boolean renderFinal)
     {
+        if ( ! displayable ) return;
+        
         renderFbo.setRenderFinal(renderFinal);
         display();
     }
@@ -75,12 +90,46 @@ public class GPUVolumeView extends GLCanvas implements GLEventListener
     @Override
     public synchronized void display( GLAutoDrawable drawable )
     {
-        isLocked = true;
-    
+        if ( ! displayable ) return;
         
         GL2 gl = drawable.getGL().getGL2();
+        
+        if ( cleanup ) {
+            renderFbo.cleanUp(gl);
+            volumeObject.cleanUp(gl);
+            ShaderManager.cleanUp();
+            cleanup = false;
+            displayable = false;
+            return;
+        }
 
+        isLocked = true;
+        
         idle( gl );
+        
+        VolumeRenderConfig renderConfig = volumeObject.getVolumeConfig().getRenderConfig();
+                
+        if ( ! renderedFinal && renderFbo.isRenderFinal() )
+        {
+            try {
+                float finalQuality = renderConfig.getFinalQuality();
+                renderFbo.resize( gl, (int)(viewport[2]*finalQuality), (int)(viewport[3]*finalQuality) );
+            } catch (Exception e) {
+                e.printStackTrace();
+                System.exit(-1);
+            }
+        }
+        
+        if ( renderedFinal && ! renderFbo.isRenderFinal() )
+        {
+            try {
+                float quality = renderConfig.getInteractiveQuality();
+                renderFbo.resize( gl, (int)(viewport[2]*quality), (int)(viewport[3]*quality) );
+            } catch (Exception e) {
+                e.printStackTrace();
+                System.exit(-1);
+            }
+        }
 
         renderFbo.run(gl);
         
@@ -92,6 +141,9 @@ public class GPUVolumeView extends GLCanvas implements GLEventListener
         gl.glLoadIdentity();
 
         gl.glGetIntegerv( GL_VIEWPORT, viewport, 0 );
+        
+        gl.glDepthMask(false);
+        gl.glDisable(GL_DEPTH_TEST);
 
         // show fps
         beginInfoScreen( gl, glu, viewport[ 2 ], viewport[ 3 ] );
@@ -106,6 +158,8 @@ public class GPUVolumeView extends GLCanvas implements GLEventListener
         endInfoScreen( gl );
         
         isLocked = false;
+        
+        renderedFinal = renderFbo.isRenderFinal();
     }
 
     @Override
@@ -182,7 +236,7 @@ public class GPUVolumeView extends GLCanvas implements GLEventListener
 
             addUniforms("volView", new String[]{"screenWidth", "screenHeight", "sliceStep", "alpha", "volTex", "backTex",
                     "transferTex", "ambient", "diffuse", "specExp", "useLighting", "gradientLimit", "eyePos", "lightPos",
-                    "xMin", "xMax", "yMin", "yMax", "zMin", "zMax", "nDiff"});
+                    "xMin", "xMax", "yMin", "yMax", "zMin", "zMax", "nDiff", "xStep", "yStep", "zStep"});
             
             addUniforms("volViewFinal", new String[]{"screenWidth", "screenHeight", "sliceStep", "alpha", "volTex", "backTex",
                     "transferTex", "ambient", "diffuse", "specExp", "useLighting", "gradientLimit", "eyePos", "lightPos",
@@ -247,7 +301,12 @@ public class GPUVolumeView extends GLCanvas implements GLEventListener
         gl.glLoadIdentity();
 
         try {
-            renderFbo.reshape( gl, width, height );
+            logger.info("width " + width);
+            logger.info("height " + height);
+            
+            VolumeRenderConfig renderConfig = volumeObject.getVolumeConfig().getRenderConfig();
+            float quality = renderConfig.getInteractiveQuality();
+            renderFbo.resize( gl, (int)(width*quality), (int)(height*quality) );
         } catch (Exception e) {
             e.printStackTrace();
             System.exit(0);

@@ -28,6 +28,7 @@ public class DicomUtil {
 
         for (DicomObject dicomObject : dicomList)
         {
+            
             short[] pixData = dicomObject.getShorts(Tag.PixelData);
             float rescaleIntercept = dicomObject.getFloat(Tag.RescaleIntercept);
             float rescaleSlope = dicomObject.getFloat(Tag.RescaleSlope);

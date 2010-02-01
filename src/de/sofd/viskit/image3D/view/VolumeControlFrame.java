@@ -51,6 +51,10 @@ public class VolumeControlFrame extends JFrame
         panel.add( getSliderPanel("Slices :", 1, volumeConfig.getRenderConfig().getSlicesMax(), volumeConfig.getRenderConfig().getSlices()) );
 
         panel.add( getSliderPanel("Alpha :", 0, 1000, (int)(volumeConfig.getRenderConfig().getAlpha() * 1000)) );
+        
+        panel.add( getSliderPanel("Interactive Quality :", 100, 2000, (int)(volumeConfig.getRenderConfig().getInteractiveQuality() * 1000)) );
+        
+        panel.add( getSliderPanel("Final Quality :", 100, 2000, (int)(volumeConfig.getRenderConfig().getFinalQuality() * 1000)) );
 
         panel.add( Box.createVerticalGlue() );
         

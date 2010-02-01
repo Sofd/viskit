@@ -50,6 +50,8 @@ public class SliceCanvas extends GLCanvas implements GLEventListener
     protected VolumeObject volumeObject;
     
     protected SliceViewController sliceViewController;
+    
+    protected boolean cleanup = false;
 
     public SliceCanvas( VolumeObject volumeObject ) throws IOException
     {
@@ -64,10 +66,20 @@ public class SliceCanvas extends GLCanvas implements GLEventListener
         
         
     }
+    
+    public void cleanUp() {
+        this.cleanup = true;
+        display();
+    }
 
     @Override
     public void display( GLAutoDrawable drawable )
     {
+        if ( cleanup ) {
+            
+            return;
+        }
+        
         idle();
 
         GL2 gl = drawable.getGL().getGL2();

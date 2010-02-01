@@ -21,6 +21,8 @@ public abstract class Shader
     
     public abstract void bind();
     
+    public abstract void cleanUp(); 
+    
     protected String readShader( String fname ) throws IOException
     {
         logger.debug("shader file to read : " + fname);
@@ -37,10 +39,10 @@ public abstract class Shader
         }
         
         return sbuf.toString();
-    } 
+    }
     
     protected abstract void setupShader() throws Exception;
-    
+
     public abstract void unbind();
     
     

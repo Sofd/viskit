@@ -37,6 +37,22 @@ public class GradientVolumeBuffer extends VolumeBuffer
         
         
     }
+    
+    @Override
+    public void cleanUp(GL2 gl) {
+        int[] fbo = new int[] { theFBO };
+
+        gl.glDeleteFramebuffers(1, fbo, 0);
+
+        theFBO = -1;
+
+        int[] tex = new int[] { theTex };
+
+        gl.glDeleteTextures(1, tex, 0);
+        
+        theTex = -1;
+        
+    }
 
     public void run( GL2 gl )
     {

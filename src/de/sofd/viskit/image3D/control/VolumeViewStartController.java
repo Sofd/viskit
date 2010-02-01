@@ -113,6 +113,10 @@ public class VolumeViewStartController implements ActionListener
                     volumeControlView.setLocation( x3, y3 );
                     
                     volumeViewer.getVolumeView().requestFocus();
+                    
+                    VolumeWindowAdapter windowAdapter = new VolumeWindowAdapter(sliceCanvas, volumeView);
+                    sliceViewer.addWindowListener(windowAdapter);
+                    volumeViewer.addWindowListener(windowAdapter);
                 }
                 catch ( IOException e )
                 {

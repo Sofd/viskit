@@ -28,6 +28,11 @@ public class ARBShader extends Shader
         gl.glBindProgramARB( GL_VERTEX_PROGRAM_ARB, ids[0] );
         gl.glBindProgramARB( GL_FRAGMENT_PROGRAM_ARB, ids[1] );
     }
+    
+    @Override
+    public void cleanUp() {
+        gl.glDeleteProgramsARB(2, ids, 0);
+    }
 
     @Override
     protected void setupShader() throws Exception

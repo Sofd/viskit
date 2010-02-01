@@ -172,7 +172,6 @@ public class GPUVolumeViewer extends JFrame implements MouseListener
         setSize( width, height );
         setLocationRelativeTo( null );
 
-        addWindowListener( new DefaultWindowClosingAdapter(this) );
         getContentPane().addMouseListener( this );
 
     }

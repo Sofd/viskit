@@ -58,4 +58,10 @@ public class ShaderManager
     {
         getARB( shName ).unbind();
     }
+
+    public static void cleanUp() {
+        for ( Shader shader : shMap.values() )
+            shader.cleanUp();
+        
+    }
 }

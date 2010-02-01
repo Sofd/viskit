@@ -83,6 +83,8 @@ public class FrameBuffer
         };
 
         gl.glDeleteFramebuffers( 1, fbo, 0 );
+        
+        theFBO = -1;
     }
 
     public void createFBO( GL2 gl ) throws Exception
@@ -103,6 +105,11 @@ public class FrameBuffer
 
     public void createTexture( GL2 gl, int internalFormat, int format )
     {
+        createTexture(gl, internalFormat, format, false);
+    }
+    
+    public void createTexture( GL2 gl, int internalFormat, int format, boolean mipmap )
+    {
         this.internalFormat = internalFormat;
         this.format = format;
         
@@ -114,7 +121,13 @@ public class FrameBuffer
         this.theTex = tex[ 0 ];
 
         gl.glBindTexture( GL_TEXTURE_2D, this.theTex );
-        gl.glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
+        
+        if ( mipmap ) {
+            gl.glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR );
+        } else {
+            gl.glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
+        }
+        
         gl.glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
 
         int mode = GL_CLAMP_TO_BORDER;
@@ -122,6 +135,7 @@ public class FrameBuffer
         gl.glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, mode );
         gl.glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, mode );
         
+        gl.glTexParameteri(GL_TEXTURE_2D, GL_GENERATE_MIPMAP, mipmap ? 1 : 0);
         gl.glTexImage2D( GL_TEXTURE_2D, 0, internalFormat, size.getWidth(), size.getHeight(), 0, format, GL_FLOAT, null );
         
         gl.glDisable( GL_TEXTURE_2D );

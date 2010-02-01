@@ -196,5 +196,11 @@ public class GLShader extends Shader
         gl.glUseProgram(0);
 
     }
+
+    @Override
+    public void cleanUp() {
+        gl.glDeleteShader(shader);
+        gl.glDeleteProgram(program);
+    }
     
 }

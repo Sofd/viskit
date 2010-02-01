@@ -22,8 +22,7 @@ import de.sofd.viskit.util.*;
 
 import vtk.*;
 
-public class VolumeObject
-{
+public class VolumeObject {
     /**
      * Databuffer for 3D-Texture.
      */
@@ -34,7 +33,7 @@ public class VolumeObject
     protected IntDimension3D imageDim;
 
     protected FloatBuffer transferFunction;
-    protected int transferTexId;
+    protected int transferTexId = -1;
 
     protected int transferTexPreIntegratedId;
 
@@ -61,20 +60,20 @@ public class VolumeObject
     /**
      * OpenGL-Id of 3D-Texture.
      */
-    protected int texId;
+    protected int texId = -1;
 
     /**
      * Weitere 3D-Textur (z.B. gefiltert mit Convolution-Filter ).
      */
-    protected int texId2;
-    
+    protected int texId2 = -1;
+
     /**
      * gradient texture
      */
-    protected int gradientTex;
+    protected int gradientTex = -1;
 
     protected ShortBuffer orgWindowing;
-    
+
     protected VolumeConfig volumeConfig;
 
     protected ShortBuffer windowing;
@@ -82,19 +81,18 @@ public class VolumeObject
     /**
      * OpenGL-Id fuer Windowingfunktion.
      */
-    protected int windowingTexId;
+    protected int windowingTexId = -1;
 
     protected VolumeConstraint constraint;
 
     protected boolean loadTransferFunctionPreIntegrated = true;
 
     protected TransferIntegrationFrameBuffer tfFbo;
-    
-    
+
     protected GradientVolumeBuffer gradientVolumeBuffer;
-    
+
     protected ConvolutionVolumeBuffer convolutionVolumeBuffer;
-    
+
     protected boolean updateConvolutionTexture = true;
     protected boolean updateGradientTexture = true;
 
@@ -134,277 +132,278 @@ public class VolumeObject
 
     }
 
-    public VolumeObject( vtkImageData imageData, ArrayList<ShortBuffer> dataBufList, double[] sliceCursor )
-    {
+    public VolumeObject(vtkImageData imageData, ArrayList<ShortBuffer> dataBufList, double[] sliceCursor) {
         int[] dim = imageData.GetDimensions();
         double[] spacing = imageData.GetSpacing();
         double[] range = imageData.GetScalarRange();
 
-        setImageDim( new IntDimension3D( dim[ 0 ], dim[ 1 ], dim[ 2 ] ) );
+        setImageDim(new IntDimension3D(dim[0], dim[1], dim[2]));
 
-        setSpacing( new DoubleDimension3D( spacing[ 0 ], spacing[ 1 ], spacing[ 2 ] ) );
+        setSpacing(new DoubleDimension3D(spacing[0], spacing[1], spacing[2]));
 
-        System.out.println( "spacing : " + getSpacing().toString() );
+        System.out.println("spacing : " + getSpacing().toString());
 
-        setDimRange( new IntRange( imageDim.getMin(), imageDim.getMax() ) );
+        setDimRange(new IntRange(imageDim.getMin(), imageDim.getMax()));
 
-        setSizeRange( new DoubleRange( Math.min( Math.min( getSizeX(), getSizeY() ), getSizeZ() ), Math.max( Math.max(
-                getSizeX(), getSizeY() ), getSizeZ() ) ) );
+        setSizeRange(new DoubleRange(Math.min(Math.min(getSizeX(), getSizeY()), getSizeZ()), Math.max(Math.max(getSizeX(), getSizeY()), getSizeZ())));
 
-        setRange( new ShortRange( (short)range[ 0 ], (short)range[ 1 ] ) );
+        setRange(new ShortRange((short) range[0], (short) range[1]));
 
-        setDataBuf( dataBuf );
-        setSliceCursor( sliceCursor );
-
-    }
-    
-    public void bindTransferTexture( GL2 gl )
-    {
-        gl.glBindTexture( GL_TEXTURE_1D, transferTexId );
-        gl.glTexImage1D( GL_TEXTURE_1D, 0, GL_RGBA32F, transferSize, 0, GL_RGBA, GL_FLOAT, transferFunction );
+        setDataBuf(dataBuf);
+        setSliceCursor(sliceCursor);
 
     }
-    
-    public void bindTransferTexturePreIntegrated( GL2 gl ) 
-    {
-        gl.glBindTexture( GL_TEXTURE_2D, transferTexPreIntegratedId );
+
+    public void bindTransferTexture(GL2 gl) {
+        gl.glBindTexture(GL_TEXTURE_1D, transferTexId);
+        gl.glTexImage1D(GL_TEXTURE_1D, 0, GL_RGBA32F, transferSize, 0, GL_RGBA, GL_FLOAT, transferFunction);
+
     }
 
-    public void bindWindowingTexture( GL2 gl )
-    {
+    public void bindTransferTexturePreIntegrated(GL2 gl) {
+        gl.glBindTexture(GL_TEXTURE_2D, transferTexPreIntegratedId);
+    }
+
+    public void bindWindowingTexture(GL2 gl) {
         // gl.glPixelStorei( GL_UNPACK_ALIGNMENT, 1 );
 
-        gl.glBindTexture( GL_TEXTURE_2D, windowingTexId );
-        gl.glTexImage2D( GL_TEXTURE_2D, 0, GL_ALPHA16F, 2, windowing.capacity() / 2, 0, GL_ALPHA, GL_SHORT, windowing );
+        gl.glBindTexture(GL_TEXTURE_2D, windowingTexId);
+        gl.glTexImage2D(GL_TEXTURE_2D, 0, GL_ALPHA16F, 2, windowing.capacity() / 2, 0, GL_ALPHA, GL_SHORT, windowing);
     }
 
-    public void createConvolutionTexture( GL2 gl, GLShader shader ) throws Exception
-    {
+    public void cleanUp(GL2 gl) {
+        if ( tfFbo != null )
+            tfFbo.cleanUp(gl);
         
-        convolutionVolumeBuffer = new ConvolutionVolumeBuffer( new IntDimension3D(
-                imageDim.getWidth(), imageDim.getHeight(), getNrOfImages() ), shader, this );
-        convolutionVolumeBuffer.createTexture( gl, GL_LUMINANCE16F, GL_LUMINANCE );
-        convolutionVolumeBuffer.createFBO( gl );
-    }
-
-    public void createGradientTexture( GL2 gl, GLShader shader ) throws Exception
-    {
+        if ( gradientVolumeBuffer != null )
+            gradientVolumeBuffer.cleanUp(gl);
         
-        gradientVolumeBuffer = new GradientVolumeBuffer( new IntDimension3D(
-                imageDim.getWidth(), imageDim.getHeight(), getNrOfImages() ), shader, this );
-        gradientVolumeBuffer.createTexture( gl, GL_RGBA32F, GL_RGBA );
-        gradientVolumeBuffer.createFBO( gl );
+        if ( convolutionVolumeBuffer != null )
+            convolutionVolumeBuffer.cleanUp(gl);
+
+        if (transferTexId != -1)
+            deleteTex(transferTexId, gl);
+        
+        if (texId != -1)
+            deleteTex(texId, gl);
+        
+        if (texId2 != -1)
+            deleteTex(texId2, gl);
+        
+        if (gradientTex != -1)
+            deleteTex(gradientTex, gl);
+        
+        if (windowingTexId != -1)
+            deleteTex(windowingTexId, gl);
+        
+        transferTexId = -1;
+        texId = -1;
+        texId2 = -1;
+        gradientTex = -1;
+        windowingTexId = -1;
+
     }
 
-    public void createTransferFbo( GL2 gl ) throws Exception
-    {
-        tfFbo = new TransferIntegrationFrameBuffer( ShaderManager.get( "transferIntegration" ), transferFunction, transferTexId );
-        tfFbo.createTexture( gl, GL_RGBA32F, GL_RGBA );
-        tfFbo.createFBO( gl );
+    public void createConvolutionTexture(GL2 gl, GLShader shader) throws Exception {
+
+        convolutionVolumeBuffer = new ConvolutionVolumeBuffer(new IntDimension3D(imageDim.getWidth(), imageDim.getHeight(), getNrOfImages()), shader, this);
+        convolutionVolumeBuffer.createTexture(gl, GL_LUMINANCE16F, GL_LUMINANCE);
+        convolutionVolumeBuffer.createFBO(gl);
     }
 
-    public void createTransferTexture( GL2 gl ) throws Exception
-    {
-        gl.glEnable( GL_TEXTURE_1D );
+    public void createGradientTexture(GL2 gl, GLShader shader) throws Exception {
 
-        int[] texId = new int[ 1 ];
-        gl.glGenTextures( 1, texId, 0 );
-
-        transferTexId = texId[ 0 ];
-
-        gl.glBindTexture( GL_TEXTURE_1D, transferTexId );
-        gl.glTexImage1D( GL_TEXTURE_1D, 0, GL_RGBA32F, transferSize, 0, GL_RGBA, GL_FLOAT,
-                transferFunction );
-
-        gl.glTexParameteri( GL_TEXTURE_1D, GL_TEXTURE_WRAP_S, GL_CLAMP );
-
-        gl.glTexParameteri( GL_TEXTURE_1D, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
-        gl.glTexParameteri( GL_TEXTURE_1D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
-
-        gl.glTexEnvf( GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE );
-
-        gl.glDisable( GL_TEXTURE_1D );
+        gradientVolumeBuffer = new GradientVolumeBuffer(new IntDimension3D(imageDim.getWidth(), imageDim.getHeight(), getNrOfImages()), shader, this);
+        gradientVolumeBuffer.createTexture(gl, GL_RGBA32F, GL_RGBA);
+        gradientVolumeBuffer.createFBO(gl);
     }
-    
-    public void createWindowingTexture( GL2 gl )
-    {
-        gl.glEnable( GL_TEXTURE_2D );
 
-        int[] texId = new int[ 1 ];
-        gl.glGenTextures( 1, texId, 0 );
+    public void createTransferFbo(GL2 gl) throws Exception {
+        tfFbo = new TransferIntegrationFrameBuffer(ShaderManager.get("transferIntegration"), transferFunction, transferTexId);
+        tfFbo.createTexture(gl, GL_RGBA32F, GL_RGBA);
+        tfFbo.createFBO(gl);
+    }
 
-        windowingTexId = texId[ 0 ];
+    public void createTransferTexture(GL2 gl) throws Exception {
+        gl.glEnable(GL_TEXTURE_1D);
 
-        for ( int i = 0; i < windowing.capacity(); ++i )
-            System.out.println( "win : " + windowing.get( i ) );
+        int[] texId = new int[1];
+        gl.glGenTextures(1, texId, 0);
+
+        transferTexId = texId[0];
+
+        gl.glBindTexture(GL_TEXTURE_1D, transferTexId);
+        gl.glTexImage1D(GL_TEXTURE_1D, 0, GL_RGBA32F, transferSize, 0, GL_RGBA, GL_FLOAT, transferFunction);
+
+        gl.glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_WRAP_S, GL_CLAMP);
+
+        gl.glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        gl.glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+        gl.glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+
+        gl.glDisable(GL_TEXTURE_1D);
+    }
+
+    public void createWindowingTexture(GL2 gl) {
+        gl.glEnable(GL_TEXTURE_2D);
+
+        int[] texId = new int[1];
+        gl.glGenTextures(1, texId, 0);
+
+        windowingTexId = texId[0];
+
+        for (int i = 0; i < windowing.capacity(); ++i)
+            System.out.println("win : " + windowing.get(i));
 
         // gl.glPixelStorei( GL_UNPACK_ALIGNMENT, 1 );
 
-        gl.glBindTexture( GL_TEXTURE_2D, windowingTexId );
-        gl.glTexImage2D( GL_TEXTURE_2D, 0, GL_ALPHA16F, 2, windowing.capacity() / 2, 0, GL_ALPHA, GL_SHORT, windowing );
+        gl.glBindTexture(GL_TEXTURE_2D, windowingTexId);
+        gl.glTexImage2D(GL_TEXTURE_2D, 0, GL_ALPHA16F, 2, windowing.capacity() / 2, 0, GL_ALPHA, GL_SHORT, windowing);
 
-        gl.glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP );
-        gl.glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP );
+        gl.glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
+        gl.glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
 
-        gl.glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
-        gl.glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
+        gl.glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        gl.glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
         // gl.glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST
         // );
         // gl.glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST
         // );
 
-        gl.glTexEnvf( GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE );
+        gl.glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
 
-        gl.glDisable( GL_TEXTURE_2D );
+        gl.glDisable(GL_TEXTURE_2D);
 
     }
 
-    public VolumeConstraint getConstraint()
-    {
+    private void deleteTex(int texId, GL2 gl) {
+        int[] tex = new int[] { texId };
+
+        gl.glDeleteTextures(1, tex, 0);
+
+    }
+
+    public VolumeConstraint getConstraint() {
         return constraint;
     }
-    
-    public int getCurrentImage()
-    {
-        return ( getCurrentSlice() / volumeConfig.getBasicConfig().getImageStride() );
+
+    public int getCurrentImage() {
+        return (getCurrentSlice() / volumeConfig.getBasicConfig().getImageStride());
     }
 
-    public int getCurrentSlice()
-    {
-        return (int)getSliceCursor()[ 2 ];
+    public int getCurrentSlice() {
+        return (int) getSliceCursor()[2];
     }
 
-    public short getCurrentWindowCenter()
-    {
+    public short getCurrentWindowCenter() {
         int z = getCurrentImage();
 
-        return windowing.get( z * 2 );
+        return windowing.get(z * 2);
     }
 
-    public void getCurrentWindowing( short[] currentWindowing )
-    {
-        currentWindowing[ 0 ] = getCurrentWindowCenter();
-        currentWindowing[ 1 ] = getCurrentWindowWidth();
+    public void getCurrentWindowing(short[] currentWindowing) {
+        currentWindowing[0] = getCurrentWindowCenter();
+        currentWindowing[1] = getCurrentWindowWidth();
     }
 
-    public short getCurrentWindowWidth()
-    {
+    public short getCurrentWindowWidth() {
         int z = getCurrentImage();
 
-        return windowing.get( z * 2 + 1 );
+        return windowing.get(z * 2 + 1);
     }
 
-    public short getCursorValue()
-    {
+    public short getCursorValue() {
         double[] pos = getSliceCursor();
-        
-        return dataBuf.get( getCurrentImage() * imageDim.getWidth() * imageDim.getHeight() +  (int)pos[ 1 ] * imageDim.getWidth() + (int)pos[ 0 ] );
+
+        return dataBuf.get(getCurrentImage() * imageDim.getWidth() * imageDim.getHeight() + (int) pos[1] * imageDim.getWidth() + (int) pos[0]);
     }
 
-    public ShortBuffer getDataBuf()
-    {
+    public ShortBuffer getDataBuf() {
         return dataBuf;
     }
 
-    public IntRange getDimRange()
-    {
+    public IntRange getDimRange() {
         return dimRange;
     }
 
-    public int getGradientTex()
-    {
+    public int getGradientTex() {
         return gradientTex;
     }
 
-    public IntDimension3D getImageDim()
-    {
+    public IntDimension3D getImageDim() {
         return imageDim;
     }
 
-    public int getNrOfImages()
-    {
-        return ( getImageDim().getDepth() / volumeConfig.getBasicConfig().getImageStride() );
+    public int getNrOfImages() {
+        return (getImageDim().getDepth() / volumeConfig.getBasicConfig().getImageStride());
     }
 
-    public ShortRange getRange()
-    {
+    public ShortRange getRange() {
         return range;
     }
 
-    public float getRelativeCursorValue()
-    {
+    public float getRelativeCursorValue() {
         int z = getCurrentImage();
 
-        return Windowing.getY( getCursorValue(), windowing.get( z * 2 + 0 ), windowing.get( z * 2 + 1 ) );
+        return Windowing.getY(getCursorValue(), windowing.get(z * 2 + 0), windowing.get(z * 2 + 1));
     }
 
-    public DoubleRange getSizeRange()
-    {
+    public DoubleRange getSizeRange() {
         return sizeRange;
     }
 
-    public double getSizeX()
-    {
-        if ( spacing.getWidth() == 0 )
+    public double getSizeX() {
+        if (spacing.getWidth() == 0)
             return imageDim.getWidth();
 
-        return ( imageDim.getWidth() * spacing.getWidth() );
+        return (imageDim.getWidth() * spacing.getWidth());
     }
 
-    public double getSizeY()
-    {
-        if ( spacing.getHeight() == 0 )
+    public double getSizeY() {
+        if (spacing.getHeight() == 0)
             return imageDim.getHeight();
 
-        return ( imageDim.getHeight() * spacing.getHeight() );
+        return (imageDim.getHeight() * spacing.getHeight());
     }
 
-    public double getSizeZ()
-    {
-        if ( spacing.getDepth() == 0 )
+    public double getSizeZ() {
+        if (spacing.getDepth() == 0)
             return imageDim.getDepth();
 
-        return ( imageDim.getDepth() * spacing.getDepth() );
+        return (imageDim.getDepth() * spacing.getDepth());
     }
 
-    public double[] getSliceCursor()
-    {
+    public double[] getSliceCursor() {
         return sliceCursor;
     }
 
-    public DoubleDimension3D getSpacing()
-    {
+    public DoubleDimension3D getSpacing() {
         return spacing;
     }
 
-    public int getTexId()
-    {
+    public int getTexId() {
         return texId;
     }
 
-    public int getTexId2()
-    {
+    public int getTexId2() {
         return texId2;
     }
 
-    public FloatBuffer getTransferFunction()
-    {
+    public FloatBuffer getTransferFunction() {
         return transferFunction;
     }
 
-    public int getTransferSize()
-    {
+    public int getTransferSize() {
         return transferSize;
     }
 
-    public int getTransferTexId()
-    {
+    public int getTransferTexId() {
         return transferTexId;
     }
 
-    public int getTransferTexPreIntegratedId()
-    {
+    public int getTransferTexPreIntegratedId() {
         return transferTexPreIntegratedId;
     }
 
@@ -412,8 +411,7 @@ public class VolumeObject
         return volumeConfig;
     }
 
-    public ShortBuffer getWindowing()
-    {
+    public ShortBuffer getWindowing() {
         return windowing;
     }
 
@@ -421,107 +419,89 @@ public class VolumeObject
         return updateConvolutionTexture;
     }
 
-    public void loadTexture( GL2 gl ) 
-    {
-        setTexId( GLUtil.get3DTexture( gl, dataBuf, imageDim.getWidth(), imageDim.getHeight(), getNrOfImages(), true ) );
+    public void loadTexture(GL2 gl) {
+        setTexId(GLUtil.get3DTexture(gl, dataBuf, imageDim.getWidth(), imageDim.getHeight(), getNrOfImages(), true));
     }
-    
-    public void loadTransferTexturePreIntegrated( GL2 gl ) throws Exception
-    {
-        if ( loadTransferFunctionPreIntegrated )
-        {
+
+    public void loadTransferTexturePreIntegrated(GL2 gl) throws Exception {
+        if (loadTransferFunctionPreIntegrated) {
             loadTransferFunctionPreIntegrated = false;
-            
+
             long time1 = System.currentTimeMillis();
-            
-            //bind current transferFunction to transferTexId
-            bindTransferTexture( gl );
-            
-            tfFbo.setTransferFunction( gl, transferFunction, transferTexId );
-            tfFbo.run( gl );
+
+            // bind current transferFunction to transferTexId
+            bindTransferTexture(gl);
+
+            tfFbo.setTransferFunction(gl, transferFunction, transferTexId);
+            tfFbo.run(gl);
             transferTexPreIntegratedId = tfFbo.getTex();
-            
+
             long time2 = System.currentTimeMillis();
 
-            System.out.println( "transfer integration in " + ( time2 - time1 ) + " ms" );
+            System.out.println("transfer integration in " + (time2 - time1) + " ms");
         }
     }
-    
-    public synchronized void reloadOriginalWindowing()
-    {
-        for ( int i = 0; i < windowing.capacity(); ++i )
-            windowing.put( i, orgWindowing.get( i ) );
-        
+
+    public synchronized void reloadOriginalWindowing() {
+        for (int i = 0; i < windowing.capacity(); ++i)
+            windowing.put(i, orgWindowing.get(i));
+
         setUpdateConvolutionTexture(true);
         setUpdateGradientTexture(true);
     }
 
-    protected void setDataBuf( ShortBuffer dataBuf )
-    {
+    protected void setDataBuf(ShortBuffer dataBuf) {
         this.dataBuf = dataBuf;
     }
-    
-    public void setDimRange( IntRange dimRange )
-    {
+
+    public void setDimRange(IntRange dimRange) {
         this.dimRange = dimRange;
     }
-    
-    public void setImageDim( IntDimension3D imageDim )
-    {
+
+    public void setImageDim(IntDimension3D imageDim) {
         this.imageDim = imageDim;
     }
-    
 
-    protected void setRange( ShortRange range )
-    {
+    protected void setRange(ShortRange range) {
         this.range = range;
     }
 
-    public void setSizeRange( DoubleRange sizeRange )
-    {
+    public void setSizeRange(DoubleRange sizeRange) {
         this.sizeRange = sizeRange;
     }
 
-    protected void setSliceCursor( double[] sliceCursor )
-    {
+    protected void setSliceCursor(double[] sliceCursor) {
         this.sliceCursor = sliceCursor;
     }
 
-    public void setSpacing( DoubleDimension3D spacing )
-    {
+    public void setSpacing(DoubleDimension3D spacing) {
         this.spacing = spacing;
     }
 
-    public void setTexId( int texId )
-    {
+    public void setTexId(int texId) {
         this.texId = texId;
     }
 
-    public void setTexId2( int texId2 )
-    {
+    public void setTexId2(int texId2) {
         this.texId2 = texId2;
     }
 
-    public void setTransferFunction( FloatBuffer transferFunction )
-    {
+    public void setTransferFunction(FloatBuffer transferFunction) {
         this.transferFunction = transferFunction;
-        
-        setTransferSize( transferFunction.capacity() / 4 );
+
+        setTransferSize(transferFunction.capacity() / 4);
         loadTransferFunctionPreIntegrated = true;
     }
 
-    public void setTransferSize( int transferSize )
-    {
+    public void setTransferSize(int transferSize) {
         this.transferSize = transferSize;
     }
 
-    public void setTransferTexId( int transferTexId )
-    {
+    public void setTransferTexId(int transferTexId) {
         this.transferTexId = transferTexId;
     }
 
-    public void setTransferTexPreIntegratedId( int transferTexPreIntegratedId )
-    {
+    public void setTransferTexPreIntegratedId(int transferTexPreIntegratedId) {
         this.transferTexPreIntegratedId = transferTexPreIntegratedId;
     }
 
@@ -533,120 +513,103 @@ public class VolumeObject
         this.updateGradientTexture = updateGradientTexture;
     }
 
-    public void setWindowing( ShortBuffer windowing )
-    {
+    public void setWindowing(ShortBuffer windowing) {
         this.windowing = windowing;
     }
 
-    public void updateConvolutionTexture( GL2 gl ) throws Exception
-    {
-        
-        if ( updateConvolutionTexture ) {
+    public void updateConvolutionTexture(GL2 gl) throws Exception {
+
+        if (updateConvolutionTexture) {
             updateConvolutionTexture = false;
-            
+
             long time1 = System.currentTimeMillis();
-            
-            convolutionVolumeBuffer.run( gl );
-    
+
+            convolutionVolumeBuffer.run(gl);
+
             texId2 = convolutionVolumeBuffer.getTex();
-            
+
             long time2 = System.currentTimeMillis();
-    
-            System.out.println( "offscreen gauss filtering in " + ( time2 - time1 ) + " ms" );
+
+            System.out.println("offscreen gauss filtering in " + (time2 - time1) + " ms");
         }
-        
+
     }
 
-    public void updateGradientTexture( GL2 gl ) throws Exception
-    {
-        if ( updateGradientTexture )
-        {
+    public void updateGradientTexture(GL2 gl) throws Exception {
+        if (updateGradientTexture) {
             updateGradientTexture = false;
-            
+
             long time1 = System.currentTimeMillis();
-    
-            gradientVolumeBuffer.run( gl );
-    
+
+            gradientVolumeBuffer.run(gl);
+
             gradientTex = gradientVolumeBuffer.getTex();
-    
+
             long time2 = System.currentTimeMillis();
-    
-            System.out.println( "gradient computed in " + ( time2 - time1 ) + " ms" );
+
+            System.out.println("gradient computed in " + (time2 - time1) + " ms");
         }
-        
+
     }
 
-    public void updateWindowCenter( short value,
-                                    WindowingMode windowingMode )
-    {
+    public void updateWindowCenter(short value, WindowingMode windowingMode) {
         int z = getCurrentImage();
 
-        switch ( windowingMode )
-        {
-            case WINDOWING_MODE_LOCAL:
-                windowing.put( z * 2, value );
+        switch (windowingMode) {
+        case WINDOWING_MODE_LOCAL:
+            windowing.put(z * 2, value);
 
-                break;
-            case WINDOWING_MODE_GLOBAL_RELATIVE:
-                short delta = (short)( value - windowing.get( z * 2 ) );
+            break;
+        case WINDOWING_MODE_GLOBAL_RELATIVE:
+            short delta = (short) (value - windowing.get(z * 2));
 
-                for ( int i = 0; i < getNrOfImages(); ++i )
-                {
-                    short orgValue = windowing.get( i * 2 );
-                    windowing.put( i * 2, (short)Math
-                            .max( Math.min( range.getMax(), orgValue + delta ), range.getMin() ) );
-                }
+            for (int i = 0; i < getNrOfImages(); ++i) {
+                short orgValue = windowing.get(i * 2);
+                windowing.put(i * 2, (short) Math.max(Math.min(range.getMax(), orgValue + delta), range.getMin()));
+            }
 
-                break;
-            case WINDOWING_MODE_GLOBAL_ABSOLUTE:
-                for ( int i = 0; i < getNrOfImages(); ++i )
-                {
-                    windowing.put( i * 2, value );
-                }
+            break;
+        case WINDOWING_MODE_GLOBAL_ABSOLUTE:
+            for (int i = 0; i < getNrOfImages(); ++i) {
+                windowing.put(i * 2, value);
+            }
 
-                break;
+            break;
         }
 
     }
 
-    public void updateWindowing( WindowingMode windowingMode )
-    {
-        updateWindowCenter( getCurrentWindowCenter(), windowingMode );
-        updateWindowWidth( getCurrentWindowWidth(), windowingMode );
-        
+    public void updateWindowing(WindowingMode windowingMode) {
+        updateWindowCenter(getCurrentWindowCenter(), windowingMode);
+        updateWindowWidth(getCurrentWindowWidth(), windowingMode);
+
         setUpdateConvolutionTexture(true);
         setUpdateGradientTexture(true);
     }
 
-    public void updateWindowWidth(    short value,
-                                    WindowingMode windowingMode )
-    {
+    public void updateWindowWidth(short value, WindowingMode windowingMode) {
         int z = getCurrentImage();
 
-        switch ( windowingMode )
-        {
-            case WINDOWING_MODE_LOCAL:
-                windowing.put( z * 2 + 1, value );
+        switch (windowingMode) {
+        case WINDOWING_MODE_LOCAL:
+            windowing.put(z * 2 + 1, value);
 
-                break;
-            case WINDOWING_MODE_GLOBAL_RELATIVE:
-                short delta = (short)( value - windowing.get( z * 2 + 1 ) );
+            break;
+        case WINDOWING_MODE_GLOBAL_RELATIVE:
+            short delta = (short) (value - windowing.get(z * 2 + 1));
 
-                for ( int i = 0; i < getNrOfImages(); ++i )
-                {
-                    short orgValue = windowing.get( i * 2 + 1 );
-                    windowing.put( i * 2 + 1, (short)Math.max( Math.min( range.getMax(), orgValue + delta ), range
-                            .getMin() ) );
-                }
+            for (int i = 0; i < getNrOfImages(); ++i) {
+                short orgValue = windowing.get(i * 2 + 1);
+                windowing.put(i * 2 + 1, (short) Math.max(Math.min(range.getMax(), orgValue + delta), range.getMin()));
+            }
 
-                break;
-            case WINDOWING_MODE_GLOBAL_ABSOLUTE:
-                for ( int i = 0; i < getNrOfImages(); ++i )
-                {
-                    windowing.put( i * 2 + 1, value );
-                }
+            break;
+        case WINDOWING_MODE_GLOBAL_ABSOLUTE:
+            for (int i = 0; i < getNrOfImages(); ++i) {
+                windowing.put(i * 2 + 1, value);
+            }
 
-                break;
+            break;
         }
 
     }

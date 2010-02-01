@@ -44,6 +44,10 @@ public class VolumeController implements ChangeListener, ActionListener {
             volumeObject.getVolumeConfig().getLightingConfig().setnDiff(slider.getValue() / 100.0f);
         } else if ("Light Pos :".equals(slider.getName())) {
             volumeObject.getVolumeConfig().getLightingConfig().setLightPos(slider.getValue() / 100.0f);
+        } else if ("Interactive Quality :".equals(slider.getName())) {
+            volumeObject.getVolumeConfig().getRenderConfig().setInteractiveQuality(slider.getValue() / 1000.0f);
+        } else if ("Final Quality :".equals(slider.getName())) {
+            volumeObject.getVolumeConfig().getRenderConfig().setFinalQuality(slider.getValue() / 1000.0f);
         }
         
         if ( ! slider.getValueIsAdjusting() )

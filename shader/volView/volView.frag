@@ -33,6 +33,10 @@ uniform float yMax;
 uniform float zMin;
 uniform float zMax;
 
+uniform float xStep;
+uniform float yStep;
+uniform float zStep;
+
 out vec4 gl_FragColor;
 
 vec4 getNormal( in vec3 texPos ) {
@@ -40,17 +44,17 @@ vec4 getNormal( in vec3 texPos ) {
 
 	vec3 sample1;
 	vec3 sample2;
-	sample1.x = texture(volTex, vec3(texPos.x + 0.02 * alpha, texPos.y, texPos.z) ).r;
-	sample1.y = texture(volTex, vec3(texPos.x, texPos.y - 0.02 * alpha, texPos.z) ).r;
-	sample1.z = texture(volTex, vec3(texPos.x, texPos.y, texPos.z + 0.02 * alpha) ).r;
+	sample1.x = texture(volTex, vec3(texPos.x + xStep, texPos.y, texPos.z) ).r;
+	sample1.y = texture(volTex, vec3(texPos.x, texPos.y - yStep, texPos.z) ).r;
+	sample1.z = texture(volTex, vec3(texPos.x, texPos.y, texPos.z + zStep) ).r;
 	
-	sample2.x = texture(volTex, vec3(texPos.x - 0.02 * alpha, texPos.y, texPos.z) ).r;
-	sample2.y = texture(volTex, vec3(texPos.x, texPos.y + 0.02 * alpha, texPos.z) ).r;
-	sample2.z = texture(volTex, vec3(texPos.x, texPos.y, texPos.z - 0.02 * alpha) ).r;
+	sample2.x = texture(volTex, vec3(texPos.x - xStep, texPos.y, texPos.z) ).r;
+	sample2.y = texture(volTex, vec3(texPos.x, texPos.y + yStep, texPos.z) ).r;
+	sample2.z = texture(volTex, vec3(texPos.x, texPos.y, texPos.z - zStep) ).r;
 	
 	result.xyz = sample2 - sample1;
 	
-	result.a = length( result.xyz );
+	result.a = length( result.xyz ) / 1.73;
 		
 	if ( result.a >= gradientLimit * 0.2 )
 		result.xyz = normalize( result.xyz );
@@ -78,7 +82,7 @@ vec3 shading( in vec3 N, in vec3 E, in vec3 L, in vec4 color )
 	//float dotER = max(dot(R, E), 0);
 	//float sf = pow( dotER, specExp );
 	
-	vec3 specular = spec * sf * color.rgb;
+	vec3 specular = spec * sf * color.a;
 	
 	return min(max(ambient + diffuse + specular, vec3(0.0f)), 1.0f);
 }
@@ -149,7 +153,7 @@ void main() {
 		
 		tfColor = texture2D( transferTex, tfCoord );
 				
-		if ( useLighting == 1 && tfColor.a > 0 )
+		if ( useLighting == 1 && tfColor.a > 0.1 )
 		{
 			
 			//vec4 G = ( texture( gradientTex, rayPos.xyz ) - vec4( 0.5f, 0.5f, 0.5f, 0.0f ) ) * vec4( 2.0f, 2.0f, 2.0f, 1.0f );
@@ -184,11 +188,11 @@ void main() {
 		tfCoord.x = tfCoord.y;
 	}
 	
-	//gl_FragColor = sumColor;
+	gl_FragColor = sumColor;
 	//gl_FragColor.rgb = normal;
 	//gl_FragColor.rgb = vec3(texture(gradientTex, texCoord.xyz).a);
 	//gl_FragColor.rgb = vec3(texture(transferTex, texCoord.xy).a);
-	gl_FragColor.rgb = texture(backTex, tc).rgb;
+	//gl_FragColor.rgb = texture(backTex, tc).rgb;
 	
 	gl_FragColor.a = 1.0f;
 } 

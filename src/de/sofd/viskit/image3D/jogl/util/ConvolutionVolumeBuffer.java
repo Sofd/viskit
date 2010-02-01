@@ -7,7 +7,6 @@ import javax.media.opengl.*;
 
 import de.sofd.util.*;
 import de.sofd.viskit.image3D.jogl.model.*;
-import de.sofd.viskit.image3D.model.*;
 
 public class ConvolutionVolumeBuffer extends VolumeBuffer
 {
@@ -27,6 +26,22 @@ public class ConvolutionVolumeBuffer extends VolumeBuffer
         shader.addProgramUniform( "xStep" );
         shader.addProgramUniform( "yStep" );
         shader.addProgramUniform( "zStep" );
+    }
+    
+    @Override
+    public void cleanUp(GL2 gl) {
+        int[] fbo = new int[] { theFBO };
+
+        gl.glDeleteFramebuffers(1, fbo, 0);
+
+        theFBO = -1;
+
+        int[] tex = new int[] { theTex };
+
+        gl.glDeleteTextures(1, tex, 0);
+        
+        theTex = -1;
+        
     }
 
     @Override
