@@ -1,5 +1,6 @@
 package de.sofd.viskit.controllers;
 
+import de.sofd.util.DynScope;
 import de.sofd.util.FloatRange;
 import de.sofd.viskit.model.DicomImageListViewModelElement;
 import de.sofd.viskit.model.ImageListViewModelElement;
@@ -8,6 +9,7 @@ import de.sofd.viskit.ui.imagelist.JImageListView;
 import de.sofd.viskit.ui.imagelist.event.ImageListViewCellPaintEvent;
 import de.sofd.viskit.ui.imagelist.event.ImageListViewCellPaintListener;
 
+import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.util.HashSet;
@@ -87,12 +89,14 @@ public class ImageListViewInitialWindowingController {
         JImageListView oldControlledImageListView = this.controlledImageListView;
         this.controlledImageListView = controlledImageListView;
         if (null != oldControlledImageListView) {
-            oldControlledImageListView.removeCellPaintListener(cellPaintListener);
+            oldControlledImageListView.removeCellPaintListener(cellHandler);
+            oldControlledImageListView.removeCellPropertyChangeListener(cellHandler);
         }
         if (null != controlledImageListView) {
             // add the paint listener below the image in the z-order, so it will be invoked
             // before the image (and anything else, most likely) is drawn
-            controlledImageListView.addCellPaintListener(JImageListView.PAINT_ZORDER_IMAGE - 1, cellPaintListener);
+            controlledImageListView.addCellPaintListener(JImageListView.PAINT_ZORDER_IMAGE - 1, cellHandler);
+            controlledImageListView.addCellPropertyChangeListener(cellHandler);
             alreadyInitializedImagesKeys.clear();
         }
         propertyChangeSupport.firePropertyChange(PROP_CONTROLLEDIMAGELISTVIEW, oldControlledImageListView, controlledImageListView);
@@ -105,10 +109,13 @@ public class ImageListViewInitialWindowingController {
      * TODO: this will break if the user displays the same image in the list
      * more than once.
      */
-    private final Set<Object> alreadyInitializedImagesKeys = new HashSet<Object>();
+    protected final Set<Object> alreadyInitializedImagesKeys = new HashSet<Object>();
+
+    protected CellHandler cellHandler = new CellHandler();
     
-    private ImageListViewCellPaintListener cellPaintListener = new ImageListViewCellPaintListener() {
+    private class CellHandler implements ImageListViewCellPaintListener, PropertyChangeListener {
         private boolean inProgrammedChange = false;
+        
         @Override
         public void onCellPaint(ImageListViewCellPaintEvent e) {
             if (!isEnabled()) {
@@ -119,19 +126,42 @@ public class ImageListViewInitialWindowingController {
             }
             inProgrammedChange = true;
             try {
-                ImageListViewCell cell = e.getSource();
+                final ImageListViewCell cell = e.getSource();
                 ImageListViewModelElement elt = cell.getDisplayedModelElement();
                 Object imageKey = elt.getImageKey();
                 if (alreadyInitializedImagesKeys.contains(imageKey)) {
                     return;
                 }
-                FloatRange usedRange = cell.getDisplayedModelElement().getUsedPixelValuesRange();
-                cell.setWindowWidth((int) usedRange.getDelta());
-                cell.setWindowLocation((int) (usedRange.getMin() + usedRange.getMax()) / 2);
+                final FloatRange usedRange = cell.getDisplayedModelElement().getUsedPixelValuesRange();
+                DynScope.runWith(ImageListViewWindowingApplyToAllController.DSK_INHIBIT, new Runnable() {
+                    @Override
+                    public void run() {
+                        cell.setWindowWidth((int) usedRange.getDelta());
+                        cell.setWindowLocation((int) (usedRange.getMin() + usedRange.getMax()) / 2);
+                    }
+                });
                 alreadyInitializedImagesKeys.add(imageKey);
             } finally {
                 inProgrammedChange = false;
             }
+        }
+        
+        @Override
+        public void propertyChange(PropertyChangeEvent evt) {
+            if (!isEnabled()) {
+                return;
+            }
+            if (inProgrammedChange) {
+                return;
+            }
+            if (!evt.getPropertyName().equals(ImageListViewCell.PROP_WINDOWLOCATION) &&
+                !evt.getPropertyName().equals(ImageListViewCell.PROP_WINDOWWIDTH)) {
+                return;
+            }
+            // some external change to a cell's windowing parameters occured => we shouldn't
+            // change that cell's windowing parameters anymore now
+            ImageListViewCell sourceCell = (ImageListViewCell) evt.getSource();
+            alreadyInitializedImagesKeys.add(sourceCell.getDisplayedModelElement().getImageKey());
         }
     };
 

@@ -3,8 +3,8 @@
 
 JGridList-GL-tack-zahn-started-scrolling.nps:
 
-- Programm gestartet, gewartet bis GUI erscheint, Profiler gestartet,
-  ca. 100 mal Cursor down
+- Programm gestartet, gewartet bis GUI erscheint (ScaleMode 2x2),
+  Profiler gestartet, ca. 100 mal Cursor down
 
   - => Runterscrollen in der Liste, dabei ständiges Laden von neu
     erscheinenden Bildern (=> DicomObject laden, Texturerzeugung) plus
@@ -53,11 +53,12 @@ JGridList-GL-tack-zahn-started-scrolling.nps:
 
 JGridList-GL-tack-zahn-texsloaded-scrolling.nps:
 
-- Programm gestartet, gewartet bis GUI erscheint, runterscrollen bis
-  ca. Mitte der Serie, ein Stück zurückscrollen, Profiler gestartet,
-  mehrmals wiederholt mit Cursor up/down kurze Stücke (10 Schritte)
-  hoch und runterscrollen, wobei keine Bilder angezeigt werden, die
-  nicht vor dem Profilerstart schonmal zu sehen waren
+- Programm gestartet, gewartet bis GUI erscheint (ScaleMode 2x2),
+  runterscrollen bis ca. Mitte der Serie, ein Stück zurückscrollen,
+  Profiler gestartet, mehrmals wiederholt mit Cursor up/down kurze
+  Stücke (10 Schritte) hoch und runterscrollen, wobei keine Bilder
+  angezeigt werden, die nicht vor dem Profilerstart schonmal zu sehen
+  waren
 
   - => die Texturen der neu angezeigten Bilder sind schon geladen und
     die Windowing-Parameter ermittelt, es gibt also kein I/O und keine

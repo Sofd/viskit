@@ -1,5 +1,6 @@
 package de.sofd.viskit.controllers;
 
+import de.sofd.util.DynScope;
 import de.sofd.viskit.ui.imagelist.ImageListViewCell;
 import de.sofd.viskit.ui.imagelist.JImageListView;
 import java.beans.PropertyChangeEvent;
@@ -7,11 +8,15 @@ import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 
 /**
- * Controller that references a JImageListView and an "enabled" flag.
- * When enabled, the controller tracks any outside changes to the windowing
- * parameters of any of the list's cells and copies those changes to all
- * other cells of the list.
- *
+ * Controller that references a JImageListView and an "enabled" flag. When
+ * enabled, the controller tracks any outside changes to the windowing
+ * parameters of any of the list's cells and copies those changes to all other
+ * cells of the list.
+ * <p>
+ * The special {@link DynScope} constant {@link #DSK_INHIBIT} is provided for
+ * external parties to temporarily disable this controller in any invocations
+ * down the callstack from a specific point in an external control flow.
+ * 
  * @author olaf
  */
 public class ImageListViewWindowingApplyToAllController {
@@ -20,6 +25,30 @@ public class ImageListViewWindowingApplyToAllController {
     public static final String PROP_CONTROLLEDIMAGELISTVIEW = "controlledImageListView";
     private boolean enabled;
     public static final String PROP_ENABLED = "enabled";
+
+    /**
+     * Constant to be passed to the {@link DynScope}facility to inhibit any
+     * activity of instances of this controller down the callstack from a
+     * specific point. Sample usage:
+     * 
+     * <code>
+     * DynScope.runWith(ImageListViewWindowingApplyToAllController.DSK_INHIBIT, new Runnable() {
+     *    @Override
+     *    public void run() {
+     *        // inside this method and in any piece of code called from here,
+     *        // any ImageListViewWindowingApplyToAllController invocation code
+     *        // will be disabled
+     *        ...
+     *        // e.g.:
+     *        JImageListView someList = ...;
+     *        someList.getCell(xx).setWindowWidth(500); // this change WON'T be copied to other cells of someList,
+     *                                                  // even if a ImageListViewWindowingApplyToAllController is
+     *                                                  // set and enabled for it.
+     *    }
+     * }
+     * </code>
+     */
+    public static final String DSK_INHIBIT = ImageListViewWindowingApplyToAllController.class.getName() + ".dynscope_inhibit";
 
     public ImageListViewWindowingApplyToAllController() {
     }
@@ -86,6 +115,9 @@ public class ImageListViewWindowingApplyToAllController {
             }
             if (!evt.getPropertyName().equals(ImageListViewCell.PROP_WINDOWLOCATION) &&
                 !evt.getPropertyName().equals(ImageListViewCell.PROP_WINDOWWIDTH)) {
+                return;
+            }
+            if (DynScope.contains(DSK_INHIBIT)) {
                 return;
             }
             ImageListViewCell sourceCell = (ImageListViewCell) evt.getSource();
