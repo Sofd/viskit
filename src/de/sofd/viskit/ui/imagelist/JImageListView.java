@@ -486,6 +486,46 @@ public abstract class JImageListView extends JPanel {
     }
 
     /**
+     * Find the index of a cell in this list. Reverse operation to
+     * {@link #getCell(int)}.
+     * <p>
+     * This operation will generally be efficient (O(1)) if the cell is present
+     * in the list.
+     * 
+     * @param cell
+     *            a cell of this list
+     * @return index of cell in this list, or -1 if the cell isn't part of the
+     *         list
+     */
+    public int getIndexOf(ImageListViewCell cell) {
+        // use cellToIndexMap to look up cell's index quickly, creating/updating
+        // cellToIndexMap lazily along the way if necessary.
+        // In most cases, the cellToIndexMap should contain the correct index for cell.
+        // we optimize for that case (O(1)).
+        // cellToIndexMap will become temporarily outdated if somebody
+        // adds/removes cells from the list. We catch such cases here.
+        if (null == getModel()) { return -1; }
+        Integer index = cellToIndexMap.get(cell);
+        ImageListViewCell foundCell = null;
+        if (index != null && index < getModel().getSize()) {
+            foundCell = getCell(index);
+        }
+        if (index != null && foundCell == cell) {
+            return index;
+        } else {
+            int eltCount = getModel().getSize();
+            for (int i = 0; i < eltCount; i++) {
+                ImageListViewCell c2 = getCell(i);
+                cellToIndexMap.put(c2, i);
+                if (c2 == cell) {
+                    return i;
+                }
+            }
+        }
+        return -1;
+    }
+    
+    /**
      * Called if a the cells of this viewer need to be refreshed. Normally
      * called internally by subclasses if they determine the need to refresh the cells,
      * but may also be called explicitly from the outside.
@@ -550,38 +590,16 @@ public abstract class JImageListView extends JPanel {
      * called internally by subclasses if they determine the need to refresh a
      * cell, but may also be called explicitly from the outside.
      * <p>
-     * Default implementation finds cell in the list of cells of this list,
-     * using an internal table to look up the index in O(1) rather than O(n) in
-     * most cases, then calls {@link #refreshCellForIndex(int) }.
+     * Default implementation uses {@link #getIndexOf(ImageListViewCell)} and
+     * then {@link #refreshCellForIndex(int) }.
      * 
      * @param cell
      *            the cell
      */
     public void refreshCell(ImageListViewCell cell) {
-        // use cellToIndexMap to look up cell's index quickly, creating/updating
-        // cellToIndexMap lazily along the way if necessary
-        // in most cases, the cellToIndexMap should contain the correct index for cell.
-        // we optimize for that case (O(1)).
-        // cellToIndexMap will only become temporarily outdated if somebody
-        // adds/removes cells from the list.
-        if (null == getModel()) { return; }
-        Integer index = cellToIndexMap.get(cell);
-        ImageListViewCell foundCell = null;
-        if (index != null && index < getModel().getSize()) {
-            foundCell = getCell(index);
-        }
-        if (index != null && foundCell == cell) {
+        int index = getIndexOf(cell);
+        if (index != -1) {
             refreshCellForIndex(index);
-        } else {
-            int eltCount = getModel().getSize();
-            for (int i = 0; i < eltCount; i++) {
-                ImageListViewCell c2 = getCell(i);
-                cellToIndexMap.put(c2, i);
-                if (c2 == cell) {
-                    refreshCellForIndex(i);
-                    return;
-                }
-            }
         }
     }
 
