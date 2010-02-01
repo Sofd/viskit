@@ -1,0 +1,106 @@
+30.01.2010  ~22:00 Uhr
+======================
+
+JGridList-GL-tack-zahn-started-scrolling.nps:
+
+- Programm gestartet, gewartet bis GUI erscheint, Profiler gestartet,
+  ca. 100 mal Cursor down
+
+  - => Runterscrollen in der Liste, dabei ständiges Laden von neu
+    erscheinenden Bildern (=> DicomObject laden, Texturerzeugung) plus
+    Initialisieren der Initial-Windowing-Parameter durch
+    ImageListViewInitialWindowingController
+
+- == ca 80% der Zeit (ca 130 ms pro Bild?) ==
+
+  verbraucht für DicomObject.getShorts(Tag.PixelData), aufgerufen von
+  CachingDicomImageListViewModelElement#getRawImage(), aufgerufen von
+  CachingDicomImageListViewModelElement#getUserPixelValuesRange(),
+  aufgerufen von
+
+  == ImageListViewInitialWindowingController ==
+
+
+- == ca. 8% der Zeit (ca. 13 ms pro Bild?) ==
+
+  verbraucht für ImageTextureManager#bindImageTexture()
+
+  - davon ca. 4.5 % (relativ 55%) vermutlich für glTexImage2D (Laden
+    der Textur)
+
+  - davon ca. 3.5 % (relativ 45%) für log4j logger.info()...
+
+
+- == ca. 8% der Zeit (ca. 6.5 ms pro Aufruf, umgerechnet ca. 12 ms pro
+  Bild?) für
+  javax.swing.SystemEventQueueUtilities#ComponentWorkRequest.run() ==
+  ??
+
+===> 
+     - Gesamtzeit ca. 160 ms pro Bild?
+
+     - ca. 80% davon für das Einlesen der Dicom-Daten im Zuge der
+       Initial-Window-Parameter-Berechnung
+
+     - ca. (umgerechnet) 8% davon in Klasse
+       javax.swing.SystemEventQueueUtilities#ComponentWorkRequest
+       (ca. alle 2 Bilder aufgerufen). Vermutung: Handelt mglw. das
+       Abarbeiten von Workload, der durch das schnelle Durchscrollen
+       (sodass das GUI mit dem Zeichnen nicht hinterherkommt) entsteht
+
+
+--------------
+
+JGridList-GL-tack-zahn-texsloaded-scrolling.nps:
+
+- Programm gestartet, gewartet bis GUI erscheint, runterscrollen bis
+  ca. Mitte der Serie, ein Stück zurückscrollen, Profiler gestartet,
+  mehrmals wiederholt mit Cursor up/down kurze Stücke (10 Schritte)
+  hoch und runterscrollen, wobei keine Bilder angezeigt werden, die
+  nicht vor dem Profilerstart schonmal zu sehen waren
+
+  - => die Texturen der neu angezeigten Bilder sind schon geladen und
+    die Windowing-Parameter ermittelt, es gibt also kein I/O und keine
+    Operationen auf Pixeldaten im RAM mehr, nur noch GL-Grafikausgaben
+
+- == ca. 40% der Zeit (ca. 1.5 ms pro Bild?) ===
+
+  verbraucht für GLImageListViewCellViewer$GLEventHandler.display
+
+  - davon ca. 24% (relativ 60%) für
+    ==ImageListViewPrintTextToCellsController$1.onCellPaint==
+
+    - davon ca. relativ 80% (ca. 0.7 ms pro Bild) für das Rastern des
+      Textes, 10% für getTextToPrint() (in der Hautpklasse), 10% in
+      JImageListView#fireCellPaintEvent() selbst
+
+  - davon ca. 10% (relativ 25%, ca. 0.4 ms pro Bild?) in display
+    selbst (vermutl. das eigentliche Text-Rendern?)
+
+- == ca. 45% der Zeit (ca. 6.5 ms pro Aufruf, umger. ca. 1.7 ms pro
+  Bild?) für
+  javax.swing.SystemEventQueueUtilities#ComponentWorkRequest.run() ==
+  ??
+
+- == ca. 0.6% der Zeit (ca. 0.02 ms pro Bild?) ==
+
+  verbraucht für ImageTextureManager#bindImageTexture()
+
+  - wie erwartet hier keine I/O- oder glTexImage2D - Aufrufe
+
+- == ca. 3.4% der Zeit (ca. 0.13 ms pro Bild?) ==
+
+  verbraucht als self time in GLCanvas display-Handler
+
+  - vermutlich macht er auch da das eigentl. Textur-Rendern?
+
+
+===> 
+     - Gesamtzeit ca. 3.8 ms pro Bild?
+
+     - das Text-Rastern in ImageListViewPrintTextToCellsController ist
+       *relativ* lahm; verbraucht ca. 20% der Zeit pro Bild
+
+     - der ominöse SystemEventQueueUtilities#ComponentWorkRequest
+       fällt relativ stärker ins Gewicht -- umgerechnet ca. 45%
+       bzw. 1.7 ms der Zeit pro Bild
