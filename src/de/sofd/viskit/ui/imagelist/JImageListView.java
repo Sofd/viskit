@@ -110,6 +110,7 @@ public abstract class JImageListView extends JPanel {
         if (oldModel != null) {
             oldModel.removeListDataListener(modelChangeListener);
             clearCellsByElementMap();
+            cellToIndexMap.clear();
         }
         this.model = model;
         if (this.model != null) {

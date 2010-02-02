@@ -88,6 +88,7 @@ public class JGridImageListView extends JImageListView {
         wrappedGridList.setModel(null);
         super.setModel(model);
         wrappedGridList.setModel(wrappedGridListModel = copyModel(model));
+        updateCellSizes(true, true);
     }
 
     private static DefaultListModel copyModel(ListModel m) {
