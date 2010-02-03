@@ -22,7 +22,7 @@ public class ConvolutionVolumeBuffer extends VolumeBuffer
         this.volumeObject = volumeObject;
         
         shader.addProgramUniform( "volTex" );
-        shader.addProgramUniform( "winTex" );
+        //shader.addProgramUniform( "winTex" );
         shader.addProgramUniform( "xStep" );
         shader.addProgramUniform( "yStep" );
         shader.addProgramUniform( "zStep" );
@@ -56,10 +56,10 @@ public class ConvolutionVolumeBuffer extends VolumeBuffer
         
         shader.bindUniform( "volTex", 1 );
         
-        gl.glActiveTexture( GL_TEXTURE2 );
-        volumeObject.bindWindowingTexture(gl);
-
-        shader.bindUniform( "winTex", 2 );
+//        gl.glActiveTexture( GL_TEXTURE2 );
+//        volumeObject.bindWindowingTexture(gl);
+//
+//        shader.bindUniform( "winTex", 2 );
         
         shader.bindUniform( "xStep", 1.0f / getSize().getWidth() );
         shader.bindUniform( "yStep", 1.0f / getSize().getHeight() );

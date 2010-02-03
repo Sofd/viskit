@@ -30,7 +30,7 @@ public class ARBShader extends Shader
     }
     
     @Override
-    public void cleanUp() {
+    public void cleanUp( GL2 gl ) {
         gl.glDeleteProgramsARB(2, ids, 0);
     }
 

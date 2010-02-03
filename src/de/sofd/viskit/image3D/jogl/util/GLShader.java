@@ -198,7 +198,7 @@ public class GLShader extends Shader
     }
 
     @Override
-    public void cleanUp() {
+    public void cleanUp( GL2 gl ) {
         gl.glDeleteShader(shader);
         gl.glDeleteProgram(program);
     }

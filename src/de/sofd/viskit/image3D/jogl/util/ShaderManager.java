@@ -59,9 +59,9 @@ public class ShaderManager
         getARB( shName ).unbind();
     }
 
-    public static void cleanUp() {
+    public static void cleanUp( GL2 gl ) {
         for ( Shader shader : shMap.values() )
-            shader.cleanUp();
+            shader.cleanUp( gl );
         
     }
 }

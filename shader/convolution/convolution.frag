@@ -1,7 +1,7 @@
 #version 130
 
 uniform sampler3D volTex;
-uniform sampler2D winTex;
+//uniform sampler2D winTex;
 
 uniform float xStep;
 uniform float yStep;
@@ -11,7 +11,7 @@ in vec3 tc;
 
 out vec4 gl_FragColor;
 
-float getWindowed( in vec3 texPos ) {
+/* float getWindowed( in vec3 texPos ) {
 	float windowCenter = texture2D(winTex, vec2(0, texPos.z) ).a * 2.0f;
 	float windowWidth = texture2D(winTex, vec2(1, texPos.z) ).a * 2.0f;
 	
@@ -37,7 +37,7 @@ float getWindowed( in vec3 texPos, in float orgValue ) {
 	if ( value > 1.0f ) value = 1.0f;
 	
 	return value;	
-}
+}*/
 
 float getValue( in vec3 texPos ) {
 	return texture(volTex, texPos).r;
@@ -79,6 +79,7 @@ void main() {
 	
 	value /= 4;
 	
-	gl_FragColor.r = getWindowed(tc, value);
+	//gl_FragColor.r = getWindowed(tc, value);
+	gl_FragColor.r = value;
 	
 } 

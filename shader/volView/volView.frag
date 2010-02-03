@@ -3,7 +3,7 @@
 uniform sampler3D volTex;
 //uniform sampler3D gradientTex;
 uniform sampler2D backTex;
-//uniform sampler2D winTex;
+uniform sampler2D winTex;
 uniform sampler2D transferTex;
 
 in vec3 texCoord;
@@ -39,18 +39,32 @@ uniform float zStep;
 
 out vec4 gl_FragColor;
 
+float getWindowed( in vec3 texPos ) {
+	float windowCenter = texture2D(winTex, vec2(0, texPos.z) ).a * 2.0f;
+	float windowWidth = texture2D(winTex, vec2(1, texPos.z) ).a * 2.0f;
+	
+	float value = 0.0f;
+	
+	value = ( 0.5f + ( texture(volTex, texPos).r - windowCenter ) / windowWidth );
+		
+	if ( value < 0.0f ) value = 0.0f;
+	if ( value > 1.0f ) value = 1.0f;
+	
+	return value;	
+}
+
 vec4 getNormal( in vec3 texPos ) {
 	vec4 result;
 
 	vec3 sample1;
 	vec3 sample2;
-	sample1.x = texture(volTex, vec3(texPos.x + xStep, texPos.y, texPos.z) ).r;
-	sample1.y = texture(volTex, vec3(texPos.x, texPos.y - yStep, texPos.z) ).r;
-	sample1.z = texture(volTex, vec3(texPos.x, texPos.y, texPos.z + zStep) ).r;
+	sample1.x = getWindowed(vec3(texPos.x + xStep, texPos.y, texPos.z) );
+	sample1.y = getWindowed(vec3(texPos.x, texPos.y - yStep, texPos.z) );
+	sample1.z = getWindowed(vec3(texPos.x, texPos.y, texPos.z + zStep) );
 	
-	sample2.x = texture(volTex, vec3(texPos.x - xStep, texPos.y, texPos.z) ).r;
-	sample2.y = texture(volTex, vec3(texPos.x, texPos.y + yStep, texPos.z) ).r;
-	sample2.z = texture(volTex, vec3(texPos.x, texPos.y, texPos.z - zStep) ).r;
+	sample2.x = getWindowed(vec3(texPos.x - xStep, texPos.y, texPos.z) );
+	sample2.y = getWindowed(vec3(texPos.x, texPos.y + yStep, texPos.z) );
+	sample2.z = getWindowed(vec3(texPos.x, texPos.y, texPos.z - zStep) );
 	
 	result.xyz = sample2 - sample1;
 	
@@ -149,7 +163,8 @@ void main() {
 	
 	for ( int i=0; i<steps; ++i )
 	{
-		tfCoord.y = texture(volTex, rayPos).r;
+		//tfCoord.y = texture(volTex, rayPos).r;
+		tfCoord.y = getWindowed( rayPos );
 		
 		tfColor = texture2D( transferTex, tfCoord );
 				

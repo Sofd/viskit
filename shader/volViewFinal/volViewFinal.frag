@@ -3,7 +3,7 @@
 uniform sampler3D volTex;
 //uniform sampler3D gradientTex;
 uniform sampler2D backTex;
-//uniform sampler2D winTex;
+uniform sampler2D winTex;
 uniform sampler2D transferTex;
 
 in vec3 texCoord;
@@ -47,6 +47,20 @@ float getValue( in float x, in float y, in float z ) {
 	//return 0;
 }
 
+float getWindowed( in vec3 texPos ) {
+	float windowCenter = texture2D(winTex, vec2(0, texPos.z) ).a * 2.0f;
+	float windowWidth = texture2D(winTex, vec2(1, texPos.z) ).a * 2.0f;
+	
+	float value = 0.0f;
+	
+	value = ( 0.5f + ( texture(volTex, texPos).r - windowCenter ) / windowWidth );
+		
+	if ( value < 0.0f ) value = 0.0f;
+	if ( value > 1.0f ) value = 1.0f;
+	
+	return value;	
+}
+
 /*vec4 getNormal( in vec3 texPos ) {
 	vec4 result;
 
@@ -82,84 +96,84 @@ vec4 getNormal( in vec3 tc ) {
 		float fak3 = 0.25f;
 		
 		//sobel
-		value = fak3 * getValue(tc.x - xStep, tc.y - yStep, tc.z - zStep);
+		value = fak3 * getWindowed(vec3(tc.x - xStep, tc.y - yStep, tc.z - zStep));
 		gradient.x += value; gradient.y -= value; gradient.z += value;
 		
-		value = fak2 * getValue(tc.x - xStep, tc.y - yStep, tc.z);
+		value = fak2 * getWindowed(vec3(tc.x - xStep, tc.y - yStep, tc.z));
 		gradient.x += value; gradient.y -= value;
 		
-		value = fak3 * getValue(tc.x - xStep, tc.y - yStep, tc.z + zStep);
+		value = fak3 * getWindowed(vec3(tc.x - xStep, tc.y - yStep, tc.z + zStep));
 		gradient.x += value; gradient.y -= value; gradient.z -= value;
 		
-		value = fak2 * getValue(tc.x - xStep, tc.y, tc.z - zStep);
+		value = fak2 * getWindowed(vec3(tc.x - xStep, tc.y, tc.z - zStep));
 		gradient.x += value; gradient.z += value;
 		
-		value = getValue(tc.x - xStep, tc.y, tc.z);
+		value = getWindowed(vec3(tc.x - xStep, tc.y, tc.z));
 		gradient.x += value;
 		
-		value = fak2 * getValue(tc.x - xStep, tc.y, tc.z + zStep);
+		value = fak2 * getWindowed(vec3(tc.x - xStep, tc.y, tc.z + zStep));
 		gradient.x += value; gradient.z -= value;
 		
-		value = fak3 * getValue(tc.x - xStep, tc.y + yStep, tc.z - zStep);
+		value = fak3 * getWindowed(vec3(tc.x - xStep, tc.y + yStep, tc.z - zStep));
 		gradient.x += value; gradient.y += value; gradient.z += value;
 		
-		value = fak2 * getValue(tc.x - xStep, tc.y + yStep, tc.z);
+		value = fak2 * getWindowed(vec3(tc.x - xStep, tc.y + yStep, tc.z));
 		gradient.x += value; gradient.y += value; 
 		
-		value = fak3 * getValue(tc.x - xStep, tc.y + yStep, tc.z + zStep);
+		value = fak3 * getWindowed(vec3(tc.x - xStep, tc.y + yStep, tc.z + zStep));
 		gradient.x += value; gradient.y += value; gradient.z -= value;
 		
 		
-		value = fak2 * getValue(tc.x, tc.y - yStep, tc.z - zStep);
+		value = fak2 * getWindowed(vec3(tc.x, tc.y - yStep, tc.z - zStep));
 		gradient.y -= value; gradient.z += value;
 		
-		value = getValue(tc.x, tc.y - yStep, tc.z);
+		value = getWindowed(vec3(tc.x, tc.y - yStep, tc.z));
 		gradient.y -= value;
 		
-		value = fak2 * getValue(tc.x, tc.y - yStep, tc.z + zStep);
+		value = fak2 * getWindowed(vec3(tc.x, tc.y - yStep, tc.z + zStep));
 		gradient.y -= value; gradient.z -= value;
 		
-		value = getValue(tc.x, tc.y, tc.z - zStep);
+		value = getWindowed(vec3(tc.x, tc.y, tc.z - zStep));
 		gradient.z += value;
 		
-		value = getValue(tc.x, tc.y, tc.z + zStep);
+		value = getWindowed(vec3(tc.x, tc.y, tc.z + zStep));
 		gradient.z -= value;
 		
-		value = fak2 * getValue(tc.x, tc.y + yStep, tc.z - zStep);
+		value = fak2 * getWindowed(vec3(tc.x, tc.y + yStep, tc.z - zStep));
 		gradient.y += value; gradient.z += value;
 		
-		value = getValue(tc.x, tc.y + yStep, tc.z);
+		value = getWindowed(vec3(tc.x, tc.y + yStep, tc.z));
 		gradient.y += value; 
 		
-		value = fak2 * getValue(tc.x, tc.y + yStep, tc.z + zStep);
+		value = fak2 * getWindowed(vec3(tc.x, tc.y + yStep, tc.z + zStep));
 		gradient.y += value; gradient.z -= value;
 		
 		
-		value = fak3 * getValue(tc.x + xStep, tc.y - yStep, tc.z - zStep);
+		value = fak3 * getWindowed(vec3(tc.x + xStep, tc.y - yStep, tc.z - zStep));
 		gradient.x -= value; gradient.y -= value; gradient.z += value;
 		
-		value = fak2 * getValue(tc.x + xStep, tc.y - yStep, tc.z);
+		value = fak2 * getWindowed(vec3(tc.x + xStep, tc.y - yStep, tc.z));
 		gradient.x -= value; gradient.y -= value;
 		
-		value = fak3 * getValue(tc.x + xStep, tc.y - yStep, tc.z + zStep);
+		value = fak3 * getWindowed(vec3(tc.x + xStep, tc.y - yStep, tc.z + zStep));
 		gradient.x -= value; gradient.y -= value; gradient.z -= value;
 		
-		value = fak2 * getValue(tc.x + xStep, tc.y, tc.z - zStep);
+		value = fak2 * getWindowed(vec3(tc.x + xStep, tc.y, tc.z - zStep));
 		gradient.x -= value; gradient.z += value;
 		
-		value = getValue(tc.x + xStep, tc.y, tc.z);
+		value = getWindowed(vec3(tc.x + xStep, tc.y, tc.z));
 		gradient.x -= value;
 		
-		value = fak2 * getValue(tc.x + xStep, tc.y, tc.z + zStep);
+		value = fak2 * getWindowed(vec3(tc.x + xStep, tc.y, tc.z + zStep));
 		gradient.x -= value; gradient.z -= value;
 		
-		value = fak3 * getValue(tc.x + xStep, tc.y + yStep, tc.z - zStep);
+		value = fak3 * getWindowed(vec3(tc.x + xStep, tc.y + yStep, tc.z - zStep));
 		gradient.x -= value; gradient.y += value; gradient.z += value;
 		
-		value = fak2 * getValue(tc.x + xStep, tc.y + yStep, tc.z);
+		value = fak2 * getWindowed(vec3(tc.x + xStep, tc.y + yStep, tc.z));
 		gradient.x -= value; gradient.y += value; 
 		
-		value = fak3 * getValue(tc.x + xStep, tc.y + yStep, tc.z + zStep);
+		value = fak3 * getWindowed(vec3(tc.x + xStep, tc.y + yStep, tc.z + zStep));
 		gradient.x -= value; gradient.y += value; gradient.z -= value;
 		
 		//gradient.a = length( gradient.xyz ) / sqrt(3*pow(1+4*fak2+4*fak3, 2));
@@ -260,7 +274,7 @@ void main() {
 	
 	for ( int i=0; i<steps; ++i )
 	{
-		tfCoord.y = texture(volTex, rayPos).r;
+		tfCoord.y = getWindowed( rayPos );
 		
 		tfColor = texture2D( transferTex, tfCoord );
 				

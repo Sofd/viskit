@@ -79,7 +79,7 @@ public class GPUVolumeView extends GLCanvas implements GLEventListener
         display( false );
     }
     
-    public void display(boolean renderFinal)
+    public synchronized void display(boolean renderFinal)
     {
         if ( ! displayable ) return;
         
@@ -95,11 +95,12 @@ public class GPUVolumeView extends GLCanvas implements GLEventListener
         GL2 gl = drawable.getGL().getGL2();
         
         if ( cleanup ) {
+            displayable = false;
+            
             renderFbo.cleanUp(gl);
             volumeObject.cleanUp(gl);
-            ShaderManager.cleanUp();
+            ShaderManager.cleanUp(gl);
             cleanup = false;
-            displayable = false;
             return;
         }
 
@@ -235,11 +236,11 @@ public class GPUVolumeView extends GLCanvas implements GLEventListener
             ShaderManager.read( gl, "transferIntegration" );
 
             addUniforms("volView", new String[]{"screenWidth", "screenHeight", "sliceStep", "alpha", "volTex", "backTex",
-                    "transferTex", "ambient", "diffuse", "specExp", "useLighting", "gradientLimit", "eyePos", "lightPos",
+                    "transferTex", "winTex", "ambient", "diffuse", "specExp", "useLighting", "gradientLimit", "eyePos", "lightPos",
                     "xMin", "xMax", "yMin", "yMax", "zMin", "zMax", "nDiff", "xStep", "yStep", "zStep"});
             
             addUniforms("volViewFinal", new String[]{"screenWidth", "screenHeight", "sliceStep", "alpha", "volTex", "backTex",
-                    "transferTex", "ambient", "diffuse", "specExp", "useLighting", "gradientLimit", "eyePos", "lightPos",
+                    "transferTex", "winTex", "ambient", "diffuse", "specExp", "useLighting", "gradientLimit", "eyePos", "lightPos",
                     "xMin", "xMax", "yMin", "yMax", "zMin", "zMax", "nDiff", "xStep", "yStep", "zStep"});
             
                         

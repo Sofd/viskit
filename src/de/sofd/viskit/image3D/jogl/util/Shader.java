@@ -21,7 +21,7 @@ public abstract class Shader
     
     public abstract void bind();
     
-    public abstract void cleanUp(); 
+    public abstract void cleanUp( GL2 gl ); 
     
     protected String readShader( String fname ) throws IOException
     {

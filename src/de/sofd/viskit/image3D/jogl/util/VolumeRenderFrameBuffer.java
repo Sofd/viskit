@@ -161,6 +161,8 @@ public class VolumeRenderFrameBuffer extends FrameBuffer {
     }
 
     public void resize(GL2 gl, int width, int height) throws Exception {
+        
+        System.out.println( "width : " + width + ", height : " + height);
         gl.glEnable(GL_TEXTURE_2D);
 
         size.setWidth(width);
@@ -228,9 +230,9 @@ public class VolumeRenderFrameBuffer extends FrameBuffer {
 
         renderShader.bindUniform("volTex", 3);
 
-        // gl.glActiveTexture( GL_TEXTURE2 );
-        // volumeObject.bindWindowingTexture( gl );
-        // ShaderManager.get( "volView" ).bindUniform( "winTex", 2 );
+         gl.glActiveTexture( GL_TEXTURE2 );
+         volumeObject.bindWindowingTexture( gl );
+         ShaderManager.get( "volView" ).bindUniform( "winTex", 2 );
 
         gl.glActiveTexture(GL_TEXTURE1);
         gl.glBindTexture(GL_TEXTURE_2D, theBackFaceTex);
@@ -270,10 +272,10 @@ public class VolumeRenderFrameBuffer extends FrameBuffer {
         renderShader.bindUniform("zMin", constraint.getZ().getMin());
         renderShader.bindUniform("zMax", constraint.getZ().getMax());
 
-        float alpha = volumeObject.getVolumeConfig().getRenderConfig().getAlpha();
-        renderShader.bindUniform("xStep", alpha * 2.0f / (float) volumeObject.getSizeX());
-        renderShader.bindUniform("yStep", alpha * 2.0f / (float) volumeObject.getSizeY());
-        renderShader.bindUniform("zStep", alpha * 2.0f / (float) volumeObject.getSizeZ());
+        float gradLength = volumeObject.getVolumeConfig().getLightingConfig().getGradientLength();
+        renderShader.bindUniform("xStep", gradLength / (float) volumeObject.getSizeX());
+        renderShader.bindUniform("yStep", gradLength / (float) volumeObject.getSizeY());
+        renderShader.bindUniform("zStep", gradLength / (float) volumeObject.getSizeZ());
         
         L[2] = volumeObject.getVolumeConfig().getLightingConfig().getLightPos();
 
