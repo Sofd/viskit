@@ -48,7 +48,7 @@ public class RoiToolPanel extends javax.swing.JPanel {
         roiButtonGroup.add(selectorToggleButton);
         selectorToggleButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/de/sofd/viskit/ui/selector.png"))); // NOI18N
         selectorToggleButton.setSelected(true);
-        selectorToggleButton.setToolTipText("Selector");
+        selectorToggleButton.setToolTipText("ROI Selector");
         selectorToggleButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 toolButtonClicked(evt);
@@ -57,7 +57,7 @@ public class RoiToolPanel extends javax.swing.JPanel {
 
         roiButtonGroup.add(ellipseToggleButton);
         ellipseToggleButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/de/sofd/viskit/ui/ellipse.png"))); // NOI18N
-        ellipseToggleButton.setToolTipText("Ellipse");
+        ellipseToggleButton.setToolTipText("Draw ROI Ellipse");
         ellipseToggleButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 toolButtonClicked(evt);
@@ -66,7 +66,7 @@ public class RoiToolPanel extends javax.swing.JPanel {
 
         roiButtonGroup.add(rectangleToggleButton);
         rectangleToggleButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/de/sofd/viskit/ui/rectangle.png"))); // NOI18N
-        rectangleToggleButton.setToolTipText("Rectangle");
+        rectangleToggleButton.setToolTipText("Draw ROI Rectangle");
         rectangleToggleButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 toolButtonClicked(evt);
@@ -75,7 +75,7 @@ public class RoiToolPanel extends javax.swing.JPanel {
 
         roiButtonGroup.add(polygonToggleButton);
         polygonToggleButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/de/sofd/viskit/ui/polygon.png"))); // NOI18N
-        polygonToggleButton.setToolTipText("Polygon");
+        polygonToggleButton.setToolTipText("Draw ROI Polygon");
         polygonToggleButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 toolButtonClicked(evt);
@@ -131,11 +131,11 @@ public class RoiToolPanel extends javax.swing.JPanel {
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JToggleButton ellipseToggleButton;
-    private javax.swing.JToggleButton polygonToggleButton;
-    private javax.swing.JToggleButton rectangleToggleButton;
+    javax.swing.JToggleButton ellipseToggleButton;
+    javax.swing.JToggleButton polygonToggleButton;
+    javax.swing.JToggleButton rectangleToggleButton;
     private javax.swing.ButtonGroup roiButtonGroup;
-    private javax.swing.JToggleButton selectorToggleButton;
+    javax.swing.JToggleButton selectorToggleButton;
     // End of variables declaration//GEN-END:variables
 
     static final Logger log4jLogger = Logger.getLogger(RoiToolPanel.class);

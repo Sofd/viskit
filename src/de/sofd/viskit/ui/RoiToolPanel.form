@@ -47,7 +47,7 @@
           <Image iconType="3" name="/de/sofd/viskit/ui/selector.png"/>
         </Property>
         <Property name="selected" type="boolean" value="true"/>
-        <Property name="toolTipText" type="java.lang.String" value="Selector"/>
+        <Property name="toolTipText" type="java.lang.String" value="ROI Selector"/>
       </Properties>
       <Events>
         <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="toolButtonClicked"/>
@@ -64,7 +64,7 @@
         <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
           <Image iconType="3" name="/de/sofd/viskit/ui/ellipse.png"/>
         </Property>
-        <Property name="toolTipText" type="java.lang.String" value="Ellipse"/>
+        <Property name="toolTipText" type="java.lang.String" value="Draw ROI Ellipse"/>
       </Properties>
       <Events>
         <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="toolButtonClicked"/>
@@ -81,7 +81,7 @@
         <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
           <Image iconType="3" name="/de/sofd/viskit/ui/rectangle.png"/>
         </Property>
-        <Property name="toolTipText" type="java.lang.String" value="Rectangle"/>
+        <Property name="toolTipText" type="java.lang.String" value="Draw ROI Rectangle"/>
       </Properties>
       <Events>
         <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="toolButtonClicked"/>
@@ -98,7 +98,7 @@
         <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
           <Image iconType="3" name="/de/sofd/viskit/ui/polygon.png"/>
         </Property>
-        <Property name="toolTipText" type="java.lang.String" value="Polygon"/>
+        <Property name="toolTipText" type="java.lang.String" value="Draw ROI Polygon"/>
       </Properties>
       <Events>
         <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="toolButtonClicked"/>

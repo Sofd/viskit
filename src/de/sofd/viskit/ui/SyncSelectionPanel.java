@@ -5,6 +5,8 @@
 
 package de.sofd.viskit.ui;
 
+import javax.swing.JToggleButton;
+
 /**
  *
  * @author sofds GmbH
@@ -30,9 +32,13 @@ public class SyncSelectionPanel extends javax.swing.JPanel {
         syncSelectionToggleButton = new javax.swing.JToggleButton();
         keepRelativeToggleButton = new javax.swing.JToggleButton();
 
+        setBorder(javax.swing.BorderFactory.createEtchedBorder());
+
         syncSelectionToggleButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/de/sofd/viskit/ui/link_obj.gif"))); // NOI18N
+        syncSelectionToggleButton.setToolTipText("Synchronize Selection");
 
         keepRelativeToggleButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/de/sofd/viskit/ui/targetinternal_obj.gif"))); // NOI18N
+        keepRelativeToggleButton.setToolTipText("Keep Relative Indices");
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
@@ -55,5 +61,21 @@ public class SyncSelectionPanel extends javax.swing.JPanel {
     protected javax.swing.JToggleButton keepRelativeToggleButton;
     protected javax.swing.JToggleButton syncSelectionToggleButton;
     // End of variables declaration//GEN-END:variables
+
+    public JToggleButton getKeepRelativeToggleButton() {
+        return keepRelativeToggleButton;
+    }
+
+    public void setKeepRelativeToggleButton(JToggleButton keepRelativeToggleButton) {
+        this.keepRelativeToggleButton = keepRelativeToggleButton;
+    }
+
+    public JToggleButton getSyncSelectionToggleButton() {
+        return syncSelectionToggleButton;
+    }
+
+    public void setSyncSelectionToggleButton(JToggleButton syncSelectionToggleButton) {
+        this.syncSelectionToggleButton = syncSelectionToggleButton;
+    }
 
 }
