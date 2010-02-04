@@ -1,6 +1,9 @@
 package de.sofd.viskit.ui.imagelist.jlistimpl.test;
 
 import java.awt.BorderLayout;
+import java.awt.GraphicsConfiguration;
+import java.awt.GraphicsDevice;
+import java.awt.GraphicsEnvironment;
 import java.awt.event.ActionEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
@@ -61,6 +64,19 @@ import de.sofd.viskit.ui.imagelist.gridlistimpl.JGridImageListView;
 public class JListImageListTestApp {
 
     public JListImageListTestApp() throws Exception {
+        GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
+        GraphicsDevice[] gs = ge.getScreenDevices();
+        
+        //// creating the frames as follows reproduces OpenGL event handling bugs under Linux/nVidia
+        //JFrame f1 = newFrame("Viskit ImageList test app window 1", gs[0].getDefaultConfiguration());
+        //JFrame f2 = newFrame("Viskit ImageList test app window 2", (gs.length > 1 ? gs[1].getDefaultConfiguration() : null));
+
+        //// creating them like this apparently works better
+        JFrame f1 = newFrame("Viskit ImageList test app window 1", null);
+        JFrame f2 = newFrame("Viskit ImageList test app window 2", null);
+    }
+    
+    public JFrame newFrame(String frameTitle, GraphicsConfiguration graphicsConfig) throws Exception {
         //final DefaultListModel model = new DefaultListModel();
         final DefaultListModel model = getViewerListModelForDirectory(new File("/home/olaf/gi/resources/DICOM-Testbilder/1578"));
         //final DefaultListModel model = getViewerListModelForDirectory(new File("/shares/shared/projekts/disk312043/Images/cd822__center4001"));
@@ -120,7 +136,7 @@ public class JListImageListTestApp {
             }
         });
 
-        final JFrame f = new JFrame("JListImageListView test");
+        final JFrame f = (graphicsConfig == null ? new JFrame(frameTitle) : new JFrame(frameTitle, graphicsConfig));
         JToolBar toolbar = new JToolBar("toolbar");
         toolbar.setFloatable(false);
         toolbar.add(new AbstractAction("+Img") {
@@ -266,6 +282,8 @@ public class JListImageListTestApp {
         f.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         f.setSize(900, 900);
         f.setVisible(true);
+        
+        return f;
     }
 
     protected static DefaultListModel getViewerListModelForDirectory(File dir) {
