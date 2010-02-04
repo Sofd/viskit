@@ -59,7 +59,9 @@ public class SharedContextData {
     void unref() {
         if (refCount == 0) {
             // TODO: this is triggered when the user scrolls through the grid quickly. Investigate!
-            throw new IllegalStateException("too many unref calls...");
+            //throw new IllegalStateException("too many unref calls...");
+            System.err.println("too many unref calls...");
+            return;
         }
         refCount--;
         if (refCount == 0) {
