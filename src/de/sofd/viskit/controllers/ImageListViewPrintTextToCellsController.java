@@ -66,6 +66,9 @@ public class ImageListViewPrintTextToCellsController {
         boolean oldEnabled = this.enabled;
         this.enabled = enabled;
         propertyChangeSupport.firePropertyChange(PROP_ENABLED, oldEnabled, enabled);
+        if (controlledImageListView != null) {
+            controlledImageListView.refreshCells();
+        }
     }
 
     public Color getTextColor() {
@@ -111,12 +114,13 @@ public class ImageListViewPrintTextToCellsController {
         this.controlledImageListView = controlledImageListView;
         if (null != oldControlledImageListView) {
             oldControlledImageListView.removeCellPaintListener(cellPaintListener);
+            oldControlledImageListView.refreshCells();
         }
         if (null != controlledImageListView) {
             controlledImageListView.addCellPaintListener(JImageListView.PAINT_ZORDER_LABELS, cellPaintListener);
         }
         propertyChangeSupport.firePropertyChange(PROP_CONTROLLEDIMAGELISTVIEW, oldControlledImageListView, controlledImageListView);
-        // TODO: initiate a list repaint?
+        controlledImageListView.refreshCells();
     }
 
     private ImageListViewCellPaintListener cellPaintListener = new ImageListViewCellPaintListener() {
