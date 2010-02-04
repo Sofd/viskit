@@ -265,7 +265,7 @@ public class JGridImageListView extends JImageListView {
 
     @Override
     public void refreshCells() {
-        wrappedGridList.repaint();
+        wrappedGridList.repaintCells();
     }
 
     public RendererType getRendererType() {
