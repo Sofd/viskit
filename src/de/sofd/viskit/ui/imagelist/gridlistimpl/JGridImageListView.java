@@ -2,6 +2,7 @@ package de.sofd.viskit.ui.imagelist.gridlistimpl;
 
 import de.sofd.swing.AbstractFramedSelectionGridListComponentFactory;
 import de.sofd.swing.JGridList;
+import de.sofd.util.DynScope;
 import de.sofd.util.Misc;
 import de.sofd.viskit.model.DicomImageListViewModelElement;
 import de.sofd.viskit.ui.imagelist.ImageListViewCell;
@@ -443,13 +444,31 @@ public class JGridImageListView extends JImageListView {
         }
     }
 
+    /**
+     * (hack) {@link DynScope} key that other parties may use to pass in the
+     * originating source cell of a mouse event. The value MUST be an object
+     * array containing the cell and the cell viewer component.
+     */
+    public static final String DSK_ORIGINAL_EVENT_SOURCE_CELL = JGridImageListView.class.getName() + ".dsk_originalEventSourceCell";
+    
     protected void dispatchEventToCell(MouseEvent evt) {
-        int clickedModelIndex = wrappedGridList.findModelIndexAt(evt.getPoint());
-        if (clickedModelIndex != -1) {
-            ImageListViewCell cell = getCell(clickedModelIndex);
-            Point mousePosInCell = SwingUtilities.convertPoint(wrappedGridList, evt.getPoint(), wrappedGridList.getComponentFor(clickedModelIndex));
+        ImageListViewCell sourceCell = null;
+        JComponent sourceComponent = null;
+        if (DynScope.contains(DSK_ORIGINAL_EVENT_SOURCE_CELL)) {
+            Object[] cellAndComponent = (Object[]) DynScope.get(DSK_ORIGINAL_EVENT_SOURCE_CELL);
+            sourceCell = (ImageListViewCell) cellAndComponent[0];
+            sourceComponent = (JComponent) cellAndComponent[1];
+        } else {
+            int clickedModelIndex = wrappedGridList.findModelIndexAt(evt.getPoint());
+            if (clickedModelIndex != -1) {
+                sourceCell = getCell(clickedModelIndex);
+                sourceComponent = wrappedGridList.getComponentFor(clickedModelIndex);
+            }
+        }
+        if (sourceCell != null) {
+            Point mousePosInCell = SwingUtilities.convertPoint(wrappedGridList, evt.getPoint(), sourceComponent);
             MouseEvent ce = Misc.deepCopy(evt);
-            ce.setSource(cell);
+            ce.setSource(sourceCell);
             ce.translatePoint(mousePosInCell.x - ce.getX(), mousePosInCell.y - ce.getY());
             if (ce instanceof MouseWheelEvent) {
                 fireCellMouseWheelEvent((MouseWheelEvent) ce);

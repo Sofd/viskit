@@ -2,6 +2,7 @@ package de.sofd.viskit.ui.imagelist.cellviewers.jogl;
 
 import com.sun.opengl.util.texture.TextureCoords;
 import de.sofd.lang.Runnable2;
+import de.sofd.util.DynScope;
 import de.sofd.util.IdentityHashSet;
 import de.sofd.util.Misc;
 import de.sofd.viskit.draw2d.gc.ViskitGC;
@@ -11,6 +12,7 @@ import de.sofd.viskit.ui.imagelist.ImageListViewCell;
 import de.sofd.viskit.ui.imagelist.JImageListView;
 import de.sofd.viskit.ui.imagelist.cellviewers.BaseImageListViewCellViewer;
 import de.sofd.viskit.ui.imagelist.event.ImageListViewCellPaintEvent;
+import de.sofd.viskit.ui.imagelist.gridlistimpl.JGridImageListView;
 
 import java.awt.AWTEvent;
 import java.awt.Component;
@@ -117,8 +119,8 @@ public class GLImageListViewCellViewer extends BaseImageListViewCellViewer {
                 // if the mouse pointer was lilngering over them
                 return;
             }
-            Component target = gridListCellContainer.getParent();
-            AWTEvent targetEvent;
+            final Component target = gridListCellContainer.getParent();
+            final AWTEvent targetEvent;
             if (e instanceof MouseEvent) {
                 MouseEvent me = (MouseEvent) e;
                 Point targetPoint = SwingUtilities.convertPoint(me.getComponent(), me.getPoint(), target);
@@ -150,8 +152,18 @@ public class GLImageListViewCellViewer extends BaseImageListViewCellViewer {
                 targetEvent = Misc.deepCopy(e);
                 targetEvent.setSource(target);
             }
-            target.dispatchEvent(targetEvent);
+            Object[] cellAndComponent = new Object[] {
+                    getDisplayedCell(),
+                    GLImageListViewCellViewer.this
+            };
+            DynScope.runWith(new DynScope.Tuple(JGridImageListView.DSK_ORIGINAL_EVENT_SOURCE_CELL, cellAndComponent), new Runnable() {
+                @Override
+                public void run() {
+                    target.dispatchEvent(targetEvent);
+                }
+            });
         }
+
     }
 
     public GLImageListViewCellViewer(ImageListViewCell cell) {
@@ -281,7 +293,7 @@ public class GLImageListViewCellViewer extends BaseImageListViewCellViewer {
 
         @Override
         public void display(GLAutoDrawable glAutoDrawable) {
-            System.out.println("DISP " + drawableToString(glAutoDrawable));
+            //System.out.println("DISP " + drawableToString(glAutoDrawable));
 
             displayedCell.setLatestSize(getSize());
 
