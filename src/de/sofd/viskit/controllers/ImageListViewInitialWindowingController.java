@@ -91,18 +91,24 @@ public class ImageListViewInitialWindowingController {
         if (null != oldControlledImageListView) {
             oldControlledImageListView.removeCellPaintListener(cellHandler);
             oldControlledImageListView.removeCellPropertyChangeListener(cellHandler);
+            oldControlledImageListView.removePropertyChangeListener(reseterOnModelChange);
         }
         if (null != controlledImageListView) {
             // add the paint listener below the image in the z-order, so it will be invoked
             // before the image (and anything else, most likely) is drawn
             controlledImageListView.addCellPaintListener(JImageListView.PAINT_ZORDER_IMAGE - 1, cellHandler);
             controlledImageListView.addCellPropertyChangeListener(cellHandler);
+            controlledImageListView.addPropertyChangeListener(reseterOnModelChange);
             alreadyInitializedImagesKeys.clear();
         }
         propertyChangeSupport.firePropertyChange(PROP_CONTROLLEDIMAGELISTVIEW, oldControlledImageListView, controlledImageListView);
         // TODO: initiate a list repaint?
     }
 
+    public void reset() {
+        alreadyInitializedImagesKeys.clear();
+    }
+    
     /**
      * Keys ( {@link ImageListViewModelElement#getImageKey()} of model elements
      * that have already been initialized.
@@ -162,6 +168,17 @@ public class ImageListViewInitialWindowingController {
             // change that cell's windowing parameters anymore now
             ImageListViewCell sourceCell = (ImageListViewCell) evt.getSource();
             alreadyInitializedImagesKeys.add(sourceCell.getDisplayedModelElement().getImageKey());
+        }
+    };
+
+
+    private PropertyChangeListener reseterOnModelChange = new PropertyChangeListener() {
+        @Override
+        public void propertyChange(PropertyChangeEvent evt) {
+            if (!evt.getPropertyName().equals(JImageListView.PROP_MODEL)) {
+                return;
+            }
+            reset();
         }
     };
 
