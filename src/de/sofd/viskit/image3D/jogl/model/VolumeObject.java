@@ -571,6 +571,9 @@ public class VolumeObject {
 
             break;
         case WINDOWING_MODE_GLOBAL_ABSOLUTE:
+            System.out.println("windowing size " + windowing.capacity());
+            System.out.println("getNrOfImages() " + getNrOfImages());
+            
             for (int i = 0; i < getNrOfImages(); ++i) {
                 windowing.put(i * 2, value);
             }

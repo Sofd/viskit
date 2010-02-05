@@ -133,7 +133,7 @@ public class Reticle extends Component
     {
         gl.glEnable( GL_TEXTURE_2D );
         gl.glEnable( GL_BLEND );
-        gl.glBlendFunc( GL_ONE, GL_ONE_MINUS_SRC_ALPHA );
+        gl.glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA );
 
         showLineTop( gl );
         showLineRight( gl );

@@ -72,7 +72,7 @@ public class DicomUtil {
 
     public static ShortBuffer getWindowing(ArrayList<DicomObject> dicomList, ShortRange range) {
         ShortBuffer windowing = ShortBuffer.allocate(dicomList.size() * 2);
-
+        
         for (DicomObject dicomObject : dicomList) {
             short winCenter = (short) dicomObject.getFloat(Tag.WindowCenter);
             short winWidth = (short) dicomObject.getFloat(Tag.WindowWidth);

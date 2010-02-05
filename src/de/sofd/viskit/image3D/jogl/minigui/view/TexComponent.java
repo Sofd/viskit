@@ -41,7 +41,7 @@ public class TexComponent extends Component
         tex.bind();
         gl.glColor4fv( color, 0 );
         
-        GLUtil.texQuad2D( gl, x, y, width, height, 0, 1, 1, -1 );
+        GLUtil.texQuad2D( gl, x, y - 1, width, height, 0, 1, 1, -1 );
     }
     
 }

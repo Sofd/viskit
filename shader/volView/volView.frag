@@ -156,7 +156,7 @@ void main() {
 	vec4 sumColor = vec4(0.0f);
 	
 	float texValue;
-	float decay = sliceStep * 600;
+	float decay = alpha * sliceStep * 300;
 	
 	vec4 tfColor = vec4(0.0f);
 	vec2 tfCoord = vec2(0.0f);

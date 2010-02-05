@@ -107,7 +107,7 @@ public class DicomInputOutput {
 
         System.out.println("files : " + dir.listFiles().length);
         for (File file : dir.listFiles()) {
-            if (file.isDirectory())
+            if (file.isDirectory() || !file.getPath().endsWith(".dcm"))
                 continue;
 
             DicomInputStream dis = new DicomInputStream(file);
@@ -120,11 +120,14 @@ public class DicomInputOutput {
             dis.close();
             dis = null;
 
-            System.out.println("file " + file.getAbsolutePath());
+            //System.out.println("file " + file.getAbsolutePath());
 
-            if (imageNr < firstSlice || imageNr > lastSlice
+            if ((imageNr + 1 ) < firstSlice || ( imageNr + 1 ) > lastSlice
                     || (imageNr - 1) % stride != 0)
+            {
+                System.out.println("imageNr " + imageNr );
                 continue;
+            }
 
             if (seriesInstanceUID == null
                     || seriesInstanceUID.equals(headerUID)) {
@@ -134,6 +137,8 @@ public class DicomInputOutput {
                 DicomObject dicomObject = dis.readDicomObject();
                 dicomSeries.put(imageNr, dicomObject);
                 dis.close();
+            } else {
+                System.out.println("seriesInstanceUID " + seriesInstanceUID);
             }
         }
 
@@ -144,6 +149,8 @@ public class DicomInputOutput {
             System.out.println("no dicom images");
             System.exit(-1);
         }
+        
+        System.out.println("files read : " + dicomList.size());
 
         return dicomList;
     }
@@ -166,9 +173,12 @@ public class DicomInputOutput {
         VolumeBasicConfig basicConfig = volumeConfig.getBasicConfig();
         
         for (File file : dir.listFiles()) {
-            if (file.isDirectory())
+            if (file.isDirectory() || !file.getPath().endsWith(".dcm"))
                 continue;
 
+
+            //System.out.println(file.getPath());
+            
             DicomInputStream dis = new DicomInputStream(file);
 
             dis.setHandler(new StopTagInputHandler(Tag.PixelData));
