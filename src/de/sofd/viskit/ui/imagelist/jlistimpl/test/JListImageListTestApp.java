@@ -73,16 +73,16 @@ public class JListImageListTestApp {
 
         //// creating them like this apparently works better
         JFrame f1 = newFrame("Viskit ImageList test app window 1", null);
-        JFrame f2 = newFrame("Viskit ImageList test app window 2", null);
+        //JFrame f2 = newFrame("Viskit ImageList test app window 2", null);
     }
     
     public JFrame newFrame(String frameTitle, GraphicsConfiguration graphicsConfig) throws Exception {
-        //final DefaultListModel model = new DefaultListModel();
-        final DefaultListModel model = getViewerListModelForDirectory(new File("/home/olaf/gi/resources/DICOM-Testbilder/1578"));
+        final DefaultListModel model = new DefaultListModel();
+        //final DefaultListModel model = getViewerListModelForDirectory(new File("/home/olaf/gi/resources/DICOM-Testbilder/1578"));
         //final DefaultListModel model = getViewerListModelForDirectory(new File("/shares/shared/projekts/disk312043/Images/cd822__center4001"));
         //final DefaultListModel model = getViewerListModelForDirectory(new File("/shares/shared/projekts/disk312043/Images/cd836__center4001"));
         for (int i = 10; i < 90; i++) {
-            //model.addElement(new TestImageModelElement(i));
+            model.addElement(new TestImageModelElement(i));
             //model.addElement(new FileBasedDicomImageListViewModelElement("/home/olaf/gi/resources/DICOM-Testbilder/1578/f0003563_006" + i + ".dcm"));
             //model.addElement(new FileBasedDicomImageListViewModelElement("/home/olaf/gi/resources/DICOM-Testbilder/24-bit Uncompressed Color.dcm"));
             //model.addElement(new FileBasedDicomImageListViewModelElement("/shares/projects/DICOM-Testbilder/1578/f0003563_006"+i+".dcm"));
@@ -301,6 +301,8 @@ public class JListImageListTestApp {
     }
 
     public static void main(String[] args) throws Exception {
+        //System.out.println("press enter..."); System.in.read();   // use when profiling startup performance
+        System.out.println("go");
         SwingUtilities.invokeLater(new Runnable() {
 
             @Override
