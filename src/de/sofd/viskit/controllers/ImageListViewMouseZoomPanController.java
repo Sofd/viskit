@@ -66,12 +66,7 @@ public class ImageListViewMouseZoomPanController {
 
         private int translateLastX, translateLastY;
 
-        public void changeScaleAndTranslationOfActiveCell(double scaleChange, Point translationChange) {
-            int idx = controlledImageListView.getSelectedIndex();
-            if (idx == -1) {
-                return;
-            }
-            ImageListViewCell cell = controlledImageListView.getCell(idx);
+        public void changeScaleAndTranslationOfCell(ImageListViewCell cell, double scaleChange, Point translationChange) {
             double newScale = cell.getScale() * scaleChange;
             if (newScale > 0.1 && newScale < 10) {
                 cell.setScale(newScale);
@@ -79,7 +74,7 @@ public class ImageListViewMouseZoomPanController {
             Point2D centerOffset = cell.getCenterOffset();
             cell.setCenterOffset(centerOffset.getX() + translationChange.x,
                                  centerOffset.getY() + translationChange.y);
-            controlledImageListView.refreshCellForIndex(idx);
+            cell.refresh();
         }
 
         @Override
@@ -97,7 +92,8 @@ public class ImageListViewMouseZoomPanController {
                         translateLastY = e.getY();
                         return;
                     }
-                    changeScaleAndTranslationOfActiveCell(1.0, new Point(e.getX() - translateLastX, e.getY() - translateLastY));
+                    ImageListViewCell cell = (ImageListViewCell) e.getSource();
+                    changeScaleAndTranslationOfCell(cell, 1.0, new Point(e.getX() - translateLastX, e.getY() - translateLastY));
                     translateLastX = e.getX();
                     translateLastY = e.getY();
                     e.consume();
@@ -109,7 +105,8 @@ public class ImageListViewMouseZoomPanController {
         public void mouseWheelMoved(MouseWheelEvent e) {
             if (e.isShiftDown()) {
                 double scaleChange = (e.getWheelRotation() < 0 ? 110.0/100.0 : 100.0/110.0);
-                changeScaleAndTranslationOfActiveCell(scaleChange, new Point(0, 0));
+                ImageListViewCell cell = (ImageListViewCell) e.getSource();
+                changeScaleAndTranslationOfCell(cell, scaleChange, new Point(0, 0));
                 e.consume();
             }
         }
@@ -118,14 +115,10 @@ public class ImageListViewMouseZoomPanController {
         public void mouseClicked(MouseEvent evt) {
             if (controlledImageListView.getModel().getSize() > 0) {
                 if (evt.getClickCount() == 2 && evt.isShiftDown() && (evt.getButton() == MOUSE_BUTTON || (evt.getModifiers() & MOUSE_MASK) != 0)) {
-                    int idx = controlledImageListView.getSelectedIndex();
-                    if (idx == -1) {
-                        return;
-                    }
-                    ImageListViewCell cell = controlledImageListView.getCell(idx);
+                    ImageListViewCell cell = (ImageListViewCell) evt.getSource();
                     if (cell != null) {
                         cell.setCenterOffset(new Point2D.Double(0, 0));
-                        controlledImageListView.refreshCellForIndex(idx);
+                        cell.refresh();
                         evt.consume();
                     }
                 }
