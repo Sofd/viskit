@@ -18,6 +18,7 @@ import com.sun.opengl.util.*;
 import com.sun.opengl.util.gl2.*;
 
 import de.sofd.viskit.image3D.jogl.model.*;
+import de.sofd.viskit.image3D.model.*;
 import de.sofd.viskit.model.*;
 import de.sofd.viskit.util.*;
 
@@ -140,7 +141,7 @@ public class GLUtil {
         return texId[0];
     }
 
-    public static int get3DTexture(GL2 gl, ShortBuffer dataBuf, int width, int height, int depth, boolean trilinear) {
+    public static int get3DTexture(GL2 gl, ArrayList<ShortBuffer> dataBufList, int width, int height, int depth, boolean trilinear, VolumeBasicConfig basicConfig) {
         int[] texId = new int[1];
 
         gl.glEnable(GL_TEXTURE_3D);
@@ -156,9 +157,28 @@ public class GLUtil {
         gl.glGenTextures(1, texId, 0);
         gl.glBindTexture(GL_TEXTURE_3D, texId[0]);
 
-        gl.glTexImage3D(GL_TEXTURE_3D, 0, GL_LUMINANCE16F, width, height, depth, 0, GL_LUMINANCE, GL_SHORT, dataBuf);
-        //gl.glTexImage3D(GL_TEXTURE_3D, 0, GL_LUMINANCE8, width, height, depth, 0, GL_LUMINANCE, GL_SHORT, dataBuf);
-
+        int internalFormat = GL_LUMINANCE16F;
+        switch (basicConfig.getInternalPixelFormatBits())
+        {
+            case 8 :
+                internalFormat = GL_LUMINANCE8;
+                break;
+            case 12 :
+                internalFormat = GL_LUMINANCE12;
+                break;
+            case 16 :
+                internalFormat = GL_LUMINANCE16F;
+                break;
+        }
+        
+        gl.glTexImage3D(GL_TEXTURE_3D, 0, internalFormat, width, height, depth, 0, GL_LUMINANCE, GL_SHORT, null);
+        
+        int zOffset = 0;
+        for (ShortBuffer dataBuf : dataBufList) {
+            gl.glTexSubImage3D(GL_TEXTURE_3D, 0, 0, 0, zOffset, width, height, 1, GL_LUMINANCE, GL_SHORT, dataBuf);
+            zOffset++;
+        }
+        
         gl.glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
         gl.glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
         gl.glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_BORDER);
@@ -176,20 +196,6 @@ public class GLUtil {
         int[] format = new int[1];
         gl.glGetTexLevelParameteriv(GL_TEXTURE_3D, 0, GL_TEXTURE_INTERNAL_FORMAT, format, 0);
         System.out.println("internal 3d texture format : " + format[0]);
-
-        // int[] compressed = new int[ 1 ];
-        // gl.glGetTexLevelParameteriv( GL_TEXTURE_3D, 0, GL_TEXTURE_COMPRESSED,
-        // compressed, 0 );
-        // System.out.println( "texture compressed? : " + compressed[ 0 ] );
-        //        
-        // if (compressed[0] == 1)
-        // {
-        // int[] compressedSize = new int[ 1 ];
-        // gl.glGetTexLevelParameteriv( GL_TEXTURE_3D, 0,
-        // GL_TEXTURE_COMPRESSED_IMAGE_SIZE, compressedSize, 0 );
-        // System.out.println( "original size : " + dataBuf.capacity() );
-        // System.out.println( "internal size : " + compressedSize[ 0 ] );
-        // }
 
         gl.glDisable(GL_TEXTURE_3D);
 

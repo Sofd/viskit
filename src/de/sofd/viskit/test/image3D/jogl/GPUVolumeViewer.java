@@ -15,7 +15,6 @@ import org.dcm4che2.data.*;
 import de.sofd.util.*;
 import de.sofd.viskit.image.*;
 import de.sofd.viskit.image3D.control.*;
-import de.sofd.viskit.image3D.jogl.control.*;
 import de.sofd.viskit.image3D.jogl.model.*;
 import de.sofd.viskit.image3D.jogl.view.*;
 import de.sofd.viskit.image3D.view.*;
@@ -73,12 +72,13 @@ public class GPUVolumeViewer extends JFrame implements MouseListener
                     //ArrayList<DicomObject> dicomList = DicomInputOutput.readDir( "/home/oliver/dicom/1578", null, Integer.parseInt(System.getProperty("de.sofd.viskit.image3d.sliceStart")), Integer.parseInt(System.getProperty("de.sofd.viskit.image3d.sliceCount")), Integer.parseInt(System.getProperty("de.sofd.viskit.image3d.sliceStride")) );
                     //ArrayList<DicomObject> dicomList = DicomInputOutput.readDir( "/home/oliver/dicom/1578", null, Integer.parseInt(System.getProperty("de.sofd.viskit.image3d.sliceStride")) );
 
-                    ShortBuffer dataBuf = DicomUtil.getFilledShortBuffer( dicomList );
-                    ShortRange range = ImageUtil.getRange( dataBuf );
+                    //ShortBuffer dataBuf = DicomUtil.getFilledShortBuffer( dicomList );
+                    ArrayList<ShortBuffer> dataBufList = DicomUtil.getFilledShortBufferList(dicomList);
+                    ShortRange range = ImageUtil.getRange( dataBufList );
                     
                     ShortBuffer windowing = DicomUtil.getWindowing( dicomList, range );
                     
-                    VolumeObject volumeObject = new VolumeObject( dicomList, windowing, dataBuf, null, range );
+                    VolumeObject volumeObject = new VolumeObject( dicomList, windowing, dataBufList, null, range );
                     
                     dicomList = null;
                                         

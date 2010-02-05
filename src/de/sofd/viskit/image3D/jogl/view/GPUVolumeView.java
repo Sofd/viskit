@@ -62,9 +62,9 @@ public class GPUVolumeView extends GLCanvas implements GLEventListener
         addMouseMotionListener( volumeInputController );
         
         VolumeRenderConfig renderConfig = volumeObject.getVolumeConfig().getRenderConfig();
-        float quality = renderConfig.getInteractiveQuality();
+        float finalQuality = renderConfig.getFinalQuality();
                 
-        renderFbo = new VolumeRenderFrameBuffer(new Size((int)(size.getWidth()*quality), (int)(size.getHeight()*quality)), volumeObject, volumeInputController);
+        renderFbo = new VolumeRenderFrameBuffer(new Size((int)(size.getWidth()*finalQuality), (int)(size.getHeight()*finalQuality)), volumeObject, volumeInputController);
     }
     
     private void addUniforms(String key, String[] uniforms) {
@@ -145,6 +145,7 @@ public class GPUVolumeView extends GLCanvas implements GLEventListener
         
         gl.glDepthMask(false);
         gl.glDisable(GL_DEPTH_TEST);
+        gl.glDepthMask(false);
 
         // show fps
         beginInfoScreen( gl, glu, viewport[ 2 ], viewport[ 3 ] );

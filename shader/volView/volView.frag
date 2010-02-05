@@ -88,17 +88,17 @@ vec3 shading( in vec3 N, in vec3 E, in vec3 L, in vec4 color )
 	
 	vec3 diffuse = color.rgb * vec3(diffuse) * dotNL;
 	
-	vec3 H = normalize( L + E );
-	float dotNH = max(dot(N, H), 0);
-	float sf = pow( dotNH, specExp );
+	//vec3 H = normalize( L + E );
+	//float dotNH = max(dot(N, H), 0);
+	//float sf = pow( dotNH, specExp );
 	
-	//vec3 R = normalize( -reflect(L, N) );
-	//float dotER = max(dot(R, E), 0);
-	//float sf = pow( dotER, specExp );
+	vec3 R = normalize( -reflect(L, N) );
+	float dotER = max(dot(R, E), 0);
+	float sf = pow( dotER, specExp );
 	
-	vec3 specular = spec * sf * color.a;
+	vec3 specular = spec * sf;
 	
-	return min(max(ambient + diffuse + specular, vec3(0.0f)), 1.0f);
+	return min(max((ambient + diffuse + specular)*color.a, vec3(0.0f)), 1.0f);
 }
 
 vec3 shading2( in vec3 E, in vec3 L, in vec3 color, in float value, in vec3 texPos )
@@ -147,8 +147,8 @@ void main() {
 	vec3 dir = texture(backTex, tc).rgb - rayStart.xyz;
 	vec3 moveDir = normalize(dir) * sliceStep;
 	
-	vec3 rayPos = rayStart + random(texCoord.xyz) * moveDir;
-	//vec3 rayPos = rayStart;
+	//vec3 rayPos = rayStart + random(texCoord.xyz) * moveDir;
+	vec3 rayPos = rayStart;
 	
 	float dirLength = length(dir);
 	float steps = floor(dirLength/sliceStep); 

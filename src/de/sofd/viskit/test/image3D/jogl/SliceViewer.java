@@ -56,11 +56,13 @@ public class SliceViewer extends JFrame implements MouseListener {
                         //ArrayList<DicomObject> dicomList = DicomInputOutput.readDir( "/home/oliver/Desktop/Laufwerk_D/dicom/1578", null, Integer.parseInt(System.getProperty("de.sofd.viskit.image3d.sliceStart")), Integer.parseInt(System.getProperty("de.sofd.viskit.image3d.sliceCount")), Integer.parseInt(System.getProperty("de.sofd.viskit.image3d.sliceStride")) );
                         ArrayList<DicomObject> dicomList = DicomInputOutput.readDir( "/home/oliver/dicom/1578", null, Integer.parseInt(System.getProperty("de.sofd.viskit.image3d.sliceStride")) );
 
-                        ShortBuffer dataBuf = DicomUtil.getFilledShortBuffer( dicomList );
-                        ShortRange range = ImageUtil.getRange( dataBuf );
+                        //ShortBuffer dataBuf = DicomUtil.getFilledShortBuffer( dicomList );
+                        ArrayList<ShortBuffer> dataBufList = DicomUtil.getFilledShortBufferList(dicomList);
+                        
+                        ShortRange range = ImageUtil.getRange( dataBufList );
                         ShortBuffer windowing = DicomUtil.getWindowing( dicomList, range );
                         
-                        VolumeObject volumeObject = new VolumeObject( dicomList, windowing, dataBuf, null, range );
+                        VolumeObject volumeObject = new VolumeObject( dicomList, windowing, dataBufList, null, range );
                         
                         SliceViewer sliceViewer = new SliceViewer(volumeObject);
 

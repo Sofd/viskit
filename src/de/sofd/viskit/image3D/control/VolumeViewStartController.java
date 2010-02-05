@@ -55,10 +55,15 @@ public class VolumeViewStartController implements ActionListener
                     /** VolumeObject erstellen */
                     VolumeBasicConfig basicConfig = volumeConfig.getBasicConfig();
                     ArrayList<DicomObject> dicomList = DicomInputOutput.readDir( basicConfig.getImageDirectory(), null, basicConfig.getImageStart(), basicConfig.getImageEnd(), basicConfig.getImageStride() );
-                    ShortBuffer dataBuf = DicomUtil.getFilledShortBuffer( dicomList );
-                    ShortRange range = ImageUtil.getRange( dataBuf );
+                    
+                    //ShortBuffer dataBuf = DicomUtil.getFilledShortBuffer( dicomList );
+                    ArrayList<ShortBuffer> dataBufList = DicomUtil.getFilledShortBufferList(dicomList);
+                    
+                    //ShortRange range = ImageUtil.getRange( dataBuf );
+                    ShortRange range = ImageUtil.getRange( dataBufList );
+                    
                     ShortBuffer windowing = DicomUtil.getWindowing( dicomList, range );
-                    VolumeObject volumeObject = new VolumeObject( dicomList, windowing, dataBuf, volumeConfig, range );
+                    VolumeObject volumeObject = new VolumeObject( dicomList, windowing, dataBufList, volumeConfig, range );
                     
                     //liste wird von hier an nicht mehr benötigt
                     dicomList = null;

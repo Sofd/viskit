@@ -18,6 +18,7 @@ public class VolumeRenderFrameBuffer extends FrameBuffer {
     protected VolumeObject volumeObject;
     protected VolumeInputController volumeInputController;
 
+    protected boolean mipmap = false;
     protected boolean renderFinal = true;
     protected boolean useGradient = false;
 
@@ -118,15 +119,17 @@ public class VolumeRenderFrameBuffer extends FrameBuffer {
 
         attachTexture(gl, 0);
         checkFBO(gl);
-
+        detachTexture(gl);
+        
         attachBackFaceTexture(gl);
         checkFBO(gl);
+        detachTexture(gl);
 
         unbind(gl);
     }
 
     public void createTextures(GL2 gl, int internalFormat, int format) {
-        createTexture(gl, internalFormat, format, true);
+        createTexture(gl, internalFormat, format, mipmap);
         createBackFaceTexture(gl);
     }
 
@@ -160,7 +163,7 @@ public class VolumeRenderFrameBuffer extends FrameBuffer {
         return useGradient;
     }
 
-    public void resize(GL2 gl, int width, int height) throws Exception {
+    public synchronized void resize(GL2 gl, int width, int height) throws Exception {
         
         System.out.println( "width : " + width + ", height : " + height);
         gl.glEnable(GL_TEXTURE_2D);
@@ -169,9 +172,11 @@ public class VolumeRenderFrameBuffer extends FrameBuffer {
         size.setHeight(height);
 
         gl.glBindTexture(GL_TEXTURE_2D, this.theTex);
-        gl.glTexParameteri(GL_TEXTURE_2D, GL_GENERATE_MIPMAP, 1);
         gl.glTexImage2D(GL_TEXTURE_2D, 0, internalFormat, size.getWidth(), size.getHeight(), 0, format, GL_FLOAT, null);
-
+        
+        if (mipmap)
+            gl.glGenerateMipmap(GL_TEXTURE_2D);
+        
         gl.glBindTexture(GL_TEXTURE_2D, this.theBackFaceTex);
         gl.glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, size.getWidth(), size.getHeight(), 0, GL_RGB, GL_FLOAT, null);
 
@@ -179,10 +184,12 @@ public class VolumeRenderFrameBuffer extends FrameBuffer {
 
         attachTexture(gl, 0);
         checkFBO(gl);
-
+        detachTexture(gl);
+        
         attachBackFaceTexture(gl);
         checkFBO(gl);
-
+        detachTexture(gl);
+        
         unbind(gl);
 
         gl.glDisable(GL_TEXTURE_2D);
@@ -212,7 +219,9 @@ public class VolumeRenderFrameBuffer extends FrameBuffer {
 
         gl.glDisable(GL_CULL_FACE);
 
-        gl.glFlush();
+        gl.glFinish();
+        
+        detachTexture(gl);
 
         // volume shading
         attachTexture(gl, 0);
@@ -298,6 +307,10 @@ public class VolumeRenderFrameBuffer extends FrameBuffer {
         renderShader.unbind();
 
         gl.glActiveTexture(GL_TEXTURE0);
+        
+        gl.glFinish();
+        
+        detachTexture(gl);
         
         end(gl);
 

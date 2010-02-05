@@ -24,7 +24,7 @@ public class FrameBuffer
 
     protected void attachTexture( GL2 gl, int layer )
     {
-        gl.glFramebufferTexture2D( GL_DRAW_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, theTex, 0 );
+        gl.glFramebufferTexture2D( GL_DRAW_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, theTex, layer );
     }
 
     public void begin( GL2 gl )
@@ -135,10 +135,17 @@ public class FrameBuffer
         gl.glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, mode );
         gl.glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, mode );
         
-        gl.glTexParameteri(GL_TEXTURE_2D, GL_GENERATE_MIPMAP, mipmap ? 1 : 0);
         gl.glTexImage2D( GL_TEXTURE_2D, 0, internalFormat, size.getWidth(), size.getHeight(), 0, format, GL_FLOAT, null );
         
+        if (mipmap)
+            gl.glGenerateMipmap(GL_TEXTURE_2D);
+        
         gl.glDisable( GL_TEXTURE_2D );
+    }
+    
+    protected void detachTexture( GL2 gl )
+    {
+        gl.glFramebufferTexture2D( GL_DRAW_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, 0, 0 );
     }
     
     protected void drawSlice( GL2 gl )
@@ -162,7 +169,7 @@ public class FrameBuffer
         return theTex;
     }
 
-    public void resize( GL2 gl, int internalFormat, int format, Size size ) throws Exception
+    public void resize( GL2 gl, int internalFormat, int format, Size size, boolean mipmap ) throws Exception
     {
         gl.glEnable( GL_TEXTURE_2D );
         
@@ -170,6 +177,9 @@ public class FrameBuffer
         
         gl.glBindTexture( GL_TEXTURE_2D, this.theTex );
         gl.glTexImage2D( GL_TEXTURE_2D, 0, internalFormat, size.getWidth(), size.getHeight(), 0, format, GL_FLOAT, null );
+        
+        if (mipmap)
+            gl.glGenerateMipmap(GL_TEXTURE_2D);
         
         bind( gl );
         attachTexture( gl, 0 );
@@ -193,6 +203,7 @@ public class FrameBuffer
 
     protected void unbind( GL2 gl )
     {
+        detachTexture(gl);
         gl.glBindFramebuffer( GL_DRAW_FRAMEBUFFER, 0 );
         
     }

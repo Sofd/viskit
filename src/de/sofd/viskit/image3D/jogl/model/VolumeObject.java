@@ -26,8 +26,9 @@ public class VolumeObject {
     /**
      * Databuffer for 3D-Texture.
      */
-    protected ShortBuffer dataBuf;
-
+    //protected ShortBuffer dataBuf;
+    protected ArrayList<ShortBuffer> dataBufList;
+    
     protected IntRange dimRange;
 
     protected IntDimension3D imageDim;
@@ -96,7 +97,7 @@ public class VolumeObject {
     protected boolean updateConvolutionTexture = true;
     protected boolean updateGradientTexture = true;
 
-    public VolumeObject(ArrayList<DicomObject> dicomList, ShortBuffer windowing, ShortBuffer dataBuf, VolumeConfig volumeConfig, ShortRange range) {
+    public VolumeObject(ArrayList<DicomObject> dicomList, ShortBuffer windowing, ArrayList<ShortBuffer> dataBufList, VolumeConfig volumeConfig, ShortRange range) {
         DicomObject refDicom = dicomList.get(0);
 
         this.volumeConfig = volumeConfig;
@@ -114,7 +115,7 @@ public class VolumeObject {
 
         setSizeRange(new DoubleRange(Math.min(Math.min(getSizeX(), getSizeY()), getSizeZ()), Math.max(Math.max(getSizeX(), getSizeY()), getSizeZ())));
 
-        setDataBuf(dataBuf);
+        setDataBufList(dataBufList);
 
         setSliceCursor(new double[] { imageDim.getWidth() / 2, imageDim.getHeight() / 2, imageDim.getDepth() / 2 });
 
@@ -149,7 +150,7 @@ public class VolumeObject {
 
         setRange(new ShortRange((short) range[0], (short) range[1]));
 
-        setDataBuf(dataBuf);
+        setDataBufList(dataBufList);
         setSliceCursor(sliceCursor);
 
     }
@@ -253,8 +254,8 @@ public class VolumeObject {
 
         windowingTexId = texId[0];
 
-        for (int i = 0; i < windowing.capacity(); ++i)
-            System.out.println("win : " + windowing.get(i));
+//        for (int i = 0; i < windowing.capacity(); ++i)
+//            System.out.println("win : " + windowing.get(i));
 
         // gl.glPixelStorei( GL_UNPACK_ALIGNMENT, 1 );
 
@@ -317,11 +318,11 @@ public class VolumeObject {
     public short getCursorValue() {
         double[] pos = getSliceCursor();
 
-        return dataBuf.get(getCurrentImage() * imageDim.getWidth() * imageDim.getHeight() + (int) pos[1] * imageDim.getWidth() + (int) pos[0]);
+        return dataBufList.get(getCurrentImage()).get((int) pos[1] * imageDim.getWidth() + (int) pos[0]);
     }
 
-    public ShortBuffer getDataBuf() {
-        return dataBuf;
+    public ArrayList<ShortBuffer> getDataBufList() {
+        return dataBufList;
     }
 
     public IntRange getDimRange() {
@@ -420,7 +421,7 @@ public class VolumeObject {
     }
 
     public void loadTexture(GL2 gl) {
-        setTexId(GLUtil.get3DTexture(gl, dataBuf, imageDim.getWidth(), imageDim.getHeight(), getNrOfImages(), true));
+        setTexId(GLUtil.get3DTexture(gl, dataBufList, imageDim.getWidth(), imageDim.getHeight(), getNrOfImages(), true, volumeConfig.getBasicConfig()));
     }
 
     public void loadTransferTexturePreIntegrated(GL2 gl) throws Exception {
@@ -450,8 +451,8 @@ public class VolumeObject {
         setUpdateGradientTexture(true);
     }
 
-    protected void setDataBuf(ShortBuffer dataBuf) {
-        this.dataBuf = dataBuf;
+    protected void setDataBufList(ArrayList<ShortBuffer> dataBufList) {
+        this.dataBufList = dataBufList;
     }
 
     public void setDimRange(IntRange dimRange) {

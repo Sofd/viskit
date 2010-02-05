@@ -88,6 +88,6 @@ public class TransferIntegrationFrameBuffer extends FrameBuffer {
         this.transferFunction = transferFunction;
         this.transferTexId = transferTexId;
 
-        this.resize(gl, internalFormat, format, new Size(transferFunction.capacity() / 4, transferFunction.capacity() / 4));
+        this.resize(gl, internalFormat, format, new Size(transferFunction.capacity() / 4, transferFunction.capacity() / 4), false);
     }
 }
