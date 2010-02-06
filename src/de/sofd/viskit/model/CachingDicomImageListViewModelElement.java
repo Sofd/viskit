@@ -21,6 +21,8 @@ import org.dcm4che2.data.UID;
 import org.dcm4che2.io.DicomOutputStream;
 import org.dcm4che2.media.FileMetaInformation;
 
+import com.sun.opengl.util.BufferUtil;
+
 /**
  * Implements getDicomObject(), getImage() as caching delegators to the (subclass-provided)
  * methods getImageKey(), getBackendDicomObject(), and optionally getBackendImage() and getBackendDicomObjectMetaData().
@@ -186,7 +188,7 @@ public abstract class CachingDicomImageListViewModelElement extends AbstractImag
     @Override
     public RawImage getRawImage() {
         RawImageImpl result = (RawImageImpl) getProxyRawImage();
-        result.setPixelData(ShortBuffer.wrap(getDicomObject().getShorts(Tag.PixelData))); // type of buffer may later depend on image metadata
+        result.setPixelData(BufferUtil.newShortBuffer(getDicomObject().getShorts(Tag.PixelData))); // type of buffer may later depend on image metadata
         return result;
     }
 
