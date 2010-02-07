@@ -1,11 +1,11 @@
 package de.sofd.viskit.model;
 
-public class Windowing implements ITransferFunction
+public class WindowingFunction implements ITransferFunction
 {
     protected short windowCenter;
     protected short windowWidth;
 
-    public Windowing( short windowCenter, short windowWidth )
+    public WindowingFunction( short windowCenter, short windowWidth )
     {
         super();
 

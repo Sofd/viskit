@@ -12,7 +12,7 @@ import de.sofd.viskit.image3D.jogl.util.*;
 public class TexComponent extends Component
 {
     protected Texture tex;
-    protected float[] color = new float[4];
+    protected float[] color;
 
     public TexComponent(int x, int y, int width, int height, Texture tex, float[] color) {
         super(x, y, width, height);

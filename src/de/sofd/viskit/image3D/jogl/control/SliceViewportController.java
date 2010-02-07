@@ -9,8 +9,6 @@ public class SliceViewportController extends OrthoViewportController
 
     protected DragController sliderPinController;
 
-    //protected TransferComponentController transferComponentController;
-
     public SliceViewportController( SliceViewport sliceViewport, java.awt.Component awtParent )
     {
         super( sliceViewport );
@@ -18,8 +16,6 @@ public class SliceViewportController extends OrthoViewportController
         slicePlaneController = new SlicePlaneController( sliceViewport.getPlane(), awtParent );
 
         sliderPinController = new SliderController( sliceViewport.getSlider() );
-
-        //transferComponentController = new TransferComponentController( sliceViewport.getTransferComp() );
     }
 
     protected SliceViewport getSliceViewport()
@@ -108,7 +104,6 @@ public class SliceViewportController extends OrthoViewportController
         slicePlaneController.updateComponents();
         
         getSliceViewport().updateSlider();
-        //getSliceViewport().updateTransferComponent();
         
         
     }

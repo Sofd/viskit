@@ -194,8 +194,8 @@ public class SliceCanvas extends GLCanvas implements GLEventListener
             ShaderManager.get("sliceView").addProgramUniform( "transferTex" );
     
             volumeObject.loadTexture( gl );
-            volumeObject.createWindowingTexture( gl );
-            volumeObject.createTransferTexture( gl );
+            volumeObject.getWindowing().createTexture( gl );
+            volumeObject.getTransferFunction().createTexture( gl );
             
             glu = new GLUgl2();
             glut = new GLUT();

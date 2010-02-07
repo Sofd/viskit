@@ -68,7 +68,7 @@ public class GLUtil {
         logi(gl, "GL_MAX_3D_TEXTURE_SIZE", GL_MAX_3D_TEXTURE_SIZE);
 
         ShortBuffer windowing = DicomUtil.getWindowing(dicomList, volumeObject.getRange());
-        ArrayList<Windowing> windowingList = DicomUtil.getWindowing(windowing);
+        ArrayList<WindowingFunction> windowingList = DicomUtil.getWindowing(windowing);
 
         gl.glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 

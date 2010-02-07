@@ -8,11 +8,13 @@ import org.apache.log4j.*;
 
 import com.sun.opengl.util.texture.*;
 
+import de.sofd.util.properties.*;
+
 public class ResourceLoader
 {
     protected static final Logger logger = Logger.getLogger(ResourceLoader.class);
     
-    protected static Properties properties;
+    protected static ExtendedProperties properties;
     
     protected static HashMap<String, Texture> texMap = new HashMap<String, Texture>();
     
@@ -21,23 +23,16 @@ public class ResourceLoader
         return ( getProperties().getProperty("minigui.img.path") + "/" );
     }
     
-    public static Properties getProperties() throws IOException
+    public static ExtendedProperties getProperties() throws IOException
     {
         if ( properties == null )
         {
-            properties = new Properties();
-            URL url = ClassLoader.getSystemResource("minigui.properties");
-            properties.load(url.openStream());
-           }
+            properties = new ExtendedProperties("minigui.properties");
+        }
         
         return properties;
     }
     
-    public static int getProperty1i( String key ) throws NumberFormatException, IOException
-    {
-        return Integer.parseInt( getProperties().getProperty( key ) );
-    }
-
     public static Texture getImageTex( String id ) throws IOException {
         Texture tex = texMap.get(id);
         

@@ -19,8 +19,6 @@ public class SliceViewport extends OrthoViewport
 
     protected Slider slider;
 
-    protected TransferComponent transferComp;
-
     protected VolumeObject volumeObject;
     
     protected TextureData sliderBgTexData;
@@ -49,15 +47,8 @@ public class SliceViewport extends OrthoViewport
                 sliderBgTexData.getHeight(), sliderPinTexData, 1, plane.getMaxSlices(),
                 (float)plane.getCurrentSlice() + 1, new float[] { 1.0f, 1.0f, 1.0f, 1.0f } );
 
-//        transferTexData = ResourceLoader.getImageTexData( "minigui.transfer.pin" );
-//
-//        transferComp = new TransferComponent( margin[ 3 ] + plane.getWidth() + 1, margin[ 2 ], margin[ 1 ] - 1, plane
-//                .getHeight(), (float)volumeObject.getRange().getMin(), (float)volumeObject.getRange().getMax(), volumeObject
-//                .getTransferTexId(), transferTexData, volumeObject.getRelativeCursorValue() );
-        
         getLayout().add( plane, BorderLayout.CENTER );
         getLayout().add( slider, BorderLayout.SOUTH );
-//        getLayout().add( transferComp, BorderLayout.EAST );
 
     }
     
@@ -77,11 +68,6 @@ public class SliceViewport extends OrthoViewport
         return slider;
     }
 
-    public TransferComponent getTransferComp()
-    {
-        return transferComp;
-    }
-
     public VolumeObject getVolumeObject()
     {
         return volumeObject;
@@ -94,14 +80,11 @@ public class SliceViewport extends OrthoViewport
         
         Texture sliderBgTex = ResourceLoader.getImageTex( sliderBgTexData, "minigui.slider.bg" );
         Texture sliderPinTex = ResourceLoader.getImageTex( sliderPinTexData, "minigui.slider.pin" );
-        //Texture transferTex = ResourceLoader.getImageTex( transferTexData, "minigui.transfer.pin" );
         
         slider.setTex( sliderBgTex );
         slider.getPin().setTex( sliderPinTex );
         slider.glCreate();
         
-//        transferComp.getPin().setTex( transferTex );
-//        transferComp.glCreate();
         
     }
     
@@ -109,7 +92,6 @@ public class SliceViewport extends OrthoViewport
     {
         super.pack( x, y, width, height );
         updateSlider();
-        //updateTransferComponent();
     }
 
     public synchronized void resize(    int x,
@@ -119,7 +101,6 @@ public class SliceViewport extends OrthoViewport
     {
         super.resize( x, y, width, height );
         updateSlider();
-        //updateTransferComponent();
     }
 
     @Override
@@ -137,9 +118,5 @@ public class SliceViewport extends OrthoViewport
         slider.setValue( (float)plane.getCurrentSlice() + 1 );
     }
 
-//    public void updateTransferComponent()
-//    {
-//        transferComp.setRelativeValue( volumeObject.getRelativeCursorValue() );
-//    }
 
 }

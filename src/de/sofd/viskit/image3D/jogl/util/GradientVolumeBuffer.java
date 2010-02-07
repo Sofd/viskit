@@ -66,7 +66,7 @@ public class GradientVolumeBuffer extends VolumeBuffer
         shader.bindUniform( "volTex", 1 );
         
         gl.glActiveTexture( GL_TEXTURE2 );
-        volumeObject.bindWindowingTexture(gl);
+        volumeObject.getWindowing().bindTexture(gl);
         
         shader.bindUniform( "winTex", 2 );
         

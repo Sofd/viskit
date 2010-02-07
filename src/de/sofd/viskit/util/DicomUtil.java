@@ -8,7 +8,7 @@ import org.dcm4che2.data.*;
 import com.sun.opengl.util.*;
 
 import de.sofd.util.*;
-import de.sofd.viskit.model.Windowing;
+import de.sofd.viskit.model.WindowingFunction;
 
 public class DicomUtil {
 
@@ -92,11 +92,11 @@ public class DicomUtil {
         return windowing;
     }
 
-    public static ArrayList<Windowing> getWindowing(ShortBuffer windowing) {
-        ArrayList<Windowing> windowingList = new ArrayList<Windowing>();
+    public static ArrayList<WindowingFunction> getWindowing(ShortBuffer windowing) {
+        ArrayList<WindowingFunction> windowingList = new ArrayList<WindowingFunction>();
 
         for (int i = 0; i < windowing.capacity() / 2; ++i) {
-            windowingList.add(new Windowing(windowing.get(i * 2 + 0), windowing.get(i * 2 + 1)));
+            windowingList.add(new WindowingFunction(windowing.get(i * 2 + 0), windowing.get(i * 2 + 1)));
         }
 
         return windowingList;

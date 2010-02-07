@@ -240,7 +240,7 @@ public class VolumeRenderFrameBuffer extends FrameBuffer {
         renderShader.bindUniform("volTex", 3);
 
          gl.glActiveTexture( GL_TEXTURE2 );
-         volumeObject.bindWindowingTexture( gl );
+         volumeObject.getWindowing().bindTexture( gl );
          ShaderManager.get( "volView" ).bindUniform( "winTex", 2 );
 
         gl.glActiveTexture(GL_TEXTURE1);
@@ -248,7 +248,7 @@ public class VolumeRenderFrameBuffer extends FrameBuffer {
         renderShader.bindUniform("backTex", 1);
 
         gl.glActiveTexture(GL_TEXTURE4);
-        volumeObject.bindTransferTexturePreIntegrated(gl);
+        volumeObject.getTransferFunction().bindTexturePreIntegrated(gl);
         renderShader.bindUniform("transferTex", 4);
 
         if (useGradient && !renderFinal) {

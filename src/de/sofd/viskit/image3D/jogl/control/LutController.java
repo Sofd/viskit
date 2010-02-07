@@ -9,14 +9,16 @@ import javax.imageio.*;
 
 import org.apache.log4j.*;
 
+import de.sofd.viskit.util.*;
+
 public class LutController {
     protected static final Logger logger = Logger.getLogger(LutController.class);
 
     protected static String imgPath;
 
-    protected static HashMap<String, FloatBuffer> lutMap = new HashMap<String, FloatBuffer>();
+    protected static HashMap<String, LutFunction> lutMap = new HashMap<String, LutFunction>();
 
-    public static HashMap<String, FloatBuffer> getLutMap() {
+    public static HashMap<String, LutFunction> getLutMap() {
         return lutMap;
     }
 
@@ -49,6 +51,9 @@ public class LutController {
             
             FloatBuffer rgbaBuffer = FloatBuffer.allocate(rgbaArray.length*4);
             
+            BufferedImage bimg2 = new BufferedImage(bimg.getWidth(), bimg.getHeight(), BufferedImage.TYPE_INT_ARGB);
+            
+            int index=0;
             for ( int argb : rgbaArray )
             {
                 float alpha = ((argb >> 24) & 0xff)/255.0f; 
@@ -65,12 +70,25 @@ public class LutController {
                 rgbaBuffer.put(blue*alpha);
                 rgbaBuffer.put(alpha);
                 
+                bimg2.setRGB(index%bimg.getWidth(), index/bimg.getWidth(), getARGB(red*alpha, green*alpha, blue*alpha, 1 ));
+                
+                index++;
+                
             }
             
             rgbaBuffer.rewind();
-
-            lutMap.put(lutId, rgbaBuffer);
+            
+            lutMap.put(lutId, new LutFunction(bimg2, rgbaBuffer));
         }
 
+    }
+
+    private static int getARGB(float r, float g, float b, float a) {
+        int ir = (int)(r * 255);
+        int ig = (int)(g * 255);
+        int ib = (int)(b * 255);
+        int ia = (int)(a * 255);
+        
+        return ( ia << 24 | ir << 16 | ig << 8 | ib );
     }
 }

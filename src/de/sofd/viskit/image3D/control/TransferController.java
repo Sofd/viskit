@@ -107,7 +107,11 @@ public class TransferController implements ActionListener, ChangeListener
             volumeObject.updateWindowing( windowingMode );
 
             sliceCanvas.display();
+            
+            volumeView.updateTransferScala();
             volumeView.display(true);
+            
+            
         }
         else if ( "restore".equals( cmd ) )
         {
@@ -120,6 +124,8 @@ public class TransferController implements ActionListener, ChangeListener
             transferFrame.updateValues();
 
             sliceCanvas.display();
+            
+            volumeView.updateTransferScala();
             volumeView.display(true);
         }
         else if ( "transferFunction".equals( cmd ) )
@@ -127,9 +133,11 @@ public class TransferController implements ActionListener, ChangeListener
             JComboBox comboBox = (JComboBox)event.getSource();
             String tf = (String)comboBox.getSelectedItem();
 
-            volumeObject.setTransferFunction( LutController.getLutMap().get(tf) );
+            volumeObject.getTransferFunction().setBuffer( LutController.getLutMap().get(tf).getBuffer() );
             
             sliceCanvas.display();
+            
+            volumeView.updateTransferScala();
             volumeView.display(true);
         }
 
@@ -159,6 +167,8 @@ public class TransferController implements ActionListener, ChangeListener
                 volumeObject.setUpdateGradientTexture(true);
                 volumeObject.setUpdateConvolutionTexture(true);
             }
+            
+            volumeView.updateTransferScala();
         }
         else if ( "winWidth".equals( slider.getName() ) )
         {
@@ -169,6 +179,7 @@ public class TransferController implements ActionListener, ChangeListener
                 volumeObject.setUpdateConvolutionTexture(true);
             }
             
+            volumeView.updateTransferScala();
             
         }
         

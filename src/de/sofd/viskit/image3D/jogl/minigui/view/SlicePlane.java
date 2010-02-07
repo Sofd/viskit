@@ -177,11 +177,11 @@ public abstract class SlicePlane extends Component
         ShaderManager.get("sliceView").bindUniform("volTex", 2);
         
         gl.glActiveTexture(GL_TEXTURE1);
-        volumeObject.bindWindowingTexture( gl );
+        volumeObject.getWindowing().bindTexture( gl );
         ShaderManager.get("sliceView").bindUniform("winTex", 1);
         
         gl.glActiveTexture( GL_TEXTURE3 );
-        volumeObject.bindTransferTexture( gl );
+        volumeObject.getTransferFunction().bindTexture( gl );
         ShaderManager.get( "sliceView" ).bindUniform( "transferTex",3 );
         
         gl.glEnable( GL_BLEND );
