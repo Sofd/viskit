@@ -258,7 +258,7 @@ public class GLImageListViewCellViewer extends BaseImageListViewCellViewer {
         @Override
         public void init(GLAutoDrawable glAutoDrawable) {
             // Use debug pipeline
-            glAutoDrawable.setGL(new DebugGL2(glAutoDrawable.getGL().getGL2()));
+            //glAutoDrawable.setGL(new DebugGL2(glAutoDrawable.getGL().getGL2()));
             System.out.println("INIT " + drawableToString(glAutoDrawable));
             GL2 gl = glAutoDrawable.getGL().getGL2();
             gl.setSwapInterval(1);
