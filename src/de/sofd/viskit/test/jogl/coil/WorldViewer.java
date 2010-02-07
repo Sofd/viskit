@@ -221,6 +221,8 @@ public class WorldViewer extends JPanel {
             gl.glEnable(gl.GL_LIGHTING);
             gl.glEnable(gl.GL_LIGHT0);
             gl.glEnable(gl.GL_COLOR_MATERIAL);
+            //gl.glEnable(gl.GL_SCISSOR_TEST);
+            //gl.glScissor(200, 100, 300, 500);
             gl.glClearColor(0,0,0,0);
             //gl.glPolygonMode(gl.GL_FRONT_AND_BACK, gl.GL_LINE);
             //gl.glShadeModel(gl.GL_FLAT);

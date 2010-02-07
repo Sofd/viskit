@@ -55,7 +55,9 @@ import de.sofd.viskit.ui.imagelist.JImageListView;
 import de.sofd.viskit.ui.imagelist.event.ImageListViewCellAddEvent;
 import de.sofd.viskit.ui.imagelist.event.ImageListViewEvent;
 import de.sofd.viskit.ui.imagelist.event.ImageListViewListener;
+import de.sofd.viskit.ui.imagelist.glimpl.JGLImageListView;
 import de.sofd.viskit.ui.imagelist.gridlistimpl.JGridImageListView;
+import de.sofd.viskit.ui.imagelist.jlistimpl.JListImageListView;
 
 /**
  *
@@ -88,23 +90,17 @@ public class JListImageListTestApp {
             //model.addElement(new FileBasedDicomImageListViewModelElement("/shares/projects/DICOM-Testbilder/1578/f0003563_006"+i+".dcm"));
         }
 
-        URL url = this.getClass().getResource("67010.dcm");
-        //url = new URL("file:///I:/DICOM/dcm4che-2.0.18-bin/dcm4che-2.0.18/bin/67010");
-        BasicDicomObject basicDicomObject = DicomInputOutput.read(url);
-        Dcm dcm = new Dcm(url, basicDicomObject);
-        DcmImageListViewModelElement dcmImageListViewModelElement = new DcmImageListViewModelElement(dcm);
-        //model.addElement(dcmImageListViewModelElement);
-
         //model.addElement(new FileBasedDicomImageListViewModelElement(this.getClass().getResource("/de/sofd/viskit/test/resources/cd846__center4001__39.dcm")));
         //model.addElement(new FileBasedDicomImageListViewModelElement(this.getClass().getResource("/de/sofd/viskit/test/resources/series/series1/cd014__center001__0.dcm")));
         //model.addElement(new FileBasedDicomImageListViewModelElement(this.getClass().getResource("/de/sofd/viskit/test/resources/series/series2/cd014__center001__25.dcm")));
         //model.addElement(new FileBasedDicomImageListViewModelElement("/home/olaf/gi/resources/DICOM-Testbilder/24-bit Uncompressed Color.dcm"));
 
-        //final JImageListView viewer = new JListImageListView();
-        final JImageListView viewer = new JGridImageListView();
-        viewer.setScaleMode(JGridImageListView.MyScaleMode.newCellGridMode(2, 2));
+        final JImageListView viewer;
+        //viewer = newJListImageListView();
+        //viewer = newJGridImageListView();
+        viewer = new JGLImageListView();
+        
         new ImageListViewInitialWindowingController(viewer).setEnabled(true);
-        ((JGridImageListView) viewer).setRendererType(JGridImageListView.RendererType.OPENGL);
         viewer.setModel(model);
         viewer.addCellPropertyChangeListener(new PropertyChangeListener() {
 
@@ -125,6 +121,7 @@ public class JListImageListTestApp {
             //setWindowingToDcm(viewer.getCell(i));
             //setWindowingToOptimal(viewer.getCell(i));
         }
+        viewer.getSelectionModel().setSelectionInterval(0, 1);
         viewer.addImageListViewListener(new ImageListViewListener() {
 
             @Override
@@ -284,6 +281,23 @@ public class JListImageListTestApp {
         f.setVisible(true);
         
         return f;
+    }
+
+    protected JListImageListView newJListImageListView() {
+        return new JListImageListView();
+    }
+    
+    protected JGridImageListView newJGridImageListView() {
+        final JGridImageListView viewer = new JGridImageListView();
+        viewer.setScaleMode(JGridImageListView.MyScaleMode.newCellGridMode(2, 2));
+        ((JGridImageListView) viewer).setRendererType(JGridImageListView.RendererType.OPENGL);
+        return viewer;
+    }
+
+    protected JGLImageListView newJGLImageListView() {
+        final JGLImageListView viewer = new JGLImageListView();
+        viewer.setScaleMode(JGLImageListView.MyScaleMode.newCellGridMode(2, 2));
+        return viewer;
     }
 
     protected static DefaultListModel getViewerListModelForDirectory(File dir) {

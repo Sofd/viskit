@@ -28,7 +28,7 @@ public class SharedContextData {
     /**
      * Used by GLContext creators (e.g. GL viewer components) only (when initializing a new context).
      */
-    SharedContextData() {
+    public SharedContextData() {
     }
 
     public GLContext getGlContext() {
@@ -46,7 +46,7 @@ public class SharedContextData {
      *
      * @param glContext
      */
-    void ref(GLContext glContext) {
+    public void ref(GLContext glContext) {
         refCount++;
         if (refCount == 1) {
             this.glContext = glContext;
@@ -56,7 +56,7 @@ public class SharedContextData {
     /**
      * Used by GLContext creators (e.g. {@link GLImageListViewCellViewer}) only (when initializing a new context).
      */
-    void unref() {
+    public void unref() {
         if (refCount == 0) {
             // TODO: this is triggered when the user scrolls through the grid quickly. Investigate!
             //throw new IllegalStateException("too many unref calls...");
@@ -95,7 +95,7 @@ public class SharedContextData {
     /**
      * Used by GLContext creators (e.g. {@link GLImageListViewCellViewer}) only (when initializing a new context).
      */
-    static void callContextInitCallbacks(SharedContextData cd, GL gl) {
+    public static void callContextInitCallbacks(SharedContextData cd, GL gl) {
         for (Runnable2<SharedContextData, GL> callback : contextInitCallbacks) {
             callback.run(cd, gl);
         }

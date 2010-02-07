@@ -1,0 +1,666 @@
+package de.sofd.viskit.ui.imagelist.glimpl;
+
+import java.awt.BorderLayout;
+import java.awt.Dimension;
+import java.awt.EventQueue;
+import java.awt.event.InputEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseWheelEvent;
+import java.awt.geom.Point2D;
+import java.awt.image.BufferedImage;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Set;
+
+import javax.media.opengl.DebugGL2;
+import javax.media.opengl.GL;
+import javax.media.opengl.GL2;
+import javax.media.opengl.GLAutoDrawable;
+import javax.media.opengl.GLCapabilities;
+import javax.media.opengl.GLEventListener;
+import javax.media.opengl.GLProfile;
+import javax.media.opengl.awt.GLCanvas;
+import javax.swing.DefaultListSelectionModel;
+import javax.swing.JPopupMenu;
+import javax.swing.JScrollBar;
+import javax.swing.ListModel;
+import javax.swing.ListSelectionModel;
+import javax.swing.SwingUtilities;
+import javax.swing.ToolTipManager;
+import javax.swing.event.ListDataEvent;
+import javax.swing.plaf.basic.BasicTreeUI.SelectionModelPropertyChangeHandler;
+
+import org.dcm4che2.data.Tag;
+
+import com.sun.awt.AWTUtilities;
+import com.sun.opengl.util.texture.TextureCoords;
+
+import de.sofd.util.IdentityHashSet;
+import de.sofd.viskit.draw2d.gc.ViskitGC;
+import de.sofd.viskit.image3D.jogl.util.GLShader;
+import de.sofd.viskit.image3D.jogl.util.ShaderManager;
+import de.sofd.viskit.model.DicomImageListViewModelElement;
+import de.sofd.viskit.model.ImageListViewModelElement;
+import de.sofd.viskit.ui.imagelist.ImageListViewCell;
+import de.sofd.viskit.ui.imagelist.JImageListView;
+import de.sofd.viskit.ui.imagelist.cellviewers.jogl.ImageTextureManager;
+import de.sofd.viskit.ui.imagelist.cellviewers.jogl.SharedContextData;
+import de.sofd.viskit.ui.imagelist.event.ImageListViewCellPaintEvent;
+
+/**
+ * JImageListView implementation that paints all cells onto a single aggreagated
+ * {@link GLCanvas}.
+ *
+ * @author Sofd GmbH
+ */
+public class JGLImageListView extends JImageListView {
+
+    static {
+        System.setProperty("sun.awt.noerasebackground", "true");
+        //JPopupMenu.setDefaultLightWeightPopupEnabled(false);
+        //ToolTipManager.sharedInstance().setLightWeightPopupEnabled(false);
+        ImageTextureManager.init();
+        ShaderManager.init("shader");
+    }
+
+    public static final int CELL_BORDER_WIDTH = 2;
+    
+    /**
+     * TODO: rename to cellsViewer
+     */
+    private GLCanvas cellsViewer = null;
+    private final JScrollBar scrollBar;
+    private int firstDisplayedIdx = 0;
+    
+    private static final Set<JGLImageListView> instances = new IdentityHashSet<JGLImageListView>();
+    private static final SharedContextData sharedContextData = new SharedContextData();
+
+    private GLShader rescaleShader;
+
+    public JGLImageListView() {
+        setLayout(new BorderLayout());
+        if (instances.isEmpty() || sharedContextData.getGlContext() != null) {
+            createGlCanvas();
+        }
+        instances.add(this);
+        setScaleMode(new MyScaleMode(2, 2));
+        scrollBar = new JScrollBar(JScrollBar.VERTICAL);
+        this.add(scrollBar, BorderLayout.EAST);
+        //scrollBar.getModel().addChangeListener(scrollbarChangeListener);
+        setSelectionModel(new DefaultListSelectionModel());
+    }
+
+    private void createGlCanvas() {
+        GLCapabilities caps = new GLCapabilities(GLProfile.get(GLProfile.GL2));
+        caps.setDoubleBuffered(true);
+        cellsViewer = new GLCanvas(caps, null, sharedContextData.getGlContext(), null);
+        cellsViewer.addGLEventListener(new GLEventHandler());
+        this.add(cellsViewer, BorderLayout.CENTER);
+        revalidate();
+        //cellsContainer.addMouseListener(cellsContainerMouseAndKeyHandler);
+        //cellsContainer.addMouseMotionListener(cellsContainerMouseAndKeyHandler);
+        //cellsContainer.addKeyListener(cellsContainerMouseAndKeyHandler);
+    }
+    
+    @Override
+    public void setModel(ListModel model) {
+        super.setModel(model);
+        updateCellSizes(true, true);
+    }
+
+    @Override
+    protected void modelIntervalAdded(ListDataEvent e) {
+        super.modelIntervalAdded(e);
+        cellsViewer.repaint();
+        // TODO: set initial scale
+    }
+
+    @Override
+    protected void modelIntervalRemoved(ListDataEvent e) {
+        super.modelIntervalRemoved(e);
+        cellsViewer.repaint();
+    }
+
+    @Override
+    protected void modelContentsChanged(ListDataEvent e) {
+        super.modelContentsChanged(e);
+        cellsViewer.repaint();
+    }
+
+   /**
+    *
+    * @return start of currently displayed interval of model elements
+    */
+   public int getFirstDisplayedIdx() {
+       return firstDisplayedIdx;
+   }
+
+    /**
+     * Programmatically "scrolls" this JGLImageLIstView to a different position
+     * by setting the index of the first model element to display.
+     * 
+     * @param newValue
+     *            the new index
+     */
+   public void setFirstDisplayedIdx(int newValue) {
+       if (newValue == this.firstDisplayedIdx) { return; }
+       this.firstDisplayedIdx = newValue;
+       cellsViewer.repaint();
+   }
+   
+    /**
+     * Class for the ScaleModes that JGLImageListView instances support. Any
+     * rectangular grid of n x m cells is supported.
+     */
+    public static class MyScaleMode implements ScaleMode {
+        private final int cellRowCount, cellColumnCount;
+
+        public MyScaleMode(int cellRowCount, int cellColumnCount) {
+            this.cellRowCount = cellRowCount;
+            this.cellColumnCount = cellColumnCount;
+        }
+
+        public static MyScaleMode newCellGridMode(int rowCount, int columnCount) {
+            return new MyScaleMode(rowCount, columnCount);
+        }
+
+        public int getCellColumnCount() {
+            return cellColumnCount;
+        }
+
+        public int getCellRowCount() {
+            return cellRowCount;
+        }
+
+        @Override
+        public String getDisplayName() {
+            return "" + cellColumnCount + "x" + cellRowCount;
+        }
+
+        @Override
+        public String toString() {
+            //return "[JListImageListView.MyScaleMode: " + getDisplayName() + "]";
+            return getDisplayName();
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (obj == null) {
+                return false;
+            }
+            if (getClass() != obj.getClass()) {
+                return false;
+            }
+            final MyScaleMode other = (MyScaleMode) obj;
+            if (this.cellRowCount != other.cellRowCount) {
+                return false;
+            }
+            if (this.cellColumnCount != other.cellColumnCount) {
+                return false;
+            }
+            return true;
+        }
+
+        @Override
+        public int hashCode() {
+            int hash = 7;
+            hash = 29 * hash + this.cellRowCount;
+            hash = 29 * hash + this.cellColumnCount;
+            return hash;
+        }
+
+    }
+
+    @Override
+    public MyScaleMode getScaleMode() {
+        return (MyScaleMode) super.getScaleMode();
+    }
+
+
+    protected static Collection<ScaleMode> supportedScaleModes;
+    static {
+        supportedScaleModes = new ArrayList<ScaleMode>();
+        supportedScaleModes.add(MyScaleMode.newCellGridMode(1, 1));
+        supportedScaleModes.add(MyScaleMode.newCellGridMode(2, 2));
+        supportedScaleModes.add(MyScaleMode.newCellGridMode(3, 3));
+        supportedScaleModes.add(MyScaleMode.newCellGridMode(4, 4));
+        supportedScaleModes.add(MyScaleMode.newCellGridMode(5, 5));
+    }
+
+    @Override
+    public Collection<ScaleMode> getSupportedScaleModes() {
+        return supportedScaleModes;
+    }
+
+    @Override
+    protected void doSetScaleMode(ScaleMode oldScaleMode, ScaleMode newScaleMode) {
+        updateCellSizes(true, true);
+    }
+
+
+    protected void updateCellSizes(boolean resetImageSizes, boolean resetImageTranslations) {
+        if (resetImageSizes || resetImageTranslations) {
+            if (getModel() == null || getModel().getSize() == 0 || cellsViewer == null) {
+                return;
+            }
+            Dimension cellImgDisplaySize = new Dimension(cellsViewer.getSize().width / getScaleMode().getCellColumnCount() - 2 * CELL_BORDER_WIDTH,
+                                                         cellsViewer.getSize().height / getScaleMode().getCellRowCount()- 2 * CELL_BORDER_WIDTH);
+            int count = getModel().getSize();
+            for (int i = 0; i < count; i++) {
+                ImageListViewCell cell = getCell(i);
+                if (resetImageTranslations) {
+                    cell.setCenterOffset(0, 0);
+                }
+                if (resetImageSizes) {
+                    Dimension cz = getUnscaledPreferredCellSize(cell);
+                    double scalex = ((double) cellImgDisplaySize.width) / (cz.width - 2 * CELL_BORDER_WIDTH);
+                    double scaley = ((double) cellImgDisplaySize.height) / (cz.height - 2 * CELL_BORDER_WIDTH);
+                    double scale = Math.min(scalex, scaley);
+                    cell.setScale(scale);
+                }
+            }
+        }
+    }
+
+    protected Dimension getUnscaledPreferredCellSize(ImageListViewCell cell) {
+        int w, h;
+        ImageListViewModelElement elt = cell.getDisplayedModelElement();
+        if (elt instanceof DicomImageListViewModelElement) {
+            // performance optimization for this case -- read the values from DICOM metadata instead of getting the image
+            DicomImageListViewModelElement dicomElt = (DicomImageListViewModelElement) elt;
+            w = dicomElt.getDicomImageMetaData().getInt(Tag.Columns);
+            h = dicomElt.getDicomImageMetaData().getInt(Tag.Rows);
+        } else {
+            BufferedImage img = elt.getImage();
+            w = img.getWidth();
+            h = img.getHeight();
+        }
+        return new Dimension(w + 2 * CELL_BORDER_WIDTH,
+                             h + 2 * CELL_BORDER_WIDTH);
+    }
+
+    @Override
+    public void refreshCellForIndex(int idx) {
+        if (null == cellsViewer) {
+            return;
+        }
+        cellsViewer.repaint();
+    }
+
+    @Override
+    public void refreshCells() {
+        if (null == cellsViewer) {
+            return;
+        }
+        cellsViewer.repaint();
+    }
+
+    public GLAutoDrawable getCellsViewer() {
+        return cellsViewer;
+    }
+
+    public int getOriginalImageWidth(ImageListViewCell cell) {
+        ImageListViewModelElement elt = cell.getDisplayedModelElement();
+        if (elt instanceof DicomImageListViewModelElement) {
+            // performance optimization for this case -- read the value from DICOM metadata instead of getting the image
+            DicomImageListViewModelElement dicomElt = (DicomImageListViewModelElement) elt;
+            return dicomElt.getDicomImageMetaData().getInt(Tag.Columns);
+        } else if (elt.hasRawImage() && elt.isRawImagePreferable()){
+            return elt.getRawImage().getWidth();
+        } else {
+            return elt.getImage().getWidth();
+        }
+    }
+
+    public int getOriginalImageHeight(ImageListViewCell cell) {
+        ImageListViewModelElement elt = cell.getDisplayedModelElement();
+        if (elt instanceof DicomImageListViewModelElement) {
+            // performance optimization for this case -- read the value from DICOM metadata instead of getting the image
+            DicomImageListViewModelElement dicomElt = (DicomImageListViewModelElement) elt;
+            return dicomElt.getDicomImageMetaData().getInt(Tag.Rows);
+        } else if (elt.hasRawImage() && elt.isRawImagePreferable()){
+            return elt.getRawImage().getHeight();
+        } else {
+            return elt.getImage().getHeight();
+        }
+    }
+
+    protected class GLEventHandler implements GLEventListener {
+
+        @Override
+        public void init(GLAutoDrawable glAutoDrawable) {
+            // Use debug pipeline
+            glAutoDrawable.setGL(new DebugGL2(glAutoDrawable.getGL().getGL2()));
+            GL2 gl = glAutoDrawable.getGL().getGL2();
+            gl.setSwapInterval(1);
+            gl.glClearColor(0,0,0,0);
+            gl.glShadeModel(gl.GL_FLAT);
+            sharedContextData.ref(getCellsViewer().getContext());
+            if (sharedContextData.getRefCount() == 1) {
+                SharedContextData.callContextInitCallbacks(sharedContextData, gl);
+                SwingUtilities.invokeLater(new Runnable() {
+                    @Override
+                    public void run() {
+                        for (JGLImageListView v : instances) {
+                            if (v != JGLImageListView.this) {
+                                v.createGlCanvas();
+                            }
+                        }
+                    }
+                });
+            }
+            try {
+                ShaderManager.read(gl, "rescaleop");
+                rescaleShader = ShaderManager.get("rescaleop");
+                rescaleShader.addProgramUniform("scale");
+                rescaleShader.addProgramUniform("offset");
+                rescaleShader.addProgramUniform("tex");
+            } catch (Exception e) {
+                System.err.println("FATAL");
+                e.printStackTrace();
+                System.exit(1);
+            }
+        }
+
+        @Override
+        public void display(GLAutoDrawable glAutoDrawable) {
+            //System.out.println("DISP " + drawableToString(glAutoDrawable));
+            GL2 gl = glAutoDrawable.getGL().getGL2();
+            
+            gl.glClear(gl.GL_COLOR_BUFFER_BIT);
+            gl.glMatrixMode(gl.GL_MODELVIEW);
+            //gl.glPushMatrix();
+            gl.glLoadIdentity();
+
+            Dimension canvasSize = cellsViewer.getSize();
+            int colCount = getScaleMode().getCellColumnCount();
+            int rowCount = getScaleMode().getCellRowCount();
+
+            int boxWidth = canvasSize.width / colCount;
+            int boxHeight = canvasSize.height / rowCount;
+            
+            int cellWidth = boxWidth - 2 * CELL_BORDER_WIDTH;
+            int cellHeight = boxHeight - 2 * CELL_BORDER_WIDTH;
+            
+            if (cellWidth < 1 || cellHeight < 1) {
+                return;
+            }
+
+            {
+                gl.glColor3f(0, 1, 0);
+                gl.glBegin(GL.GL_LINE_STRIP);
+                gl.glVertex2f(20, 10);
+                gl.glVertex2f(150, 70);
+                gl.glVertex2f(canvasSize.width / 5, canvasSize.height / 4);
+                gl.glEnd();
+            }
+            
+            int dispCount = colCount * rowCount;
+            for (int iBox = 0; iBox < dispCount; iBox++) {
+                int iCell = getFirstDisplayedIdx() + iBox;
+                if (iCell >= getModel().getSize()) { break; }
+                ImageListViewCell cell = getCell(iCell);
+                int boxColumn = iBox % colCount;
+                int boxRow = rowCount - 1 - iBox / colCount; // counted from bottom to match framebuffer y axis direction
+                
+                int boxMinX = boxWidth * boxColumn;
+                int boxMinY = boxHeight * boxRow;
+
+                gl.glPushAttrib(GL2.GL_CURRENT_BIT|GL2.GL_ENABLE_BIT);
+                gl.glPushMatrix();
+                try {
+                    gl.glLoadIdentity();
+                    
+                    // transform to cell coordinate system: (0,0) = top-left corner, y axis pointing downwards
+                    gl.glTranslated(- canvasSize.getWidth() / 2  + boxMinX + CELL_BORDER_WIDTH,
+                                    - canvasSize.getHeight() / 2 + boxMinY + boxHeight - CELL_BORDER_WIDTH - 1,
+                                    0);
+                    gl.glScalef(1, -1, 1);
+
+                    // draw selection box
+                    ListSelectionModel sm = getSelectionModel();
+                    if (sm != null && sm.isSelectedIndex(iCell)) {
+                        gl.glColor3f(1, 0, 0);
+                        gl.glBegin(GL.GL_LINE_LOOP);
+                        gl.glVertex2f(- CELL_BORDER_WIDTH + 1, - CELL_BORDER_WIDTH);
+                        gl.glVertex2f(cellWidth + CELL_BORDER_WIDTH,  - CELL_BORDER_WIDTH);
+                        gl.glVertex2f(cellWidth + CELL_BORDER_WIDTH,  cellHeight + CELL_BORDER_WIDTH);
+                        gl.glVertex2f(- CELL_BORDER_WIDTH + 1,  cellHeight + CELL_BORDER_WIDTH);
+                        gl.glEnd();
+                    }
+                    
+                    cell.setLatestSize(new Dimension(cellWidth, cellHeight));
+    
+                    // clip
+                    gl.glEnable(gl.GL_SCISSOR_TEST);
+                    try {
+                        gl.glScissor(boxMinX + CELL_BORDER_WIDTH, boxMinY + CELL_BORDER_WIDTH, cellWidth, cellHeight);
+    
+                        // draw cell
+                        ViskitGC gc = new ViskitGC(gl);
+                        
+                        // call paint listeners for stuff below the image in the z order
+                        // Eventually all painting, including the image and ROIs, should happen in PaintListeners
+                        fireCellPaintEvent(new ImageListViewCellPaintEvent(cell, gc, null), Integer.MIN_VALUE, JImageListView.PAINT_ZORDER_IMAGE);
+    
+                        paintImage(cell, gc);
+                        
+                        paintRois(cell, gc);
+                        
+                        // stuff above the ROIs in the z order
+                        fireCellPaintEvent(new ImageListViewCellPaintEvent(cell, gc, null), JImageListView.PAINT_ZORDER_ROI + 1, Integer.MAX_VALUE);
+                    } finally {
+                        gl.glDisable(gl.GL_SCISSOR_TEST);
+                    }
+                } finally {
+                    gl.glPopMatrix();
+                    gl.glPopAttrib();
+                }
+            }
+            
+            //gl.glPopMatrix();
+        }
+
+
+        private void paintImage(ImageListViewCell cell, ViskitGC gc) {
+            GL2 gl = gc.getGl().getGL2();
+            Dimension cellSize = cell.getLatestSize();
+            gl.glPushMatrix();
+            //gl.glLoadIdentity();
+            gl.glTranslated(cellSize.getWidth() / 2, cellSize.getHeight() / 2, 0);
+            gl.glTranslated(cell.getCenterOffset().getX(), cell.getCenterOffset().getY(), 0);
+            gl.glScaled(cell.getScale(), cell.getScale(), 1);
+            System.out.println("scaling to " + cell.getScale());
+            rescaleShader.bind();  // TODO: rescaleShader's internal gl may be outdated here...?
+            rescaleShader.bindUniform("tex", 0);
+            {
+                // TODO: determine the following from the image
+                float minGrayvalue = -32768;
+                float nGrayvalues = 65536F;
+                float wl = (cell.getWindowLocation() - minGrayvalue) / nGrayvalues;
+                float ww = cell.getWindowWidth() / nGrayvalues;
+                float scale = 1F/ww;
+                float offset = (ww/2-wl)*scale;
+                rescaleShader.bindUniform("scale", scale);
+                rescaleShader.bindUniform("offset", offset);
+            }
+            ImageTextureManager.TextureRef texRef = ImageTextureManager.bindImageTexture(sharedContextData, cell.getDisplayedModelElement());
+            gl.glTexEnvi(GL2.GL_TEXTURE_ENV, GL2.GL_TEXTURE_ENV_MODE, gl.GL_REPLACE);
+            TextureCoords coords = texRef.getCoords();
+            gl.glColor3f(0, 1, 0);
+            float w2 = (float) getOriginalImageWidth(cell) / 2, h2 = (float) getOriginalImageHeight(cell) / 2;
+            gl.glBegin(GL2.GL_QUADS);
+            gl.glTexCoord2f(coords.left(), coords.top());
+            gl.glVertex2f(-w2, h2);
+            gl.glTexCoord2f(coords.right(), coords.top());
+            gl.glVertex2f( w2,  h2);
+            gl.glTexCoord2f(coords.right(), coords.bottom());
+            gl.glVertex2f( w2, -h2);
+            gl.glTexCoord2f(coords.left(), coords.bottom());
+            gl.glVertex2f(-w2, -h2);
+            gl.glEnd();
+            ImageTextureManager.unbindCurrentImageTexture(sharedContextData);
+            rescaleShader.unbind();
+            gl.glPopMatrix();
+        }
+        
+        private void paintRois(ImageListViewCell cell, ViskitGC gc) {
+            GL2 gl = gc.getGl().getGL2();
+            gl.glPushMatrix();
+            Point2D centerOffset = cell.getCenterOffset();
+            float scale = (float) cell.getScale();
+            float w2 = (float) getOriginalImageWidth(cell) * scale / 2;
+            float h2 = (float) getOriginalImageHeight(cell) * scale / 2;
+            Dimension cellSize = cell.getLatestSize();
+            gl.glTranslated(cellSize.getWidth() / 2, cellSize.getHeight() / 2, 0);
+            gl.glTranslated(centerOffset.getX(), centerOffset.getY(), 0);
+            gl.glTranslated(-w2, -h2, 0);
+
+            cell.getRoiDrawingViewer().paint(gc);
+
+            gl.glPopMatrix();
+        }
+
+        @Override
+        public void reshape(GLAutoDrawable glAutoDrawable, int x, int y, int width, int height) {
+            GL2 gl = (GL2) glAutoDrawable.getGL();
+            setupEye2ViewportTransformation(gl);
+            Runnable r = new Runnable() {
+                @Override
+                public void run() {
+                    updateCellSizes(true, false);
+                }
+            };
+            if (EventQueue.isDispatchThread()) {
+                r.run();
+            } else {
+                try {
+                    EventQueue.invokeAndWait(r);
+                } catch (Exception e) {
+                    throw new RuntimeException("CAN'T HAPPEN");
+                }
+            }
+        }
+
+        private void setupEye2ViewportTransformation(GL2 gl) {
+            gl.glMatrixMode(gl.GL_PROJECTION);
+            gl.glLoadIdentity();
+            Dimension sz = cellsViewer.getSize();
+            if (sz != null) {
+                gl.glOrtho(-sz.width / 2,   //  GLdouble    left,
+                            sz.width / 2,   //    GLdouble      right,
+                           -sz.height / 2,  //    GLdouble      bottom,
+                            sz.height / 2,  //    GLdouble      top,
+                           -1000, //  GLdouble      nearVal,
+                            1000   //  GLdouble     farVal
+                           );
+
+                /*
+                // TODO: if we have a glViewPort() call, strange things happen
+                //  (completely wrong viewport in some cells) if the J2D OGL pipeline is active.
+                //  If we don't include it, everything works. Why? The JOGL UserGuide says
+                //  that the viewport is automatically set to the drawable's size, but why
+                //  is it harmful to do this manually too?
+                gl.glViewport(0, //GLint x,
+                              0, //GLint y,
+                              getWidth(), //GLsizei width,
+                              getHeight() //GLsizei height
+                              );
+                */
+                gl.glDepthRange(0,1);
+            }
+        }
+
+        @Override
+        public void dispose(GLAutoDrawable glAutoDrawable) {
+            sharedContextData.unref();
+            instances.remove(JGLImageListView.this);
+        }
+
+    };
+
+    
+
+    private MouseAdapter wholeGridTestMouseHandler = new MouseAdapter() {
+
+        @Override
+        public void mouseClicked(MouseEvent evt) {
+            dispatchEventToCell(evt);
+        }
+
+        @Override
+        public void mousePressed(MouseEvent evt) {
+            dispatchEventToCell(evt);
+        }
+
+        @Override
+        public void mouseReleased(final MouseEvent evt) {
+             dispatchEventToCell(evt);
+        }
+
+        // TODO: generate correct enter/exit events for the cells?
+        //       this is something that would be much easier with per-cell
+        //       mouse listeners of course... (see TODO in commted-out block above)
+
+        @Override
+        public void mouseEntered(MouseEvent evt) {
+             //dispatchEventToCell(evt);
+        }
+
+        @Override
+        public void mouseExited(MouseEvent evt) {
+            //dispatchEventToCell(evt);
+        }
+
+        @Override
+        public void mouseMoved(MouseEvent evt) {
+             dispatchEventToCell(evt);
+        }
+
+        @Override
+        public void mouseDragged(MouseEvent evt) {
+             dispatchEventToCell(evt);
+        }
+
+        @Override
+        public void mouseWheelMoved(MouseWheelEvent evt) {
+             dispatchEventToCell(evt);
+        }
+
+    };
+
+    protected void dispatchEventToCell(InputEvent evt) {
+        dispatchEventToCell(evt, true);
+    }
+
+    protected void dispatchEventToCell(InputEvent evt, boolean refreshCell) {
+        if (evt instanceof MouseEvent) {
+            dispatchEventToCell((MouseEvent)evt);
+        }
+    }
+
+    /*
+    protected void dispatchEventToCell(MouseEvent evt) {
+        ImageListViewCell sourceCell = null;
+        JComponent sourceComponent = null;
+        var cell = findCellAt(evt.getPoint());
+        if (clickedModelIndex != -1) {
+            sourceCell = getCell(clickedModelIndex);
+            sourceComponent = wrappedGridList.getComponentFor(clickedModelIndex);
+        }
+        if (sourceCell != null) {
+            Point mousePosInCell = SwingUtilities.convertPoint(wrappedGridList, evt.getPoint(), sourceComponent);
+            MouseEvent ce = Misc.deepCopy(evt);
+            ce.setSource(sourceCell);
+            ce.translatePoint(mousePosInCell.x - ce.getX(), mousePosInCell.y - ce.getY());
+            if (ce instanceof MouseWheelEvent) {
+                fireCellMouseWheelEvent((MouseWheelEvent) ce);
+            } else {
+                fireCellMouseEvent(ce);
+            }
+        }
+    }
+    */
+
+}

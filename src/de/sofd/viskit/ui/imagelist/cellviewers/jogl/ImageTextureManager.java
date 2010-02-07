@@ -20,7 +20,7 @@ import org.apache.log4j.Logger;
  *
  * @author olaf
  */
-class ImageTextureManager {
+public class ImageTextureManager {
 
     protected static final Logger logger = Logger.getLogger(ImageTextureManager.class);
 
