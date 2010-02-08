@@ -75,7 +75,7 @@ public class JListImageListTestApp {
 
         //// creating them like this apparently works better
         JFrame f1 = newFrame("Viskit ImageList test app window 1", null);
-        //JFrame f2 = newFrame("Viskit ImageList test app window 2", null);
+        JFrame f2 = newFrame("Viskit ImageList test app window 2", null);
     }
     
     public JFrame newFrame(String frameTitle, GraphicsConfiguration graphicsConfig) throws Exception {

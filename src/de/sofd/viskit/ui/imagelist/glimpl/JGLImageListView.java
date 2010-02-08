@@ -3,6 +3,7 @@ package de.sofd.viskit.ui.imagelist.glimpl;
 import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.awt.EventQueue;
+import java.awt.Point;
 import java.awt.event.InputEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
@@ -22,21 +23,18 @@ import javax.media.opengl.GLEventListener;
 import javax.media.opengl.GLProfile;
 import javax.media.opengl.awt.GLCanvas;
 import javax.swing.DefaultListSelectionModel;
-import javax.swing.JPopupMenu;
 import javax.swing.JScrollBar;
 import javax.swing.ListModel;
 import javax.swing.ListSelectionModel;
 import javax.swing.SwingUtilities;
-import javax.swing.ToolTipManager;
 import javax.swing.event.ListDataEvent;
-import javax.swing.plaf.basic.BasicTreeUI.SelectionModelPropertyChangeHandler;
 
 import org.dcm4che2.data.Tag;
 
-import com.sun.awt.AWTUtilities;
 import com.sun.opengl.util.texture.TextureCoords;
 
 import de.sofd.util.IdentityHashSet;
+import de.sofd.util.Misc;
 import de.sofd.viskit.draw2d.gc.ViskitGC;
 import de.sofd.viskit.image3D.jogl.util.GLShader;
 import de.sofd.viskit.image3D.jogl.util.ShaderManager;
@@ -66,9 +64,6 @@ public class JGLImageListView extends JImageListView {
 
     public static final int CELL_BORDER_WIDTH = 2;
     
-    /**
-     * TODO: rename to cellsViewer
-     */
     private GLCanvas cellsViewer = null;
     private final JScrollBar scrollBar;
     private int firstDisplayedIdx = 0;
@@ -98,9 +93,10 @@ public class JGLImageListView extends JImageListView {
         cellsViewer.addGLEventListener(new GLEventHandler());
         this.add(cellsViewer, BorderLayout.CENTER);
         revalidate();
-        //cellsContainer.addMouseListener(cellsContainerMouseAndKeyHandler);
-        //cellsContainer.addMouseMotionListener(cellsContainerMouseAndKeyHandler);
-        //cellsContainer.addKeyListener(cellsContainerMouseAndKeyHandler);
+        cellsViewer.addMouseListener(cellsViewerMouseAndKeyHandler);
+        cellsViewer.addMouseMotionListener(cellsViewerMouseAndKeyHandler);
+        cellsViewer.addMouseWheelListener(cellsViewerMouseAndKeyHandler);
+        //cellsViewer.addKeyListener(cellsViewerMouseAndKeyHandler);
     }
     
     @Override
@@ -387,15 +383,6 @@ public class JGLImageListView extends JImageListView {
                 return;
             }
 
-            {
-                gl.glColor3f(0, 1, 0);
-                gl.glBegin(GL.GL_LINE_STRIP);
-                gl.glVertex2f(20, 10);
-                gl.glVertex2f(150, 70);
-                gl.glVertex2f(canvasSize.width / 5, canvasSize.height / 4);
-                gl.glEnd();
-            }
-            
             int dispCount = colCount * rowCount;
             for (int iBox = 0; iBox < dispCount; iBox++) {
                 int iCell = getFirstDisplayedIdx() + iBox;
@@ -471,7 +458,6 @@ public class JGLImageListView extends JImageListView {
             gl.glTranslated(cellSize.getWidth() / 2, cellSize.getHeight() / 2, 0);
             gl.glTranslated(cell.getCenterOffset().getX(), cell.getCenterOffset().getY(), 0);
             gl.glScaled(cell.getScale(), cell.getScale(), 1);
-            System.out.println("scaling to " + cell.getScale());
             rescaleShader.bind();  // TODO: rescaleShader's internal gl may be outdated here...?
             rescaleShader.bindUniform("tex", 0);
             {
@@ -491,6 +477,7 @@ public class JGLImageListView extends JImageListView {
             gl.glColor3f(0, 1, 0);
             float w2 = (float) getOriginalImageWidth(cell) / 2, h2 = (float) getOriginalImageHeight(cell) / 2;
             gl.glBegin(GL2.GL_QUADS);
+            // TODO: wrong orientation here? check visually!
             gl.glTexCoord2f(coords.left(), coords.top());
             gl.glVertex2f(-w2, h2);
             gl.glTexCoord2f(coords.right(), coords.top());
@@ -580,9 +567,45 @@ public class JGLImageListView extends JImageListView {
 
     };
 
+    public int findModelIndexAt(Point p) {
+        return findModelIndexAt(p, null);
+    }
     
+    public int findModelIndexAt(Point p, Point cellRelativePositionReturn) {
+        if (getModel() == null) {
+            return -1;
+        }
+        Dimension canvasSize = cellsViewer.getSize();
+        int colCount = getScaleMode().getCellColumnCount();
+        int rowCount = getScaleMode().getCellRowCount();
+        int dispCount = colCount * rowCount;
+        int boxWidth = canvasSize.width / colCount;
+        int boxHeight = canvasSize.height / rowCount;
+        int cellWidth = boxWidth - 2 * CELL_BORDER_WIDTH;
+        int cellHeight = boxHeight - 2 * CELL_BORDER_WIDTH;
+        int boxRow = p.y / boxHeight;
+        int boxColumn = p.x / boxWidth;
+        int boxIndex = boxRow * colCount + boxColumn;
+        if (boxIndex >= dispCount) {
+            return -1;
+        }
+        int modelIndex = getFirstDisplayedIdx() + boxIndex;
+        if (modelIndex >= getModel().getSize()) {
+            return -1;
+        }
+        int cellPosX = p.x - boxColumn * boxWidth - CELL_BORDER_WIDTH;
+        int cellPosY = p.y - boxRow * boxHeight - CELL_BORDER_WIDTH;
+        if (cellPosX < 0 || cellPosY < 0 || cellPosX >= cellWidth || cellPosY >= cellHeight) {
+            return -1;
+        }
+        if (null != cellRelativePositionReturn) {
+            cellRelativePositionReturn.x = cellPosX;
+            cellRelativePositionReturn.y = cellPosY;
+        }
+        return modelIndex;
+    }
 
-    private MouseAdapter wholeGridTestMouseHandler = new MouseAdapter() {
+    private MouseAdapter cellsViewerMouseAndKeyHandler = new MouseAdapter() {
 
         @Override
         public void mouseClicked(MouseEvent evt) {
@@ -640,17 +663,11 @@ public class JGLImageListView extends JImageListView {
         }
     }
 
-    /*
     protected void dispatchEventToCell(MouseEvent evt) {
-        ImageListViewCell sourceCell = null;
-        JComponent sourceComponent = null;
-        var cell = findCellAt(evt.getPoint());
-        if (clickedModelIndex != -1) {
-            sourceCell = getCell(clickedModelIndex);
-            sourceComponent = wrappedGridList.getComponentFor(clickedModelIndex);
-        }
-        if (sourceCell != null) {
-            Point mousePosInCell = SwingUtilities.convertPoint(wrappedGridList, evt.getPoint(), sourceComponent);
+        Point mousePosInCell = new Point();
+        int modelIdx = findModelIndexAt(evt.getPoint(), mousePosInCell);
+        if (modelIdx != -1) {
+            ImageListViewCell sourceCell = getCell(modelIdx);
             MouseEvent ce = Misc.deepCopy(evt);
             ce.setSource(sourceCell);
             ce.translatePoint(mousePosInCell.x - ce.getX(), mousePosInCell.y - ce.getY());
@@ -661,6 +678,5 @@ public class JGLImageListView extends JImageListView {
             }
         }
     }
-    */
 
 }
