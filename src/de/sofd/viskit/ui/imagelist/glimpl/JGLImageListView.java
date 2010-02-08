@@ -27,6 +27,7 @@ import javax.media.opengl.awt.GLCanvas;
 import javax.swing.AbstractAction;
 import javax.swing.Action;
 import javax.swing.ActionMap;
+import javax.swing.BoundedRangeModel;
 import javax.swing.DefaultListSelectionModel;
 import javax.swing.InputMap;
 import javax.swing.JComponent;
@@ -35,6 +36,8 @@ import javax.swing.KeyStroke;
 import javax.swing.ListModel;
 import javax.swing.ListSelectionModel;
 import javax.swing.SwingUtilities;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 import javax.swing.event.ListDataEvent;
 import javax.swing.event.ListSelectionEvent;
 
@@ -94,7 +97,7 @@ public class JGLImageListView extends JImageListView {
         setScaleMode(new MyScaleMode(2, 2));
         scrollBar = new JScrollBar(JScrollBar.VERTICAL);
         this.add(scrollBar, BorderLayout.EAST);
-        //scrollBar.getModel().addChangeListener(scrollbarChangeListener);
+        scrollBar.getModel().addChangeListener(scrollbarChangeListener);
         setSelectionModel(new DefaultListSelectionModel());
     }
 
@@ -117,6 +120,7 @@ public class JGLImageListView extends JImageListView {
     public void setModel(ListModel model) {
         super.setModel(model);
         updateCellSizes(true, true);
+        updateScrollbar();
     }
 
     @Override
@@ -156,6 +160,7 @@ public class JGLImageListView extends JImageListView {
    public void setFirstDisplayedIdx(int newValue) {
        if (newValue == this.firstDisplayedIdx) { return; }
        this.firstDisplayedIdx = newValue;
+       updateScrollbar();
        cellsViewer.repaint();
    }
    
@@ -246,6 +251,7 @@ public class JGLImageListView extends JImageListView {
     @Override
     protected void doSetScaleMode(ScaleMode oldScaleMode, ScaleMode newScaleMode) {
         updateCellSizes(true, true);
+        updateScrollbar();
     }
 
 
@@ -637,6 +643,67 @@ public class JGLImageListView extends JImageListView {
         }
     }
 
+    /**
+     * need our own valueIsAdjusting for the scrollbar instead of using
+     * scrollBar.getModel().getValueIsAdjusting() because we want to be able to
+     * tell the difference between the user dragging the thumb (we want to
+     * update the display during that) and our own temporarily invalid
+     * scrollModel value settings in updateScrollbar() (we do NOT want to update
+     * the display during that)
+     */
+    private boolean internalScrollbarValueIsAdjusting = false;
+    
+    private void updateScrollbar() {
+        if (null == scrollBar) {
+            return;
+        }
+        if (null == getModel()) {
+            scrollBar.setEnabled(false);
+            return;
+        }
+        if (! scrollBar.isEnabled()) {
+            scrollBar.setEnabled(true);
+        }
+        int size = getModel().getSize();
+        int firstDispIdx = getFirstDisplayedIdx();
+        int rowCount = getScaleMode().getCellRowCount();
+        int columnCount = getScaleMode().getCellColumnCount();
+        int displayedCount = rowCount * columnCount;
+        int lastDispIdx = firstDispIdx + displayedCount - 1;
+        if (lastDispIdx >= size) {
+            lastDispIdx = size - 1;
+        }
+        BoundedRangeModel scrollModel = scrollBar.getModel();
+        internalScrollbarValueIsAdjusting = true;
+        scrollModel.setMinimum(0);
+        scrollModel.setMaximum(size - 1);
+        scrollModel.setValue(firstDispIdx);
+        scrollModel.setExtent(displayedCount - 1);
+        internalScrollbarValueIsAdjusting = false;
+        scrollBar.setUnitIncrement(columnCount);
+        scrollBar.setBlockIncrement(displayedCount);
+    }
+    
+    private ChangeListener scrollbarChangeListener = new ChangeListener() {
+        private boolean inCall = false;
+        @Override
+        public void stateChanged(ChangeEvent e) {
+            if (inCall) { return; }
+            inCall = true;
+            try {
+                BoundedRangeModel scrollModel = scrollBar.getModel();
+                if (internalScrollbarValueIsAdjusting) { return; }
+                //System.out.println("scrollbar changed: " + scrollModel);
+                setFirstDisplayedIdx(scrollModel.getValue());
+            } finally {
+                inCall = false;
+            }
+        }
+    };
+    
+    // TODO: row-wise scrolling instead of cell-wise scrolling
+    
+    
     public int findModelIndexAt(Point p) {
         return findModelIndexAt(p, null);
     }
