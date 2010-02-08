@@ -4,7 +4,9 @@ import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.awt.EventQueue;
 import java.awt.Point;
+import java.awt.event.ActionEvent;
 import java.awt.event.InputEvent;
+import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelEvent;
@@ -22,12 +24,19 @@ import javax.media.opengl.GLCapabilities;
 import javax.media.opengl.GLEventListener;
 import javax.media.opengl.GLProfile;
 import javax.media.opengl.awt.GLCanvas;
+import javax.swing.AbstractAction;
+import javax.swing.Action;
+import javax.swing.ActionMap;
 import javax.swing.DefaultListSelectionModel;
+import javax.swing.InputMap;
+import javax.swing.JComponent;
 import javax.swing.JScrollBar;
+import javax.swing.KeyStroke;
 import javax.swing.ListModel;
 import javax.swing.ListSelectionModel;
 import javax.swing.SwingUtilities;
 import javax.swing.event.ListDataEvent;
+import javax.swing.event.ListSelectionEvent;
 
 import org.dcm4che2.data.Tag;
 
@@ -68,6 +77,9 @@ public class JGLImageListView extends JImageListView {
     private final JScrollBar scrollBar;
     private int firstDisplayedIdx = 0;
     
+    private boolean displayFollowsSelection = true;
+    public static final String PROP_DISPLAYFOLLOWSSELECTION = "displayFollowsSelection";
+    
     private static final Set<JGLImageListView> instances = new IdentityHashSet<JGLImageListView>();
     private static final SharedContextData sharedContextData = new SharedContextData();
 
@@ -93,9 +105,11 @@ public class JGLImageListView extends JImageListView {
         cellsViewer.addGLEventListener(new GLEventHandler());
         this.add(cellsViewer, BorderLayout.CENTER);
         revalidate();
-        cellsViewer.addMouseListener(cellsViewerMouseAndKeyHandler);
-        cellsViewer.addMouseMotionListener(cellsViewerMouseAndKeyHandler);
-        cellsViewer.addMouseWheelListener(cellsViewerMouseAndKeyHandler);
+        setupInternalUiInteractions();
+        //cellsViewer.addKeyListener(internalMouseEventHandler);
+        cellsViewer.addMouseListener(cellMouseEventDispatcher);
+        cellsViewer.addMouseMotionListener(cellMouseEventDispatcher);
+        cellsViewer.addMouseWheelListener(cellMouseEventDispatcher);
         //cellsViewer.addKeyListener(cellsViewerMouseAndKeyHandler);
     }
     
@@ -566,6 +580,62 @@ public class JGLImageListView extends JImageListView {
         }
 
     };
+    
+    public void ensureIndexIsVisible(int idx) {
+        if (null == getModel()) {
+            return;
+        }
+        if (idx >= 0 && idx < getModel().getSize()) {
+            int rowCount = getScaleMode().getCellRowCount();
+            int columnCount = getScaleMode().getCellColumnCount();
+            int displayedCount = rowCount * columnCount;
+            int lastDispIdx = getFirstDisplayedIdx() + displayedCount - 1;
+            int newFirstDispIdx = -1;
+            // TODO: the following always sets firstDispIdx to a multiple of
+            //   columnCount. Instead, it should take the previous firstDispIdx
+            //   into account correctly
+            if (idx < getFirstDisplayedIdx()) {
+                newFirstDispIdx = idx / columnCount * columnCount;
+            } else if (idx > lastDispIdx) {
+                int rowStartIdx = idx / columnCount * columnCount;
+                newFirstDispIdx = rowStartIdx - (rowCount-1) * columnCount;
+            }
+            if (newFirstDispIdx != -1) {
+                setFirstDisplayedIdx(newFirstDispIdx);
+            }
+        }
+    }
+    
+    public void scrollToSelection() {
+        ListSelectionModel sm = getSelectionModel();
+        if (null != sm) {
+            int li = sm.getLeadSelectionIndex();
+            if (sm.isSelectedIndex(li)) {
+                ensureIndexIsVisible(li);
+            }
+        }
+    }
+    
+    public boolean isDisplayFollowsSelection() {
+        return displayFollowsSelection;
+    }
+    
+    public void setDisplayFollowsSelection(boolean displayFollowsSelection) {
+        boolean oldValue = displayFollowsSelection;
+        this.displayFollowsSelection = displayFollowsSelection;
+        firePropertyChange(PROP_DISPLAYFOLLOWSSELECTION, oldValue, displayFollowsSelection);
+    }
+    
+    @Override
+    protected void selectionChanged(ListSelectionEvent e) {
+        super.selectionChanged(e);
+        if (cellsViewer != null) {
+            if (isDisplayFollowsSelection()) {
+                scrollToSelection();
+            }
+            cellsViewer.repaint();
+        }
+    }
 
     public int findModelIndexAt(Point p) {
         return findModelIndexAt(p, null);
@@ -605,7 +675,7 @@ public class JGLImageListView extends JImageListView {
         return modelIndex;
     }
 
-    private MouseAdapter cellsViewerMouseAndKeyHandler = new MouseAdapter() {
+    private MouseAdapter cellMouseEventDispatcher = new MouseAdapter() {
 
         @Override
         public void mouseClicked(MouseEvent evt) {
@@ -679,4 +749,80 @@ public class JGLImageListView extends JImageListView {
         }
     }
 
+
+
+    protected void setupInternalUiInteractions() {
+        this.setFocusable(true);
+        cellsViewer.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                if (null == getSelectionModel() || null == getModel()) {
+                    return;
+                }
+                requestFocus();
+                if (e.getButton() != MouseEvent.BUTTON1) { return; }
+                int clickedModelIndex = findModelIndexAt(e.getPoint());
+                if (clickedModelIndex != -1) {
+                    if ((e.getModifiersEx() & MouseEvent.CTRL_DOWN_MASK) == 0) {
+                        getSelectionModel().clearSelection();
+                    }
+                    getSelectionModel().addSelectionInterval(clickedModelIndex, clickedModelIndex);
+                }
+            }
+        });
+
+        InputMap inputMap = this.getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
+        ActionMap actionMap = this.getActionMap();
+        if (inputMap != null && actionMap != null) {
+            inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_UP, 0), "up");
+            actionMap.put("up", new AbstractAction() {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    shiftSelectionBy(-getScaleMode().getCellColumnCount());
+                }
+            });
+            inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_DOWN, 0), "down");
+            actionMap.put("down", new AbstractAction() {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    shiftSelectionBy(getScaleMode().getCellColumnCount());
+                }
+            });
+            inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_LEFT, 0), "left");
+            actionMap.put("left", new SelectionShiftAction(-1));
+            inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_RIGHT, 0), "right");
+            actionMap.put("right", new SelectionShiftAction(1));
+        }
+    }
+
+    protected Action upAction = new AbstractAction() {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+        }
+    };
+    
+    protected void shiftSelectionBy(int shift) {
+        if (null == getSelectionModel() || null == getModel()) {
+            return;
+        }
+        int idx = getSelectionModel().getLeadSelectionIndex();
+        if (idx != -1) {
+            idx += shift;
+            if (idx >= 0 && idx < getModel().getSize()) {
+                getSelectionModel().clearSelection();
+                getSelectionModel().addSelectionInterval(idx, idx);
+            }
+        }
+    }
+    
+    protected class SelectionShiftAction extends AbstractAction {
+        private int shift;
+        public SelectionShiftAction(int shift) {
+            this.shift = shift;
+        }
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            shiftSelectionBy(shift);
+        }
+    }
 }
