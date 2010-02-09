@@ -41,6 +41,7 @@ import javax.swing.event.ChangeListener;
 import javax.swing.event.ListDataEvent;
 import javax.swing.event.ListSelectionEvent;
 
+import org.apache.log4j.Logger;
 import org.dcm4che2.data.Tag;
 
 import com.sun.opengl.util.texture.TextureCoords;
@@ -65,6 +66,8 @@ import de.sofd.viskit.ui.imagelist.event.ImageListViewCellPaintEvent;
  * @author Sofd GmbH
  */
 public class JGLImageListView extends JImageListView {
+
+    static final Logger logger = Logger.getLogger(JGLImageListView.class);
 
     static {
         System.setProperty("sun.awt.noerasebackground", "true");
@@ -457,6 +460,8 @@ public class JGLImageListView extends JImageListView {
                         
                         // stuff above the ROIs in the z order
                         fireCellPaintEvent(new ImageListViewCellPaintEvent(cell, gc, null), JImageListView.PAINT_ZORDER_ROI + 1, Integer.MAX_VALUE);
+                    } catch (Exception e) {
+                        logger.error("error displaying " + cell.getDisplayedModelElement(), e);
                     } finally {
                         gl.glDisable(gl.GL_SCISSOR_TEST);
                     }
@@ -474,59 +479,64 @@ public class JGLImageListView extends JImageListView {
             GL2 gl = gc.getGl().getGL2();
             Dimension cellSize = cell.getLatestSize();
             gl.glPushMatrix();
-            //gl.glLoadIdentity();
-            gl.glTranslated(cellSize.getWidth() / 2, cellSize.getHeight() / 2, 0);
-            gl.glTranslated(cell.getCenterOffset().getX(), cell.getCenterOffset().getY(), 0);
-            gl.glScaled(cell.getScale(), cell.getScale(), 1);
-            rescaleShader.bind();  // TODO: rescaleShader's internal gl may be outdated here...?
-            rescaleShader.bindUniform("tex", 0);
-            {
-                // TODO: determine the following from the image
-                float minGrayvalue = -32768;
-                float nGrayvalues = 65536F;
-                float wl = (cell.getWindowLocation() - minGrayvalue) / nGrayvalues;
-                float ww = cell.getWindowWidth() / nGrayvalues;
-                float scale = 1F/ww;
-                float offset = (ww/2-wl)*scale;
-                rescaleShader.bindUniform("scale", scale);
-                rescaleShader.bindUniform("offset", offset);
+            try {
+                //gl.glLoadIdentity();
+                gl.glTranslated(cellSize.getWidth() / 2, cellSize.getHeight() / 2, 0);
+                gl.glTranslated(cell.getCenterOffset().getX(), cell.getCenterOffset().getY(), 0);
+                gl.glScaled(cell.getScale(), cell.getScale(), 1);
+                rescaleShader.bind();  // TODO: rescaleShader's internal gl may be outdated here...?
+                rescaleShader.bindUniform("tex", 0);
+                {
+                    // TODO: determine the following from the image
+                    float minGrayvalue = -32768;
+                    float nGrayvalues = 65536F;
+                    float wl = (cell.getWindowLocation() - minGrayvalue) / nGrayvalues;
+                    float ww = cell.getWindowWidth() / nGrayvalues;
+                    float scale = 1F/ww;
+                    float offset = (ww/2-wl)*scale;
+                    rescaleShader.bindUniform("scale", scale);
+                    rescaleShader.bindUniform("offset", offset);
+                }
+                ImageTextureManager.TextureRef texRef = ImageTextureManager.bindImageTexture(sharedContextData, cell.getDisplayedModelElement());
+                gl.glTexEnvi(GL2.GL_TEXTURE_ENV, GL2.GL_TEXTURE_ENV_MODE, gl.GL_REPLACE);
+                TextureCoords coords = texRef.getCoords();
+                gl.glColor3f(0, 1, 0);
+                float w2 = (float) getOriginalImageWidth(cell) / 2, h2 = (float) getOriginalImageHeight(cell) / 2;
+                gl.glBegin(GL2.GL_QUADS);
+                // TODO: wrong orientation here? check visually!
+                gl.glTexCoord2f(coords.left(), coords.top());
+                gl.glVertex2f(-w2, h2);
+                gl.glTexCoord2f(coords.right(), coords.top());
+                gl.glVertex2f( w2,  h2);
+                gl.glTexCoord2f(coords.right(), coords.bottom());
+                gl.glVertex2f( w2, -h2);
+                gl.glTexCoord2f(coords.left(), coords.bottom());
+                gl.glVertex2f(-w2, -h2);
+                gl.glEnd();
+                ImageTextureManager.unbindCurrentImageTexture(sharedContextData);
+                rescaleShader.unbind();
+            } finally {
+                gl.glPopMatrix();
             }
-            ImageTextureManager.TextureRef texRef = ImageTextureManager.bindImageTexture(sharedContextData, cell.getDisplayedModelElement());
-            gl.glTexEnvi(GL2.GL_TEXTURE_ENV, GL2.GL_TEXTURE_ENV_MODE, gl.GL_REPLACE);
-            TextureCoords coords = texRef.getCoords();
-            gl.glColor3f(0, 1, 0);
-            float w2 = (float) getOriginalImageWidth(cell) / 2, h2 = (float) getOriginalImageHeight(cell) / 2;
-            gl.glBegin(GL2.GL_QUADS);
-            // TODO: wrong orientation here? check visually!
-            gl.glTexCoord2f(coords.left(), coords.top());
-            gl.glVertex2f(-w2, h2);
-            gl.glTexCoord2f(coords.right(), coords.top());
-            gl.glVertex2f( w2,  h2);
-            gl.glTexCoord2f(coords.right(), coords.bottom());
-            gl.glVertex2f( w2, -h2);
-            gl.glTexCoord2f(coords.left(), coords.bottom());
-            gl.glVertex2f(-w2, -h2);
-            gl.glEnd();
-            ImageTextureManager.unbindCurrentImageTexture(sharedContextData);
-            rescaleShader.unbind();
-            gl.glPopMatrix();
         }
         
         private void paintRois(ImageListViewCell cell, ViskitGC gc) {
             GL2 gl = gc.getGl().getGL2();
             gl.glPushMatrix();
-            Point2D centerOffset = cell.getCenterOffset();
-            float scale = (float) cell.getScale();
-            float w2 = (float) getOriginalImageWidth(cell) * scale / 2;
-            float h2 = (float) getOriginalImageHeight(cell) * scale / 2;
-            Dimension cellSize = cell.getLatestSize();
-            gl.glTranslated(cellSize.getWidth() / 2, cellSize.getHeight() / 2, 0);
-            gl.glTranslated(centerOffset.getX(), centerOffset.getY(), 0);
-            gl.glTranslated(-w2, -h2, 0);
-
-            cell.getRoiDrawingViewer().paint(gc);
-
-            gl.glPopMatrix();
+            try {
+                Point2D centerOffset = cell.getCenterOffset();
+                float scale = (float) cell.getScale();
+                float w2 = (float) getOriginalImageWidth(cell) * scale / 2;
+                float h2 = (float) getOriginalImageHeight(cell) * scale / 2;
+                Dimension cellSize = cell.getLatestSize();
+                gl.glTranslated(cellSize.getWidth() / 2, cellSize.getHeight() / 2, 0);
+                gl.glTranslated(centerOffset.getX(), centerOffset.getY(), 0);
+                gl.glTranslated(-w2, -h2, 0);
+    
+                cell.getRoiDrawingViewer().paint(gc);
+            } finally {
+                gl.glPopMatrix();
+            }
         }
 
         @Override
