@@ -9,7 +9,6 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.File;
 import java.net.MalformedURLException;
-import java.net.URL;
 import java.util.Arrays;
 
 import javax.swing.AbstractAction;
@@ -24,7 +23,6 @@ import javax.swing.SwingUtilities;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 
-import org.dcm4che2.data.BasicDicomObject;
 import org.dcm4che2.data.DicomObject;
 import org.dcm4che2.data.Tag;
 import org.jdesktop.beansbinding.BeanProperty;
@@ -43,9 +41,6 @@ import de.sofd.viskit.controllers.ImageListViewPrintTextToCellsController;
 import de.sofd.viskit.controllers.ImageListViewRoiInputEventController;
 import de.sofd.viskit.controllers.ImageListViewRoiToolApplicationController;
 import de.sofd.viskit.controllers.ImageListViewWindowingApplyToAllController;
-import de.sofd.viskit.image.Dcm;
-import de.sofd.viskit.image.DcmImageListViewModelElement;
-import de.sofd.viskit.image.DicomInputOutput;
 import de.sofd.viskit.model.DicomImageListViewModelElement;
 import de.sofd.viskit.model.FileBasedDicomImageListViewModelElement;
 import de.sofd.viskit.model.ImageListViewModelElement;
@@ -97,7 +92,8 @@ public class JListImageListTestApp {
 
         final JImageListView viewer;
         //viewer = newJListImageListView();
-        //viewer = newJGridImageListView();
+        //viewer = newJGridImageListView(true);
+        //viewer = newJGridImageListView(false);
         viewer = new JGLImageListView();
         
         new ImageListViewInitialWindowingController(viewer).setEnabled(true);
@@ -210,6 +206,7 @@ public class JListImageListTestApp {
                     final DefaultListModel model = new DefaultListModel();
                     File file = new File(jFileChooser1.getSelectedFile().getPath());
                     String[] children = file.list();
+                    Arrays.sort(children);
                     for (int i = 0; i < children.length; i++) {
                         if (children[i].endsWith(".dcm")) {
                             System.out.println(children[i]);
@@ -265,6 +262,8 @@ public class JListImageListTestApp {
             }
         };
         ptc.setEnabled(true);
+        
+        //new ImageListViewMouseMeasurementController(viewer).setEnabled(true);
 
         toolbar.add(new AbstractAction("tgglTxt") {
             @Override
@@ -287,10 +286,12 @@ public class JListImageListTestApp {
         return new JListImageListView();
     }
     
-    protected JGridImageListView newJGridImageListView() {
+    protected JGridImageListView newJGridImageListView(boolean useOpenglRenderer) {
         final JGridImageListView viewer = new JGridImageListView();
         viewer.setScaleMode(JGridImageListView.MyScaleMode.newCellGridMode(2, 2));
-        ((JGridImageListView) viewer).setRendererType(JGridImageListView.RendererType.OPENGL);
+        if (useOpenglRenderer) {
+            ((JGridImageListView) viewer).setRendererType(JGridImageListView.RendererType.OPENGL);
+        }
         return viewer;
     }
 
