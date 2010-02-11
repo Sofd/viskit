@@ -14,11 +14,12 @@ import java.beans.PropertyChangeListener;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.EventListener;
 import java.util.IdentityHashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.SortedSet;
+import java.util.NavigableSet;
 import java.util.TreeSet;
 
 import javax.swing.AbstractListModel;
@@ -717,9 +718,6 @@ public abstract class JImageListView extends JPanel {
 
 
 
-    private Collection<MouseListener> cellMouseListeners =
-            new ArrayList<MouseListener>();
-
     /**
      * Add a MouseListener that receives mouse events for all cells of this list.
      * This is a convenient way to be
@@ -730,24 +728,132 @@ public abstract class JImageListView extends JPanel {
      * <p>
      * The event's source will be the cell, the mouse coordinates will be relative
      * to the cell's upper-left border.
+     * <p>
+     * The zOrder parameter specifies the z position at which the mouse listener is
+     * added. Mouse listeners with higher z positions are invoked before ones with
+     * lower z positions. You may use one of the PAINT_ZORDER_* constants for
+     * pre-defined z positions.
      *
+     * @param zOrder
      * @param listener
      */
+    public void addCellMouseListener(int zOrder, MouseListener listener) {
+        addAnyCellMouseListener(zOrder, listener);
+    }
+
     public void addCellMouseListener(MouseListener listener) {
-        cellMouseListeners.add(listener);
+        addAnyCellMouseListener(PAINT_ZORDER_DEFAULT, listener);
     }
-
+    
     public void removeCellMouseListener(MouseListener listener) {
-        cellMouseListeners.remove(listener);
+        removeAnyCellMouseListener(listener);
+    }
+    
+    protected void fireCellMouseEvent(MouseEvent e) {
+        fireAnyCellMouseEvent(e);
     }
 
-    protected void fireCellMouseEvent(MouseEvent e) {
-        if (e.getID() == MouseEvent.MOUSE_MOVED || e.getID() == MouseEvent.MOUSE_DRAGGED) {
-            fireCellMouseMotionEvent(e);
-            return;
+    /**
+     * Like {@link #addCellMouseListener(int, java.awt.event.MouseListener) }, but for
+     * MouseMotionListeners.
+     *
+     * @param zOrder
+     * @param listener
+     */
+    public void addCellMouseMotionListener(int zOrder, MouseMotionListener listener) {
+        addAnyCellMouseListener(zOrder, listener);
+    }
+
+    public void addCellMouseMotionListener(MouseMotionListener listener) {
+        addAnyCellMouseListener(PAINT_ZORDER_DEFAULT, listener);
+    }
+    
+    public void removeCellMouseMotionListener(MouseMotionListener listener) {
+        removeAnyCellMouseListener(listener);
+    }
+
+    protected void fireCellMouseMotionEvent(MouseEvent e) {
+        fireAnyCellMouseEvent(e);
+    }
+
+
+    /**
+     * Like {@link #addCellMouseListener(int, java.awt.event.MouseListener) }, but for
+     * MouseWheelListener.
+     *
+     * @param zOrder
+     * @param listener
+     */
+    public void addCellMouseWheelListener(int zOrder, MouseWheelListener listener) {
+        addAnyCellMouseListener(zOrder, listener);
+    }
+
+    public void addCellMouseWheelListener(MouseWheelListener listener) {
+        addAnyCellMouseListener(PAINT_ZORDER_DEFAULT, listener);
+    }
+    
+    public void removeCellMouseWheelListener(MouseWheelListener listener) {
+        removeAnyCellMouseListener(listener);
+    }
+
+    protected void fireCellMouseWheelEvent(MouseWheelEvent e) {
+        fireAnyCellMouseEvent(e);
+    }
+
+
+    
+    private NavigableSet<ListenerRecord<EventListener>> cellMouseListeners =
+        new TreeSet<ListenerRecord<EventListener>>();
+    
+    protected void addAnyCellMouseListener(int zOrder, EventListener listener) {
+        // check if it's been added before already. TODO: this is not really correct, get rid of it?
+        //   (it was added for compatibility with clients that call all three add methods with just
+        //   one listener instance (extending MouseHandler and thus implementing all Mouse*Listener interfaces),
+        //   and expect the listener to be called only once per event.
+        //   Check how standard Swing components handle this)
+        for (Iterator<ListenerRecord<EventListener>> it = cellMouseListeners.iterator(); it.hasNext();) {
+            if (it.next().listener == listener) {
+                return;
+            }
         }
-        for (MouseListener l : cellMouseListeners) {
-            switch (e.getID()) {
+        cellMouseListeners.add(new ListenerRecord<EventListener>(listener, zOrder));
+    }
+
+    protected void removeAnyCellMouseListener(EventListener listener) {
+        for (Iterator<ListenerRecord<EventListener>> it = cellMouseListeners.iterator(); it.hasNext();) {
+            if (it.next().listener == listener) {
+                it.remove();
+                return;
+            }
+        }
+    }
+
+    protected void fireAnyCellMouseEvent(MouseEvent e) {
+        for (ListenerRecord<EventListener> rec : cellMouseListeners/*.descendingSet()*/) {
+            //TODO: ^^^ .descendingSet() is correct, but won't work with the current TestApp/HieroDent app
+            //      because of a bug in ImageListViewRoiInputEventController, which modifies the mouse event
+            boolean eventProcessed = false;
+            if (rec.listener instanceof MouseWheelListener && e instanceof MouseWheelEvent) {
+                MouseWheelListener l = (MouseWheelListener) rec.listener;
+                l.mouseWheelMoved((MouseWheelEvent) e);
+                eventProcessed = true;
+            }
+            if (!eventProcessed && rec.listener instanceof MouseMotionListener) {
+                MouseMotionListener l = (MouseMotionListener) rec.listener;
+                switch (e.getID()) {
+                case MouseEvent.MOUSE_MOVED:
+                    l.mouseMoved(e);
+                    eventProcessed = true;
+                    break;
+                case MouseEvent.MOUSE_DRAGGED:
+                    l.mouseDragged(e);
+                    eventProcessed = true;
+                    break;
+                }
+            }
+            if (!eventProcessed) {
+                MouseListener l = (MouseListener) rec.listener;
+                switch (e.getID()) {
                 case MouseEvent.MOUSE_CLICKED:
                     l.mouseClicked(e);
                     break;
@@ -763,73 +869,14 @@ public abstract class JImageListView extends JPanel {
                 case MouseEvent.MOUSE_EXITED:
                     l.mouseExited(e);
                     break;
+                }
             }
             if (e.isConsumed()) {
                 break;
             }
         }
     }
-
-
-    private Collection<MouseMotionListener> cellMouseMotionListeners =
-            new ArrayList<MouseMotionListener>();
-
-    /**
-     * Like {@link #addCellMouseListener(java.awt.event.MouseListener) }, but for
-     * MouseMotionListeners.
-     *
-     * @param listener
-     */
-    public void addCellMouseMotionListener(MouseMotionListener listener) {
-        cellMouseMotionListeners.add(listener);
-    }
-
-    public void removeCellMouseMotionListener(MouseMotionListener listener) {
-        cellMouseMotionListeners.remove(listener);
-    }
-
-    protected void fireCellMouseMotionEvent(MouseEvent e) {
-        for (MouseMotionListener l : cellMouseMotionListeners) {
-            switch (e.getID()) {
-                case MouseEvent.MOUSE_MOVED:
-                    l.mouseMoved(e);
-                    break;
-                case MouseEvent.MOUSE_DRAGGED:
-                    l.mouseDragged(e);
-                    break;
-            }
-            if (e.isConsumed()) {
-                break;
-            }
-        }
-    }
-
-
-    private Collection<MouseWheelListener> cellMouseWheelListeners =
-            new ArrayList<MouseWheelListener>();
-
-    /**
-     * Like {@link #addCellMouseListener(java.awt.event.MouseListener) }, but for
-     * MouseWheelListener.
-     *
-     * @param listener
-     */
-    public void addCellMouseWheelListener(MouseWheelListener listener) {
-        cellMouseWheelListeners.add(listener);
-    }
-
-    public void removeCellMouseWheelListener(MouseWheelListener listener) {
-        cellMouseWheelListeners.remove(listener);
-    }
-
-    protected void fireCellMouseWheelEvent(MouseWheelEvent e) {
-        for (MouseWheelListener l : cellMouseWheelListeners) {
-            l.mouseWheelMoved(e);
-            if (e.isConsumed()) {
-                break;
-            }
-        }
-    }
+    
 
 
     /**
@@ -858,11 +905,11 @@ public abstract class JImageListView extends JPanel {
      * @param listener
      */
     public void addCellPaintListener(int zOrder, ImageListViewCellPaintListener listener) {
-        cellPaintListeners.add(new PaintListenerRecord(listener, zOrder));
+        cellPaintListeners.add(new ListenerRecord<ImageListViewCellPaintListener>(listener, zOrder));
     }
     
     public void removeCellPaintListener(ImageListViewCellPaintListener listener) {
-        for (Iterator<PaintListenerRecord> it = cellPaintListeners.iterator(); it.hasNext();) {
+        for (Iterator<ListenerRecord<ImageListViewCellPaintListener>> it = cellPaintListeners.iterator(); it.hasNext();) {
             if (it.next().listener == listener) {
                 it.remove();
                 return;
@@ -916,7 +963,7 @@ public abstract class JImageListView extends JPanel {
      * @param e
      */
     public void fireCellPaintEvent(ImageListViewCellPaintEvent e) {
-        for (PaintListenerRecord rec : cellPaintListeners) {
+        for (ListenerRecord<ImageListViewCellPaintListener> rec : cellPaintListeners) {
             rec.listener.onCellPaint(e);
             if (e.isConsumed()) {
                 break;
@@ -936,9 +983,9 @@ public abstract class JImageListView extends JPanel {
             public void onCellPaint(ImageListViewCellPaintEvent e) {
             }
         };
-        PaintListenerRecord min = new PaintListenerRecord(dummy, minZ);
-        PaintListenerRecord max = new PaintListenerRecord(dummy, maxZ);
-        for (PaintListenerRecord rec : cellPaintListeners.subSet(min, max)) {
+        ListenerRecord<ImageListViewCellPaintListener> min = new ListenerRecord<ImageListViewCellPaintListener>(dummy, minZ);
+        ListenerRecord<ImageListViewCellPaintListener> max = new ListenerRecord<ImageListViewCellPaintListener>(dummy, maxZ);
+        for (ListenerRecord<ImageListViewCellPaintListener> rec : cellPaintListeners.subSet(min, max)) {
             rec.listener.onCellPaint(e);
             if (e.isConsumed()) {
                 break;
@@ -946,20 +993,21 @@ public abstract class JImageListView extends JPanel {
         }
     }
 
-    private SortedSet<PaintListenerRecord> cellPaintListeners = new TreeSet<PaintListenerRecord>();
+    private NavigableSet<ListenerRecord<ImageListViewCellPaintListener>> cellPaintListeners =
+        new TreeSet<ListenerRecord<ImageListViewCellPaintListener>>();
     
-    private static class PaintListenerRecord implements Comparable<PaintListenerRecord> {
-        ImageListViewCellPaintListener listener;
+    private static class ListenerRecord<ListenerType> implements Comparable<ListenerRecord<ListenerType>> {
+        ListenerType listener;
         Integer zOrder;
         Integer instanceNumber;
         private static int lastInstanceNumber;
-        public PaintListenerRecord(ImageListViewCellPaintListener listener, int zOrder) {
+        public ListenerRecord(ListenerType listener, int zOrder) {
             this.listener = listener;
             this.zOrder = zOrder;
             this.instanceNumber = lastInstanceNumber++;
         }
         @Override
-        public int compareTo(PaintListenerRecord o) {
+        public int compareTo(ListenerRecord<ListenerType> o) {
             int res = zOrder.compareTo(o.zOrder);
             if (res == 0) {
                 return instanceNumber.compareTo(o.instanceNumber);
