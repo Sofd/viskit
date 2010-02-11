@@ -300,6 +300,22 @@ public class JGLImageListView extends JImageListView {
     }
 
     @Override
+    public void refreshCell(ImageListViewCell cell) {
+        if (null == cellsViewer) {
+            return;
+        }
+        cellsViewer.repaint();
+    }
+    
+    @Override
+    public void refreshCellForElement(ImageListViewModelElement elt) {
+        if (null == cellsViewer) {
+            return;
+        }
+        cellsViewer.repaint();
+    }
+    
+    @Override
     public void refreshCellForIndex(int idx) {
         if (null == cellsViewer) {
             return;
