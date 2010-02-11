@@ -64,7 +64,7 @@ public class ImageListViewMouseZoomPanController {
         //TODO: this is a MouseCellEventHandler, i.e. the event source is the cell, not the list.
         //   and the coordinates are relative to the cell. Modify code to take that into account.
 
-        private int translateLastX, translateLastY;
+        private int translateLastX = -1, translateLastY = -1;
 
         public void changeScaleAndTranslationOfCell(ImageListViewCell cell, double scaleChange, Point translationChange) {
             double newScale = cell.getScale() * scaleChange;
