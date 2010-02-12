@@ -46,6 +46,7 @@ import org.dcm4che2.data.Tag;
 
 import com.sun.opengl.util.texture.TextureCoords;
 
+import de.sofd.util.FloatRange;
 import de.sofd.util.IdentityHashSet;
 import de.sofd.util.Misc;
 import de.sofd.viskit.draw2d.gc.ViskitGC;
@@ -508,11 +509,9 @@ public class JGLImageListView extends JImageListView {
                 rescaleShader.bindUniform("preScale", texRef.getPreScale());
                 rescaleShader.bindUniform("preOffset", texRef.getPreOffset());
                 {
-                    // TODO: determine the following from the image
-                    //float minGrayvalue = -32768;
-                    //float nGrayvalues = 65536F;
-                    float minGrayvalue = 0;
-                    float nGrayvalues = 1<<12;
+                    FloatRange pxValuesRange = cell.getDisplayedModelElement().getPixelValuesRange();
+                    float minGrayvalue = pxValuesRange.getMin();
+                    float nGrayvalues = pxValuesRange.getDelta();
                     float wl = (cell.getWindowLocation() - minGrayvalue) / nGrayvalues;
                     float ww = cell.getWindowWidth() / nGrayvalues;
                     float scale = 1F/ww;
