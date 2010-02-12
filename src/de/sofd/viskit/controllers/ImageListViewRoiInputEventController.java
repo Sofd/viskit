@@ -1,5 +1,6 @@
 package de.sofd.viskit.controllers;
 
+import de.sofd.util.Misc;
 import de.sofd.viskit.ui.imagelist.ImageListViewCell;
 import de.sofd.viskit.ui.imagelist.JImageListView;
 import java.awt.Dimension;
@@ -110,10 +111,10 @@ public class ImageListViewRoiInputEventController {
                 Point2D imageOffset = new Point2D.Double((cellSize.width + 2 * cell.getCenterOffset().getX() - (int) imgSize.getX()) / 2,
                                                          (cellSize.height + 2 * cell.getCenterOffset().getY() - (int) imgSize.getY()) / 2);
 
-
                 //Point2D imgSize = getScaledImageSize();
-                evt.translatePoint((int) -imageOffset.getX(), (int) -imageOffset.getY());
-                cell.getRoiDrawingViewer().processInputEvent(evt);
+                MouseEvent translatedEvt = Misc.deepCopy(evt);
+                translatedEvt.translatePoint((int) -imageOffset.getX(), (int) -imageOffset.getY());
+                cell.getRoiDrawingViewer().processInputEvent(translatedEvt);
                 if (refreshCell) {
                     controlledImageListView.refreshCell(cell);
                 }

@@ -829,9 +829,7 @@ public abstract class JImageListView extends JPanel {
     }
 
     protected void fireAnyCellMouseEvent(MouseEvent e) {
-        for (ListenerRecord<EventListener> rec : cellMouseListeners/*.descendingSet()*/) {
-            //TODO: ^^^ .descendingSet() is correct, but won't work with the current TestApp/HieroDent app
-            //      because of a bug in ImageListViewRoiInputEventController, which modifies the mouse event
+        for (ListenerRecord<EventListener> rec : cellMouseListeners.descendingSet()) {
             boolean eventProcessed = false;
             if (rec.listener instanceof MouseWheelListener && e instanceof MouseWheelEvent) {
                 MouseWheelListener l = (MouseWheelListener) rec.listener;

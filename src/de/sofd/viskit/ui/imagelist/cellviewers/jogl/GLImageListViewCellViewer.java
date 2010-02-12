@@ -124,6 +124,7 @@ public class GLImageListViewCellViewer extends BaseImageListViewCellViewer {
             if (e instanceof MouseEvent) {
                 MouseEvent me = (MouseEvent) e;
                 Point targetPoint = SwingUtilities.convertPoint(me.getComponent(), me.getPoint(), target);
+                // TODO: use deepCopy in all cases and then translatePoint() to modify the point for MouseEvents
                 if (e instanceof MouseWheelEvent) {
                     MouseWheelEvent mwe = (MouseWheelEvent) e;
                     targetEvent = new MouseWheelEvent(target,
