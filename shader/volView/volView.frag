@@ -96,9 +96,9 @@ vec3 shading( in vec3 N, in vec3 E, in vec3 L, in vec4 color )
 	float dotER = max(dot(R, E), 0);
 	float sf = pow( dotER, specExp );
 	
-	vec3 specular = spec * sf;
+	vec3 specular = spec * sf * color.a;
 	
-	return min(max((ambient + diffuse + specular)*color.a, vec3(0.0f)), 1.0f);
+	return min(max(ambient + diffuse + specular, vec3(0.0f)), 1.0f);
 }
 
 vec3 shading2( in vec3 E, in vec3 L, in vec3 color, in float value, in vec3 texPos )
@@ -156,7 +156,7 @@ void main() {
 	vec4 sumColor = vec4(0.0f);
 	
 	float texValue;
-	float decay = alpha * sliceStep * 300;
+	float decay = alpha * sliceStep * 600;
 	
 	vec4 tfColor = vec4(0.0f);
 	vec2 tfCoord = vec2(0.0f);

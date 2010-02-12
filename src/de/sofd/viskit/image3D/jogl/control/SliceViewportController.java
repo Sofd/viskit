@@ -1,5 +1,8 @@
 package de.sofd.viskit.image3D.jogl.control;
 
+import java.awt.*;
+import java.awt.event.*;
+
 import de.sofd.viskit.image3D.jogl.minigui.controller.*;
 import de.sofd.viskit.image3D.jogl.view.*;
 
@@ -9,13 +12,16 @@ public class SliceViewportController extends OrthoViewportController
 
     protected DragController sliderPinController;
 
-    public SliceViewportController( SliceViewport sliceViewport, java.awt.Component awtParent )
-    {
-        super( sliceViewport );
+    public SliceViewportController(SliceViewport sliceViewport, java.awt.Component awtParent, Robot robot) {
+        super(sliceViewport, robot);
 
-        slicePlaneController = new SlicePlaneController( sliceViewport.getPlane(), awtParent );
+        slicePlaneController = new SlicePlaneController(sliceViewport.getPlane(), awtParent, robot);
 
-        sliderPinController = new SliderController( sliceViewport.getSlider() );
+        sliderPinController = new SliderController(sliceViewport.getSlider(), robot);
+    }
+
+    public SlicePlaneController getSlicePlaneController() {
+        return slicePlaneController;
     }
 
     protected SliceViewport getSliceViewport()
@@ -46,22 +52,22 @@ public class SliceViewportController extends OrthoViewportController
     }
 
     @Override
-    public void mouseDragged(    int button,
+    public void mouseDragged(    MouseEvent e,
                                 int mX,
                                 int mY )
     {
         int mouseX = orthoViewport.getRelativeMouseX( mX );
         int mouseY = orthoViewport.getRelativeMouseY( mY );
 
-        sliderPinController.dragged( button, mouseX, mouseY );
-        slicePlaneController.mouseDragged( button, mouseX, mouseY );
+        sliderPinController.dragged( e, mouseX, mouseY );
+        slicePlaneController.mouseDragged( e, mouseX, mouseY );
         
         getSliceViewport().getPlane().setCurrentSlice( getSliceViewport().getSlider().getValue() - 1 );
 
     }
 
     @Override
-    public void mouseMoved( int button,
+    public void mouseMoved( MouseEvent e,
                             int mX,
                             int mY )
     {
@@ -69,7 +75,7 @@ public class SliceViewportController extends OrthoViewportController
         int mouseX = orthoViewport.getRelativeMouseX( mX );
         int mouseY = orthoViewport.getRelativeMouseY( mY );
 
-        slicePlaneController.mouseMoved( button, mouseX, mouseY );
+        slicePlaneController.mouseMoved( e, mouseX, mouseY );
         // }
     }
 

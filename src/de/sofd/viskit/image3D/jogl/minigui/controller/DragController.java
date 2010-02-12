@@ -1,5 +1,6 @@
 package de.sofd.viskit.image3D.jogl.minigui.controller;
 
+import java.awt.*;
 import java.awt.event.*;
 
 import de.sofd.viskit.image3D.jogl.minigui.view.*;
@@ -14,25 +15,42 @@ public class DragController
     protected int oldX;
     protected int oldY;
     
-    protected Component component;
+    protected DragComponent component;
+    
+    protected Robot robot;
 
-    public DragController( Component component ) {
+    public DragController( DragComponent component, Robot robot ) {
         setComponent(component);
         setLastX(0);
         setLastY(0);
         setActive(false);
+        this.robot = robot;
     }
     
-    public void dragged( int button, int mouseX, int mouseY )
+    public void dragged( MouseEvent e, int mouseX, int mouseY )
     {
         if ( isActive() )
         {
-            component.setX( oldX + ( mouseX - oldMouseX ) );
-            component.setY( oldY + ( mouseY - oldMouseY ) );
+            int nx = oldX + ( mouseX - oldMouseX ); 
+            int ny = oldY + ( mouseY - oldMouseY );
+            
+            component.setX( nx );
+            component.setY( ny );
+            
+//            
+//            Point mouseInBounds = component.getInBounds( component.getBounds().getDeltaX() > 0 ? mouseX : oldMouseX, component.getBounds().getDeltaY() > 0 ? mouseY : oldMouseY );
+//            int mx = (int)mouseInBounds.getX();
+//            int my = (int)mouseInBounds.getY();
+//        
+//            if ( mx != mouseX || my != mouseY ) {
+//                Point mouseOnScreen = e.getLocationOnScreen();
+//                    
+//                robot.mouseMove((int)mouseOnScreen.getX() - mouseX + mx, (int)mouseOnScreen.getY() - my + mouseY);
+//            }
         }
     }
 
-    public Component getComponent() {
+    public DragComponent getComponent() {
         return component;
     }
 
@@ -71,7 +89,7 @@ public class DragController
         this.isActive = isActive;
     }
 
-    protected void setComponent(Component component) {
+    protected void setComponent(DragComponent component) {
         this.component = component;
     }
 
@@ -82,4 +100,6 @@ public class DragController
     public void setLastY(int lastY) {
         this.oldMouseY = lastY;
     }
+
+    
 }

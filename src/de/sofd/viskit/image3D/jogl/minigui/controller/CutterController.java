@@ -15,9 +15,9 @@ public class CutterController extends DragController
     
     protected int cursorType;
 
-    public CutterController( CutterPlane cutterPlane, Component awtParent )
+    public CutterController( CutterPlane cutterPlane, Component awtParent, Robot robot )
     {
-        super( cutterPlane );
+        super( cutterPlane, robot );
         
         this.awtParent = awtParent;
         
@@ -33,7 +33,7 @@ public class CutterController extends DragController
     }
     
     @Override
-    public void dragged( int button, int mouseX, int mouseY )
+    public void dragged( MouseEvent e, int mouseX, int mouseY )
     {
         CutterPlane cutter = getCutterPlane();
         
@@ -142,7 +142,7 @@ public class CutterController extends DragController
         }
     }
     
-    public void mouseMoved( int button,
+    public void mouseMoved( MouseEvent e,
                             int mouseX,
                             int mouseY )
     {

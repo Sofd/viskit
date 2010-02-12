@@ -1,9 +1,10 @@
 package de.sofd.viskit.image3D.jogl.control;
 
+import java.awt.*;
 import java.awt.event.*;
 import java.util.*;
 
-import de.sofd.viskit.image3D.jogl.minigui.view.*;
+import de.sofd.viskit.image3D.jogl.minigui.view.Component;
 import de.sofd.viskit.image3D.jogl.view.*;
 import de.sofd.viskit.image3D.view.*;
 
@@ -16,15 +17,18 @@ public class SliceViewController implements MouseListener, MouseMotionListener
     protected TransferFrame transferFrame;
     
     protected GPUVolumeView volumeView;
+    
+    protected Robot robot;
 
-    public SliceViewController( SliceCanvas sliceCanvas )
+    public SliceViewController( SliceCanvas sliceCanvas, Robot robot )
     {
         this.sliceCanvas = sliceCanvas;
-
+        this.robot = robot;
+        
         for ( Component orthoViewport : sliceCanvas.getSliceView().getViewports() )
         {
             if ( orthoViewport instanceof SliceViewport )
-                orthoViewportControllerList.add( new SliceViewportController( (SliceViewport)orthoViewport, sliceCanvas ) );
+                orthoViewportControllerList.add( new SliceViewportController( (SliceViewport)orthoViewport, sliceCanvas, robot ) );
         }
     }
 
@@ -74,8 +78,10 @@ public class SliceViewController implements MouseListener, MouseMotionListener
             }
             
             if ( ! draggingLocked )
-                orthoViewportController.mouseDragged( e.getButton(), e.getX(), sliceCanvas.getViewportHeight() - e.getY() );
+                orthoViewportController.mouseDragged( e, e.getX(), sliceCanvas.getViewportHeight() - e.getY() );
         }
+        
+        boolean cutterIsActive = false;
 
         for ( OrthoViewportController orthoViewportController : orthoViewportControllerList )
         {
@@ -83,14 +89,21 @@ public class SliceViewController implements MouseListener, MouseMotionListener
             
             if ( orthoViewportController instanceof SliceViewportController )
             {
-                ( (SliceViewportController)orthoViewportController ).updateComponents();
+                SliceViewportController sliceViewportController = (SliceViewportController)orthoViewportController;
+                
+                sliceViewportController.updateComponents();
+                cutterIsActive |= sliceViewportController.getSlicePlaneController().getCutterController().isActive();
+                
             }
         }
         
         sliceCanvas.display();
         
-        if ( volumeView != null )
+        if ( volumeView != null && cutterIsActive ) {
             volumeView.display(false);
+        }
+        
+            
     }
 
     @Override
@@ -112,7 +125,7 @@ public class SliceViewController implements MouseListener, MouseMotionListener
     {
         for ( OrthoViewportController orthoViewportController : orthoViewportControllerList )
             if ( orthoViewportController.getOrthoViewport().isVisible() )
-                orthoViewportController.mouseMoved( e.getButton(), e.getX(), sliceCanvas.getViewportHeight() - e.getY() );
+                orthoViewportController.mouseMoved( e, e.getX(), sliceCanvas.getViewportHeight() - e.getY() );
 
         for ( OrthoViewportController orthoViewportController : orthoViewportControllerList )
         {

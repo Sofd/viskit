@@ -52,8 +52,10 @@ public class SliceCanvas extends GLCanvas implements GLEventListener
     protected SliceViewController sliceViewController;
     
     protected boolean cleanup = false;
+    
+    protected Robot robot;
 
-    public SliceCanvas( VolumeObject volumeObject ) throws IOException
+    public SliceCanvas( VolumeObject volumeObject ) throws IOException, AWTException
     {
         super( caps );
 
@@ -63,6 +65,8 @@ public class SliceCanvas extends GLCanvas implements GLEventListener
         addGLEventListener( this );
 
         animator = new Animator( this );
+        
+        this.robot = new Robot();
         
         
     }
@@ -181,7 +185,7 @@ public class SliceCanvas extends GLCanvas implements GLEventListener
             
             sliceView.glCreate();
             
-            sliceViewController = new SliceViewController( this );
+            sliceViewController = new SliceViewController( this, robot );
             this.addMouseListener( sliceViewController );
             this.addMouseMotionListener( sliceViewController );
             
@@ -227,8 +231,7 @@ public class SliceCanvas extends GLCanvas implements GLEventListener
         GL2 gl = drawable.getGL().getGL2();
         gl.glViewport( 0, 0, width, height );
 
-        System.out.println( "width : " + width + ", height : " + height );
-
+        
         gl.glMatrixMode( GL_PROJECTION );
         gl.glLoadIdentity();
 

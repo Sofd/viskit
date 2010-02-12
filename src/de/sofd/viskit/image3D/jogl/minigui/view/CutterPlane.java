@@ -7,7 +7,7 @@ import javax.media.opengl.*;
 import de.sofd.util.*;
 import de.sofd.viskit.image3D.jogl.minigui.util.*;
 
-public class CutterPlane extends TexComponent
+public class CutterPlane extends DragTexComponent
 {
     protected FloatRange horiRange;
 
@@ -20,7 +20,7 @@ public class CutterPlane extends TexComponent
         super( x, y, width, height, null, new float[]
         {
                 1.0f, 1.0f, 1.0f, 0.5f
-        } );
+        }, null );
 
         this.horiRange = horiRange;
         this.vertiRange = vertiRange;

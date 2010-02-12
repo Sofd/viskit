@@ -14,13 +14,16 @@ public class ReticleController
     protected boolean isActive;
 
     protected Component awtParent;
+    
+    protected Robot robot;
 
-    public ReticleController( Reticle reticle, Component awtParent )
+    public ReticleController( Reticle reticle, Component awtParent, Robot robot )
     {
 
         this.reticle = reticle;
         this.isActive = false;
         this.awtParent = awtParent;
+        this.robot = robot;
     }
 
     protected Reticle getReticle()
@@ -49,17 +52,34 @@ public class ReticleController
         }
     }
 
-    public void mouseMoved( int button,
+    public void mouseMoved( MouseEvent e,
                             int mouseX,
                             int mouseY )
     {
         if ( isActive() )
         {
-            if ( reticle.getMoveBounds().isInXBounds( mouseX ) )
+            boolean inXBounds = false;
+            boolean inYBounds = false;
+            
+            if ( reticle.getMoveBounds().isInXBounds( mouseX ) ) {
                 reticle.getCross().setPosX( mouseX );
-
-            if ( reticle.getMoveBounds().isInYBounds( mouseY ) )
+                inXBounds = true;
+            }
+            
+            if ( reticle.getMoveBounds().isInYBounds( mouseY ) ) {
                 reticle.getCross().setPosY( mouseY );
+                inYBounds = true;
+            }
+            
+            if ( ! inXBounds || ! inYBounds ) {
+                Point mouseInBounds = reticle.getMoveBounds().getInBounds( mouseX, mouseY );
+                int mx = (int)mouseInBounds.getX();
+                int my = (int)mouseInBounds.getY();
+                
+                Point mouseOnScreen = e.getLocationOnScreen();
+                
+                robot.mouseMove((int)mouseOnScreen.getX() - mouseX + mx, (int)mouseOnScreen.getY() - my + mouseY);
+            }
         }
     }
 

@@ -1,14 +1,20 @@
 package de.sofd.viskit.image3D.jogl.control;
 
+import java.awt.*;
+import java.awt.event.*;
+
 import de.sofd.viskit.image3D.jogl.view.*;
 
 public abstract class OrthoViewportController
 {
     protected OrthoViewport orthoViewport;
-
-    public OrthoViewportController( OrthoViewport orthoViewport )
+    
+    protected Robot robot;
+    
+    public OrthoViewportController( OrthoViewport orthoViewport, Robot robot )
     {
         this.orthoViewport = orthoViewport;
+        this.robot = robot;
     }
 
     protected OrthoViewport getOrthoViewport()
@@ -29,11 +35,11 @@ public abstract class OrthoViewportController
         }
     }
 
-    public abstract void mouseDragged(    int button,
+    public abstract void mouseDragged(    MouseEvent e,
                                         int mX,
                                         int mY );
 
-    public abstract void mouseMoved(    int button,
+    public abstract void mouseMoved(    MouseEvent e,
                                         int mX,
                                         int mY );
 

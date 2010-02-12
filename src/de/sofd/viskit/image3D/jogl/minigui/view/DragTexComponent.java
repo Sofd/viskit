@@ -1,53 +1,48 @@
 package de.sofd.viskit.image3D.jogl.minigui.view;
 
+import javax.media.opengl.*;
+
 import com.sun.opengl.util.texture.*;
 
 import de.sofd.util.*;
+import de.sofd.viskit.image3D.jogl.util.*;
 
-public class DragTexComponent extends TexComponent
+public class DragTexComponent extends DragComponent
 {
     protected Bounds bounds;
+    
+    protected Texture tex;
+    protected float[] color;
 
     public DragTexComponent( int x, int y, int width, int height, Texture tex, float[] color, Bounds bounds )
     {
-        super( x, y, width, height, tex, color );
-        this.bounds = bounds;
+        super( x, y, width, height, bounds );
+        setTex(tex);
+        setColor(color);
+    }
+    
+    public float[] getColor() {
+        return color;
     }
 
-    public Bounds getBounds()
-    {
-        return bounds;
+    public Texture getTex() {
+        return tex;
     }
 
-    public void setBounds( Bounds bounds )
-    {
-        this.bounds = bounds;
+    public void setColor(float[] color) {
+        this.color = color;
     }
-
-    @Override
-    public void setX( int x )
-    {
-        super.setX( Math.min( Math.max( bounds.getMinX(), x ), bounds.getMaxX() ) );
+    
+    public void setTex(Texture tex) {
+        this.tex = tex;
     }
-
-    public void setXAndBounds( int x )
+    
+    public void show( GL2 gl )
     {
-        bounds.setMinX( x );
-        bounds.setMaxX( x );
-        setX( x );
-    }
-
-    @Override
-    public void setY( int y )
-    {
-        super.setY( Math.min( Math.max( bounds.getMinY(), y ), bounds.getMaxY() ) );
-    }
-
-    public void setYAndBounds( int y )
-    {
-        bounds.setMinY( y );
-        bounds.setMaxY( y );
-        setY( y );
+        tex.bind();
+        gl.glColor4fv( color, 0 );
+        
+        GLUtil.texQuad2D( gl, x, y - 1, width, height, 0, 1, 1, -1 );
     }
 
 }

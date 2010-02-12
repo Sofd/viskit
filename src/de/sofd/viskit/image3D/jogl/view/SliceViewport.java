@@ -34,7 +34,7 @@ public class SliceViewport extends OrthoViewport
 
         this.volumeObject = volumeObject;
 
-        setLayout( new BorderLayout( 5, 30, 14, 5 ) );
+        setLayout( new BorderLayout( 5, 27, 5, 5 ) );
         int[] margin = getLayout().getMargin();
 
         plane = SlicePlaneFactory.getInstance().getPlane( margin[ 3 ], margin[ 2 ], width - margin[ 1 ] - margin[ 3 ],
@@ -43,12 +43,16 @@ public class SliceViewport extends OrthoViewport
         sliderBgTexData = ResourceLoader.getImageTexData( "minigui.slider.bg" );
         sliderPinTexData = ResourceLoader.getImageTexData( "minigui.slider.pin" );
 
-        slider = new SliderHorizontal( margin[ 3 ], margin[ 2 ] - sliderBgTexData.getHeight() - 2, plane.getWidth(),
-                sliderBgTexData.getHeight(), sliderPinTexData, 1, plane.getMaxSlices(),
+//        slider = new SliderHorizontal( margin[ 3 ], margin[ 2 ] - sliderBgTexData.getHeight() - 2, plane.getWidth(),
+//                sliderBgTexData.getHeight(), sliderPinTexData, 1, plane.getMaxSlices(),
+//                (float)plane.getCurrentSlice() + 1, new float[] { 1.0f, 1.0f, 1.0f, 1.0f } );
+        
+        slider = new SliderVertical( margin[ 3 ] + plane.getWidth(), margin[ 2 ] - sliderBgTexData.getHeight() - 2, sliderBgTexData.getWidth(), 
+                height, sliderPinTexData, 1, plane.getMaxSlices(),
                 (float)plane.getCurrentSlice() + 1, new float[] { 1.0f, 1.0f, 1.0f, 1.0f } );
 
         getLayout().add( plane, BorderLayout.CENTER );
-        getLayout().add( slider, BorderLayout.SOUTH );
+        getLayout().add( slider, BorderLayout.EAST );
 
     }
     

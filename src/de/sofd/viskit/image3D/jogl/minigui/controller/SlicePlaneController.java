@@ -1,6 +1,7 @@
 package de.sofd.viskit.image3D.jogl.minigui.controller;
 
 import java.awt.*;
+import java.awt.event.*;
 
 import de.sofd.viskit.image3D.jogl.minigui.view.*;
 
@@ -14,15 +15,22 @@ public class SlicePlaneController
     
     protected java.awt.Component awtParent;
 
-    public SlicePlaneController( SlicePlane slicePlane, java.awt.Component awtParent )
+    protected Robot robot;
+    
+    public SlicePlaneController( SlicePlane slicePlane, java.awt.Component awtParent, Robot robot )
     {
+        this.robot = robot;
         this.slicePlane = slicePlane;
+        
+        reticleController = new ReticleController( slicePlane.getReticle(), awtParent, robot );
 
-        reticleController = new ReticleController( slicePlane.getReticle(), awtParent );
-
-        cutterController = new CutterController( slicePlane.getCutter(), awtParent );
+        cutterController = new CutterController( slicePlane.getCutter(), awtParent, robot );
         
         this.awtParent = awtParent;
+    }
+
+    public CutterController getCutterController() {
+        return cutterController;
     }
 
     public void mouseClicked(    int button,
@@ -35,20 +43,20 @@ public class SlicePlaneController
         }
     }
 
-    public void mouseDragged(    int button,
+    public void mouseDragged(    MouseEvent e,
                                 int mouseX,
                                 int mouseY )
     {
-        cutterController.dragged( button, mouseX, mouseY );
+        cutterController.dragged( e, mouseX, mouseY );
 
     }
 
-    public void mouseMoved( int button,
+    public void mouseMoved( MouseEvent e,
                             int mouseX,
                             int mouseY )
     {
-
-        reticleController.mouseMoved( button, mouseX, mouseY );
+        
+        reticleController.mouseMoved( e, mouseX, mouseY );
 
         if ( reticleController.isActive() )
         {
@@ -57,7 +65,7 @@ public class SlicePlaneController
         else
         {
             if ( slicePlane.isInBounds( mouseX, mouseY ) )
-                cutterController.mouseMoved( button, mouseX, mouseY );
+                cutterController.mouseMoved( e, mouseX, mouseY );
                 
         }
         
