@@ -1,6 +1,8 @@
 package de.sofd.viskit.controllers;
 
 import static com.sun.opengl.util.gl2.GLUT.BITMAP_8_BY_13;
+import de.sofd.viskit.model.DicomImageListViewModelElement;
+import de.sofd.viskit.model.ImageListViewModelElement;
 import de.sofd.viskit.ui.imagelist.ImageListViewCell;
 import de.sofd.viskit.ui.imagelist.JImageListView;
 import de.sofd.viskit.ui.imagelist.event.ImageListViewCellPaintEvent;
@@ -8,17 +10,19 @@ import de.sofd.viskit.ui.imagelist.event.ImageListViewCellPaintListener;
 
 import java.awt.Color;
 import java.awt.Graphics2D;
-import java.awt.Point;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.awt.event.MouseWheelEvent;
 import java.awt.geom.Line2D;
 import java.awt.geom.Point2D;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
+import java.text.DecimalFormat;
 
 import javax.media.opengl.GL;
 import javax.media.opengl.GL2;
+
+import org.dcm4che2.data.DicomObject;
+import org.dcm4che2.data.Tag;
 
 import com.sun.opengl.util.gl2.GLUT;
 
@@ -36,7 +40,7 @@ public class ImageListViewMouseMeasurementController {
     public static final String PROP_CONTROLLEDIMAGELISTVIEW = "controlledImageListView";
     private boolean enabled;
     public static final String PROP_ENABLED = "enabled";
-    private Color drawingColor = Color.yellow;
+    private Color drawingColor = Color.red;
     public static final String PROP_DRAWINGCOLOR = "drawingColor";
 
     protected ImageListViewCell currentlyMeasuredCell;
@@ -118,7 +122,6 @@ public class ImageListViewMouseMeasurementController {
 
         @Override
         public void mousePressed(MouseEvent e) {
-            System.out.println("MouseMeasurementCtler: mousePressed");
             if (!isEnabled()) {
                 return;
             }
@@ -126,6 +129,7 @@ public class ImageListViewMouseMeasurementController {
                 if (e.isShiftDown() && (e.getButton() == MOUSE_BUTTON || (e.getModifiers() & MOUSE_MASK) != 0)) {
                     currentlyMeasuredCell = (ImageListViewCell) e.getSource();
                     startingPoint = new Point2D.Double(e.getX(), e.getY());
+                    draggedPoint = null;
                     currentlyMeasuredCell.refresh();
                     e.consume();
                 }
@@ -158,20 +162,21 @@ public class ImageListViewMouseMeasurementController {
         
         @Override
         public void onCellPaint(ImageListViewCellPaintEvent e) {
-            if (!isEnabled() || currentlyMeasuredCell == null || startingPoint == null || draggedPoint == null) {
+            if (!isEnabled() || currentlyMeasuredCell != e.getSource() || startingPoint == null || draggedPoint == null) {
                 return;
             }
-            System.out.println("MouseMeasurementCtler: painting");
             if (e.getGc().isGraphics2DAvailable() && ! e.getGc().isGlPreferred()) {
                 // paint using Java2D
                 Graphics2D g2d = e.getGc().getGraphics2D();
                 g2d.setColor(drawingColor);
                 g2d.draw(new Line2D.Double(startingPoint, draggedPoint));
-                //g2d.drawString(text, posx, posy);
+                g2d.drawString(getDistanceLabel(currentlyMeasuredCell, startingPoint, draggedPoint),
+                               (int) (startingPoint.getX() + draggedPoint.getX()) / 2,
+                               (int) (startingPoint.getY() + draggedPoint.getY()) / 2);
            } else {
                 // paint using OpenGL
                 GL2 gl = e.getGc().getGl().getGL2();
-                //GLUT glut = new GLUT();
+                GLUT glut = new GLUT();
                 gl.glPushAttrib(GL2.GL_CURRENT_BIT|GL2.GL_ENABLE_BIT);
                 try {
                     gl.glShadeModel(GL2.GL_FLAT);
@@ -182,8 +187,9 @@ public class ImageListViewMouseMeasurementController {
                     gl.glVertex2d(startingPoint.getX(), startingPoint.getY());
                     gl.glVertex2d(draggedPoint.getX(), draggedPoint.getY());
                     gl.glEnd();
-                    //gl.glRasterPos2i(posx, posy);
-                    //glut.glutBitmapString(BITMAP_8_BY_13, text);
+                    gl.glRasterPos2i((int) (startingPoint.getX() + draggedPoint.getX()) / 2,
+                                     (int) (startingPoint.getY() + draggedPoint.getY()) / 2);
+                    glut.glutBitmapString(BITMAP_8_BY_13, getDistanceLabel(currentlyMeasuredCell, startingPoint, draggedPoint));
                 } finally {
                     gl.glPopAttrib();
                 }
@@ -192,6 +198,48 @@ public class ImageListViewMouseMeasurementController {
         
     };
 
+    protected DecimalFormat df = new DecimalFormat();
+    {
+        // TODO: proper rounding to a fixed number of significant decimal places
+        df.setMinimumFractionDigits(3);
+        df.setMaximumFractionDigits(3);
+        df.setGroupingUsed(false);
+        df.setMinimumIntegerDigits(1);
+    }
+    
+    protected String getDistanceLabel(ImageListViewCell cell, Point2D p0, Point2D p1) {
+        double dx = (p1.getX() - p0.getX()) / cell.getScale();
+        double dy = (p1.getY() - p0.getY()) / cell.getScale();
+        String unit = " pixel";
+        ImageListViewModelElement elt = cell.getDisplayedModelElement();
+        if (elt instanceof DicomImageListViewModelElement) {
+            DicomImageListViewModelElement delt = (DicomImageListViewModelElement) elt;
+            DicomObject dcm = delt.getDicomImageMetaData();
+            float[] rowCol;
+            try {
+                if (dcm.contains(Tag.PixelSpacing)) {
+                    rowCol = dcm.getFloats(Tag.PixelSpacing);
+                    if ((rowCol.length != 2) || (rowCol[0] <= 0) || (rowCol[1] <= 0)) {
+                        throw new RuntimeException("Illegal PixelSpacing tag in DICOM metadata (2 positive real numbers expected)");
+                    }
+                } else if (dcm.contains(Tag.ImagerPixelSpacing)) {
+                    rowCol = dcm.getFloats(Tag.ImagerPixelSpacing);
+                    if ((rowCol.length != 2) || (rowCol[0] <= 0) || (rowCol[1] <= 0)) {
+                        throw new RuntimeException("Illegal ImagerPixelSpacing tag in DICOM metadata (2 positive real numbers expected)");
+                    }
+                } else {
+                    throw new RuntimeException("DICOM metadata contained neither a PixelSpacing nor an ImagerPixelSpacing tag");
+                }
+                dx *= rowCol[1];
+                dy *= rowCol[0];
+                unit = " mm";
+            } catch (RuntimeException e) {
+                // ignore, fall back to pixels (s.a.)
+            }
+        }
+        return "" + df.format(Math.sqrt(dx*dx + dy*dy)) + unit;
+    }
+    
     private PropertyChangeSupport propertyChangeSupport = new PropertyChangeSupport(this);
 
     /**

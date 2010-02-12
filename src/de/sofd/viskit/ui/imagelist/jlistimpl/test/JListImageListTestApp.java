@@ -35,6 +35,7 @@ import de.sofd.draw2d.viewer.tools.EllipseTool;
 import de.sofd.draw2d.viewer.tools.SelectorTool;
 import de.sofd.util.FloatRange;
 import de.sofd.viskit.controllers.ImageListViewInitialWindowingController;
+import de.sofd.viskit.controllers.ImageListViewMouseMeasurementController;
 import de.sofd.viskit.controllers.ImageListViewMouseWindowingController;
 import de.sofd.viskit.controllers.ImageListViewMouseZoomPanController;
 import de.sofd.viskit.controllers.ImageListViewPrintTextToCellsController;
@@ -263,7 +264,7 @@ public class JListImageListTestApp {
         };
         ptc.setEnabled(true);
         
-        //new ImageListViewMouseMeasurementController(viewer).setEnabled(true);
+        new ImageListViewMouseMeasurementController(viewer).setEnabled(true);
 
         toolbar.add(new AbstractAction("tgglTxt") {
             @Override
