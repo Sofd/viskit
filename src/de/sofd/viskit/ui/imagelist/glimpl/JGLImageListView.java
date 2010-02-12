@@ -388,6 +388,8 @@ public class JGLImageListView extends JImageListView {
             try {
                 ShaderManager.read(gl, "rescaleop");
                 rescaleShader = ShaderManager.get("rescaleop");
+                rescaleShader.addProgramUniform("preScale");
+                rescaleShader.addProgramUniform("preOffset");
                 rescaleShader.addProgramUniform("scale");
                 rescaleShader.addProgramUniform("offset");
                 rescaleShader.addProgramUniform("tex");
@@ -500,20 +502,26 @@ public class JGLImageListView extends JImageListView {
                 gl.glTranslated(cellSize.getWidth() / 2, cellSize.getHeight() / 2, 0);
                 gl.glTranslated(cell.getCenterOffset().getX(), cell.getCenterOffset().getY(), 0);
                 gl.glScaled(cell.getScale(), cell.getScale(), 1);
+                ImageTextureManager.TextureRef texRef = ImageTextureManager.bindImageTexture(sharedContextData, cell.getDisplayedModelElement());
                 rescaleShader.bind();  // TODO: rescaleShader's internal gl may be outdated here...?
                 rescaleShader.bindUniform("tex", 0);
+                rescaleShader.bindUniform("preScale", texRef.getPreScale());
+                rescaleShader.bindUniform("preOffset", texRef.getPreOffset());
                 {
                     // TODO: determine the following from the image
-                    float minGrayvalue = -32768;
-                    float nGrayvalues = 65536F;
+                    //float minGrayvalue = -32768;
+                    //float nGrayvalues = 65536F;
+                    float minGrayvalue = 0;
+                    float nGrayvalues = 1<<12;
                     float wl = (cell.getWindowLocation() - minGrayvalue) / nGrayvalues;
                     float ww = cell.getWindowWidth() / nGrayvalues;
                     float scale = 1F/ww;
                     float offset = (ww/2-wl)*scale;
                     rescaleShader.bindUniform("scale", scale);
                     rescaleShader.bindUniform("offset", offset);
+                    //rescaleShader.bindUniform("scale", 1.0F);
+                    //rescaleShader.bindUniform("offset", 0.0F);
                 }
-                ImageTextureManager.TextureRef texRef = ImageTextureManager.bindImageTexture(sharedContextData, cell.getDisplayedModelElement());
                 gl.glTexEnvi(GL2.GL_TEXTURE_ENV, GL2.GL_TEXTURE_ENV_MODE, gl.GL_REPLACE);
                 TextureCoords coords = texRef.getCoords();
                 gl.glColor3f(0, 1, 0);
