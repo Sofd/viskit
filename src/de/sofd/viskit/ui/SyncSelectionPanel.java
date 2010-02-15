@@ -9,9 +9,8 @@ import javax.swing.JToggleButton;
 
 /**
  *
- * @author sofds GmbH
+ * @author sofd GmbH
  *
- * TODO generic tool pattern (e.g. from RoiToolPanel)
  */
 public class SyncSelectionPanel extends javax.swing.JPanel {
 
@@ -66,16 +65,8 @@ public class SyncSelectionPanel extends javax.swing.JPanel {
         return keepRelativeToggleButton;
     }
 
-    public void setKeepRelativeToggleButton(JToggleButton keepRelativeToggleButton) {
-        this.keepRelativeToggleButton = keepRelativeToggleButton;
-    }
-
     public JToggleButton getSyncSelectionToggleButton() {
         return syncSelectionToggleButton;
-    }
-
-    public void setSyncSelectionToggleButton(JToggleButton syncSelectionToggleButton) {
-        this.syncSelectionToggleButton = syncSelectionToggleButton;
     }
 
 }
