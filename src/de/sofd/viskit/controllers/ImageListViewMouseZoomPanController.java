@@ -1,5 +1,7 @@
 package de.sofd.viskit.controllers;
 
+import de.sofd.viskit.model.DicomImageListViewModelElement;
+import de.sofd.viskit.model.ImageListViewModelElement;
 import de.sofd.viskit.ui.imagelist.ImageListViewCell;
 import de.sofd.viskit.ui.imagelist.JImageListView;
 import java.awt.Point;
@@ -7,8 +9,10 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelEvent;
 import java.awt.geom.Point2D;
+import java.awt.image.BufferedImage;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
+import org.dcm4che2.data.Tag;
 
 /**
  *
@@ -118,6 +122,21 @@ public class ImageListViewMouseZoomPanController {
                     ImageListViewCell cell = (ImageListViewCell) evt.getSource();
                     if (cell != null) {
                         cell.setCenterOffset(new Point2D.Double(0, 0));
+                        int w, h;
+                        ImageListViewModelElement elt = cell.getDisplayedModelElement();
+                        if (elt instanceof DicomImageListViewModelElement) {
+                            // performance optimization for this case -- read the values from DICOM metadata instead of getting the image
+                            DicomImageListViewModelElement dicomElt = (DicomImageListViewModelElement) elt;
+                            w = dicomElt.getDicomImageMetaData().getInt(Tag.Columns);
+                            h = dicomElt.getDicomImageMetaData().getInt(Tag.Rows);
+                        } else {
+                            BufferedImage img = elt.getImage();
+                            w = img.getWidth();
+                            h = img.getHeight();
+                        }
+                        double scalex  = (double) cell.getLatestSize().width / w;
+                        double scaley  = (double) cell.getLatestSize().height / h;
+                        cell.setScale(scalex < scaley ? scalex : scaley);
                         cell.refresh();
                         evt.consume();
                     }
