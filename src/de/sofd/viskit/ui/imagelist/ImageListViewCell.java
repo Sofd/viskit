@@ -1,6 +1,7 @@
 package de.sofd.viskit.ui.imagelist;
 
 import de.sofd.viskit.model.ImageListViewModelElement;
+import de.sofd.viskit.model.LookupTable;
 import de.sofd.draw2d.viewer.DrawingViewer;
 import java.awt.Dimension;
 import java.awt.geom.Point2D;
@@ -31,6 +32,7 @@ public interface ImageListViewCell {
     public static final String PROP_INTERACTIVEWINDOWINGINPROGRESS = "interactiveWindowingInProgress";
     public static final String PROP_SCALE = "scale";
     public static final String PROP_WINDOWWIDTH = "windowWidth";
+    public static final String PROP_LOOKUPTABLE = "lookupTable";
 
     JImageListView getOwner();
 
@@ -91,6 +93,8 @@ public interface ImageListViewCell {
      */
     boolean isInteractiveWindowingInProgress();
 
+    LookupTable getLookupTable();
+    
     /**
      * Set the value of centerOffset
      *
@@ -130,6 +134,9 @@ public interface ImageListViewCell {
      */
     void setWindowWidth(int windowWidth);
 
+    void setLookupTable(LookupTable lut);
+    
+    
     void refresh();
 
     /**

@@ -52,6 +52,7 @@ public class GLImageListViewCellViewer extends BaseImageListViewCellViewer {
         JPopupMenu.setDefaultLightWeightPopupEnabled(false);
         ToolTipManager.sharedInstance().setLightWeightPopupEnabled(false);
         ImageTextureManager.init();
+        LookupTableTextureManager.init();
     }
 
     private static final Set<GLImageListViewCellViewer> instances = new IdentityHashSet<GLImageListViewCellViewer>();

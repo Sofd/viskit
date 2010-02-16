@@ -160,6 +160,7 @@ public class ImageTextureManager {
                                           null // Flusher flusher);
                                           );
                     imageTextureData.flush();
+                    cd.getGlContext().getCurrentGL().glActiveTexture(GL2.GL_TEXTURE1);
                     imageTexture = new Texture(imageTextureData);
                     preScale = 0.5F;
                     preOffset = 0.5F;
@@ -181,6 +182,7 @@ public class ImageTextureManager {
                                           null // Flusher flusher);
                                           );
                     imageTextureData.flush();
+                    cd.getGlContext().getCurrentGL().glActiveTexture(GL2.GL_TEXTURE1);
                     imageTexture = new Texture(imageTextureData);
                     preScale = (float) (1<<16) / (1<<12);
                     preOffset = 0.0F;
@@ -191,6 +193,7 @@ public class ImageTextureManager {
                 //TextureData imageTextureData = AWTTextureIO.newTextureData(elt.getImage(), true);  // with mipmapping
                 TextureData imageTextureData = AWTTextureIO.newTextureData(elt.getImage(), false);   // w/o mipmapping
                 imageTextureData.flush();
+                cd.getGlContext().getCurrentGL().glActiveTexture(GL2.GL_TEXTURE1);
                 imageTexture = new Texture(imageTextureData);
             }
             texRef = new TextureRef(imageTexture.getTextureObject(),
@@ -202,6 +205,7 @@ public class ImageTextureManager {
             logger.info("GL texture memory consumption now (est.): " + (texRefStore.getTotalMemConsumption()/1024/1024) + " MB");
         }
         cd.getGlContext().getCurrentGL().glEnable(GL.GL_TEXTURE_2D);
+        cd.getGlContext().getCurrentGL().glActiveTexture(GL2.GL_TEXTURE1);
         cd.getGlContext().getCurrentGL().glBindTexture(GL.GL_TEXTURE_2D, texRef.getTexId());
         return texRef;
     }

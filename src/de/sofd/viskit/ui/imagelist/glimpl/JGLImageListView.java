@@ -54,9 +54,11 @@ import de.sofd.viskit.image3D.jogl.util.GLShader;
 import de.sofd.viskit.image3D.jogl.util.ShaderManager;
 import de.sofd.viskit.model.DicomImageListViewModelElement;
 import de.sofd.viskit.model.ImageListViewModelElement;
+import de.sofd.viskit.model.LookupTable;
 import de.sofd.viskit.ui.imagelist.ImageListViewCell;
 import de.sofd.viskit.ui.imagelist.JImageListView;
 import de.sofd.viskit.ui.imagelist.cellviewers.jogl.ImageTextureManager;
+import de.sofd.viskit.ui.imagelist.cellviewers.jogl.LookupTableTextureManager;
 import de.sofd.viskit.ui.imagelist.cellviewers.jogl.SharedContextData;
 import de.sofd.viskit.ui.imagelist.event.ImageListViewCellPaintEvent;
 
@@ -75,6 +77,7 @@ public class JGLImageListView extends JImageListView {
         //JPopupMenu.setDefaultLightWeightPopupEnabled(false);
         //ToolTipManager.sharedInstance().setLightWeightPopupEnabled(false);
         ImageTextureManager.init();
+        LookupTableTextureManager.init();
         ShaderManager.init("shader");
     }
 
@@ -394,6 +397,8 @@ public class JGLImageListView extends JImageListView {
                 rescaleShader.addProgramUniform("scale");
                 rescaleShader.addProgramUniform("offset");
                 rescaleShader.addProgramUniform("tex");
+                rescaleShader.addProgramUniform("lutTex");
+                rescaleShader.addProgramUniform("useLut");
             } catch (Exception e) {
                 System.err.println("FATAL");
                 e.printStackTrace();
@@ -504,8 +509,16 @@ public class JGLImageListView extends JImageListView {
                 gl.glTranslated(cell.getCenterOffset().getX(), cell.getCenterOffset().getY(), 0);
                 gl.glScaled(cell.getScale(), cell.getScale(), 1);
                 ImageTextureManager.TextureRef texRef = ImageTextureManager.bindImageTexture(sharedContextData, cell.getDisplayedModelElement());
+                LookupTable lut = cell.getLookupTable();
+                if (lut != null) {
+                    LookupTableTextureManager.bindLutTexture(sharedContextData, cell.getLookupTable());
+                }
                 rescaleShader.bind();  // TODO: rescaleShader's internal gl may be outdated here...?
-                rescaleShader.bindUniform("tex", 0);
+                rescaleShader.bindUniform("tex", 1);
+                rescaleShader.bindUniform("useLut", lut != null);
+                if (lut != null) {
+                    rescaleShader.bindUniform("lutTex", 2);
+                }
                 rescaleShader.bindUniform("preScale", texRef.getPreScale());
                 rescaleShader.bindUniform("preOffset", texRef.getPreOffset());
                 {

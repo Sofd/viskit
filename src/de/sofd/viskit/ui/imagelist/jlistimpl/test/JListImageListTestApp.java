@@ -5,11 +5,14 @@ import java.awt.GraphicsConfiguration;
 import java.awt.GraphicsDevice;
 import java.awt.GraphicsEnvironment;
 import java.awt.event.ActionEvent;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.File;
 import java.net.MalformedURLException;
 import java.util.Arrays;
+import java.util.Map.Entry;
 
 import javax.swing.AbstractAction;
 import javax.swing.DefaultListModel;
@@ -42,9 +45,12 @@ import de.sofd.viskit.controllers.ImageListViewPrintTextToCellsController;
 import de.sofd.viskit.controllers.ImageListViewRoiInputEventController;
 import de.sofd.viskit.controllers.ImageListViewRoiToolApplicationController;
 import de.sofd.viskit.controllers.ImageListViewWindowingApplyToAllController;
+import de.sofd.viskit.image3D.jogl.control.LutController;
 import de.sofd.viskit.model.DicomImageListViewModelElement;
 import de.sofd.viskit.model.FileBasedDicomImageListViewModelElement;
 import de.sofd.viskit.model.ImageListViewModelElement;
+import de.sofd.viskit.model.LookupTable;
+import de.sofd.viskit.model.LookupTables;
 import de.sofd.viskit.ui.RoiToolPanel;
 import de.sofd.viskit.ui.imagelist.ImageListViewCell;
 import de.sofd.viskit.ui.imagelist.JImageListView;
@@ -54,6 +60,7 @@ import de.sofd.viskit.ui.imagelist.event.ImageListViewListener;
 import de.sofd.viskit.ui.imagelist.glimpl.JGLImageListView;
 import de.sofd.viskit.ui.imagelist.gridlistimpl.JGridImageListView;
 import de.sofd.viskit.ui.imagelist.jlistimpl.JListImageListView;
+import de.sofd.viskit.util.LutFunction;
 
 /**
  *
@@ -225,8 +232,30 @@ public class JListImageListTestApp {
 
             }
         });
+        
+        toolbar.add(new JLabel("lut:"));
+        final JComboBox lutCombo = new JComboBox();
+        for (LookupTable lut : LookupTables.getAllKnownLuts()) {
+            lutCombo.addItem(lut);
+        }
+        lutCombo.addItemListener(new ItemListener() {
+            @Override
+            public void itemStateChanged(ItemEvent e) {
+                if (e.getStateChange() == ItemEvent.SELECTED) {
+                    LookupTable lut = (LookupTable) lutCombo.getSelectedItem();
+                    System.out.println("activating lut: " + lut);
+                    for (int i = 0; i < viewer.getLength(); i++) {
+                        viewer.getCell(i).setLookupTable(lut);
+                    }
+                    // TODO: apply to newly added cells. Have a controller to generalize this for arbitrary cell properties
+                }
+            }
+        });
+        toolbar.add(lutCombo);
+        
         RoiToolPanel roiToolPanel = new RoiToolPanel();
         toolbar.add(roiToolPanel);
+
         toolbar.add(new JLabel("ScaleMode:"));
         final JComboBox scaleModeCombo = new JComboBox();
         for (JImageListView.ScaleMode sm : viewer.getSupportedScaleModes()) {
@@ -278,7 +307,7 @@ public class JListImageListTestApp {
         f.getContentPane().add(viewer, BorderLayout.CENTER);
         f.getContentPane().add(toolbar, BorderLayout.PAGE_START);
         f.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        f.setSize(900, 900);
+        f.setSize(1100, 900);
         f.setVisible(true);
         
         return f;

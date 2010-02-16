@@ -1,6 +1,7 @@
 package de.sofd.viskit.ui.imagelist;
 
 import de.sofd.viskit.model.ImageListViewModelElement;
+import de.sofd.viskit.model.LookupTable;
 import de.sofd.draw2d.viewer.DrawingViewer;
 import de.sofd.viskit.draw2d.vieweradapters.ViskitDrawingObjectViewerAdapterFactory;
 import java.awt.Dimension;
@@ -21,6 +22,7 @@ public class ImageListViewCellBase implements ImageListViewCell {
     private final ImageListViewModelElement displayedModelElement;
     private int windowLocation;
     private int windowWidth;
+    private LookupTable lookupTable;
     private double scale;
     private Dimension latestSize; // = new Dimension(0, 0);
     private Point2D centerOffset;
@@ -115,6 +117,18 @@ public class ImageListViewCellBase implements ImageListViewCell {
         propertyChangeSupport.firePropertyChange(PROP_INTERACTIVEWINDOWINGINPROGRESS, oldInteractiveWindowingInProgress, interactiveWindowingInProgress);
     }
 
+    @Override
+    public LookupTable getLookupTable() {
+        return lookupTable;
+    }
+
+    @Override
+    public void setLookupTable(LookupTable lut) {
+        LookupTable oldValue = this.lookupTable;
+        this.lookupTable = lut;
+        propertyChangeSupport.firePropertyChange(PROP_LOOKUPTABLE, oldValue, lookupTable);
+    }
+    
     /**
      * Get the value of scale
      *
