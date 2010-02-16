@@ -71,24 +71,6 @@ public class LookupTableTextureManager {
         });
     }
 
-    private static FloatBuffer testLut;
-    private static int nComponents = 4;
-    
-    static {
-        init();
-        int n = 25;
-        testLut = FloatBuffer.allocate(n*nComponents);
-        for (int i = 0; i < n; i++) {
-            testLut.put(i*nComponents, (float)i/n);
-            //testLut.put(i*4, 0.7f);
-            testLut.put(i*nComponents+1, 0.0f);
-            testLut.put(i*nComponents+2, 1.0f - (float)i/n);
-            if (nComponents >= 4) {
-                testLut.put(i*nComponents+3, 1.0f);
-            }
-        }
-    }
-
     public static TextureRef bindLutTexture(SharedContextData cd, LookupTable lut) {
         if (lut == null) {
             return null;
@@ -105,12 +87,11 @@ public class LookupTableTextureManager {
             cd.getGlContext().getCurrentGL().glActiveTexture(GL2.GL_TEXTURE2);
             gl.glBindTexture(gl.GL_TEXTURE_1D, texId[0]);
             FloatBuffer lutToUse = lut.getRGBAValues();
-            //FloatBuffer lutToUse = testLut;
             gl.glTexImage1D(
                     gl.GL_TEXTURE_1D,   // target
                     0,                  // level
                     gl.GL_RGBA32F,      // internalFormat
-                    lutToUse.capacity() / nComponents,  //width
+                    lutToUse.capacity() / 4,  //width
                     0,                  // border
                     gl.GL_RGBA,         // format
                     gl.GL_FLOAT,        // type

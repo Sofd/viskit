@@ -12,9 +12,9 @@ void main() {
     vec3 texColor_normalized = preScale * texture2D(tex, gl_TexCoord[0].st).rgb + preOffset;
     if (useLut) {
 	    float intensity = scale * texColor_normalized.r + offset;
-	    gl_FragColor.rgb = texture1D(lutTex, intensity).rgb;
+	    gl_FragColor.rgba = texture1D(lutTex, intensity).rgba;
     } else {
 	    gl_FragColor.rgb = scale * texColor_normalized + offset;
+        gl_FragColor.a = 1.0;
     }
-    gl_FragColor.a = 1.0;
 }
