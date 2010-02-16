@@ -510,14 +510,14 @@ public class JGLImageListView extends JImageListView {
                 gl.glScaled(cell.getScale(), cell.getScale(), 1);
                 ImageTextureManager.TextureRef texRef = ImageTextureManager.bindImageTexture(sharedContextData, cell.getDisplayedModelElement());
                 LookupTable lut = cell.getLookupTable();
-                if (lut != null) {
-                    LookupTableTextureManager.bindLutTexture(sharedContextData, cell.getLookupTable());
-                }
                 rescaleShader.bind();  // TODO: rescaleShader's internal gl may be outdated here...?
                 rescaleShader.bindUniform("tex", 1);
-                rescaleShader.bindUniform("useLut", lut != null);
                 if (lut != null) {
+                    LookupTableTextureManager.bindLutTexture(sharedContextData, cell.getLookupTable());
                     rescaleShader.bindUniform("lutTex", 2);
+                    rescaleShader.bindUniform("useLut", true);
+                } else {
+                    rescaleShader.bindUniform("useLut", false);
                 }
                 rescaleShader.bindUniform("preScale", texRef.getPreScale());
                 rescaleShader.bindUniform("preOffset", texRef.getPreOffset());
