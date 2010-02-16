@@ -51,6 +51,7 @@ import de.sofd.viskit.model.FileBasedDicomImageListViewModelElement;
 import de.sofd.viskit.model.ImageListViewModelElement;
 import de.sofd.viskit.model.LookupTable;
 import de.sofd.viskit.model.LookupTables;
+import de.sofd.viskit.ui.LookupTableCellRenderer;
 import de.sofd.viskit.ui.RoiToolPanel;
 import de.sofd.viskit.ui.imagelist.ImageListViewCell;
 import de.sofd.viskit.ui.imagelist.JImageListView;
@@ -238,6 +239,7 @@ public class JListImageListTestApp {
         for (LookupTable lut : LookupTables.getAllKnownLuts()) {
             lutCombo.addItem(lut);
         }
+        lutCombo.setRenderer(new LookupTableCellRenderer());
         lutCombo.addItemListener(new ItemListener() {
             @Override
             public void itemStateChanged(ItemEvent e) {
