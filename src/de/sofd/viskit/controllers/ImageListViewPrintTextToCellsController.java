@@ -40,12 +40,23 @@ public class ImageListViewPrintTextToCellsController {
     public static final String PROP_ENABLED = "enabled";
     public static final String PROP_TEXTCOLOR = "textColor";
     public static final String PROP_TEXTPOSITION = "textPosition";
+    private int zOrder;
+    public static final String PROP_ZORDER = "zOrder";
+    protected static final int DEFAULT_ZORDER = JImageListView.PAINT_ZORDER_LABELS;
 
     public ImageListViewPrintTextToCellsController() {
+        this(null, DEFAULT_ZORDER);
     }
 
     public ImageListViewPrintTextToCellsController(JImageListView controlledImageListView) {
-        setControlledImageListView(controlledImageListView);
+        this(controlledImageListView, DEFAULT_ZORDER);
+    }
+
+    public ImageListViewPrintTextToCellsController(JImageListView controlledImageListView, int zOrder) {
+        if (controlledImageListView != null) {
+            setControlledImageListView(controlledImageListView);
+        }
+        setZOrder(zOrder);
     }
 
     /**
@@ -117,10 +128,35 @@ public class ImageListViewPrintTextToCellsController {
             oldControlledImageListView.refreshCells();
         }
         if (null != controlledImageListView) {
-            controlledImageListView.addCellPaintListener(JImageListView.PAINT_ZORDER_LABELS, cellPaintListener);
+            controlledImageListView.addCellPaintListener(getZOrder(), cellPaintListener);
         }
         propertyChangeSupport.firePropertyChange(PROP_CONTROLLEDIMAGELISTVIEW, oldControlledImageListView, controlledImageListView);
         controlledImageListView.refreshCells();
+    }
+
+    /**
+     * Get the value of zOrder
+     *
+     * @return the value of zOrder
+     */
+    public int getZOrder() {
+        return zOrder;
+    }
+    
+    /**
+     * Set the value of zOrder
+     *
+     * @param enabled new value of zOrder
+     */
+    public void setZOrder(int zOrder) {
+        int oldZOrder = this.zOrder;
+        this.zOrder = zOrder;
+        propertyChangeSupport.firePropertyChange(PROP_ZORDER, oldZOrder, zOrder);
+        if (controlledImageListView != null) {
+            controlledImageListView.removeCellPaintListener(cellPaintListener);
+            controlledImageListView.addCellPaintListener(zOrder, cellPaintListener);
+            controlledImageListView.refreshCells();
+        }
     }
 
     private ImageListViewCellPaintListener cellPaintListener = new ImageListViewCellPaintListener() {

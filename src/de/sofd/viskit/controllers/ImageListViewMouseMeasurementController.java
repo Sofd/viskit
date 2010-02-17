@@ -45,12 +45,24 @@ public class ImageListViewMouseMeasurementController {
 
     protected ImageListViewCell currentlyMeasuredCell;
     protected Point2D startingPoint, draggedPoint;  // in cell coordinates
+    
+    private int zOrder;
+    public static final String PROP_ZORDER = "zOrder";
+    protected static final int DEFAULT_ZORDER = JImageListView.PAINT_ZORDER_LABELS + 100;
 
     public ImageListViewMouseMeasurementController() {
+        this(null, DEFAULT_ZORDER);
     }
 
     public ImageListViewMouseMeasurementController(JImageListView controlledImageListView) {
-        setControlledImageListView(controlledImageListView);
+        this(controlledImageListView, DEFAULT_ZORDER);
+    }
+
+    public ImageListViewMouseMeasurementController(JImageListView controlledImageListView, int zOrder) {
+        if (controlledImageListView != null) {
+            setControlledImageListView(controlledImageListView);
+        }
+        setZOrder(zOrder);
     }
 
     /**
@@ -100,9 +112,9 @@ public class ImageListViewMouseMeasurementController {
             controlledImageListView.refreshCells();
         }
         if (null != controlledImageListView) {
-            controlledImageListView.addCellMouseListener(mouseHandler);
-            controlledImageListView.addCellMouseMotionListener(mouseHandler);
-            controlledImageListView.addCellPaintListener(JImageListView.PAINT_ZORDER_LABELS + 100, cellPaintHandler);
+            controlledImageListView.addCellMouseListener(getZOrder(), mouseHandler);
+            controlledImageListView.addCellMouseMotionListener(getZOrder(), mouseHandler);
+            controlledImageListView.addCellPaintListener(getZOrder(), cellPaintHandler);
         }
         propertyChangeSupport.firePropertyChange(PROP_CONTROLLEDIMAGELISTVIEW, oldControlledImageListView, controlledImageListView);
         controlledImageListView.refreshCells();
@@ -116,6 +128,35 @@ public class ImageListViewMouseMeasurementController {
         Color oldValue = this.drawingColor;
         this.drawingColor = drawingColor;
         propertyChangeSupport.firePropertyChange(PROP_DRAWINGCOLOR, oldValue , drawingColor);
+    }
+
+    /**
+     * Get the value of zOrder
+     *
+     * @return the value of zOrder
+     */
+    public int getZOrder() {
+        return zOrder;
+    }
+    
+    /**
+     * Set the value of zOrder
+     *
+     * @param enabled new value of zOrder
+     */
+    public void setZOrder(int zOrder) {
+        int oldZOrder = this.zOrder;
+        this.zOrder = zOrder;
+        propertyChangeSupport.firePropertyChange(PROP_ZORDER, oldZOrder, zOrder);
+        if (controlledImageListView != null) {
+            controlledImageListView.removeCellMouseListener(mouseHandler);
+            controlledImageListView.removeCellMouseMotionListener(mouseHandler);
+            controlledImageListView.removeCellPaintListener(cellPaintHandler);
+            controlledImageListView.addCellMouseListener(zOrder, mouseHandler);
+            controlledImageListView.addCellMouseMotionListener(zOrder, mouseHandler);
+            controlledImageListView.addCellPaintListener(zOrder, cellPaintHandler);
+            controlledImageListView.refreshCells();
+        }
     }
 
     private MouseAdapter mouseHandler = new MouseAdapter() {

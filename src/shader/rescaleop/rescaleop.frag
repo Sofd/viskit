@@ -13,6 +13,7 @@ void main() {
     if (useLut) {
 	    float intensity = scale * texColor_normalized.r + offset;
 	    gl_FragColor.rgba = texture1D(lutTex, intensity).rgba;
+		// TODO: composite/combine with the existing pixel in a configurable way
     } else {
 	    gl_FragColor.rgb = scale * texColor_normalized + offset;
         gl_FragColor.a = 1.0;

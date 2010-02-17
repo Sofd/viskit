@@ -534,6 +534,7 @@ public class JGLImageListView extends JImageListView {
                     //rescaleShader.bindUniform("scale", 1.0F);
                     //rescaleShader.bindUniform("offset", 0.0F);
                 }
+                // TODO: (GL_TEXTURE_ENV is ignored because a frag shader is active) make the compositing mode configurable (replace/combine)
                 gl.glTexEnvi(GL2.GL_TEXTURE_ENV, GL2.GL_TEXTURE_ENV_MODE, gl.GL_REPLACE);
                 TextureCoords coords = texRef.getCoords();
                 gl.glColor3f(0, 1, 0);
