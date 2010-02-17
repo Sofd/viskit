@@ -18,16 +18,26 @@ public class ImageListViewMouseWindowingController {
     // TODO: make these parameterizable
     private static final int WINDOWING_MOUSE_BUTTON = MouseEvent.BUTTON3;
     private static final int WINDOWING_MOUSE_MASK = MouseEvent.BUTTON3_MASK;
-    private static final int GREYSCALE_RANGE = 4096; // 12 bits. But may depend on image...
 
     protected JImageListView controlledImageListView;
     public static final String PROP_CONTROLLEDIMAGELISTVIEW = "controlledImageListView";
+    private int zOrder;
+    public static final String PROP_ZORDER = "zOrder";
+    protected static final int DEFAULT_ZORDER = JImageListView.PAINT_ZORDER_LABELS + 20;
 
     public ImageListViewMouseWindowingController() {
+        this(null, DEFAULT_ZORDER);
     }
 
     public ImageListViewMouseWindowingController(JImageListView controlledImageListView) {
-        setControlledImageListView(controlledImageListView);
+        this(controlledImageListView, DEFAULT_ZORDER);
+    }
+
+    public ImageListViewMouseWindowingController(JImageListView controlledImageListView, int zOrder) {
+        if (controlledImageListView != null) {
+            setControlledImageListView(controlledImageListView);
+        }
+        setZOrder(zOrder);
     }
 
     /**
@@ -52,10 +62,37 @@ public class ImageListViewMouseWindowingController {
             oldControlledImageListView.removeCellMouseMotionListener(windowingCellMouseListener);
         }
         if (null != controlledImageListView) {
-            controlledImageListView.addCellMouseListener(windowingCellMouseListener);
-            controlledImageListView.addCellMouseMotionListener(windowingCellMouseListener);
+            controlledImageListView.addCellMouseListener(getZOrder(), windowingCellMouseListener);
+            controlledImageListView.addCellMouseMotionListener(getZOrder(), windowingCellMouseListener);
         }
         propertyChangeSupport.firePropertyChange(PROP_CONTROLLEDIMAGELISTVIEW, oldControlledImageListView, controlledImageListView);
+    }
+
+    /**
+     * Get the value of zOrder
+     *
+     * @return the value of zOrder
+     */
+    public int getZOrder() {
+        return zOrder;
+    }
+    
+    /**
+     * Set the value of zOrder
+     *
+     * @param enabled new value of zOrder
+     */
+    public void setZOrder(int zOrder) {
+        int oldZOrder = this.zOrder;
+        this.zOrder = zOrder;
+        propertyChangeSupport.firePropertyChange(PROP_ZORDER, oldZOrder, zOrder);
+        if (controlledImageListView != null) {
+            controlledImageListView.removeCellMouseListener(windowingCellMouseListener);
+            controlledImageListView.removeCellMouseMotionListener(windowingCellMouseListener);
+            controlledImageListView.addCellMouseListener(zOrder, windowingCellMouseListener);
+            controlledImageListView.addCellMouseMotionListener(zOrder, windowingCellMouseListener);
+            controlledImageListView.refreshCells();
+        }
     }
 
     private MouseAdapter windowingCellMouseListener = new MouseAdapter() {
