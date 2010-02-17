@@ -127,6 +127,7 @@ public class ImageListViewCellBase implements ImageListViewCell {
         LookupTable oldValue = this.lookupTable;
         this.lookupTable = lut;
         propertyChangeSupport.firePropertyChange(PROP_LOOKUPTABLE, oldValue, lookupTable);
+        refresh();
     }
     
     /**
@@ -211,7 +212,7 @@ public class ImageListViewCellBase implements ImageListViewCell {
 
     @Override
     public void refresh() {
-        getOwner().refreshCellForElement(getDisplayedModelElement());
+        getOwner().refreshCell(this);
     }
 
     private PropertyChangeSupport propertyChangeSupport = new PropertyChangeSupport(this);

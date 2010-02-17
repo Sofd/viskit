@@ -249,7 +249,6 @@ public class JListImageListTestApp {
                     for (int i = 0; i < viewer.getLength(); i++) {
                         viewer.getCell(i).setLookupTable(lut);
                     }
-                    viewer.refreshCells();
                     // TODO: apply to newly added cells. Have a controller to generalize this for arbitrary cell properties
                 }
             }
