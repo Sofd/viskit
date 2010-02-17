@@ -5,10 +5,8 @@ import java.awt.event.*;
 
 import de.sofd.viskit.image3D.jogl.minigui.view.*;
 
-public class SlicePlaneController
+public class SlicePlaneController extends ComponentController
 {
-    protected SlicePlane slicePlane;
-
     protected ReticleController reticleController;
 
     protected CutterController cutterController;
@@ -17,11 +15,12 @@ public class SlicePlaneController
 
     protected Robot robot;
     
-    public SlicePlaneController( SlicePlane slicePlane, java.awt.Component awtParent, Robot robot )
+    public SlicePlaneController( SlicePlane slicePlane, java.awt.Component awtParent, Robot robot ) 
     {
-        this.robot = robot;
-        this.slicePlane = slicePlane;
+        super(slicePlane);
         
+        this.robot = robot;
+                
         reticleController = new ReticleController( slicePlane.getReticle(), awtParent, robot );
 
         cutterController = new CutterController( slicePlane.getCutter(), awtParent, robot );
@@ -32,12 +31,16 @@ public class SlicePlaneController
     public CutterController getCutterController() {
         return cutterController;
     }
+    
+    public SlicePlane getSlicePlane() {
+        return (SlicePlane)getComponent();
+    }
 
     public void mouseClicked(    int button,
                                 int mouseX,
                                 int mouseY )
     {
-        if ( slicePlane.isInBounds( mouseX, mouseY ) )
+        if ( getSlicePlane().isInBounds( mouseX, mouseY ) )
         {
             reticleController.mouseClicked( button, mouseX, mouseY );
         }
@@ -60,17 +63,12 @@ public class SlicePlaneController
 
         if ( reticleController.isActive() )
         {
-            slicePlane.updateSliceCursor();
-        }
-        else
-        {
-            if ( slicePlane.isInBounds( mouseX, mouseY ) )
-                cutterController.mouseMoved( e, mouseX, mouseY );
-                
+            getSlicePlane().updateSliceCursor();
+        } else {
+            cutterController.mouseMoved( e, mouseX, mouseY );
         }
         
-//        if ( ! reticleController.isActive() && ! cutterController.isActive() )
-//            awtParent.setCursor( Cursor.getPredefinedCursor( Cursor.DEFAULT_CURSOR ) );
+        super.mouseMoved(e, mouseX, mouseY);
 
     }
 
@@ -87,12 +85,12 @@ public class SlicePlaneController
     {
         cutterController.mouseReleased( button, mouseX, mouseY );
         
-        slicePlane.getVolumeObject().setUpdateGradientTexture(true);
+        getSlicePlane().getVolumeObject().setUpdateGradientTexture(true);
     }
 
     public void updateComponents()
     {
-        slicePlane.updateReticle();
+        getSlicePlane().updateReticle();
     }
 
     

@@ -1,5 +1,6 @@
 package de.sofd.viskit.image3D.model;
 
+import de.sofd.util.*;
 import de.sofd.util.properties.*;
 
 public class VolumeBasicConfig {
@@ -9,11 +10,7 @@ public class VolumeBasicConfig {
     protected boolean originalWindowingExists;
 
     protected int pixelFormatBits;
-
-    protected double width;
-    protected double height;
-    protected double depth;
-
+    
     protected int internalPixelFormatBits;
 
     protected int imageStart;
@@ -23,20 +20,21 @@ public class VolumeBasicConfig {
     protected int pixelWidth;
     protected int pixelHeight;
     protected int slices;
+    
+    protected DoubleDimension3D spacing;
 
     public VolumeBasicConfig(ExtendedProperties properties) {
-        imageStart = properties.getI("volumeConfig.basic.image.start");
         imageStride = properties.getI("volumeConfig.basic.image.stride");
         imageDirectory = properties.getProperty("volumeConfig.basic.image.dir");
 
     }
 
     public double getDepth() {
-        return depth;
+        return slices * spacing.getDepth();
     }
 
     public double getHeight() {
-        return height;
+        return pixelHeight * spacing.getHeight();
     }
 
     public String getImageDirectory() {
@@ -83,22 +81,18 @@ public class VolumeBasicConfig {
         return slices;
     }
 
+    public DoubleDimension3D getSpacing() {
+        return spacing;
+    }
+
     public double getWidth() {
-        return width;
+        return pixelWidth * spacing.getWidth(); 
     }
 
     public boolean isOriginalWindowingExists() {
         return originalWindowingExists;
     }
-
-    public void setDepth(double depth) {
-        this.depth = depth;
-    }
-
-    public void setHeight(double height) {
-        this.height = height;
-    }
-
+    
     public void setImageEnd(int imageEnd) {
         this.imageEnd = imageEnd;
     }
@@ -139,7 +133,9 @@ public class VolumeBasicConfig {
         this.slices = slices;
     }
 
-    public void setWidth(double width) {
-        this.width = width;
+    public void setSpacing(DoubleDimension3D spacing) {
+        this.spacing = spacing;
     }
+
+
 }

@@ -19,8 +19,9 @@ public class Component {
     protected int width;
 
     protected int x;
-
     protected int y;
+    
+    protected boolean mouseInside;
 
     public Component(int x, int y, int width, int height) {
         setSize(x, y, width, height);
@@ -28,6 +29,7 @@ public class Component {
         this.isVisible = true;
         this.isMaximized = false;
         this.preferredAspectRatio = 0;
+        this.mouseInside = false;
     }
 
     public int getHeight() {
@@ -116,6 +118,10 @@ public class Component {
         return isMaximized;
     }
 
+    public boolean isMouseInside() {
+        return mouseInside;
+    }
+
     public boolean isVisible() {
         return isVisible;
     }
@@ -158,6 +164,10 @@ public class Component {
 
     public void setMaximized(boolean isMaximized) {
         this.isMaximized = isMaximized;
+    }
+
+    public void setMouseInside(boolean mouseInside) {
+        this.mouseInside = mouseInside;
     }
 
     public void setPreferredAspectRatio(float preferredAspectRatio) {

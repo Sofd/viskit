@@ -165,7 +165,6 @@ public class VolumeRenderFrameBuffer extends FrameBuffer {
 
     public synchronized void resize(GL2 gl, int width, int height) throws Exception {
         
-        System.out.println( "width : " + width + ", height : " + height);
         gl.glEnable(GL_TEXTURE_2D);
 
         size.setWidth(width);

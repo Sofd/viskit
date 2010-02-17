@@ -10,6 +10,7 @@ import org.dcm4che2.data.*;
 import org.dcm4che2.io.DicomInputStream;
 import org.dcm4che2.io.StopTagInputHandler;
 
+import de.sofd.util.*;
 import de.sofd.util.properties.*;
 import de.sofd.viskit.image3D.model.*;
 
@@ -107,7 +108,7 @@ public class DicomInputOutput {
 
         System.out.println("files : " + dir.listFiles().length);
         for (File file : dir.listFiles()) {
-            if (file.isDirectory() || !file.getPath().endsWith(".dcm"))
+            if (file.isDirectory() || !file.getPath().toLowerCase().endsWith(".dcm"))
                 continue;
 
             DicomInputStream dis = new DicomInputStream(file);
@@ -122,8 +123,8 @@ public class DicomInputOutput {
 
             //System.out.println("file " + file.getAbsolutePath());
 
-            if ((imageNr + 1 ) < firstSlice || ( imageNr + 1 ) > lastSlice
-                    || (imageNr - 1) % stride != 0)
+            if (imageNr < firstSlice || imageNr > lastSlice
+                    || (imageNr - firstSlice) % stride != 0)
             {
                 System.out.println("imageNr " + imageNr );
                 continue;
@@ -167,13 +168,15 @@ public class DicomInputOutput {
             throw new IOException("no directory : " + dirPath);
 
         System.out.println("files : " + dir.listFiles().length);
+        int imageStart = Integer.MAX_VALUE;
         int nrOfImages = 0;
         double thickness = 0;
+        double[] ps = {1.0, 1.0};
 
         VolumeBasicConfig basicConfig = volumeConfig.getBasicConfig();
         
         for (File file : dir.listFiles()) {
-            if (file.isDirectory() || !file.getPath().endsWith(".dcm"))
+            if (file.isDirectory() || !file.getPath().toLowerCase().endsWith(".dcm"))
                 continue;
 
 
@@ -190,6 +193,8 @@ public class DicomInputOutput {
 
             nrOfImages++;
             
+            imageStart = Math.min(imageStart, imageNr);
+            
             if (imageNr == 1) {
                 dis = new DicomInputStream(file);
                 DicomObject dicomObject = dis.readDicomObject();
@@ -199,12 +204,9 @@ public class DicomInputOutput {
                 basicConfig.setPixelWidth(dicomObject.getInt(Tag.Columns));
                 basicConfig.setPixelHeight(dicomObject.getInt(Tag.Rows));
 
-                double[] ps = dicomObject.getDoubles(Tag.PixelSpacing);
+                ps = dicomObject.getDoubles(Tag.PixelSpacing);
                 thickness = dicomObject.getDouble(Tag.SliceThickness);
 
-                basicConfig.setWidth(ps[0] * basicConfig.getPixelWidth());
-                basicConfig.setHeight(ps[1] * basicConfig.getPixelHeight());
-                
                 basicConfig.setPixelFormatBits(dicomObject.getInt(Tag.BitsAllocated));
                 basicConfig.setInternalPixelFormatBits(basicConfig.getPixelFormatBits());
                 volumeConfig.getWindowingConfig().setTargetPixelFormat(basicConfig.getPixelFormatBits());
@@ -218,9 +220,10 @@ public class DicomInputOutput {
         }
 
         basicConfig.setSlices(nrOfImages);
-        basicConfig.setDepth(nrOfImages * thickness);
+        basicConfig.setImageStart(imageStart);
+        basicConfig.setImageEnd(imageStart+nrOfImages-1);
         
-        basicConfig.setImageEnd(nrOfImages);
+        basicConfig.setSpacing(new DoubleDimension3D(ps[0], ps[1], thickness));
 
         return volumeConfig;
     }

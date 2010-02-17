@@ -8,13 +8,17 @@ import org.dcm4che2.data.*;
 
 import vtk.*;
 
+import de.sofd.util.*;
 import de.sofd.viskit.image.*;
+import de.sofd.viskit.image3D.model.*;
 import de.sofd.viskit.image3D.vtk.VTK;
 import de.sofd.viskit.image3D.vtk.util.*;
 import de.sofd.viskit.image3D.vtk.view.*;
+import de.sofd.viskit.util.*;
 
 import java.awt.*;
 import java.awt.event.*;
+import java.nio.*;
 import java.util.*;
 
 /**
@@ -29,11 +33,15 @@ public class Dicom3DViewer extends JFrame implements ChangeListener, ActionListe
     protected vtkImageData imageData;
     protected vtkImageGaussianSmooth smooth;
     
+    protected vtkShortArray dataArray=null;
+    protected short[] shorts;
+    
     public Dicom3DViewer() throws Exception
     {
         super("Dicom3D");
         
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        
         
 //        Collection<DicomObject> dicomList
 //            = DicomInputOutput.readDir("D:/dicom/serie7", "1.2.840.113619.2.135.2025.3758242.5289.1206919099.647");
@@ -42,14 +50,66 @@ public class Dicom3DViewer extends JFrame implements ChangeListener, ActionListe
 //        Collection<DicomObject> dicomList
 //            = DicomInputOutput.readDir("D:/dicom/1578", "2x.16.756.5.23.5012.70.3563.3.20090827121711.3767977317");
         
-        imageData = DicomReader.readImageDataFromDir("/home/oliver/dicom/series1");
+        //imageData = DicomReader.readImageDataFromDir("/home/oliver/dicom/series1");
+        //imageData = DicomReader.readImageDataFromDir("/home/oliver/Desktop/oliver/dicom/INCISIX");
+        
+        VolumeConfig volumeConfig = DicomInputOutput.readVolumeConfig();
+        VolumeBasicConfig basicConfig = volumeConfig.getBasicConfig();
+        ArrayList<DicomObject> dicomList = DicomInputOutput.readDir( basicConfig.getImageDirectory(), null, basicConfig.getImageStart(), basicConfig.getImageEnd(), basicConfig.getImageStride() );
+        
+        ShortBuffer dataBuf = DicomUtil.getFilledShortBuffer( dicomList );
+        
+        long time1 = System.currentTimeMillis();
+        
+        dataArray = new vtkShortArray();
+        shorts = new short[dataBuf.capacity()];
+        dataBuf.get(shorts);
+        System.out.println("capacity : " + dataBuf.capacity());
+        
+        imageData = new vtkImageData();
+        imageData.SetScalarTypeToShort();
+        imageData.SetNumberOfScalarComponents(1);
+        System.out.println("dims " + basicConfig.getPixelWidth() + " " + basicConfig.getPixelHeight() + " " + basicConfig.getSlices());
+        imageData.SetDimensions(basicConfig.getPixelWidth(), basicConfig.getPixelHeight(), basicConfig.getSlices());
+        //imageData.SetDimensions(200, 400, 320);
+        
+        imageData.SetSpacing(basicConfig.getSpacing().toDoubleArray());
+        
+        imageData.SetOrigin(0, 0, 0);
+        //imageData.AllocateScalars();
+        
+        dataArray.SetJavaArray(shorts);
+        System.out.println("array size " + dataArray.GetDataSize());
+        
+        imageData.GetPointData().SetScalars(dataArray);
+        //imageData.GetPointData().CopyAllOn(3);
+        
         imageData.Update();
+        imageData.UpdateData();
+        
+        long time2 = System.currentTimeMillis();
+        System.out.println("conversion time : " + (time2-time1) + " ms");
         int dim[] =  imageData.GetDimensions();
         
         logger.debug("image dimension : " + dim[0] + " " + dim[1] + " " + dim[2] + " " + imageData.GetPointData().GetScalars().GetSize());
         
+        double[] range = imageData.GetScalarRange();
+        System.out.println("range " + range[0] + " " + range[1]);
+        
+        //double factor = Math.min(256.0*256.0*256.0/(dim[0]*dim[1]*dim[2]), 1);
+        //double factor = 0.5;
+        
         smooth = new vtkImageGaussianSmooth();
         smooth.SetInput(imageData);
+        
+        /*vtkImageResample resample = new vtkImageResample();
+        resample.SetDimensionality(3);
+        resample.InterpolateOn();
+        resample.SetAxisMagnificationFactor(0, Math.min(150.0/dim[0], 1));
+        resample.SetAxisMagnificationFactor(1, Math.min(150.0/dim[1], 1));
+        resample.SetAxisMagnificationFactor(2, Math.min(150.0/dim[2], 1));
+        resample.SetInput(smooth.GetOutput());*/
+        
         dicom3DView = new Dicom3DView(smooth.GetOutput());
         
         JPanel panel = new JPanel(new BorderLayout());
@@ -67,8 +127,9 @@ public class Dicom3DViewer extends JFrame implements ChangeListener, ActionListe
         panel.setLayout(new BoxLayout(panel, BoxLayout.PAGE_AXIS));
         
         double[] range = imageData.GetScalarRange();
+        System.out.println("range " + range[0] + " " + range[1]);
         
-        panel.add(getSliderPanel("Contour Level", 0, (int)range[1], 250, 500, 100));
+        panel.add(getSliderPanel("Contour Level", (int)range[0], (int)range[1]+300, 250));
         panel.add(getCheckboxPanel("smooth on", true));
         panel.add(getSliderPanel("Smooth radius", 0, 2.0f, 1.0f));
         panel.add(Box.createVerticalGlue());
@@ -107,7 +168,7 @@ public class Dicom3DViewer extends JFrame implements ChangeListener, ActionListe
         return panel;
     }
     
-    private JPanel getSliderPanel(String name, int min, int max, int value, int major, int minor) {
+    private JPanel getSliderPanel(String name, int min, int max, int value) {
         JPanel panel = new JPanel(new BorderLayout());
         panel.setPreferredSize(new Dimension(200, 70));
         panel.setMaximumSize(new Dimension(200, 70));
@@ -115,11 +176,7 @@ public class Dicom3DViewer extends JFrame implements ChangeListener, ActionListe
         
         slider.setName("slider:"+name);
         slider.addChangeListener(this);
-        slider.setMajorTickSpacing(major);
-        slider.setMinorTickSpacing(minor);
         slider.setPaintLabels(true);
-        slider.setPaintTicks(true);
-        //slider.setSnapToTicks(true);
         
         JPanel panelN = new JPanel(new GridLayout(1, 2));
         panelN.add(new JLabel(name));

@@ -23,7 +23,7 @@ public class DicomUtil {
         dim[0] = refDicom.getInt(Tag.Columns);
         dim[1] = refDicom.getInt(Tag.Rows);
         dim[2] = dicomList.size();
-
+        
         ShortBuffer dataBuf = BufferUtil.newShortBuffer(dim[0] * dim[1] * dim[2]);
 
         for (DicomObject dicomObject : dicomList)

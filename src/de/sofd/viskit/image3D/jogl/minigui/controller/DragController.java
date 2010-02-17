@@ -5,7 +5,7 @@ import java.awt.event.*;
 
 import de.sofd.viskit.image3D.jogl.minigui.view.*;
 
-public class DragController 
+public class DragController extends ComponentController
 {
     protected int oldMouseX;
     protected int oldMouseY;
@@ -15,12 +15,11 @@ public class DragController
     protected int oldX;
     protected int oldY;
     
-    protected DragComponent component;
-    
     protected Robot robot;
 
     public DragController( DragComponent component, Robot robot ) {
-        setComponent(component);
+        super(component);
+        
         setLastX(0);
         setLastY(0);
         setActive(false);
@@ -50,8 +49,8 @@ public class DragController
         }
     }
 
-    public DragComponent getComponent() {
-        return component;
+    public DragComponent getDragComponent() {
+        return (DragComponent)getComponent();
     }
 
     public int getLastX() {
@@ -88,11 +87,7 @@ public class DragController
     public void setActive(boolean isActive) {
         this.isActive = isActive;
     }
-
-    protected void setComponent(DragComponent component) {
-        this.component = component;
-    }
-
+    
     public void setLastX(int lastX) {
         this.oldMouseX = lastX;
     }

@@ -189,22 +189,22 @@ public class CutterPlane extends DragTexComponent
     
     public boolean touchesBottomBound( int mouseY )
     {
-        return ( Math.abs( getBottomBoundY() - mouseY ) < epsilon );
+        return ( Math.abs( getBottomBoundY() - mouseY ) < epsilon && mouseY >= y );
     }
     
     public boolean touchesLeftBound( int mouseX )
     {
-        return ( Math.abs( getLeftBoundX() - mouseX ) < epsilon );
+        return ( Math.abs( getLeftBoundX() - mouseX ) < epsilon && mouseX >= x );
     }
 
     public boolean touchesRightBound( int mouseX )
     {
-        return ( Math.abs( getRightBoundX() - mouseX ) < epsilon );
+        return ( Math.abs( getRightBoundX() - mouseX ) < epsilon && mouseX <= x + width );
     }
     
     public boolean touchesTopBound( int mouseY )
     {
-        return ( Math.abs( getTopBoundY() - mouseY ) < epsilon );
+        return ( Math.abs( getTopBoundY() - mouseY ) < epsilon && mouseY <= y + height );
     }
 
     
