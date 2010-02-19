@@ -9,6 +9,7 @@ import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 
 import javax.media.opengl.GL2;
+import javax.media.opengl.GLAutoDrawable;
 
 import com.sun.opengl.util.gl2.GLUT;
 
@@ -161,6 +162,9 @@ public class ImageListViewPrintTextToCellsController {
 
     private ImageListViewCellPaintListener cellPaintListener = new ImageListViewCellPaintListener() {
         private boolean inProgrammedChange = false;
+        @Override
+        public void glDrawableInitialized(GLAutoDrawable glAutoDrawable) {
+        }
         @Override
         public void onCellPaint(ImageListViewCellPaintEvent e) {
             if (!isEnabled()) {

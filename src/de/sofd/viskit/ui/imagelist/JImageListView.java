@@ -22,6 +22,7 @@ import java.util.Map;
 import java.util.NavigableSet;
 import java.util.TreeSet;
 
+import javax.media.opengl.GLAutoDrawable;
 import javax.swing.AbstractListModel;
 import javax.swing.JPanel;
 import javax.swing.ListModel;
@@ -977,6 +978,9 @@ public abstract class JImageListView extends JPanel {
      */
     public void fireCellPaintEvent(ImageListViewCellPaintEvent e, int minZ, int maxZ) {
         ImageListViewCellPaintListener dummy = new ImageListViewCellPaintListener() {
+            @Override
+            public void glDrawableInitialized(GLAutoDrawable glAutoDrawable) {
+            }
             @Override
             public void onCellPaint(ImageListViewCellPaintEvent e) {
             }

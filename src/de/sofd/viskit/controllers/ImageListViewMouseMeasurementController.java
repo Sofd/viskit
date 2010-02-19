@@ -20,6 +20,7 @@ import java.text.DecimalFormat;
 
 import javax.media.opengl.GL;
 import javax.media.opengl.GL2;
+import javax.media.opengl.GLAutoDrawable;
 
 import org.dcm4che2.data.DicomObject;
 import org.dcm4che2.data.Tag;
@@ -200,6 +201,10 @@ public class ImageListViewMouseMeasurementController {
     };
     
     private ImageListViewCellPaintListener cellPaintHandler = new ImageListViewCellPaintListener() {
+        
+        @Override
+        public void glDrawableInitialized(GLAutoDrawable glAutoDrawable) {
+        }
         
         @Override
         public void onCellPaint(ImageListViewCellPaintEvent e) {

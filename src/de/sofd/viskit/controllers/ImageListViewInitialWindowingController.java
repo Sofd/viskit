@@ -15,6 +15,8 @@ import java.beans.PropertyChangeSupport;
 import java.util.HashSet;
 import java.util.Set;
 
+import javax.media.opengl.GLAutoDrawable;
+
 /**
  * Controller that references a JImageListView and an "enabled" flag. When
  * enabled, the controller ensures that the windowing parameters of all cells
@@ -121,6 +123,10 @@ public class ImageListViewInitialWindowingController {
     
     private class CellHandler implements ImageListViewCellPaintListener, PropertyChangeListener {
         private boolean inProgrammedChange = false;
+        
+        @Override
+        public void glDrawableInitialized(GLAutoDrawable glAutoDrawable) {
+        }
         
         @Override
         public void onCellPaint(ImageListViewCellPaintEvent e) {
