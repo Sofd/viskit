@@ -242,6 +242,10 @@ public class ImageListViewMouseMeasurementController {
             }
         }
         
+        @Override
+        public void glDrawableDisposing(GLAutoDrawable glAutoDrawable) {
+        }
+
     };
 
     protected DecimalFormat df = new DecimalFormat();

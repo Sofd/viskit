@@ -42,4 +42,18 @@ public interface ImageListViewCellPaintListener {
      * @param glAutoDrawable
      */
     void glDrawableInitialized(GLAutoDrawable glAutoDrawable);
+
+    /**
+     * An OpenGL/JOGL drawable that has previously been initialized (and for
+     * which {@link #glDrawableInitialized(GLAutoDrawable)} was called then) is
+     * being disposed.
+     * 
+     * @param glAutoDrawable
+     */
+    void glDrawableDisposing(GLAutoDrawable glAutoDrawable);
+
+    // TODO: maybe refactor glDrawableIntialized/-Disposed to also be called
+    // during J2D graphics initialization/disposal? Maybe people want to do things
+    // there too.
+    
 }

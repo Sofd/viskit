@@ -175,6 +175,11 @@ public class ImageListViewInitialWindowingController {
             ImageListViewCell sourceCell = (ImageListViewCell) evt.getSource();
             alreadyInitializedImagesKeys.add(sourceCell.getDisplayedModelElement().getImageKey());
         }
+
+        @Override
+        public void glDrawableDisposing(GLAutoDrawable glAutoDrawable) {
+        }
+        
     };
 
 

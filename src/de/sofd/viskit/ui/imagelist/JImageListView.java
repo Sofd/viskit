@@ -984,6 +984,9 @@ public abstract class JImageListView extends JPanel {
             @Override
             public void onCellPaint(ImageListViewCellPaintEvent e) {
             }
+            @Override
+            public void glDrawableDisposing(GLAutoDrawable glAutoDrawable) {
+            }
         };
         ListenerRecord<ImageListViewCellPaintListener> min = new ListenerRecord<ImageListViewCellPaintListener>(dummy, minZ);
         ListenerRecord<ImageListViewCellPaintListener> max = new ListenerRecord<ImageListViewCellPaintListener>(dummy, maxZ);

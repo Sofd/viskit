@@ -162,9 +162,11 @@ public class ImageListViewPrintTextToCellsController {
 
     private ImageListViewCellPaintListener cellPaintListener = new ImageListViewCellPaintListener() {
         private boolean inProgrammedChange = false;
+
         @Override
         public void glDrawableInitialized(GLAutoDrawable glAutoDrawable) {
         }
+        
         @Override
         public void onCellPaint(ImageListViewCellPaintEvent e) {
             if (!isEnabled()) {
@@ -215,6 +217,11 @@ public class ImageListViewPrintTextToCellsController {
                 inProgrammedChange = false;
             }
         }
+
+        @Override
+        public void glDrawableDisposing(GLAutoDrawable glAutoDrawable) {
+        }
+
     };
 
     /**
