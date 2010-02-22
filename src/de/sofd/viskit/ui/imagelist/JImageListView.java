@@ -40,11 +40,11 @@ import de.sofd.util.IdentityHashSet;
 import de.sofd.util.Misc;
 import de.sofd.viskit.model.ImageListViewModelElement;
 import de.sofd.viskit.ui.imagelist.event.ImageListViewCellAddEvent;
-import de.sofd.viskit.ui.imagelist.event.ImageListViewCellPaintEvent;
-import de.sofd.viskit.ui.imagelist.event.ImageListViewCellPaintListener;
 import de.sofd.viskit.ui.imagelist.event.ImageListViewCellRemoveEvent;
 import de.sofd.viskit.ui.imagelist.event.ImageListViewEvent;
 import de.sofd.viskit.ui.imagelist.event.ImageListViewListener;
+import de.sofd.viskit.ui.imagelist.event.cellpaint.ImageListViewCellPaintEvent;
+import de.sofd.viskit.ui.imagelist.event.cellpaint.ImageListViewCellPaintListener;
 
 /**
  * Base class for GUI components displaying a list of elements, which are objects implementing {@link ImageListViewModelElement}.

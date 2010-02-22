@@ -11,7 +11,7 @@ import de.sofd.viskit.image3D.jogl.util.ShaderManager;
 import de.sofd.viskit.ui.imagelist.ImageListViewCell;
 import de.sofd.viskit.ui.imagelist.JImageListView;
 import de.sofd.viskit.ui.imagelist.cellviewers.BaseImageListViewCellViewer;
-import de.sofd.viskit.ui.imagelist.event.ImageListViewCellPaintEvent;
+import de.sofd.viskit.ui.imagelist.event.cellpaint.ImageListViewCellPaintEvent;
 import de.sofd.viskit.ui.imagelist.gridlistimpl.JGridImageListView;
 
 import java.awt.AWTEvent;

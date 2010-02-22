@@ -60,7 +60,7 @@ import de.sofd.viskit.ui.imagelist.JImageListView;
 import de.sofd.viskit.ui.imagelist.cellviewers.jogl.ImageTextureManager;
 import de.sofd.viskit.ui.imagelist.cellviewers.jogl.LookupTableTextureManager;
 import de.sofd.viskit.ui.imagelist.cellviewers.jogl.SharedContextData;
-import de.sofd.viskit.ui.imagelist.event.ImageListViewCellPaintEvent;
+import de.sofd.viskit.ui.imagelist.event.cellpaint.ImageListViewCellPaintEvent;
 
 /**
  * JImageListView implementation that paints all cells onto a single aggreagated

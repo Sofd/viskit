@@ -1,4 +1,4 @@
-package de.sofd.viskit.ui.imagelist.event;
+package de.sofd.viskit.ui.imagelist.event.cellpaint;
 
 import de.sofd.viskit.draw2d.gc.ViskitGC;
 import de.sofd.viskit.ui.imagelist.ImageListViewCell;

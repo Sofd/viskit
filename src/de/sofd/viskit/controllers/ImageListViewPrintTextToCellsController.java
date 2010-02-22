@@ -15,8 +15,8 @@ import com.sun.opengl.util.gl2.GLUT;
 
 import de.sofd.viskit.ui.imagelist.ImageListViewCell;
 import de.sofd.viskit.ui.imagelist.JImageListView;
-import de.sofd.viskit.ui.imagelist.event.ImageListViewCellPaintEvent;
-import de.sofd.viskit.ui.imagelist.event.ImageListViewCellPaintListener;
+import de.sofd.viskit.ui.imagelist.event.cellpaint.ImageListViewCellPaintEvent;
+import de.sofd.viskit.ui.imagelist.event.cellpaint.ImageListViewCellPaintListener;
 
 /**
  * Controller that references a JImageListView and an "enabled" flag. When
