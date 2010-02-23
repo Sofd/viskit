@@ -122,7 +122,7 @@ public class ImageTextureManager {
         SharedContextData.registerContextInitCallback(new Runnable2<SharedContextData, GL>() {
             @Override
             public void run(SharedContextData cd, GL gl1) {
-                TextureRefStore texturesStore = new TextureRefStore(1900*1024*1024);  // <<== configure max. GL texture memory consumption here (for now)
+                TextureRefStore texturesStore = new TextureRefStore(256*1024*1024);  // <<== configure max. GL texture memory consumption here (for now)
                 cd.setAttribute(TEX_STORE, texturesStore);
             }
         });
