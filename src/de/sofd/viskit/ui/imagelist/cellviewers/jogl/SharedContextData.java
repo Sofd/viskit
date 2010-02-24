@@ -72,6 +72,10 @@ public class SharedContextData {
     public int getRefCount() {
         return refCount;
     }
+    
+    public Map<String, Object> getAttributes() {
+        return attributes;
+    }
 
     public Object getAttribute(String name) {
         return attributes.get(name);

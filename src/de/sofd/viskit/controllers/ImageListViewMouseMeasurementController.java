@@ -17,6 +17,7 @@ import java.awt.geom.Point2D;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.text.DecimalFormat;
+import java.util.Map;
 
 import javax.media.opengl.GL;
 import javax.media.opengl.GL2;
@@ -204,6 +205,11 @@ public class ImageListViewMouseMeasurementController {
         
         @Override
         public void glDrawableInitialized(GLAutoDrawable glAutoDrawable) {
+        }
+        
+        @Override
+        public void glSharedContextDataInitialization(GL gl,
+                Map<String, Object> sharedData) {
         }
         
         @Override

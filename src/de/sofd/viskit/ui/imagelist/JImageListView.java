@@ -22,6 +22,7 @@ import java.util.Map;
 import java.util.NavigableSet;
 import java.util.TreeSet;
 
+import javax.media.opengl.GL;
 import javax.media.opengl.GLAutoDrawable;
 import javax.swing.AbstractListModel;
 import javax.swing.JPanel;
@@ -34,6 +35,7 @@ import javax.swing.event.ListSelectionListener;
 
 import de.sofd.draw2d.viewer.DrawingViewer;
 import de.sofd.draw2d.viewer.backend.DrawingViewerBackend;
+import de.sofd.lang.Runnable1;
 import de.sofd.util.BiIdentityHashMap;
 import de.sofd.util.BiMap;
 import de.sofd.util.IdentityHashSet;
@@ -970,6 +972,12 @@ public abstract class JImageListView extends JPanel {
         }
     }
 
+    protected void forEachCellPaintListenerInZOrder(Runnable1<ImageListViewCellPaintListener> callback) {
+        for (ListenerRecord<ImageListViewCellPaintListener> rec : cellPaintListeners) {
+            callback.run(rec.listener);
+        }
+    }
+    
     /**
      * NOT A PUBLIC API! DON'T CALL.
      * 
@@ -978,6 +986,10 @@ public abstract class JImageListView extends JPanel {
      */
     public void fireCellPaintEvent(ImageListViewCellPaintEvent e, int minZ, int maxZ) {
         ImageListViewCellPaintListener dummy = new ImageListViewCellPaintListener() {
+            @Override
+            public void glSharedContextDataInitialization(GL gl,
+                    Map<String, Object> sharedData) {
+            }
             @Override
             public void glDrawableInitialized(GLAutoDrawable glAutoDrawable) {
             }

@@ -13,8 +13,10 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
+import javax.media.opengl.GL;
 import javax.media.opengl.GLAutoDrawable;
 
 /**
@@ -123,6 +125,11 @@ public class ImageListViewInitialWindowingController {
     
     private class CellHandler implements ImageListViewCellPaintListener, PropertyChangeListener {
         private boolean inProgrammedChange = false;
+        
+        @Override
+        public void glSharedContextDataInitialization(GL gl,
+                Map<String, Object> sharedData) {
+        }
         
         @Override
         public void glDrawableInitialized(GLAutoDrawable glAutoDrawable) {

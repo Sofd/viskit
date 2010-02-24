@@ -1,5 +1,8 @@
 package de.sofd.viskit.ui.imagelist.event.cellpaint;
 
+import java.util.Map;
+
+import javax.media.opengl.GL;
 import javax.media.opengl.GLAutoDrawable;
 
 import de.sofd.viskit.ui.imagelist.JImageListView;
@@ -42,6 +45,8 @@ public interface ImageListViewCellPaintListener {
      * @param glAutoDrawable
      */
     void glDrawableInitialized(GLAutoDrawable glAutoDrawable);
+
+    void glSharedContextDataInitialization(GL gl, Map<String, Object> sharedData);
 
     /**
      * An OpenGL/JOGL drawable that has previously been initialized (and for

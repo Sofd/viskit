@@ -21,6 +21,7 @@ import javax.media.opengl.GL;
 import javax.media.opengl.GL2;
 import javax.media.opengl.GLAutoDrawable;
 import javax.media.opengl.GLCapabilities;
+import javax.media.opengl.GLContext;
 import javax.media.opengl.GLEventListener;
 import javax.media.opengl.GLProfile;
 import javax.media.opengl.awt.GLCanvas;
@@ -46,6 +47,7 @@ import org.dcm4che2.data.Tag;
 
 import com.sun.opengl.util.texture.TextureCoords;
 
+import de.sofd.lang.Runnable1;
 import de.sofd.util.FloatRange;
 import de.sofd.util.IdentityHashSet;
 import de.sofd.util.Misc;
@@ -61,6 +63,7 @@ import de.sofd.viskit.ui.imagelist.cellviewers.jogl.ImageTextureManager;
 import de.sofd.viskit.ui.imagelist.cellviewers.jogl.LookupTableTextureManager;
 import de.sofd.viskit.ui.imagelist.cellviewers.jogl.SharedContextData;
 import de.sofd.viskit.ui.imagelist.event.cellpaint.ImageListViewCellPaintEvent;
+import de.sofd.viskit.ui.imagelist.event.cellpaint.ImageListViewCellPaintListener;
 
 /**
  * JImageListView implementation that paints all cells onto a single aggreagated
@@ -90,10 +93,13 @@ public class JGLImageListView extends JImageListView {
     private boolean displayFollowsSelection = true;
     public static final String PROP_DISPLAYFOLLOWSSELECTION = "displayFollowsSelection";
     
-    private static final Set<JGLImageListView> instances = new IdentityHashSet<JGLImageListView>();
+    protected static final Set<JGLImageListView> instances = new IdentityHashSet<JGLImageListView>();
     private static final SharedContextData sharedContextData = new SharedContextData();
 
     private GLShader rescaleShader;
+    
+    private final Collection<ImageListViewCellPaintListener> uninitializedCellPaintListeners
+        = new IdentityHashSet<ImageListViewCellPaintListener>();
 
     public JGLImageListView() {
         setLayout(new BorderLayout());
@@ -121,6 +127,32 @@ public class JGLImageListView extends JImageListView {
         cellsViewer.addMouseMotionListener(cellMouseEventDispatcher);
         cellsViewer.addMouseWheelListener(cellMouseEventDispatcher);
         //cellsViewer.addKeyListener(cellsViewerMouseAndKeyHandler);
+    }
+
+    @Override
+    public void addCellPaintListener(int zOrder,
+            ImageListViewCellPaintListener listener) {
+        super.addCellPaintListener(zOrder, listener);
+        uninitializedCellPaintListeners.add(listener);
+    }
+    
+    @Override
+    public void removeCellPaintListener(ImageListViewCellPaintListener listener) {
+        super.removeCellPaintListener(listener);
+        uninitializedCellPaintListeners.remove(listener);
+    }
+    
+    protected void initializeUninitializedCellPaintListeners(final GL gl, final GLAutoDrawable glAutoDrawable) {
+        forEachCellPaintListenerInZOrder(new Runnable1<ImageListViewCellPaintListener>() {
+            @Override
+            public void run(ImageListViewCellPaintListener l) {
+                if (uninitializedCellPaintListeners.contains(l)) {
+                    l.glSharedContextDataInitialization(gl, sharedContextData.getAttributes());
+                    l.glDrawableInitialized(glAutoDrawable);
+                }
+            }
+        });
+        uninitializedCellPaintListeners.clear();
     }
     
     @Override
@@ -389,6 +421,7 @@ public class JGLImageListView extends JImageListView {
                     }
                 });
             }
+            initializeUninitializedCellPaintListeners(gl, glAutoDrawable);
             try {
                 ShaderManager.read(gl, "rescaleop");
                 rescaleShader = ShaderManager.get("rescaleop");
@@ -410,6 +443,8 @@ public class JGLImageListView extends JImageListView {
         public void display(GLAutoDrawable glAutoDrawable) {
             //System.out.println("DISP " + drawableToString(glAutoDrawable));
             GL2 gl = glAutoDrawable.getGL().getGL2();
+            
+            initializeUninitializedCellPaintListeners(gl, glAutoDrawable);
             
             gl.glClear(gl.GL_COLOR_BUFFER_BIT);
             gl.glMatrixMode(gl.GL_MODELVIEW);
