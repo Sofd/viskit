@@ -187,7 +187,7 @@ public class ImageListViewCellViewer extends BaseImageListViewCellViewer {
 
         // Call all CellPaintListeners below the image in the z-order.
         // Eventually all painting, including the image and ROIs, should happen in PaintListeners.
-        getDisplayedCell().getOwner().fireCellPaintEvent(new ImageListViewCellPaintEvent(getDisplayedCell(), new ViskitGC(g2d), null),
+        getDisplayedCell().getOwner().fireCellPaintEvent(new ImageListViewCellPaintEvent(getDisplayedCell(), new ViskitGC(g2d), null, null),
                                                          Integer.MIN_VALUE, JImageListView.PAINT_ZORDER_IMAGE);
         
         //give the render* methods a Graphics2D whose coordinate system
@@ -206,7 +206,7 @@ public class ImageListViewCellViewer extends BaseImageListViewCellViewer {
 
         // image and ROIs have been drawn. Now call all CellPaintListeners above the ROIs in the z-order.
         // Eventually all painting, including the image and ROIs, should happen in PaintListeners.
-        getDisplayedCell().getOwner().fireCellPaintEvent(new ImageListViewCellPaintEvent(getDisplayedCell(), new ViskitGC(g2d), null),
+        getDisplayedCell().getOwner().fireCellPaintEvent(new ImageListViewCellPaintEvent(getDisplayedCell(), new ViskitGC(g2d), null, null),
                                                          JImageListView.PAINT_ZORDER_ROI + 1, Integer.MAX_VALUE);
     }
 

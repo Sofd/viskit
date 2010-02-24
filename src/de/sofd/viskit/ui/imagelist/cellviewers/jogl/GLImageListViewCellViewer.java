@@ -1,19 +1,5 @@
 package de.sofd.viskit.ui.imagelist.cellviewers.jogl;
 
-import com.sun.opengl.util.texture.TextureCoords;
-import de.sofd.lang.Runnable2;
-import de.sofd.util.DynScope;
-import de.sofd.util.IdentityHashSet;
-import de.sofd.util.Misc;
-import de.sofd.viskit.draw2d.gc.ViskitGC;
-import de.sofd.viskit.image3D.jogl.util.GLShader;
-import de.sofd.viskit.image3D.jogl.util.ShaderManager;
-import de.sofd.viskit.ui.imagelist.ImageListViewCell;
-import de.sofd.viskit.ui.imagelist.JImageListView;
-import de.sofd.viskit.ui.imagelist.cellviewers.BaseImageListViewCellViewer;
-import de.sofd.viskit.ui.imagelist.event.cellpaint.ImageListViewCellPaintEvent;
-import de.sofd.viskit.ui.imagelist.gridlistimpl.JGridImageListView;
-
 import java.awt.AWTEvent;
 import java.awt.Component;
 import java.awt.Dimension;
@@ -25,8 +11,7 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelEvent;
 import java.awt.geom.Point2D;
 import java.util.Set;
-import javax.media.opengl.DebugGL2;
-import javax.media.opengl.GL;
+
 import javax.media.opengl.GL2;
 import javax.media.opengl.GLAutoDrawable;
 import javax.media.opengl.GLCapabilities;
@@ -38,6 +23,20 @@ import javax.media.opengl.awt.GLCanvas;
 import javax.swing.JPopupMenu;
 import javax.swing.SwingUtilities;
 import javax.swing.ToolTipManager;
+
+import com.sun.opengl.util.texture.TextureCoords;
+
+import de.sofd.util.DynScope;
+import de.sofd.util.IdentityHashSet;
+import de.sofd.util.Misc;
+import de.sofd.viskit.draw2d.gc.ViskitGC;
+import de.sofd.viskit.image3D.jogl.util.GLShader;
+import de.sofd.viskit.image3D.jogl.util.ShaderManager;
+import de.sofd.viskit.ui.imagelist.ImageListViewCell;
+import de.sofd.viskit.ui.imagelist.JImageListView;
+import de.sofd.viskit.ui.imagelist.cellviewers.BaseImageListViewCellViewer;
+import de.sofd.viskit.ui.imagelist.event.cellpaint.ImageListViewCellPaintEvent;
+import de.sofd.viskit.ui.imagelist.gridlistimpl.JGridImageListView;
 
 /**
  * Swing component for displaying a {@link ImageListViewCell} using an OpenGL-based
@@ -315,7 +314,7 @@ public class GLImageListViewCellViewer extends BaseImageListViewCellViewer {
             Dimension cellSize = getDisplayedCell().getLatestSize();
             gl.glTranslated(- cellSize.getWidth() / 2, cellSize.getHeight() / 2, 0);
             gl.glScalef(1, -1, 1);
-            getDisplayedCell().getOwner().fireCellPaintEvent(new ImageListViewCellPaintEvent(getDisplayedCell(), gc, null),
+            getDisplayedCell().getOwner().fireCellPaintEvent(new ImageListViewCellPaintEvent(getDisplayedCell(), gc, null, sharedContextData.getAttributes()),
                                                              Integer.MIN_VALUE, JImageListView.PAINT_ZORDER_IMAGE);
             gl.glPopMatrix();
 
@@ -386,7 +385,7 @@ public class GLImageListViewCellViewer extends BaseImageListViewCellViewer {
             cellSize = getDisplayedCell().getLatestSize();
             gl.glTranslated(- cellSize.getWidth() / 2, cellSize.getHeight() / 2, 0);
             gl.glScalef(1, -1, 1);
-            getDisplayedCell().getOwner().fireCellPaintEvent(new ImageListViewCellPaintEvent(getDisplayedCell(), gc, null),
+            getDisplayedCell().getOwner().fireCellPaintEvent(new ImageListViewCellPaintEvent(getDisplayedCell(), gc, null, sharedContextData.getAttributes()),
                                                              JImageListView.PAINT_ZORDER_ROI + 1, Integer.MAX_VALUE);
             gl.glPopMatrix();
             

@@ -6,6 +6,7 @@ import de.sofd.viskit.ui.imagelist.JImageListView;
 
 import java.awt.Rectangle;
 import java.util.EventObject;
+import java.util.Map;
 
 /**
  * Event that indicates that a {@link ImageListViewCell} of a
@@ -26,12 +27,14 @@ public class ImageListViewCellPaintEvent extends EventObject {
 
     private final ViskitGC gc;
     private final Rectangle clip;
+    private Map<String, Object> sharedContextData;
     private boolean consumed = false;
     
-    public ImageListViewCellPaintEvent(ImageListViewCell source, ViskitGC gc, Rectangle clip) {
+    public ImageListViewCellPaintEvent(ImageListViewCell source, ViskitGC gc, Rectangle clip, Map<String, Object> sharedContextData) {
         super(source);
         this.gc = gc;
         this.clip = clip;
+        this.sharedContextData = sharedContextData;
     }
     
     @Override
@@ -53,6 +56,19 @@ public class ImageListViewCellPaintEvent extends EventObject {
      */
     public Rectangle getClip() {
         return clip;
+    }
+
+    /**
+     * Shared context data for the paint event. See
+     * {@link ImageListViewCellPaintListener#glSharedContextDataInitialization(javax.media.opengl.GL, Map)}
+     * for details.
+     * <p>
+     * Not relevant for Java2D paint events.
+     * 
+     * @return
+     */
+    public Map<String, Object> getSharedContextData() {
+        return sharedContextData;
     }
 
     public boolean isConsumed() {

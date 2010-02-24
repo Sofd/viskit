@@ -45,6 +45,7 @@ import de.sofd.viskit.controllers.ImageListViewPrintTextToCellsController;
 import de.sofd.viskit.controllers.ImageListViewRoiInputEventController;
 import de.sofd.viskit.controllers.ImageListViewRoiToolApplicationController;
 import de.sofd.viskit.controllers.ImageListViewWindowingApplyToAllController;
+import de.sofd.viskit.controllers.cellpaint.ImageListViewImagePaintController;
 import de.sofd.viskit.image3D.jogl.control.LutController;
 import de.sofd.viskit.model.DicomImageListViewModelElement;
 import de.sofd.viskit.model.FileBasedDicomImageListViewModelElement;
@@ -86,6 +87,7 @@ public class JListImageListTestApp {
         final DefaultListModel model = new DefaultListModel();
         //final DefaultListModel model = getViewerListModelForDirectory(new File("/home/olaf/gi/resources/DICOM-Testbilder/1578"));
         //final DefaultListModel model = getViewerListModelForDirectory(new File("/home/olaf/gi/Images/cd00900__center10102"));
+        //final DefaultListModel model = getViewerListModelForDirectory(new File("/home/olaf/gi/pet-studie/cd855__center4001"));
         //final DefaultListModel model = getViewerListModelForDirectory(new File("/shares/shared/projekts/disk312043/Images/cd822__center4001"));
         //final DefaultListModel model = getViewerListModelForDirectory(new File("/shares/shared/projekts/disk312043/Images/cd836__center4001"));
         for (int i = 10; i < 90; i++) {
@@ -104,7 +106,7 @@ public class JListImageListTestApp {
         //viewer = newJListImageListView();
         //viewer = newJGridImageListView(true);
         //viewer = newJGridImageListView(false);
-        viewer = new JGLImageListView();
+        viewer = newJGLImageListView();
         
         new ImageListViewInitialWindowingController(viewer).setEnabled(true);
         viewer.setModel(model);
@@ -281,6 +283,8 @@ public class JListImageListTestApp {
                                    wndAllController, BeanProperty.create("enabled"),
                                    wndAllCheckbox, BeanProperty.create("selected")).bind();
 
+        new ImageListViewImagePaintController(viewer).setEnabled(true);
+        
         final ImageListViewPrintTextToCellsController ptc = new ImageListViewPrintTextToCellsController(viewer) {
             @Override
             protected String[] getTextToPrint(ImageListViewCell cell) {
@@ -302,7 +306,6 @@ public class JListImageListTestApp {
             @Override
             public void actionPerformed(ActionEvent e) {
                 ptc.setEnabled(!ptc.isEnabled());
-                //viewer.refreshCells();
             }
         });
         

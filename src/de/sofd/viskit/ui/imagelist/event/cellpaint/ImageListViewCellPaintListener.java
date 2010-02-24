@@ -40,25 +40,59 @@ public interface ImageListViewCellPaintListener {
      * cell paint event to {@link #onCellPaint(ImageListViewCellPaintEvent)}
      * will first be passed through this method.
      * <p>
+     * This method will be called at least once per listener. I.e., if you
+     * register a listener with a list that is already being displayed (and
+     * thus, has already initialized its GL canvasses), this method will still
+     * be called once, right after listener registration.
+     * <p>
      * For Java2D painting, this method won't ever be called.
      * 
      * @param glAutoDrawable
      */
     void glDrawableInitialized(GLAutoDrawable glAutoDrawable);
 
+    /**
+     * Method that will be called every time a GL context is being set up whose
+     * data (e.g., textures and display lists) may later be shared with new GL
+     * contexts being created. sharedData is a place where the listener can put
+     * arbitrary data (e.g., IDs of created textures or display lists) that it
+     * needs for painting. The sharedData will be passed to
+     * {@link #onCellPaint(ImageListViewCellPaintEvent)} again (in
+     * {@link ImageListViewCellPaintEvent#getSharedContextData()}).
+     * <p>
+     * There will be one such sharedData per set of data-sharing GL contexts
+     * (most of the time, this amounts to just one per VM), and all listeners
+     * will receive that sharedData and be able to write to it. Thus, the
+     * listeners must ensure that they're not overwriting each other's values in
+     * the map. Thus, it is advised to use unique strings for the keys in the
+     * map, e.g. dotted names similar to Java class names.
+     * <p>
+     * Just like {@link #glDrawableInitialized(GLAutoDrawable)}, this method
+     * will be called at least once per listener.
+     * <p>
+     * For Java2D painting, this method won't ever be called.
+     * 
+     * @param gl
+     * @param sharedData
+     */
     void glSharedContextDataInitialization(GL gl, Map<String, Object> sharedData);
 
     /**
      * An OpenGL/JOGL drawable that has previously been initialized (and for
      * which {@link #glDrawableInitialized(GLAutoDrawable)} was called then) is
      * being disposed.
+     * <p>
+     * For Java2D painting, this method won't ever be called.
      * 
      * @param glAutoDrawable
      */
     void glDrawableDisposing(GLAutoDrawable glAutoDrawable);
 
+    // TODO: void glSharedContextDataDisposing(GL gl, Map<String, Object> sharedData);
+    
     // TODO: maybe refactor glDrawableIntialized/-Disposed to also be called
     // during J2D graphics initialization/disposal? Maybe people want to do things
     // there too.
+    // TODO: or, maybe move the gl* methods to a new subinterface
     
 }
