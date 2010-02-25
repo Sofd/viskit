@@ -1,8 +1,10 @@
 package de.sofd.viskit.ui.imagelist.gridlistimpl;
 
+import de.sofd.lang.Runnable1;
 import de.sofd.swing.AbstractFramedSelectionGridListComponentFactory;
 import de.sofd.swing.JGridList;
 import de.sofd.util.DynScope;
+import de.sofd.util.IdentityHashSet;
 import de.sofd.util.Misc;
 import de.sofd.viskit.model.DicomImageListViewModelElement;
 import de.sofd.viskit.ui.imagelist.ImageListViewCell;
@@ -10,6 +12,8 @@ import de.sofd.viskit.model.ImageListViewModelElement;
 import de.sofd.viskit.ui.imagelist.JImageListView;
 import de.sofd.viskit.ui.imagelist.cellviewers.jogl.GLImageListViewCellViewer;
 import de.sofd.viskit.ui.imagelist.cellviewers.java2d.ImageListViewCellViewer;
+import de.sofd.viskit.ui.imagelist.event.cellpaint.ImageListViewCellPaintListener;
+
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.GridLayout;
@@ -23,6 +27,9 @@ import java.awt.event.MouseWheelEvent;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 import java.util.Collection;
+
+import javax.media.opengl.GL;
+import javax.media.opengl.GLAutoDrawable;
 import javax.swing.DefaultListModel;
 import javax.swing.JComponent;
 import javax.swing.JPanel;
@@ -273,7 +280,14 @@ public class JGridImageListView extends JImageListView {
         return rendererType;
     }
 
+    /**
+     * 
+     * @param rendererType
+     */
     public void setRendererType(RendererType rendererType) {
+        if (rendererType != RendererType.JAVA2D) {
+            throw new UnsupportedOperationException("only JAVA2D rendererType supported for now");
+        }
         this.rendererType = rendererType;
         wrappedGridList.refresh();
     }

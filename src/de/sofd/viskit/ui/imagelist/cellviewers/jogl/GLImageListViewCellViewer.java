@@ -39,8 +39,12 @@ import de.sofd.viskit.ui.imagelist.event.cellpaint.ImageListViewCellPaintEvent;
 import de.sofd.viskit.ui.imagelist.gridlistimpl.JGridImageListView;
 
 /**
+ * NOT WORKING ATM.! Only Java2D rendering is supported for now in JGridImageListView.
+ * 
  * Swing component for displaying a {@link ImageListViewCell} using an OpenGL-based
  * renderer. For use in cell renderers or elsewhere.
+ * 
+ * NOTE: OpenGL rendering is not supported atm.
  *
  * @author olaf
  */

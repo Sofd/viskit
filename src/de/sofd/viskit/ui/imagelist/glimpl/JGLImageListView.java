@@ -69,11 +69,6 @@ public class JGLImageListView extends JImageListView {
 
     static {
         System.setProperty("sun.awt.noerasebackground", "true");
-        //JPopupMenu.setDefaultLightWeightPopupEnabled(false);
-        //ToolTipManager.sharedInstance().setLightWeightPopupEnabled(false);
-        //ImageTextureManager.init();
-        //LookupTableTextureManager.init();
-        //ShaderManager.init("shader");
     }
 
     public static final int CELL_BORDER_WIDTH = 2;
