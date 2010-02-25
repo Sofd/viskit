@@ -200,7 +200,7 @@ public class CellPaintControllerBase {
     public void glDrawableDisposing(GLAutoDrawable glAutoDrawable) {
     }
     
-    private PropertyChangeSupport propertyChangeSupport = new PropertyChangeSupport(this);
+    protected final PropertyChangeSupport propertyChangeSupport = new PropertyChangeSupport(this);
 
     /**
      * Add PropertyChangeListener.
