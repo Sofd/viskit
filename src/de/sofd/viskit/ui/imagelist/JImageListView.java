@@ -70,6 +70,8 @@ public abstract class JImageListView extends JPanel {
     public static final String PROP_MODEL = "model";
     private ListSelectionModel selectionModel;
     public static final String PROP_SELECTIONMODEL = "selectionModel";
+    private int firstVisibleIndex = 0;
+    public static final String PROP_FIRSTVISIBLEINDEX = "firstVisibleIndex";
     private final List<ListSelectionListener> listSelectionListeners = new ArrayList<ListSelectionListener>();
     private String displayName = "";
     public static final String PROP_SCALEMODE = "scaleMode";
@@ -529,6 +531,34 @@ public abstract class JImageListView extends JPanel {
         }
         return -1;
     }
+    
+    /**
+     *
+     * @return start of currently displayed interval of model elements
+     */
+    public int getFirstVisibleIndex() {
+       return firstVisibleIndex;
+    }
+
+    /**
+     * Programmatically "scrolls" this list to a different position by setting
+     * the index of the first model element to display.
+     * <p>
+     * This base class method only deals with changing the property value (
+     * {@link #getFirstVisibleIndex()}) and firing the property change event.
+     * Subclasses must override, possibly calling super, or re-implementing both
+     * the getter and the setter from scratch.
+     * 
+     * @param newValue
+     *            the new index
+     */
+    public void setFirstVisibleIndex(int newValue) {
+        int oldValue = getFirstVisibleIndex();
+        if (newValue == oldValue) { return; }
+        this.firstVisibleIndex = newValue;
+        firePropertyChange(PROP_FIRSTVISIBLEINDEX, oldValue, newValue);
+    }
+    
     
     /**
      * Called if a the cells of this viewer need to be refreshed. Normally

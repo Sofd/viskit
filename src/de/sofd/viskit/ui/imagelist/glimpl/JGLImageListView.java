@@ -48,7 +48,6 @@ import de.sofd.lang.Runnable1;
 import de.sofd.util.IdentityHashSet;
 import de.sofd.util.Misc;
 import de.sofd.viskit.draw2d.gc.ViskitGC;
-import de.sofd.viskit.image3D.jogl.util.GLShader;
 import de.sofd.viskit.model.DicomImageListViewModelElement;
 import de.sofd.viskit.model.ImageListViewModelElement;
 import de.sofd.viskit.ui.imagelist.ImageListViewCell;
@@ -75,15 +74,12 @@ public class JGLImageListView extends JImageListView {
     
     private GLCanvas cellsViewer = null;
     private final JScrollBar scrollBar;
-    private int firstDisplayedIdx = 0;
     
     private boolean displayFollowsSelection = true;
     public static final String PROP_DISPLAYFOLLOWSSELECTION = "displayFollowsSelection";
     
     protected static final Set<JGLImageListView> instances = new IdentityHashSet<JGLImageListView>();
     private static final SharedContextData sharedContextData = new SharedContextData();
-
-    private GLShader rescaleShader;
     
     private final Collection<ImageListViewCellPaintListener> uninitializedCellPaintListeners
         = new IdentityHashSet<ImageListViewCellPaintListener>();
@@ -168,27 +164,12 @@ public class JGLImageListView extends JImageListView {
         cellsViewer.repaint();
     }
 
-   /**
-    *
-    * @return start of currently displayed interval of model elements
-    */
-   public int getFirstDisplayedIdx() {
-       return firstDisplayedIdx;
-   }
-
-    /**
-     * Programmatically "scrolls" this JGLImageLIstView to a different position
-     * by setting the index of the first model element to display.
-     * 
-     * @param newValue
-     *            the new index
-     */
-   public void setFirstDisplayedIdx(int newValue) {
-       if (newValue == this.firstDisplayedIdx) { return; }
-       this.firstDisplayedIdx = newValue;
-       updateScrollbar();
-       cellsViewer.repaint();
-   }
+    @Override
+    public void setFirstVisibleIndex(int newValue) {
+        super.setFirstVisibleIndex(newValue);
+        updateScrollbar();
+        cellsViewer.repaint();
+    }
    
     /**
      * Class for the ScaleModes that JGLImageListView instances support. Any
@@ -439,7 +420,7 @@ public class JGLImageListView extends JImageListView {
 
             int dispCount = colCount * rowCount;
             for (int iBox = 0; iBox < dispCount; iBox++) {
-                int iCell = getFirstDisplayedIdx() + iBox;
+                int iCell = getFirstVisibleIndex() + iBox;
                 if (iCell >= getModel().getSize()) { break; }
                 ImageListViewCell cell = getCell(iCell);
                 int boxColumn = iBox % colCount;
@@ -594,19 +575,19 @@ public class JGLImageListView extends JImageListView {
             int rowCount = getScaleMode().getCellRowCount();
             int columnCount = getScaleMode().getCellColumnCount();
             int displayedCount = rowCount * columnCount;
-            int lastDispIdx = getFirstDisplayedIdx() + displayedCount - 1;
+            int lastDispIdx = getFirstVisibleIndex() + displayedCount - 1;
             int newFirstDispIdx = -1;
             // TODO: the following always sets firstDispIdx to a multiple of
             //   columnCount. Instead, it should take the previous firstDispIdx
             //   into account correctly
-            if (idx < getFirstDisplayedIdx()) {
+            if (idx < getFirstVisibleIndex()) {
                 newFirstDispIdx = idx / columnCount * columnCount;
             } else if (idx > lastDispIdx) {
                 int rowStartIdx = idx / columnCount * columnCount;
                 newFirstDispIdx = rowStartIdx - (rowCount-1) * columnCount;
             }
             if (newFirstDispIdx != -1) {
-                setFirstDisplayedIdx(newFirstDispIdx);
+                setFirstVisibleIndex(newFirstDispIdx);
             }
         }
     }
@@ -664,7 +645,7 @@ public class JGLImageListView extends JImageListView {
             scrollBar.setEnabled(true);
         }
         int size = getModel().getSize();
-        int firstDispIdx = getFirstDisplayedIdx();
+        int firstDispIdx = getFirstVisibleIndex();
         int rowCount = getScaleMode().getCellRowCount();
         int columnCount = getScaleMode().getCellColumnCount();
         int displayedCount = rowCount * columnCount;
@@ -693,7 +674,7 @@ public class JGLImageListView extends JImageListView {
                 BoundedRangeModel scrollModel = scrollBar.getModel();
                 if (internalScrollbarValueIsAdjusting) { return; }
                 //System.out.println("scrollbar changed: " + scrollModel);
-                setFirstDisplayedIdx(scrollModel.getValue());
+                setFirstVisibleIndex(scrollModel.getValue());
             } finally {
                 inCall = false;
             }
@@ -725,7 +706,7 @@ public class JGLImageListView extends JImageListView {
         if (boxIndex >= dispCount) {
             return -1;
         }
-        int modelIndex = getFirstDisplayedIdx() + boxIndex;
+        int modelIndex = getFirstVisibleIndex() + boxIndex;
         if (modelIndex >= getModel().getSize()) {
             return -1;
         }
