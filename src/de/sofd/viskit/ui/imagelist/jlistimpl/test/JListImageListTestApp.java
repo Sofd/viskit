@@ -4,6 +4,7 @@ import java.awt.BorderLayout;
 import java.awt.GraphicsConfiguration;
 import java.awt.GraphicsDevice;
 import java.awt.GraphicsEnvironment;
+import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
@@ -11,7 +12,9 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.File;
 import java.net.MalformedURLException;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Map.Entry;
 
 import javax.swing.AbstractAction;
@@ -21,7 +24,9 @@ import javax.swing.JComboBox;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
+import javax.swing.JPanel;
 import javax.swing.JToolBar;
+import javax.swing.ListModel;
 import javax.swing.SwingUtilities;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
@@ -44,6 +49,7 @@ import de.sofd.viskit.controllers.ImageListViewMouseZoomPanController;
 import de.sofd.viskit.controllers.ImageListViewRoiInputEventController;
 import de.sofd.viskit.controllers.ImageListViewRoiToolApplicationController;
 import de.sofd.viskit.controllers.ImageListViewSelectionScrollSyncController;
+import de.sofd.viskit.controllers.ImageListViewSelectionSynchronizationController;
 import de.sofd.viskit.controllers.ImageListViewWindowingApplyToAllController;
 import de.sofd.viskit.controllers.cellpaint.ImageListViewImagePaintController;
 import de.sofd.viskit.controllers.cellpaint.ImageListViewPrintTextToCellsController;
@@ -62,7 +68,6 @@ import de.sofd.viskit.ui.imagelist.event.ImageListViewListener;
 import de.sofd.viskit.ui.imagelist.glimpl.JGLImageListView;
 import de.sofd.viskit.ui.imagelist.gridlistimpl.JGridImageListView;
 import de.sofd.viskit.ui.imagelist.jlistimpl.JListImageListView;
-import de.sofd.viskit.util.LutFunction;
 
 /**
  *
@@ -79,11 +84,12 @@ public class JListImageListTestApp {
         //JFrame f2 = newFrame("Viskit ImageList test app window 2", (gs.length > 1 ? gs[1].getDefaultConfiguration() : null));
 
         //// creating them like this apparently works better
-        JFrame f1 = newFrame("Viskit ImageList test app window 1", null);
-        JFrame f2 = newFrame("Viskit ImageList test app window 2", null);
+        JFrame f1 = newSingleListFrame("Viskit ImageList test app window 1", null);
+        //JFrame f2 = newSingleListFrame("Viskit ImageList test app window 2", null);
+        JFrame f2 = newMultiListFrame("Multi-List frame", null);
     }
     
-    public JFrame newFrame(String frameTitle, GraphicsConfiguration graphicsConfig) throws Exception {
+    public JFrame newSingleListFrame(String frameTitle, GraphicsConfiguration graphicsConfig) throws Exception {
         final DefaultListModel model = getTestImageViewerListModel();
         //final DefaultListModel model = getViewerListModelForDirectory(new File("/home/olaf/gi/resources/DICOM-Testbilder/1578"));
         //final DefaultListModel model = getViewerListModelForDirectory(new File("/home/olaf/gi/Images/cd00900__center10102"));
@@ -318,6 +324,130 @@ public class JListImageListTestApp {
         return f;
     }
 
+    public JFrame newMultiListFrame(String frameTitle, GraphicsConfiguration graphicsConfig) throws Exception {
+        final JFrame theFrame = (graphicsConfig == null ? new JFrame(frameTitle) : new JFrame(frameTitle, graphicsConfig));
+        JToolBar toolbar = new JToolBar("toolbar");
+        toolbar.setFloatable(false);
+        
+        List<ListModel> listModels = new ArrayList<ListModel>();
+        listModels.add(getViewerListModelForDirectory(new File("/home/olaf/gi/Images/cd00900__center10102")));
+        listModels.add(getViewerListModelForDirectory(new File("/home/olaf/gi/Images/cd00901__center14146")));
+        
+        List<JImageListView> lists = new ArrayList<JImageListView>();
+        
+        JPanel listsPanel = new JPanel();
+        listsPanel.setLayout(new GridLayout(1, listModels.size(), 10, 0));
+        for (ListModel lm : listModels) {
+            ListViewPanel lvp = new ListViewPanel();
+            lvp.getListView().setModel(lm);
+            listsPanel.add(lvp);
+            lists.add(lvp.getListView());
+        }
+
+        ImageListViewSelectionSynchronizationController selSyncController = new ImageListViewSelectionSynchronizationController();
+        selSyncController.setLists(lists.toArray(new JImageListView[lists.size()]));
+        
+        JCheckBox selSyncCheckbox = new JCheckBox("sync selections");
+        toolbar.add(selSyncCheckbox);
+        Bindings.createAutoBinding(UpdateStrategy.READ_WRITE,
+                selSyncController, BeanProperty.create("enabled"),
+                selSyncCheckbox, BeanProperty.create("selected")).bind();
+        
+        theFrame.getContentPane().add(listsPanel, BorderLayout.CENTER);
+        theFrame.getContentPane().add(toolbar, BorderLayout.PAGE_START);
+        theFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        theFrame.setSize(1250, 800);
+        theFrame.setVisible(true);
+        
+        return theFrame;
+    }
+
+    private class ListViewPanel extends JPanel {
+        private JToolBar toolbar;
+        private JImageListView listView;
+        
+        public ListViewPanel() {
+            this.setLayout(new BorderLayout());
+            listView = new JGLImageListView();
+            this.add(listView, BorderLayout.CENTER);
+            new ImageListViewInitialWindowingController(listView).setEnabled(true);
+            new ImageListViewMouseWindowingController(listView);
+            new ImageListViewMouseZoomPanController(listView);
+            new ImageListViewRoiInputEventController(listView);
+            new ImageListViewImagePaintController(listView).setEnabled(true);
+            
+            ImageListViewSelectionScrollSyncController sssc = new ImageListViewSelectionScrollSyncController(listView);
+            sssc.setScrollPositionTracksSelection(true);
+            sssc.setSelectionTracksScrollPosition(true);
+            sssc.setAllowEmptySelection(false);
+            sssc.setEnabled(true);
+            
+            final ImageListViewPrintTextToCellsController ptc = new ImageListViewPrintTextToCellsController(listView) {
+                @Override
+                protected String[] getTextToPrint(ImageListViewCell cell) {
+                    DicomImageListViewModelElement elt = (DicomImageListViewModelElement) cell.getDisplayedModelElement();
+                    DicomObject dicomImageMetaData = elt.getDicomImageMetaData();
+                    return new String[] {
+                            "PN: " + dicomImageMetaData.getString(Tag.PatientName),
+                            "SL: " + dicomImageMetaData.getString(Tag.SliceLocation),
+                            "wl/ww: " + cell.getWindowLocation() + "/" + cell.getWindowWidth(),
+                            "Zoom: " + cell.getScale()
+                    };
+                }
+            };
+            ptc.setEnabled(true);
+            
+            new ImageListViewMouseMeasurementController(listView).setEnabled(true);
+
+            toolbar = new JToolBar();
+            toolbar.setFloatable(false);
+            this.add(toolbar, BorderLayout.PAGE_START);
+
+            toolbar.add(new JLabel("ScaleMode:"));
+            final JComboBox scaleModeCombo = new JComboBox();
+            for (JImageListView.ScaleMode sm : listView.getSupportedScaleModes()) {
+                scaleModeCombo.addItem(sm);
+            }
+            //scaleModeCombo.addItem(JGridImageListView.MyScaleMode.newCellGridMode(6, 6));
+            //scaleModeCombo.addItem(JGridImageListView.MyScaleMode.newCellGridMode(7, 7));
+            //scaleModeCombo.addItem(JGridImageListView.MyScaleMode.newCellGridMode(8, 8));
+            toolbar.add(scaleModeCombo);
+            scaleModeCombo.setEditable(false);
+            Bindings.createAutoBinding(UpdateStrategy.READ_WRITE,
+                                       listView, BeanProperty.create("scaleMode"),
+                                       scaleModeCombo, BeanProperty.create("selectedItem")).bind();
+
+            toolbar.add(new JLabel("lut:"));
+            final JComboBox lutCombo = new JComboBox();
+            for (LookupTable lut : LookupTables.getAllKnownLuts()) {
+                lutCombo.addItem(lut);
+            }
+            lutCombo.setRenderer(new LookupTableCellRenderer());
+            lutCombo.addItemListener(new ItemListener() {
+                @Override
+                public void itemStateChanged(ItemEvent e) {
+                    if (e.getStateChange() == ItemEvent.SELECTED) {
+                        LookupTable lut = (LookupTable) lutCombo.getSelectedItem();
+                        System.out.println("activating lut: " + lut);
+                        for (int i = 0; i < listView.getLength(); i++) {
+                            listView.getCell(i).setLookupTable(lut);
+                        }
+                        // TODO: apply to newly added cells. Have a controller to generalize this for arbitrary cell properties
+                    }
+                }
+            });
+            toolbar.add(lutCombo);
+        }
+
+        public JImageListView getListView() {
+            return listView;
+        }
+
+    }
+    
+    
+    
+    
     protected JListImageListView newJListImageListView() {
         return new JListImageListView();
     }
