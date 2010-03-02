@@ -84,18 +84,12 @@ public class JListImageListTestApp {
     }
     
     public JFrame newFrame(String frameTitle, GraphicsConfiguration graphicsConfig) throws Exception {
-        final DefaultListModel model = new DefaultListModel();
+        final DefaultListModel model = getTestImageViewerListModel();
         //final DefaultListModel model = getViewerListModelForDirectory(new File("/home/olaf/gi/resources/DICOM-Testbilder/1578"));
         //final DefaultListModel model = getViewerListModelForDirectory(new File("/home/olaf/gi/Images/cd00900__center10102"));
         //final DefaultListModel model = getViewerListModelForDirectory(new File("/home/olaf/gi/pet-studie/cd855__center4001"));
         //final DefaultListModel model = getViewerListModelForDirectory(new File("/shares/shared/projekts/disk312043/Images/cd822__center4001"));
         //final DefaultListModel model = getViewerListModelForDirectory(new File("/shares/shared/projekts/disk312043/Images/cd836__center4001"));
-        for (int i = 10; i < 90; i++) {
-            model.addElement(new TestImageModelElement(i));
-            //model.addElement(new FileBasedDicomImageListViewModelElement("/home/olaf/gi/resources/DICOM-Testbilder/1578/f0003563_006" + i + ".dcm"));
-            //model.addElement(new FileBasedDicomImageListViewModelElement("/home/olaf/gi/resources/DICOM-Testbilder/24-bit Uncompressed Color.dcm"));
-            //model.addElement(new FileBasedDicomImageListViewModelElement("/shares/projects/DICOM-Testbilder/1578/f0003563_006"+i+".dcm"));
-        }
 
         //model.addElement(new FileBasedDicomImageListViewModelElement(this.getClass().getResource("/de/sofd/viskit/test/resources/cd846__center4001__39.dcm")));
         //model.addElement(new FileBasedDicomImageListViewModelElement(this.getClass().getResource("/de/sofd/viskit/test/resources/series/series1/cd014__center001__0.dcm")));
@@ -356,6 +350,15 @@ public class JListImageListTestApp {
         System.err.println("" + result.size() + " images found in " + dir);
         return result;
     }
+    
+    protected static DefaultListModel getTestImageViewerListModel() {
+        final DefaultListModel result = new DefaultListModel();
+        for (int i = 10; i < 90; i++) {
+            result.addElement(new TestImageModelElement(i));
+        }
+        return result;
+    }
+    
 
     public static void main(String[] args) throws Exception {
         //System.out.println("press enter..."); System.in.read();   // use when profiling startup performance
