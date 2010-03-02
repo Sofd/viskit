@@ -10,7 +10,12 @@ import javax.swing.event.ListSelectionListener;
 
 import de.sofd.viskit.ui.imagelist.JImageListView;
 
-
+/**
+ * Controller that can synchronize the selection and the scroll position of a
+ * {@link JImageListView} in various ways.
+ * 
+ * @author Olaf Klischat
+ */
 public class ImageListViewSelectionScrollSyncController {
     protected JImageListView controlledImageListView;
     public static final String PROP_CONTROLLEDIMAGELISTVIEW = "controlledImageListView";
