@@ -39,7 +39,6 @@ import javax.swing.SwingUtilities;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.event.ListDataEvent;
-import javax.swing.event.ListSelectionEvent;
 
 import org.apache.log4j.Logger;
 import org.dcm4che2.data.Tag;
@@ -74,9 +73,6 @@ public class JGLImageListView extends JImageListView {
     
     private GLCanvas cellsViewer = null;
     private final JScrollBar scrollBar;
-    
-    private boolean displayFollowsSelection = true;
-    public static final String PROP_DISPLAYFOLLOWSSELECTION = "displayFollowsSelection";
     
     protected static final Set<JGLImageListView> instances = new IdentityHashSet<JGLImageListView>();
     private static final SharedContextData sharedContextData = new SharedContextData();
@@ -170,7 +166,12 @@ public class JGLImageListView extends JImageListView {
         updateScrollbar();
         cellsViewer.repaint();
     }
-   
+    
+    @Override
+    public int getLastVisibleIndex() {
+        return getFirstVisibleIndex() + getScaleMode().getCellColumnCount() * getScaleMode().getCellRowCount() - 1;
+    }
+    
     /**
      * Class for the ScaleModes that JGLImageListView instances support. Any
      * rectangular grid of n x m cells is supported.
@@ -567,6 +568,7 @@ public class JGLImageListView extends JImageListView {
 
     };
     
+    @Override
     public void ensureIndexIsVisible(int idx) {
         if (null == getModel()) {
             return;
@@ -592,37 +594,6 @@ public class JGLImageListView extends JImageListView {
         }
     }
     
-    public void scrollToSelection() {
-        ListSelectionModel sm = getSelectionModel();
-        if (null != sm) {
-            int li = sm.getLeadSelectionIndex();
-            if (sm.isSelectedIndex(li)) {
-                ensureIndexIsVisible(li);
-            }
-        }
-    }
-    
-    public boolean isDisplayFollowsSelection() {
-        return displayFollowsSelection;
-    }
-    
-    public void setDisplayFollowsSelection(boolean displayFollowsSelection) {
-        boolean oldValue = displayFollowsSelection;
-        this.displayFollowsSelection = displayFollowsSelection;
-        firePropertyChange(PROP_DISPLAYFOLLOWSSELECTION, oldValue, displayFollowsSelection);
-    }
-    
-    @Override
-    protected void selectionChanged(ListSelectionEvent e) {
-        super.selectionChanged(e);
-        if (cellsViewer != null) {
-            if (isDisplayFollowsSelection()) {
-                scrollToSelection();
-            }
-            cellsViewer.repaint();
-        }
-    }
-
     /**
      * need our own valueIsAdjusting for the scrollbar instead of using
      * scrollBar.getModel().getValueIsAdjusting() because we want to be able to

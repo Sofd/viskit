@@ -129,6 +129,17 @@ public class JGridImageListView extends JImageListView {
         wrappedGridList.setModel(wrappedGridListModel = copyModel(getModel()));
     }
 
+    @Override
+    public int getLastVisibleIndex() {
+        return getFirstVisibleIndex() + getScaleMode().getCellColumnCount() * getScaleMode().getCellRowCount();
+    }
+    
+    //TODO: impl: setFirstVisibleIndex(), + prop change event
+    
+    public void ensureIndexIsVisible(int idx) {
+        wrappedGridList.ensureIndexIsVisible(idx);
+    }
+    
     /**
      * Class for the ScaleModes that JGridImageListView instances support. Any
      * rectangular grid of n x m cells is supported.

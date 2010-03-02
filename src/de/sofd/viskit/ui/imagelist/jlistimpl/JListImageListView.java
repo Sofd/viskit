@@ -112,7 +112,29 @@ public class JListImageListView extends JImageListView {
         // updateCellSizes(false);  // TODO: test performance...
     }
 
+    @Override
+    public int getFirstVisibleIndex() {
+        return wrappedList.getFirstVisibleIndex();
+    }
 
+    @Override
+    public int getLastVisibleIndex() {
+        return wrappedList.getLastVisibleIndex();
+    }
+    
+    @Override
+    public void setFirstVisibleIndex(int newValue) {
+        //TODO: impl
+        
+    }
+    
+    @Override
+    public void ensureIndexIsVisible(int idx) {
+        //TODO: impl
+        
+    }
+    
+    
     @Override
     public void setSelectionModel(ListSelectionModel selectionModel) {
         super.setSelectionModel(selectionModel);

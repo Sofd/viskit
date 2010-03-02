@@ -485,11 +485,13 @@ public abstract class JImageListView extends JPanel {
     };
 
     /**
-     * Called if the selection of this list has changed.
-     * Default implementation does nothing, subclasses may override.
+     * Called if the selection of this list has changed. Default implementation
+     * calls {@link #refreshCells()}, subclasses may override.
+     * 
      * @param e
      */
     protected void selectionChanged(ListSelectionEvent e) {
+        refreshCells();
     }
 
     /**
@@ -558,7 +560,34 @@ public abstract class JImageListView extends JPanel {
         this.firstVisibleIndex = newValue;
         firePropertyChange(PROP_FIRSTVISIBLEINDEX, oldValue, newValue);
     }
+
+    public abstract int getLastVisibleIndex();
     
+    public abstract void ensureIndexIsVisible(int idx);
+
+    public void selectSomeVisibleCell() {
+        ListSelectionModel sm = getSelectionModel();
+        if (sm != null) {
+            int idx = sm.getLeadSelectionIndex();
+            if (idx != -1) {
+                if (idx < getFirstVisibleIndex()) {
+                    sm.setSelectionInterval(getFirstVisibleIndex(), getFirstVisibleIndex());
+                } else if (idx > getLastVisibleIndex()) {
+                    sm.setSelectionInterval(getLastVisibleIndex(), getLastVisibleIndex());
+                }
+            }
+        }
+    }
+    
+    public void scrollToSelection() {
+        ListSelectionModel sm = getSelectionModel();
+        if (null != sm) {
+            int li = sm.getLeadSelectionIndex();
+            if (sm.isSelectedIndex(li)) {
+                ensureIndexIsVisible(li);
+            }
+        }
+    }
     
     /**
      * Called if a the cells of this viewer need to be refreshed. Normally

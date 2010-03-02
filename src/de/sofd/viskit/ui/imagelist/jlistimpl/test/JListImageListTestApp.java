@@ -43,6 +43,7 @@ import de.sofd.viskit.controllers.ImageListViewMouseWindowingController;
 import de.sofd.viskit.controllers.ImageListViewMouseZoomPanController;
 import de.sofd.viskit.controllers.ImageListViewRoiInputEventController;
 import de.sofd.viskit.controllers.ImageListViewRoiToolApplicationController;
+import de.sofd.viskit.controllers.ImageListViewSelectionScrollSyncController;
 import de.sofd.viskit.controllers.ImageListViewWindowingApplyToAllController;
 import de.sofd.viskit.controllers.cellpaint.ImageListViewImagePaintController;
 import de.sofd.viskit.controllers.cellpaint.ImageListViewPrintTextToCellsController;
@@ -283,6 +284,12 @@ public class JListImageListTestApp {
                                    wndAllCheckbox, BeanProperty.create("selected")).bind();
 
         new ImageListViewImagePaintController(viewer).setEnabled(true);
+        
+        ImageListViewSelectionScrollSyncController sssc = new ImageListViewSelectionScrollSyncController(viewer);
+        sssc.setScrollPositionTracksSelection(true);
+        sssc.setSelectionTracksScrollPosition(true);
+        sssc.setAllowEmptySelection(false);
+        sssc.setEnabled(true);
         
         final ImageListViewPrintTextToCellsController ptc = new ImageListViewPrintTextToCellsController(viewer) {
             @Override
