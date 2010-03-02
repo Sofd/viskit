@@ -162,7 +162,9 @@ public class ImageListViewSelectionScrollSyncController {
             inProgrammedChange = true;
             try {
                 //System.err.println("scroll posn change: " + getControlledImageListView().getFirstVisibleIndex());
-                getControlledImageListView().selectSomeVisibleCell();
+                if (getControlledImageListView().getSelectedIndex() >= 0) {
+                    getControlledImageListView().selectSomeVisibleCell();
+                }
             } finally {
                 inProgrammedChange = false;
             }
@@ -182,8 +184,7 @@ public class ImageListViewSelectionScrollSyncController {
             inProgrammedChange = true;
             try {
                 ensureNonEmptySelectionIfRequired();
-                int selIndex = getControlledImageListView().getSelectedIndex();
-                if (selIndex >= 0) {
+                if (getControlledImageListView().getSelectedIndex() >= 0) {
                     getControlledImageListView().scrollToSelection();
                 }
             } finally {
