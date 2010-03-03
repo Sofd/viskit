@@ -457,6 +457,13 @@ public class JListImageListTestApp {
                 }
             });
             toolbar.add(lutCombo);
+            
+            ImageListViewWindowingApplyToAllController wndAllController = new ImageListViewWindowingApplyToAllController(listView);
+            JCheckBox wndAllCheckbox = new JCheckBox("window all");
+            toolbar.add(wndAllCheckbox);
+            Bindings.createAutoBinding(UpdateStrategy.READ_WRITE,
+                    wndAllController, BeanProperty.create("enabled"),
+                    wndAllCheckbox, BeanProperty.create("selected")).bind();
         }
 
         public JImageListView getListView() {
