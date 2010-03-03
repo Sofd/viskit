@@ -42,6 +42,7 @@ import de.sofd.draw2d.DrawingObject;
 import de.sofd.draw2d.viewer.tools.EllipseTool;
 import de.sofd.draw2d.viewer.tools.SelectorTool;
 import de.sofd.util.FloatRange;
+import de.sofd.viskit.controllers.GenericILVCellPropertySyncController;
 import de.sofd.viskit.controllers.ImageListViewInitialWindowingController;
 import de.sofd.viskit.controllers.ImageListViewMouseMeasurementController;
 import de.sofd.viskit.controllers.ImageListViewMouseWindowingController;
@@ -84,7 +85,7 @@ public class JListImageListTestApp {
         //JFrame f2 = newFrame("Viskit ImageList test app window 2", (gs.length > 1 ? gs[1].getDefaultConfiguration() : null));
 
         //// creating them like this apparently works better
-        JFrame f1 = newSingleListFrame("Viskit ImageList test app window 1", null);
+        //JFrame f1 = newSingleListFrame("Viskit ImageList test app window 1", null);
         //JFrame f2 = newSingleListFrame("Viskit ImageList test app window 2", null);
         JFrame f2 = newMultiListFrame("Multi-List frame", null);
     }
@@ -353,6 +354,24 @@ public class JListImageListTestApp {
         Bindings.createAutoBinding(UpdateStrategy.READ_WRITE,
                 selSyncController, BeanProperty.create("enabled"),
                 selSyncCheckbox, BeanProperty.create("selected")).bind();
+        
+        GenericILVCellPropertySyncController windowingSyncController =
+            new GenericILVCellPropertySyncController(new String[]{"windowLocation", "windowWidth"});
+        windowingSyncController.setLists(lists);
+        JCheckBox windowingSyncCheckbox = new JCheckBox("sync windowing");
+        toolbar.add(windowingSyncCheckbox);
+        Bindings.createAutoBinding(UpdateStrategy.READ_WRITE,
+                windowingSyncController, BeanProperty.create("enabled"),
+                windowingSyncCheckbox, BeanProperty.create("selected")).bind();
+        
+        GenericILVCellPropertySyncController zoomPanSyncController =
+            new GenericILVCellPropertySyncController(new String[]{"scale", "centerOffset"});
+        zoomPanSyncController.setLists(lists);
+        JCheckBox zoomPanSyncCheckbox = new JCheckBox("sync zoom/pan");
+        toolbar.add(zoomPanSyncCheckbox);
+        Bindings.createAutoBinding(UpdateStrategy.READ_WRITE,
+                zoomPanSyncController, BeanProperty.create("enabled"),
+                zoomPanSyncCheckbox, BeanProperty.create("selected")).bind();
         
         theFrame.getContentPane().add(listsPanel, BorderLayout.CENTER);
         theFrame.getContentPane().add(toolbar, BorderLayout.PAGE_START);

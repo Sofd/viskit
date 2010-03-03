@@ -3,6 +3,7 @@ package de.sofd.viskit.controllers;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
+import java.util.Collection;
 import java.util.Set;
 
 import de.sofd.util.IdentityHashSet;
@@ -52,11 +53,12 @@ public abstract class ImageListViewCellPropertySyncControllerBase {
             l.removeCellPropertyChangeListener(listsCellPropertyChangeListener);
         }
     }
-    
+
     /**
-     * Set the value of lists
-     *
-     * @param lists new value of lists
+     * Set set of {@link JImageListView}s that this controller currently
+     * synchronizes.
+     * 
+     * @param lists
      */
     public void setLists(JImageListView[] lists) {
         for (JImageListView l : this.lists.toArray(new JImageListView[0])) {
@@ -67,6 +69,21 @@ public abstract class ImageListViewCellPropertySyncControllerBase {
         }
     }
 
+    /**
+     * Set set of {@link JImageListView}s that this controller currently
+     * synchronizes.
+     * 
+     * @param lists
+     */
+    public void setLists(Collection<JImageListView> lists) {
+        for (JImageListView l : this.lists.toArray(new JImageListView[0])) {
+            removeList(l);
+        }
+        for (JImageListView l : lists) {
+            addList(l);
+        }
+    }
+    
     /**
      * Get the value of enabled
      *
@@ -102,7 +119,7 @@ public abstract class ImageListViewCellPropertySyncControllerBase {
             }
             inChange = true;
             try {
-                
+                onCellPropertyChange(evt);
             } finally {
                 inChange = false;
             }

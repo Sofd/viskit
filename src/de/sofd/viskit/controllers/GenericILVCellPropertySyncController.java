@@ -4,7 +4,11 @@ import java.beans.BeanInfo;
 import java.beans.IntrospectionException;
 import java.beans.Introspector;
 import java.beans.PropertyChangeEvent;
+import java.beans.PropertyDescriptor;
+import java.lang.reflect.InvocationTargetException;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 import javax.swing.ListSelectionModel;
@@ -12,7 +16,14 @@ import javax.swing.ListSelectionModel;
 import de.sofd.viskit.ui.imagelist.ImageListViewCell;
 import de.sofd.viskit.ui.imagelist.JImageListView;
 
-
+/**
+ * Generic cell property sync controller that can synchronize any set bean
+ * properties of cells ({@link ImageListViewCell}s) between some set of
+ * JImageLists.
+ * 
+ * @author olaf
+ * 
+ */
 public class GenericILVCellPropertySyncController extends ImageListViewCellPropertySyncControllerBase {
 
     private Set<String> propertiesToSynchronize = new HashSet<String>();
@@ -35,6 +46,12 @@ public class GenericILVCellPropertySyncController extends ImageListViewCellPrope
     }
     
     public void setPropertiesToSynchronize(Set<String> propertiesToSynchronize) {
+        // check for undefined properties
+        for (String p : propertiesToSynchronize) {
+            if (null == getCellPropertyDescriptor(p)) {
+                throw new IllegalArgumentException("undefined cell property: " + p);
+            }
+        }
         this.propertiesToSynchronize = new HashSet<String>(propertiesToSynchronize);
     }
     
@@ -50,31 +67,45 @@ public class GenericILVCellPropertySyncController extends ImageListViewCellPrope
         if (!sm.isSelectionEmpty()) {
             int sourceCellIndex = sourceList.getIndexOf(sourceCell);
             if (sm.isSelectedIndex(sourceCellIndex)) {
-                for (JImageListView destList : getLists()) {
-                    if (destList != sourceList) {
-                        int si = destList.getSelectedIndex();
-                        if (si != -1) {
-                            ImageListViewCell destCell = destList.getCell(si);
-                            getCellBeanInfo().getPropertyDescriptors();   // TODO: continue...
-                            
+                try {
+                    for (JImageListView destList : getLists()) {
+                        if (destList != sourceList) {
+                            int si = destList.getSelectedIndex();
+                            if (si != -1) {
+                                ImageListViewCell destCell = destList.getCell(si);
+                                for (String propName : propertiesToSynchronize) {
+                                    PropertyDescriptor pd = getCellPropertyDescriptor(propName);
+                                    Object propValue = pd.getReadMethod().invoke(sourceCell);
+                                    pd.getWriteMethod().invoke(destCell, propValue);
+                                }
+                            }
                         }
                     }
+                } catch (InvocationTargetException e1) {
+                    throw new IllegalStateException(e1.getMessage(), e1);
+                } catch (IllegalAccessException e2) {
+                    throw new IllegalStateException(e2.getMessage(), e2);
                 }
             }
         }
     }
 
-    protected BeanInfo getCellBeanInfo() {
-        if (cellBeanInfo == null) {
+
+    protected static PropertyDescriptor getCellPropertyDescriptor(String propName) {
+        if (cellPropsByName == null) {
             try {
-                cellBeanInfo = Introspector.getBeanInfo(ImageListViewCell.class);
+                cellPropsByName = new HashMap<String, PropertyDescriptor>();
+                BeanInfo cellBeanInfo = Introspector.getBeanInfo(ImageListViewCell.class);
+                for (PropertyDescriptor pd : cellBeanInfo.getPropertyDescriptors()) {
+                    cellPropsByName.put(pd.getName(), pd);
+                }
             } catch (IntrospectionException e) {
                 throw new IllegalStateException(e.getLocalizedMessage(), e);
             }
         }
-        return cellBeanInfo;
+        return cellPropsByName.get(propName);
     }
 
-    protected static BeanInfo cellBeanInfo;
+    protected static Map<String, PropertyDescriptor> cellPropsByName;
     
 }
