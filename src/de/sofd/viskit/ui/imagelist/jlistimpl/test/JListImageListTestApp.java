@@ -346,6 +346,7 @@ public class JListImageListTestApp {
 
         ImageListViewSelectionSynchronizationController selSyncController = new ImageListViewSelectionSynchronizationController();
         selSyncController.setLists(lists.toArray(new JImageListView[lists.size()]));
+        selSyncController.setKeepRelativeSelectionIndices(true);
         
         JCheckBox selSyncCheckbox = new JCheckBox("sync selections");
         toolbar.add(selSyncCheckbox);
