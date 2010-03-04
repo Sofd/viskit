@@ -150,7 +150,7 @@ public abstract class CachingDicomImageListViewModelElement extends AbstractImag
      *
      * @return
      */
-    public DicomObject getBackendDicomImageMetaData() {
+    protected DicomObject getBackendDicomImageMetaData() {
         // even though the getDicomObject() could serve as the metadata object
         // (it's a superset of it -- essentially, it's the metadata plus the pixel data),
         // we extract the metadata subset and return that, because it will be much smaller

@@ -165,7 +165,7 @@ public class FileBasedDicomImageListViewModelElement extends CachingDicomImageLi
     }
 
     @Override
-    public DicomObject getBackendDicomImageMetaData() {
+    protected DicomObject getBackendDicomImageMetaData() {
         checkInitialized();
         // the backend DicomObject isn't cached yet -- read the metadata (and only the metadata) directly from the backend file,
         // in the hope that that will be faster than reading & caching the whole backend DicomObject (which would include the pixel data)
