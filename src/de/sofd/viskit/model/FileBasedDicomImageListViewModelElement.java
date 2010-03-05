@@ -24,6 +24,7 @@ import org.dcm4che2.io.DicomInputStream;
 public class FileBasedDicomImageListViewModelElement extends CachingDicomImageListViewModelElement {
 
     private /*final*/ URL url;
+    private File urlAsFile; // url as a file again (if it represents one), for user convenience
 
     protected FileBasedDicomImageListViewModelElement() {
     }
@@ -51,6 +52,7 @@ public class FileBasedDicomImageListViewModelElement extends CachingDicomImageLi
     public FileBasedDicomImageListViewModelElement(File file, boolean checkReadability) {
         try {
             setUrl(file.toURI().toURL(), checkReadability);
+            urlAsFile = file.getAbsoluteFile();
         } catch (MalformedURLException e) {
             throw new RuntimeException(e);
         }
@@ -72,9 +74,24 @@ public class FileBasedDicomImageListViewModelElement extends CachingDicomImageLi
         }
         this.url = url;
     }
-    
+
+    /**
+     * 
+     * @return the URL the model element wraps
+     */
     public URL getUrl() {
         return url;
+    }
+
+    /**
+     * Convenience method that returns {@link #getUrl()} as a file object, if
+     * this model element was constructed as wrapping a file.
+     * 
+     * @return the file represented by {@link #getUrl()}, if any. null
+     *         otherwise.
+     */
+    public File getFile() {
+        return urlAsFile;
     }
 
     protected void checkInitialized() {
