@@ -72,6 +72,10 @@ public class FileBasedDicomImageListViewModelElement extends CachingDicomImageLi
         }
         this.url = url;
     }
+    
+    public URL getUrl() {
+        return url;
+    }
 
     protected void checkInitialized() {
         if (this.url == null) {
