@@ -800,9 +800,10 @@ public class JGLImageListView extends JImageListView {
                 int clickedModelIndex = findModelIndexAt(e.getPoint());
                 if (clickedModelIndex != -1) {
                     if ((e.getModifiersEx() & MouseEvent.CTRL_DOWN_MASK) == 0) {
-                        getSelectionModel().clearSelection();
+                        getSelectionModel().setSelectionInterval(clickedModelIndex, clickedModelIndex);
+                    } else {
+                        getSelectionModel().addSelectionInterval(clickedModelIndex, clickedModelIndex);
                     }
-                    getSelectionModel().addSelectionInterval(clickedModelIndex, clickedModelIndex);
                 }
             }
         });
@@ -845,8 +846,7 @@ public class JGLImageListView extends JImageListView {
         if (idx != -1) {
             idx += shift;
             if (idx >= 0 && idx < getModel().getSize()) {
-                getSelectionModel().clearSelection();
-                getSelectionModel().addSelectionInterval(idx, idx);
+                getSelectionModel().setSelectionInterval(idx, idx);
             }
         }
     }
