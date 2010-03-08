@@ -183,8 +183,12 @@ public class BoundedListSelectionModel implements ListSelectionModel {
         runWithValueAdjusting(new Runnable() {
             @Override
             public void run() {
-                removeSelectionInterval(min, getLowerBound() - 1);
-                removeSelectionInterval(getUpperBound() + 1, max);
+                if (getLowerBound() > min) {
+                    removeSelectionInterval(min, getLowerBound() - 1);
+                }
+                if (getUpperBound() < max) {
+                    removeSelectionInterval(getUpperBound() + 1, max);
+                }
             }
         });
     }
