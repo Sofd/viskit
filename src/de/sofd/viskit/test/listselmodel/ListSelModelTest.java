@@ -1,13 +1,16 @@
 package de.sofd.viskit.test.listselmodel;
 
 import java.awt.BorderLayout;
+import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 
 import javax.swing.AbstractAction;
 import javax.swing.DefaultListModel;
 import javax.swing.JFrame;
+import javax.swing.JLabel;
 import javax.swing.JList;
 import javax.swing.JScrollPane;
+import javax.swing.JTextField;
 import javax.swing.JToolBar;
 import javax.swing.ListSelectionModel;
 import javax.swing.SwingUtilities;
@@ -32,8 +35,10 @@ public class ListSelModelTest {
             listModel.addElement("origElt"+i);
         }
         list.setModel(listModel);
-        BoundedListSelectionModel sm = new BoundedListSelectionModel();
-        list.setSelectionModel(sm);
+        final BoundedListSelectionModel boundedSM = new BoundedListSelectionModel();
+        boundedSM.setLowerBound(5);
+        boundedSM.setUpperBound(17);
+        list.setSelectionModel(boundedSM);
         JScrollPane sp = new JScrollPane(list);
         f.getContentPane().add(sp, BorderLayout.CENTER);
 
@@ -97,6 +102,35 @@ public class ListSelModelTest {
                 }
             }
         });
+        final JTextField lowerEntry = new JTextField("5") {
+            @Override
+            public Dimension getMaximumSize() {
+                return new Dimension(50, super.getMaximumSize().height);
+            }
+        };
+        final JTextField upperEntry = new JTextField("17") {
+            @Override
+            public Dimension getMaximumSize() {
+                return new Dimension(50, super.getMaximumSize().height);
+            }
+        };
+        toolbar.add(new JLabel("lower:"));
+        toolbar.add(lowerEntry);
+        toolbar.add(new JLabel("upper:"));
+        toolbar.add(upperEntry);
+        toolbar.add(new AbstractAction("set") {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                try {
+                    int lower = Integer.parseInt(lowerEntry.getText());
+                    int upper = Integer.parseInt(upperEntry.getText());
+                    boundedSM.setBounds(lower, upper);
+                } catch (NumberFormatException ex) {
+                    //ignore
+                }
+            }
+        });
+        
         f.getContentPane().add(toolbar, BorderLayout.NORTH);
 
         f.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);

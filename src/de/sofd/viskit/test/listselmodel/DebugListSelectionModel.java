@@ -74,6 +74,7 @@ public class DebugListSelectionModel implements ListSelectionModel {
     }
 
     public void removeSelectionInterval(int index0, int index1) {
+        System.out.println("removeSelectionInterval("+index0+", "+index1+")");
         backend.removeSelectionInterval(index0, index1);
     }
 
