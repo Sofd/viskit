@@ -49,7 +49,7 @@ public class ImageListViewSelectionSynchronizationController {
 
     public void addList(JImageListView l) {
         if (! listsAndSelectionIndices.containsKey(l)) {
-            listsAndSelectionIndices.put(l, l.getLeadSelectionIndex());
+            putSelectionIndex(l, l.getLeadSelectionIndex());
             l.addListSelectionListener(selectionHandler);
         }
     }
@@ -60,6 +60,14 @@ public class ImageListViewSelectionSynchronizationController {
         }
     }
 
+    private void putSelectionIndex(JImageListView l, int idx) {
+        if (idx == -1) {
+            listsAndSelectionIndices.put(l, null);
+        } else {
+            listsAndSelectionIndices.put(l, idx);
+        }
+    }
+    
     /**
      * Set set of {@link JImageListView}s that this controller currently
      * synchronizes.
@@ -94,7 +102,7 @@ public class ImageListViewSelectionSynchronizationController {
     
     private void recordSelectionIndices() {
         for (JImageListView l : getLists()) {
-            listsAndSelectionIndices.put(l, l.getLeadSelectionIndex());
+            putSelectionIndex(l, l.getLeadSelectionIndex());
         }
     }
     
@@ -148,8 +156,6 @@ public class ImageListViewSelectionSynchronizationController {
     }
 
 
-    // TODO: still bug: inband signaling: -1 in listsAndSelectionIndices indicates "no selection" but is also a valid index value now
-    
     private ListSelectionListener selectionHandler = new ListSelectionListener() {
         private boolean inProgrammedSelectionChange = false;
         @Override
@@ -166,19 +172,19 @@ public class ImageListViewSelectionSynchronizationController {
                 int selIndex = sourceList.getLeadSelectionIndex();
                 if (selIndex >= 0) {
                     if (keepRelativeSelectionIndices) {
-                        int lastSourceSelIdx = listsAndSelectionIndices.get(sourceList);  // NPE here would indicate consistency bug (sourceList not added to the map)
-                        if (lastSourceSelIdx < 0) {
+                        Integer lastSourceSelIdx = listsAndSelectionIndices.get(sourceList);
+                        if (lastSourceSelIdx == null) {
                             // nothing was selected in sourceList previously. Just remember the newly selected index
-                            listsAndSelectionIndices.put(sourceList, selIndex);
+                            putSelectionIndex(sourceList, selIndex);
                         } else {
+                            putSelectionIndex(sourceList, selIndex);
                             int change = selIndex - lastSourceSelIdx;
-                            listsAndSelectionIndices.put(sourceList, selIndex);
                             for (JImageListView l : getLists()) {
                                 if (l != sourceList) {
-                                    int si = l.getLeadSelectionIndex();
-                                    if (si >= 0) {
+                                    Integer si = listsAndSelectionIndices.get(l);
+                                    if (si != null) {
                                         int newsi = si + change;
-                                        listsAndSelectionIndices.put(l, newsi);
+                                        listsAndSelectionIndices.put(l, newsi);  // newsi==-1 is a valid value here, so DON'T call putSelectionIndex
                                         if (newsi >= l.getLength()) {
                                             newsi = l.getLength() - 1;
                                         }
@@ -191,20 +197,19 @@ public class ImageListViewSelectionSynchronizationController {
                             }
                         }
                     } else {
-                        listsAndSelectionIndices.put(sourceList, selIndex);
+                        putSelectionIndex(sourceList, selIndex);
                         for (JImageListView l : getLists()) {
                             if (l != sourceList) {
                                 l.getSelectionModel().setSelectionInterval(selIndex, selIndex);
-                                listsAndSelectionIndices.put(l, selIndex);
+                                putSelectionIndex(l, selIndex);
                             }
                         }
                     }
                 } else {
-                    listsAndSelectionIndices.put(sourceList, -1);
+                    putSelectionIndex(sourceList, -1);
                 }
             } finally {
                 inProgrammedSelectionChange = false;
-                dumpSelectionIndices();
             }
         }
     };
