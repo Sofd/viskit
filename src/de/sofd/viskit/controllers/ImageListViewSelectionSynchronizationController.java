@@ -252,23 +252,20 @@ public class ImageListViewSelectionSynchronizationController {
         if (!(listsAndSelectionIndices.keySet().iterator().next().getSelectionModel() instanceof BoundedListSelectionModel)) {
             return;
         }
-        int min = Integer.MAX_VALUE;
-        int max = Integer.MIN_VALUE;
-        int minLength = Integer.MAX_VALUE;
+        int minSelIndex = Integer.MAX_VALUE;
+        int minHeadroom = Integer.MAX_VALUE;
         for (Entry<JImageListView, Integer> e : listsAndSelectionIndices.entrySet()) {
             JImageListView list = e.getKey();
             Integer i = e.getValue();
-            if (list.getLength() < minLength) {
-                minLength = list.getLength();
-            }
             if (i == null) {
                 continue;
             }
-            if (i < min) {
-                min = i;
+            if (i < minSelIndex) {
+                minSelIndex = i;
             }
-            if (i > max) {
-                max = i;
+            int length = list.getLength();
+            if (length - i < minHeadroom) {
+                minHeadroom = length - i;
             }
         }
         for (JImageListView l : listsAndSelectionIndices.keySet()) {
@@ -282,15 +279,15 @@ public class ImageListViewSelectionSynchronizationController {
                 bsm.disableBounds();
                 continue;
             }
-            int lower = idx - min;
-            int upper = l.getLength() - 1 - (max - idx);
-            if (lower < 0 || max < idx || lower > upper) {
+            int lower = idx - minSelIndex;
+            int upper = idx + minHeadroom;
+            if (lower < 0 || lower > upper) {
                 System.err.println("shouldn't happen: trying to set selection bounds of list (length=" + l.getLength() +
                                    " to [" + lower + "," + upper + "]");
                 continue;
             }
-            bsm.setLowerBound(idx - min);
-            bsm.setUpperBound(l.getLength() - 1 - (max - idx));
+            bsm.setLowerBound(lower);
+            bsm.setUpperBound(upper);
         }
     }
     
