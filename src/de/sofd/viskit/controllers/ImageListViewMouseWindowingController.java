@@ -115,9 +115,15 @@ public class ImageListViewMouseWindowingController {
                 if (sourceCell != null && sourceCell == currentCell) {
                     FloatRange usedPxRange = sourceCell.getDisplayedModelElement().getUsedPixelValuesRange();
                     int mouseIncrement = 1 + (int)(usedPxRange.getDelta() / 300);
+                    // TODO: floating-point mouseIncrements would be better...
+                    // TODO: account for cell size as well maybe? (bigger mouse increment when the cell is small)
                     Point sourcePosition = e.getPoint();
                     sourceCell.setWindowLocation(sourceCell.getWindowLocation() + mouseIncrement * (sourcePosition.x - lastPosition.x));
-                    sourceCell.setWindowWidth(sourceCell.getWindowWidth() + mouseIncrement * (sourcePosition.y - lastPosition.y));
+                    int newWW = sourceCell.getWindowWidth() + mouseIncrement * (sourcePosition.y - lastPosition.y);
+                    if (newWW < 1) {
+                        newWW = 1;
+                    }
+                    sourceCell.setWindowWidth(newWW);
                     lastPosition = sourcePosition;
                     e.consume();
                 }
