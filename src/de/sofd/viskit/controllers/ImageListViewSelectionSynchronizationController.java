@@ -5,17 +5,31 @@ import java.beans.PropertyChangeSupport;
 import java.util.Collection;
 import java.util.IdentityHashMap;
 import java.util.Map;
+import java.util.Map.Entry;
 
+import javax.swing.ListSelectionModel;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 
+import de.sofd.swing.BoundedListSelectionModel;
 import de.sofd.viskit.ui.imagelist.JImageListView;
 
 /**
- * Controller that maintains a list of references to {@link JImageListView} objects
- * and a boolean "enabled" flag. If the flag is set to true, the selections of
- * all the lists are kept synchronized.
- *
+ * Controller that maintains a list of references to {@link JImageListView}
+ * objects and a boolean "enabled" flag. If the flag is set to true, the
+ * selections of all the lists are kept synchronized.
+ * <p>
+ * If the {@link #isKeepRelativeSelectionIndices()} flag is also true, the
+ * differences between the selection indices in different lists will be kept
+ * constant (rather than all selection indices being set to the same value). For
+ * this to work if the selections are moved to the beginning/end of one of the
+ * lists, the controller must be able to constrain the selections of the lists
+ * appropriately, such that, depending on the situation, some indices at the
+ * beginning and/or end of the lists can no longer be selected. To make this
+ * work, the selection models of the participating lists (
+ * {@link JImageListView#setSelectionModel(ListSelectionModel)} must be set to
+ * instances of {@link BoundedListSelectionModel}.
+ * 
  * @author Sofd GmbH
  */
 public class ImageListViewSelectionSynchronizationController {
@@ -131,6 +145,9 @@ public class ImageListViewSelectionSynchronizationController {
         boolean oldEnabled = this.enabled;
         this.enabled = enabled;
         recordSelectionIndices();
+        if (isKeepRelativeSelectionIndices()) {
+            updateSelectionBounds();
+        }
         propertyChangeSupport.firePropertyChange(PROP_ENABLED, oldEnabled, enabled);
     }
 
@@ -152,6 +169,9 @@ public class ImageListViewSelectionSynchronizationController {
         boolean oldKeepRelativeSelectionIndices = this.keepRelativeSelectionIndices;
         this.keepRelativeSelectionIndices = keepRelativeSelectionIndices;
         recordSelectionIndices();
+        if (keepRelativeSelectionIndices) {
+            updateSelectionBounds();
+        }
         propertyChangeSupport.firePropertyChange(PROP_KEEPRELATIVESELECTIONINDICES, oldKeepRelativeSelectionIndices, keepRelativeSelectionIndices);
     }
 
@@ -176,6 +196,7 @@ public class ImageListViewSelectionSynchronizationController {
                         if (lastSourceSelIdx == null) {
                             // nothing was selected in sourceList previously. Just remember the newly selected index
                             putSelectionIndex(sourceList, selIndex);
+                            updateSelectionBounds();
                         } else {
                             putSelectionIndex(sourceList, selIndex);
                             int change = selIndex - lastSourceSelIdx;
@@ -210,10 +231,69 @@ public class ImageListViewSelectionSynchronizationController {
                 }
             } finally {
                 inProgrammedSelectionChange = false;
+                dumpSelectionIndices();
             }
         }
     };
 
+    /**
+     * Constrain all the lists' selections such that the relative differences
+     * between them stay the same no matter how the user shifts any of the
+     * selections upwards/downwards.
+     * <p>
+     * Only works if the lists' selection models are instances of
+     * {@link BoundedListSelectionModel}.
+     */
+    private void updateSelectionBounds() {
+        // TODO: still not working properly if the lists don't all have the same length
+        if (listsAndSelectionIndices.isEmpty()) {
+            return;
+        }
+        if (!(listsAndSelectionIndices.keySet().iterator().next().getSelectionModel() instanceof BoundedListSelectionModel)) {
+            return;
+        }
+        int min = Integer.MAX_VALUE;
+        int max = Integer.MIN_VALUE;
+        int minLength = Integer.MAX_VALUE;
+        for (Entry<JImageListView, Integer> e : listsAndSelectionIndices.entrySet()) {
+            JImageListView list = e.getKey();
+            Integer i = e.getValue();
+            if (list.getLength() < minLength) {
+                minLength = list.getLength();
+            }
+            if (i == null) {
+                continue;
+            }
+            if (i < min) {
+                min = i;
+            }
+            if (i > max) {
+                max = i;
+            }
+        }
+        for (JImageListView l : listsAndSelectionIndices.keySet()) {
+            ListSelectionModel sm = l.getSelectionModel();
+            if (!(sm instanceof BoundedListSelectionModel)) {
+                continue;
+            }
+            BoundedListSelectionModel bsm = (BoundedListSelectionModel) sm;
+            Integer idx = listsAndSelectionIndices.get(l);
+            if (idx == null) {
+                bsm.disableBounds();
+                continue;
+            }
+            int lower = idx - min;
+            int upper = l.getLength() - 1 - (max - idx);
+            if (lower < 0 || max < idx || lower > upper) {
+                System.err.println("shouldn't happen: trying to set selection bounds of list (length=" + l.getLength() +
+                                   " to [" + lower + "," + upper + "]");
+                continue;
+            }
+            bsm.setLowerBound(idx - min);
+            bsm.setUpperBound(l.getLength() - 1 - (max - idx));
+        }
+    }
+    
 
     private PropertyChangeSupport propertyChangeSupport = new PropertyChangeSupport(this);
 
