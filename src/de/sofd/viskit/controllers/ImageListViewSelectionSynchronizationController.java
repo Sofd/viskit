@@ -1,12 +1,15 @@
 package de.sofd.viskit.controllers;
 
-import de.sofd.viskit.ui.imagelist.JImageListView;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Collection;
+import java.util.IdentityHashMap;
+import java.util.Map;
+
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
+
+import de.sofd.viskit.ui.imagelist.JImageListView;
 
 /**
  * Controller that maintains a list of references to {@link JImageListView} objects
@@ -17,12 +20,11 @@ import javax.swing.event.ListSelectionListener;
  */
 public class ImageListViewSelectionSynchronizationController {
 
-    private final List<JImageListView> lists = new ArrayList<JImageListView>();
     private boolean enabled;
     public static final String PROP_ENABLED = "enabled";
     private boolean keepRelativeSelectionIndices;
     public static final String PROP_KEEPRELATIVESELECTIONINDICES = "keepRelativeSelectionIndices";
-    private int[] lastSelectionIndices;
+    private Map<JImageListView, Integer> listsAndSelectionIndices = new IdentityHashMap<JImageListView, Integer>();
 
     public ImageListViewSelectionSynchronizationController() {
     }
@@ -32,48 +34,75 @@ public class ImageListViewSelectionSynchronizationController {
     }
 
     /**
-     * Get the value of lists
-     *
+     * The set of {@link JImageListView}s that this controller currently
+     * synchronizes.
+     * 
      * @return the value of lists
      */
     public JImageListView[] getLists() {
-        return (JImageListView[]) lists.toArray(new JImageListView[0]);
+        return (JImageListView[]) listsAndSelectionIndices.keySet().toArray(new JImageListView[0]);
+    }
+    
+    public boolean containsList(JImageListView l) {
+        return listsAndSelectionIndices.containsKey(l);
+    }
+
+    public void addList(JImageListView l) {
+        if (! listsAndSelectionIndices.containsKey(l)) {
+            listsAndSelectionIndices.put(l, l.getLeadSelectionIndex());
+            l.addListSelectionListener(selectionHandler);
+        }
+    }
+
+    public void removeList(JImageListView l) {
+        if (null != listsAndSelectionIndices.remove(l)) {
+            l.removeListSelectionListener(selectionHandler);
+        }
     }
 
     /**
-     * Set the value of lists
-     *
-     * @param lists new value of lists
+     * Set set of {@link JImageListView}s that this controller currently
+     * synchronizes.
+     * 
+     * @param lists
      */
     public void setLists(JImageListView[] lists) {
-        // TODO: deal with selection model changes on the lists?
-        for (JImageListView lv : this.lists) {
-            lv.removeListSelectionListener(selectionHandler);
+        for (JImageListView l : listsAndSelectionIndices.keySet()) {
+            removeList(l);
         }
-        this.lists.clear();
-        for (JImageListView lv : lists) {
-            this.lists.add(lv);
-            lv.addListSelectionListener(selectionHandler);
+        for (JImageListView l : lists) {
+            addList(l);
         }
-        recordLastSelectionIndices();
     }
 
     /**
-     * Get the value of lists at specified index
-     *
-     * @param index
-     * @return the value of lists at specified index
+     * Set set of {@link JImageListView}s that this controller currently
+     * synchronizes.
+     * 
+     * @param lists
      */
-    public JImageListView getLists(int index) {
-        return this.lists.get(index);
-    }
-
-    private void recordLastSelectionIndices() {
-        int size = lists.size();
-        lastSelectionIndices = new int[size];
-        for (int i = 0; i < size; i++) {
-            lastSelectionIndices[i] = lists.get(i).getLeadSelectionIndex();
+    public void setLists(Collection<JImageListView> lists) {
+        for (JImageListView l : listsAndSelectionIndices.keySet()) {
+            removeList(l);
         }
+        for (JImageListView l : lists) {
+            addList(l);
+        }
+    }
+    
+    // TODO: deal with selection model changes on the lists?
+    
+    private void recordSelectionIndices() {
+        for (JImageListView l : getLists()) {
+            listsAndSelectionIndices.put(l, l.getLeadSelectionIndex());
+        }
+    }
+    
+    private void dumpSelectionIndices() {
+        for (JImageListView l : listsAndSelectionIndices.keySet()) {
+            System.out.print("" + listsAndSelectionIndices.get(l) + " ");
+        }
+        System.out.println();
     }
 
     /**
@@ -93,7 +122,7 @@ public class ImageListViewSelectionSynchronizationController {
     public void setEnabled(boolean enabled) {
         boolean oldEnabled = this.enabled;
         this.enabled = enabled;
-        recordLastSelectionIndices();
+        recordSelectionIndices();
         propertyChangeSupport.firePropertyChange(PROP_ENABLED, oldEnabled, enabled);
     }
 
@@ -114,11 +143,13 @@ public class ImageListViewSelectionSynchronizationController {
     public void setKeepRelativeSelectionIndices(boolean keepRelativeSelectionIndices) {
         boolean oldKeepRelativeSelectionIndices = this.keepRelativeSelectionIndices;
         this.keepRelativeSelectionIndices = keepRelativeSelectionIndices;
-        recordLastSelectionIndices();
+        recordSelectionIndices();
         propertyChangeSupport.firePropertyChange(PROP_KEEPRELATIVESELECTIONINDICES, oldKeepRelativeSelectionIndices, keepRelativeSelectionIndices);
     }
 
 
+    // TODO: still bug: inband signaling: -1 in listsAndSelectionIndices indicates "no selection" but is also a valid index value now
+    
     private ListSelectionListener selectionHandler = new ListSelectionListener() {
         private boolean inProgrammedSelectionChange = false;
         @Override
@@ -131,22 +162,23 @@ public class ImageListViewSelectionSynchronizationController {
             }
             inProgrammedSelectionChange = true;
             try {
-                JImageListView source = (JImageListView) e.getSource();
-                int selIndex = source.getSelectedIndex();
+                JImageListView sourceList = (JImageListView) e.getSource();
+                int selIndex = sourceList.getLeadSelectionIndex();
                 if (selIndex >= 0) {
                     if (keepRelativeSelectionIndices) {
-                        int sourceListIdx = lists.indexOf(source);
-                        assert(sourceListIdx >= 0);
-                        int lastSourceSelIdx = lastSelectionIndices[sourceListIdx];
-                        if (lastSourceSelIdx >= 0) {
+                        int lastSourceSelIdx = listsAndSelectionIndices.get(sourceList);  // NPE here would indicate consistency bug (sourceList not added to the map)
+                        if (lastSourceSelIdx < 0) {
+                            // nothing was selected in sourceList previously. Just remember the newly selected index
+                            listsAndSelectionIndices.put(sourceList, selIndex);
+                        } else {
                             int change = selIndex - lastSourceSelIdx;
-                            int nLists = lists.size();
-                            for (int i = 0; i < nLists; i++) {
-                                if (i != sourceListIdx) {
-                                    JImageListView l = lists.get(i);
+                            listsAndSelectionIndices.put(sourceList, selIndex);
+                            for (JImageListView l : getLists()) {
+                                if (l != sourceList) {
                                     int si = l.getLeadSelectionIndex();
                                     if (si >= 0) {
                                         int newsi = si + change;
+                                        listsAndSelectionIndices.put(l, newsi);
                                         if (newsi >= l.getLength()) {
                                             newsi = l.getLength() - 1;
                                         }
@@ -159,16 +191,20 @@ public class ImageListViewSelectionSynchronizationController {
                             }
                         }
                     } else {
+                        listsAndSelectionIndices.put(sourceList, selIndex);
                         for (JImageListView l : getLists()) {
-                            if (l != source) {
+                            if (l != sourceList) {
                                 l.getSelectionModel().setSelectionInterval(selIndex, selIndex);
+                                listsAndSelectionIndices.put(l, selIndex);
                             }
                         }
                     }
+                } else {
+                    listsAndSelectionIndices.put(sourceList, -1);
                 }
             } finally {
                 inProgrammedSelectionChange = false;
-                recordLastSelectionIndices();
+                dumpSelectionIndices();
             }
         }
     };
