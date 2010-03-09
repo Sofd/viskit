@@ -15,6 +15,9 @@ import javax.swing.JToolBar;
 import javax.swing.ListSelectionModel;
 import javax.swing.SwingUtilities;
 
+import de.sofd.swing.BoundedListSelectionModel;
+import de.sofd.swing.DefaultBoundedListSelectionModel;
+
 
 public class ListSelModelTest {
 
@@ -35,7 +38,7 @@ public class ListSelModelTest {
             listModel.addElement("origElt"+i);
         }
         list.setModel(listModel);
-        final BoundedListSelectionModel boundedSM = new BoundedListSelectionModel();
+        final BoundedListSelectionModel boundedSM = new DefaultBoundedListSelectionModel();
         boundedSM.setLowerBound(5);
         boundedSM.setUpperBound(17);
         list.setSelectionModel(boundedSM);
