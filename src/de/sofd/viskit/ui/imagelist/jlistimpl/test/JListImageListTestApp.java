@@ -41,6 +41,7 @@ import de.sofd.draw2d.Drawing;
 import de.sofd.draw2d.DrawingObject;
 import de.sofd.draw2d.viewer.tools.EllipseTool;
 import de.sofd.draw2d.viewer.tools.SelectorTool;
+import de.sofd.swing.DefaultBoundedListSelectionModel;
 import de.sofd.util.FloatRange;
 import de.sofd.viskit.controllers.GenericILVCellPropertySyncController;
 import de.sofd.viskit.controllers.ImageListViewInitialWindowingController;
@@ -388,7 +389,7 @@ public class JListImageListTestApp {
         
         public ListViewPanel() {
             this.setLayout(new BorderLayout());
-            listView = new JGLImageListView();
+            listView = newJGLImageListView();
             this.add(listView, BorderLayout.CENTER);
             new ImageListViewInitialWindowingController(listView).setEnabled(true);
             new ImageListViewMouseWindowingController(listView);
@@ -476,7 +477,9 @@ public class JListImageListTestApp {
     
     
     protected JListImageListView newJListImageListView() {
-        return new JListImageListView();
+        JListImageListView viewer = new JListImageListView();
+        viewer.setSelectionModel(new DefaultBoundedListSelectionModel());
+        return viewer;
     }
     
     protected JGridImageListView newJGridImageListView(boolean useOpenglRenderer) {
@@ -485,12 +488,14 @@ public class JListImageListTestApp {
         if (useOpenglRenderer) {
             ((JGridImageListView) viewer).setRendererType(JGridImageListView.RendererType.OPENGL);
         }
+        viewer.setSelectionModel(new DefaultBoundedListSelectionModel());
         return viewer;
     }
 
     protected JGLImageListView newJGLImageListView() {
         final JGLImageListView viewer = new JGLImageListView();
         viewer.setScaleMode(JGLImageListView.MyScaleMode.newCellGridMode(2, 2));
+        viewer.setSelectionModel(new DefaultBoundedListSelectionModel());
         return viewer;
     }
 
