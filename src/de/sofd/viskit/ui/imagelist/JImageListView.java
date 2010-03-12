@@ -72,6 +72,9 @@ public abstract class JImageListView extends JPanel {
     public static final String PROP_SELECTIONMODEL = "selectionModel";
     private int firstVisibleIndex = 0;
     public static final String PROP_FIRSTVISIBLEINDEX = "firstVisibleIndex";
+    private Integer lowerVisibilityLimit, upperVisibilityLimit;
+    public static final String PROP_LOWERVISIBILITYLIMIT = "lowerVisibilityLimit";
+    public static final String PROP_UPPERVISIBILITYLIMIT = "upperVisibilityLimit";
     private final List<ListSelectionListener> listSelectionListeners = new ArrayList<ListSelectionListener>();
     private String displayName = "";
     public static final String PROP_SCALEMODE = "scaleMode";
@@ -546,8 +549,19 @@ public abstract class JImageListView extends JPanel {
      * Programmatically "scrolls" this list to a different position by setting
      * the index of the first model element to display.
      * <p>
-     * This base class method only deals with changing the property value (
-     * {@link #getFirstVisibleIndex()}) and firing the property change event.
+     * Only elements within the bounds of {@link #getLowerVisibilityLimit()} /
+     * {@link #getUpperVisibilityLimit()} may be visible.
+     * <p>
+     * This base class method deals with changing the property value (
+     * {@link #getFirstVisibleIndex()}) and firing the property change event. It
+     * also accounts for the visibility bounds explained above -- i.e., if the
+     * new index would lead to indices outside the bounds to be displayed, the
+     * method will do nothing. For predicting the new lastVisible index in this
+     * case, it is assumed that {@link #getLastVisibleIndex()} -
+     * {@link #getFirstVisibleIndex()} will not be modified by changes to the
+     * firstVisibleIndex. This may or may not be an appropriate way to do this,
+     * depending on the implementation.
+     * <p>
      * Subclasses must override, possibly calling super, or re-implementing both
      * the getter and the setter from scratch.
      * 
@@ -555,6 +569,23 @@ public abstract class JImageListView extends JPanel {
      *            the new index
      */
     public void setFirstVisibleIndex(int newValue) {
+        Integer lowerLimit = getLowerVisibilityLimit();
+        if (null != lowerLimit && newValue < lowerLimit) {
+            //return;
+            newValue = lowerLimit;
+        }
+        Integer upperLimit = getUpperVisibilityLimit();
+        if (null != upperLimit) {
+            int predictedNewLastVisible = getLastVisibleIndex() + (newValue - getFirstVisibleIndex());
+            if (predictedNewLastVisible > upperLimit) {
+                //return;
+                newValue -= (predictedNewLastVisible - upperLimit);
+                if (newValue < 0) {
+                    // may happen if lower and upper limit are very close
+                    newValue = 0;
+                }
+            }
+        }
         int oldValue = getFirstVisibleIndex();
         if (newValue == oldValue) { return; }
         this.firstVisibleIndex = newValue;
@@ -565,6 +596,81 @@ public abstract class JImageListView extends JPanel {
     
     public abstract void ensureIndexIsVisible(int idx);
 
+    /**
+     * Returns the current lower limit of indices that may be made visible by
+     * scrolling. Scrolling further than this limit should be prevented by the
+     * list. null indicates "no limit".
+     * <p>
+     * The default implementation just returns the property set by
+     * {@link #setLowerVisibilityLimit(Integer)}. Subclasses may
+     * override/replace.
+     * 
+     * @return current lower limit, or null for "no limit"
+     */
+    public Integer getLowerVisibilityLimit() {
+        return lowerVisibilityLimit;
+    }
+
+    /**
+     * Sets the lower visibility limit.
+     * <p>
+     * This base class method only deals with changing the property value (
+     * {@link #getLowerVisibilityLimit()}) and firing the property change event.
+     * Subclasses must override, possibly calling super, or re-implementing both
+     * the getter and the setter from scratch.
+     * 
+     * @param newValue
+     *            the new index
+     */
+    public void setLowerVisibilityLimit(Integer newValue) {
+        Integer oldValue = getLowerVisibilityLimit();
+        if (newValue == oldValue || (newValue != null && oldValue != null && newValue.intValue() == oldValue.intValue())) {
+            return;
+        }
+        this.lowerVisibilityLimit = newValue;
+        firePropertyChange(PROP_LOWERVISIBILITYLIMIT, oldValue, newValue);
+    }
+    
+    /**
+     * Returns the current upper limit of indices that may be made visible by
+     * scrolling. Scrolling further than this limit should be prevented by the
+     * list. null indicates "no limit".
+     * <p>
+     * The default implementation just returns the property set by
+     * {@link #setUpperVisibilityLimit(Integer)}. Subclasses may
+     * override/replace.
+     * 
+     * @return current lower limit, or null for "no limit"
+     */
+    public Integer getUpperVisibilityLimit() {
+        return upperVisibilityLimit;
+    }
+    
+    /**
+     * Sets the upper visibility limit.
+     * <p>
+     * This base class method only deals with changing the property value (
+     * {@link #getLowerVisibilityLimit()}) and firing the property change event.
+     * Subclasses must override, possibly calling super, or re-implementing both
+     * the getter and the setter from scratch.
+     * 
+     * @param newValue
+     *            the new index
+     */
+    public void setUpperVisibilityLimit(Integer newValue) {
+        Integer oldValue = getUpperVisibilityLimit();
+        if (newValue == oldValue || (newValue != null && oldValue != null && newValue.intValue() == oldValue.intValue())) {
+            return;
+        }
+        this.upperVisibilityLimit = newValue;
+        firePropertyChange(PROP_UPPERVISIBILITYLIMIT, oldValue, newValue);
+    }
+    
+    public void disableVisibilityLimits() {
+        setLowerVisibilityLimit(null);
+        setUpperVisibilityLimit(null);
+    }
+    
     public void selectSomeVisibleCell() {
         ListSelectionModel sm = getSelectionModel();
         if (sm != null) {

@@ -145,8 +145,10 @@ public class ImageListViewSelectionSynchronizationController {
         boolean oldEnabled = this.enabled;
         this.enabled = enabled;
         recordSelectionIndices();
-        if (isKeepRelativeSelectionIndices()) {
+        if (enabled && isKeepRelativeSelectionIndices()) {
             updateSelectionBounds();
+        } else {
+            clearSelectionBounds();
         }
         propertyChangeSupport.firePropertyChange(PROP_ENABLED, oldEnabled, enabled);
     }
@@ -169,8 +171,10 @@ public class ImageListViewSelectionSynchronizationController {
         boolean oldKeepRelativeSelectionIndices = this.keepRelativeSelectionIndices;
         this.keepRelativeSelectionIndices = keepRelativeSelectionIndices;
         recordSelectionIndices();
-        if (keepRelativeSelectionIndices) {
+        if (isEnabled() && keepRelativeSelectionIndices) {
             updateSelectionBounds();
+        } else {
+            clearSelectionBounds();
         }
         propertyChangeSupport.firePropertyChange(PROP_KEEPRELATIVESELECTIONINDICES, oldKeepRelativeSelectionIndices, keepRelativeSelectionIndices);
     }
@@ -245,7 +249,6 @@ public class ImageListViewSelectionSynchronizationController {
      * {@link BoundedListSelectionModel}.
      */
     private void updateSelectionBounds() {
-        // TODO: still not working properly if the lists don't all have the same length
         if (listsAndSelectionIndices.isEmpty()) {
             return;
         }
@@ -264,8 +267,8 @@ public class ImageListViewSelectionSynchronizationController {
                 minSelIndex = i;
             }
             int length = list.getLength();
-            if (length - i < minHeadroom) {
-                minHeadroom = length - i;
+            if (length - 1 - i < minHeadroom) {
+                minHeadroom = length - 1 - i;
             }
         }
         for (JImageListView l : listsAndSelectionIndices.keySet()) {
@@ -277,6 +280,7 @@ public class ImageListViewSelectionSynchronizationController {
             Integer idx = listsAndSelectionIndices.get(l);
             if (idx == null) {
                 bsm.disableBounds();
+                l.disableVisibilityLimits();
                 continue;
             }
             int lower = idx - minSelIndex;
@@ -287,10 +291,26 @@ public class ImageListViewSelectionSynchronizationController {
                 continue;
             }
             bsm.setLowerBound(lower);
+            l.setLowerVisibilityLimit(lower);
             bsm.setUpperBound(upper);
+            l.setUpperVisibilityLimit(upper);
         }
     }
     
+    private void clearSelectionBounds() {
+        if (listsAndSelectionIndices.isEmpty()) {
+            return;
+        }
+        for (JImageListView l : listsAndSelectionIndices.keySet()) {
+            ListSelectionModel sm = l.getSelectionModel();
+            if (!(sm instanceof BoundedListSelectionModel)) {
+                continue;
+            }
+            BoundedListSelectionModel bsm = (BoundedListSelectionModel) sm;
+            bsm.disableBounds();
+            l.disableVisibilityLimits();
+        }
+    }
 
     private PropertyChangeSupport propertyChangeSupport = new PropertyChangeSupport(this);
 
