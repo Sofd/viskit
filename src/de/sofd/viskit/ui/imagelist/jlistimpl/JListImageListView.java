@@ -76,7 +76,7 @@ public class JListImageListView extends JImageListView {
         setScaleMode(MyScaleMode.newOneToOneMode());
         // ensure selection is always kept visible.
         // TODO: ensure reverse direction too?
-        // TODO: use dedicated controller for this?
+        // TODO: use dedicated controller for this? -- have one now (ImageListViewSelectionScrollSyncController) -- test it with this list.
         addListSelectionListener(new ListSelectionListener() {
             @Override
             public void valueChanged(ListSelectionEvent e) {
