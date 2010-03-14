@@ -127,6 +127,7 @@ public abstract class JImageListView extends JPanel {
             this.model.addListDataListener(modelChangeListener);
         }
         firePropertyChange(PROP_MODEL, oldModel, model);
+        refreshCells();
     }
 
     private ListDataListener modelChangeListener = new ListDataListener() {

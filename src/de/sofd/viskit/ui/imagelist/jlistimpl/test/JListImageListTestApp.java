@@ -458,6 +458,12 @@ public class JListImageListTestApp {
                 }
             });
             toolbar.add(lutCombo);
+            toolbar.add(new AbstractAction("setEmptyModel") {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    listView.setModel(new DefaultListModel());
+                }
+            });
             
             ImageListViewWindowingApplyToAllController wndAllController = new ImageListViewWindowingApplyToAllController(listView);
             JCheckBox wndAllCheckbox = new JCheckBox("window all");
