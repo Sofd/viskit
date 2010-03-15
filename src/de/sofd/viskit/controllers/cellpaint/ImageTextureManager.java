@@ -118,7 +118,21 @@ public class ImageTextureManager {
         TextureRefStore texRefStore = (TextureRefStore) sharedContextData.get(TEX_STORE);
         if (null == texRefStore) {
             System.out.println("CREATING NEW TextureRefStore");
-            texRefStore = new TextureRefStore(256*1024*1024);  // <<== configure max. GL texture memory consumption here (for now)
+            int texMemInMB;
+            String memPropVal = System.getProperty(ImageTextureManager.class.getName() + ".texmem_mb");
+            if (memPropVal != null) {
+                try {
+                    texMemInMB = Integer.parseInt(memPropVal);
+                    if (texMemInMB < 2) {
+                        texMemInMB = 256;
+                    }
+                } catch (NumberFormatException e) {
+                    texMemInMB = 256;
+                }
+            } else {
+                texMemInMB = 256;
+            }
+            texRefStore = new TextureRefStore(texMemInMB*1024*1024);  // <<== configure max. GL texture memory consumption here (for now)
             sharedContextData.put(TEX_STORE, texRefStore);
         }
         TextureRef texRef = texRefStore.getTexRef(elt);
