@@ -92,9 +92,9 @@ public class JListImageListTestApp {
     }
     
     public JFrame newSingleListFrame(String frameTitle, GraphicsConfiguration graphicsConfig) throws Exception {
-        final DefaultListModel model = getTestImageViewerListModel();
+        //final DefaultListModel model = getTestImageViewerListModel();
         //final DefaultListModel model = getViewerListModelForDirectory(new File("/home/olaf/gi/resources/DICOM-Testbilder/1578"));
-        //final DefaultListModel model = getViewerListModelForDirectory(new File("/home/olaf/gi/Images/cd00900__center10102"));
+        final DefaultListModel model = getViewerListModelForDirectory(new File("/home/olaf/gi/Images/cd00900__center10102"));
         //final DefaultListModel model = getViewerListModelForDirectory(new File("/home/olaf/gi/pet-studie/cd855__center4001"));
         //final DefaultListModel model = getViewerListModelForDirectory(new File("/shares/shared/projekts/disk312043/Images/cd822__center4001"));
         //final DefaultListModel model = getViewerListModelForDirectory(new File("/shares/shared/projekts/disk312043/Images/cd836__center4001"));
@@ -332,13 +332,28 @@ public class JListImageListTestApp {
         toolbar.setFloatable(false);
         
         List<ListModel> listModels = new ArrayList<ListModel>();
-        listModels.add(getViewerListModelForDirectory(new File("/home/olaf/gi/Images/cd00900__center10102")));
-        listModels.add(getViewerListModelForDirectory(new File("/home/olaf/gi/Images/cd00901__center14146")));
+        //listModels.add(getViewerListModelForDirectory(new File("/home/olaf/gi/Images/cd00900__center10102")));
+        //listModels.add(getViewerListModelForDirectory(new File("/home/olaf/gi/Images/cd00901__center14146")));
+
+        listModels.add(getViewerListModelForDirectory(new File("/home/olaf/hieronymusr/br312046/images/cd00900__center10102")));
+        ///*
+        listModels.add(getViewerListModelForDirectory(new File("/home/olaf/hieronymusr/br312046/images/cd00901__center14146")));
+        listModels.add(getViewerListModelForDirectory(new File("/home/olaf/hieronymusr/br312046/images/cd00902__center10101")));
+        /*
+        listModels.add(getViewerListModelForDirectory(new File("/home/olaf/hieronymusr/br312046/images/cd00903__center10101")));
+        listModels.add(getViewerListModelForDirectory(new File("/home/olaf/hieronymusr/br312046/images/cd00904__center10101")));
+        listModels.add(getViewerListModelForDirectory(new File("/home/olaf/hieronymusr/br312046/images/cd00905__center10101")));
+        listModels.add(getViewerListModelForDirectory(new File("/home/olaf/hieronymusr/br312046/images/cd00906__center10102")));
+        listModels.add(getViewerListModelForDirectory(new File("/home/olaf/hieronymusr/br312046/images/cd00907__center10102")));
+        //*/
+        //listModels.add(getViewerListModelForDirectory(new File("/home/olaf/hieronymusr/br312046/images/cd00908__center10101")));
+        //listModels.add(getViewerListModelForDirectory(new File("/home/olaf/hieronymusr/br312046/images/cd00909__center10101")));
+        //*/
         
         List<JImageListView> lists = new ArrayList<JImageListView>();
         
         JPanel listsPanel = new JPanel();
-        listsPanel.setLayout(new GridLayout(1, listModels.size(), 10, 0));
+        listsPanel.setLayout(new GridLayout((listModels.size() - 1) / 3 + 1, Math.min(listModels.size(), 3), 10, 10));
         for (ListModel lm : listModels) {
             ListViewPanel lvp = new ListViewPanel();
             lvp.getListView().setModel(lm);
@@ -500,6 +515,8 @@ public class JListImageListTestApp {
 
     protected JGLImageListView newJGLImageListView() {
         final JGLImageListView viewer = new JGLImageListView();
+        viewer.setScaleMode(JGLImageListView.MyScaleMode.newCellGridMode(5, 5));
+        viewer.setSelectionModel(new DefaultBoundedListSelectionModel());
         viewer.setScaleMode(JGLImageListView.MyScaleMode.newCellGridMode(2, 2));
         viewer.setSelectionModel(new DefaultBoundedListSelectionModel());
         return viewer;
