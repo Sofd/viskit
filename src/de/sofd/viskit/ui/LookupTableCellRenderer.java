@@ -13,11 +13,11 @@ public class LookupTableCellRenderer implements ListCellRenderer {
     
     private final int maxWidth;
     
-    LookupTableCellRenderer() {
+    public LookupTableCellRenderer() {
         this(Integer.MAX_VALUE);
     }
     
-    LookupTableCellRenderer(int maxWidth) {
+    public LookupTableCellRenderer(int maxWidth) {
         this.maxWidth = maxWidth;
     }
 
