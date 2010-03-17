@@ -65,12 +65,14 @@ public class ImageListViewSelectionSynchronizationController {
         if (! listsAndSelectionIndices.containsKey(l)) {
             putSelectionIndex(l, l.getLeadSelectionIndex());
             l.addListSelectionListener(selectionHandler);
+            updateSelectionBounds();
         }
     }
 
     public void removeList(JImageListView l) {
         if (null != listsAndSelectionIndices.remove(l)) {
             l.removeListSelectionListener(selectionHandler);
+            updateSelectionBounds();
         }
     }
 
