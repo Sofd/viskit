@@ -2,6 +2,7 @@ package de.sofd.viskit.controllers;
 
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.IdentityHashMap;
 import java.util.Map;
@@ -91,7 +92,7 @@ public class ImageListViewSelectionSynchronizationController {
      * @param lists
      */
     public void setLists(JImageListView[] lists) {
-        for (JImageListView l : listsAndSelectionIndices.keySet()) {
+        for (JImageListView l : new ArrayList<JImageListView>(listsAndSelectionIndices.keySet())) {  // copy keySet to avoid ConcurrModifException
             removeList(l);
         }
         for (JImageListView l : lists) {
@@ -106,7 +107,7 @@ public class ImageListViewSelectionSynchronizationController {
      * @param lists
      */
     public void setLists(Collection<JImageListView> lists) {
-        for (JImageListView l : listsAndSelectionIndices.keySet()) {
+        for (JImageListView l : new ArrayList<JImageListView>(listsAndSelectionIndices.keySet())) {  // copy keySet to avoid ConcurrModifException
             removeList(l);
         }
         for (JImageListView l : lists) {
