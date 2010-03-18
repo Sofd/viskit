@@ -1,5 +1,7 @@
 package de.sofd.viskit.image3D.jogl.util;
 
+import java.awt.geom.AffineTransform;
+
 /**
  *
  * @author olaf
@@ -10,6 +12,7 @@ public class LinAlg {
 
     // this is a least-effort port straight from my C linalg.cc
     // Beware: Very ugly. No typedefs in Java...
+    // TODO: define the same operations on FloatBuffers too. Or just use some 3rd party lib...
 
     public static void fillZeros(float[] arr) {
         for (int i=0; i<arr.length; i++) {
@@ -143,6 +146,39 @@ public class LinAlg {
         float l = length(v);
         multiply(1.0F/l, v, dest);
         return dest;
+    }
+
+    public static float[] matrixJ2DtoJOGL(AffineTransform at) {
+        double[] values = new double[6];
+        at.getMatrix(values);
+
+        float[] rm = new float[16];
+
+        rm[0]  = (float) values[0];
+        rm[1]  = (float) values[1];
+        rm[2]  = 0;
+        rm[3]  = 0;
+
+        rm[4]  = (float) values[2];
+        rm[5]  = (float) values[3];
+        rm[6]  = 0;
+        rm[7]  = 0;
+
+        rm[8]  = 0;
+        rm[9]  = 0;
+        rm[10] = 1;
+        rm[11] = 0;
+
+        rm[12]  = (float) values[4];
+        rm[13]  = (float) values[5];
+        rm[14] = 0;
+        rm[15] = 1;
+
+        return rm;
+    }
+
+    public static AffineTransform matrixJOGLtoJ2D(float[] m) {
+        return new AffineTransform(m[0], m[1], m[4], m[5], m[8], m[9]);
     }
 
 }
