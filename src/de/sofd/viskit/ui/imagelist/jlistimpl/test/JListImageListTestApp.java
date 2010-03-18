@@ -20,9 +20,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.Map.Entry;
 
 import javax.swing.AbstractAction;
+import javax.swing.ButtonModel;
 import javax.swing.DefaultListModel;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
@@ -30,6 +30,7 @@ import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.JToggleButton;
 import javax.swing.JToolBar;
 import javax.swing.ListModel;
 import javax.swing.SwingUtilities;
@@ -342,10 +343,16 @@ public class JListImageListTestApp {
         ImageListViewSelectionSynchronizationController selSyncController;
         GenericILVCellPropertySyncController windowingSyncController;
         GenericILVCellPropertySyncController zoomPanSyncController;
-        JCheckBox selSyncCB, windowingSyncCB, zoomPanSyncCB;
+        ButtonModel selSyncCheckboxModel, windowingSyncCheckboxModel, zoomPanSyncCheckboxModel;
     }
     
     {
+        ActionListener controllerUpdater = new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                updateSyncControllers();
+            }
+        };
         for (Color c : syncColors) {
             SyncColorState state = new SyncColorState();
             syncColorStates.put(c, state);
@@ -355,12 +362,18 @@ public class JListImageListTestApp {
             state.selSyncController = new ImageListViewSelectionSynchronizationController();
             state.selSyncController.setKeepRelativeSelectionIndices(true);
             state.selSyncController.setEnabled(true);
+            state.selSyncCheckboxModel = new JToggleButton.ToggleButtonModel();
+            state.selSyncCheckboxModel.addActionListener(controllerUpdater);
             
             state.windowingSyncController = new GenericILVCellPropertySyncController(new String[]{"windowLocation", "windowWidth"});
             state.windowingSyncController.setEnabled(true);
+            state.windowingSyncCheckboxModel = new JToggleButton.ToggleButtonModel();
+            state.windowingSyncCheckboxModel.addActionListener(controllerUpdater);
             
             state.zoomPanSyncController = new GenericILVCellPropertySyncController(new String[]{"scale", "centerOffset"});
             state.zoomPanSyncController.setEnabled(true);
+            state.zoomPanSyncCheckboxModel = new JToggleButton.ToggleButtonModel();
+            state.zoomPanSyncCheckboxModel.addActionListener(controllerUpdater);
         }
     }
     
@@ -368,20 +381,20 @@ public class JListImageListTestApp {
         for (Color c : syncColors) {
             SyncColorState state = syncColorStates.get(c);
 
-            if (state.windowingSyncCB.isSelected()) {
+            if (state.windowingSyncCheckboxModel.isSelected()) {
                 state.windowingSyncController.setLists(state.syncSet);
             } else {
                 state.windowingSyncController.setLists(new JImageListView[0]);
             }
 
-            if (state.selSyncCB.isSelected()) {
+            if (state.selSyncCheckboxModel.isSelected()) {
                 // TODO: constraint: a list shouldn't be in more than one selSyncController at the same time
                 state.selSyncController.setLists(state.syncSet);
             } else {
                 state.selSyncController.setLists(new JImageListView[0]);
             }
 
-            if (state.zoomPanSyncCB.isSelected()) {
+            if (state.zoomPanSyncCheckboxModel.isSelected()) {
                 state.zoomPanSyncController.setLists(state.syncSet);
             } else {
                 state.zoomPanSyncController.setLists(new JImageListView[0]);
@@ -445,29 +458,22 @@ public class JListImageListTestApp {
         selSyncController.setKeepRelativeSelectionIndices(true);
 
         toolbar.add(new JLabel("Sync: "));
-        ActionListener controllerUpdater = new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                updateSyncControllers();
-            }
-        };
         for (Color c : syncColors) {
+            SyncColorState state = syncColorStates.get(c);
+            
             JCheckBox cb = new JCheckBox("selections");
-            syncColorStates.get(c).selSyncCB = cb;
+            cb.setModel(state.selSyncCheckboxModel);
             cb.setBackground(c);
-            cb.addActionListener(controllerUpdater);
             toolbar.add(cb);
             
             cb = new JCheckBox("windowing");
-            syncColorStates.get(c).windowingSyncCB = cb;
+            cb.setModel(state.windowingSyncCheckboxModel);
             cb.setBackground(c);
-            cb.addActionListener(controllerUpdater);
             toolbar.add(cb);
 
             cb = new JCheckBox("zoom/pan");
-            syncColorStates.get(c).zoomPanSyncCB = cb;
+            cb.setModel(state.zoomPanSyncCheckboxModel);
             cb.setBackground(c);
-            cb.addActionListener(controllerUpdater);
             toolbar.add(cb);
         }
         
