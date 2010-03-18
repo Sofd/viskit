@@ -1,5 +1,6 @@
 package de.sofd.viskit.test.jogl.coil;
 
+import de.sofd.viskit.image3D.jogl.util.LinAlg;
 import de.sofd.lang.Runnable1;
 import de.sofd.util.DynScope;
 import de.sofd.util.IdentityHashSet;

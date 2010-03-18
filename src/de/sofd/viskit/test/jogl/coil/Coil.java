@@ -1,5 +1,6 @@
 package de.sofd.viskit.test.jogl.coil;
 
+import de.sofd.viskit.image3D.jogl.util.LinAlg;
 import com.sun.opengl.util.texture.Texture;
 import com.sun.opengl.util.texture.TextureCoords;
 import com.sun.opengl.util.texture.TextureData;

@@ -1,4 +1,4 @@
-package de.sofd.viskit.test.jogl.coil;
+package de.sofd.viskit.image3D.jogl.util;
 
 /**
  *
