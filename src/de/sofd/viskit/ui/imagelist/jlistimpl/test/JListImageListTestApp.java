@@ -515,7 +515,8 @@ public class JListImageListTestApp {
                             "PN: " + dicomImageMetaData.getString(Tag.PatientName),
                             "SL: " + dicomImageMetaData.getString(Tag.SliceLocation),
                             "wl/ww: " + cell.getWindowLocation() + "/" + cell.getWindowWidth(),
-                            "Zoom: " + cell.getScale()
+                            "Zoom: " + cell.getScale(),
+                            "Slice orientation: " + DicomUtil.getSliceOrientation(dicomImageMetaData)
                     };
                 }
             };

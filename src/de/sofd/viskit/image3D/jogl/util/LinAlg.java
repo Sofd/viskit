@@ -122,7 +122,27 @@ public class LinAlg {
         return dest;
     }
 
+    
+    public static float[] cross(float[] a, int ai, float[] b, int bi, float[] dest) {
+        if (dest == null) {
+            dest = new float[3];
+        }
+        dest[0] = -a[ai+2] * b[bi+1] + a[ai+1] * b[bi+2];
+        dest[1] = a[ai+2] * b[bi+0] - a[ai+0] * b[bi+2];
+        dest[2] = -a[ai+1] * b[bi+0] + a[ai+0] * b[bi+1];
+        return dest;
+    }
 
+    
+    public static float dot(float[] a, float[] b) {
+        float result = 0;
+        for (int i = 0; i < a.length; i++) {
+            result += a[i] * b[i];
+        }
+        return result;
+    }
+    
+    
     public static float[] multiply(float s, float[] v, float[] dest) {
         if (dest == null) {
             dest = new float[v.length];
