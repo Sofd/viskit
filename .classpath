@@ -3,7 +3,6 @@
 	<classpathentry excluding="**/.svn|**/.svn/**|**/_svn|**/_svn/**" kind="src" path="src"/>
 	<classpathentry excluding="properties/|src/" including="img/**/*|shader/**/*" kind="src" path=""/>
 	<classpathentry kind="src" path="properties"/>
-	<classpathentry kind="lib" path="ext-src/dcm4che-2.0.20-src.jar"/>
 	<classpathentry kind="lib" path="lib/beans-binding/beansbinding-1.2.1.jar"/>
 	<classpathentry kind="lib" path="lib/commons-cli-1.2.jar"/>
 	<classpathentry kind="lib" path="lib/commons-lang.jar"/>
