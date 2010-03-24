@@ -63,15 +63,15 @@ public class GenericILVCellPropertySyncController extends ImageListViewCellPrope
         }
         ImageListViewCell sourceCell = (ImageListViewCell) e.getSource();
         JImageListView sourceList = sourceCell.getOwner();
-        ListSelectionModel sm = sourceList.getSelectionModel();
-        if (!sm.isSelectionEmpty()) {
+        ListSelectionModel sourceListSM = sourceList.getSelectionModel();
+        if (!sourceListSM.isSelectionEmpty()) {
             int sourceCellIndex = sourceList.getIndexOf(sourceCell);
-            if (sm.isSelectedIndex(sourceCellIndex)) {
+            if (sourceListSM.isSelectedIndex(sourceCellIndex)) {
                 try {
                     for (JImageListView destList : getLists()) {
                         if (destList != sourceList) {
                             int si = destList.getSelectedIndex();
-                            if (si != -1) {
+                            if (si >= 0 && si < destList.getLength()) {
                                 ImageListViewCell destCell = destList.getCell(si);
                                 for (String propName : propertiesToSynchronize) {
                                     PropertyDescriptor pd = getCellPropertyDescriptor(propName);
