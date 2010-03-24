@@ -33,7 +33,7 @@ import de.sofd.viskit.ui.imagelist.JImageListView;
  * 
  * @author Sofd GmbH
  */
-public class ImageListViewSelectionSynchronizationController {
+public class ImageListViewSelectionSynchronizationController implements MultiImageListViewController {
 
     private boolean enabled;
     public static final String PROP_ENABLED = "enabled";
@@ -48,32 +48,36 @@ public class ImageListViewSelectionSynchronizationController {
         setLists(lists);
     }
 
-    /**
-     * The set of {@link JImageListView}s that this controller currently
-     * synchronizes.
-     * 
-     * @return the value of lists
-     */
+    @Override
     public JImageListView[] getLists() {
         return (JImageListView[]) listsAndSelectionIndices.keySet().toArray(new JImageListView[0]);
     }
-    
+
+    @Override
     public boolean containsList(JImageListView l) {
         return listsAndSelectionIndices.containsKey(l);
     }
 
-    public void addList(JImageListView l) {
+    @Override
+    public boolean addList(JImageListView l) {
         if (! listsAndSelectionIndices.containsKey(l)) {
             putSelectionIndex(l, l.getLeadSelectionIndex());
             l.addListSelectionListener(selectionHandler);
             updateSelectionBounds();
+            return true;
+        } else {
+            return false;
         }
     }
 
-    public void removeList(JImageListView l) {
+    @Override
+    public boolean removeList(JImageListView l) {
         if (null != listsAndSelectionIndices.remove(l)) {
             l.removeListSelectionListener(selectionHandler);
             updateSelectionBounds();
+            return true;
+        } else {
+            return false;
         }
     }
 
@@ -84,13 +88,8 @@ public class ImageListViewSelectionSynchronizationController {
             listsAndSelectionIndices.put(l, idx);
         }
     }
-    
-    /**
-     * Set set of {@link JImageListView}s that this controller currently
-     * synchronizes.
-     * 
-     * @param lists
-     */
+
+    @Override
     public void setLists(JImageListView[] lists) {
         for (JImageListView l : new ArrayList<JImageListView>(listsAndSelectionIndices.keySet())) {  // copy keySet to avoid ConcurrModifException
             removeList(l);
@@ -100,12 +99,7 @@ public class ImageListViewSelectionSynchronizationController {
         }
     }
 
-    /**
-     * Set set of {@link JImageListView}s that this controller currently
-     * synchronizes.
-     * 
-     * @param lists
-     */
+    @Override
     public void setLists(Collection<JImageListView> lists) {
         for (JImageListView l : new ArrayList<JImageListView>(listsAndSelectionIndices.keySet())) {  // copy keySet to avoid ConcurrModifException
             removeList(l);
