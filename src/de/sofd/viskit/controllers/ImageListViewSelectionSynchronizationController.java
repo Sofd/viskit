@@ -72,7 +72,9 @@ public class ImageListViewSelectionSynchronizationController implements MultiIma
 
     @Override
     public boolean removeList(JImageListView l) {
-        if (null != listsAndSelectionIndices.remove(l)) {
+        if (listsAndSelectionIndices.containsKey(l)) {
+            clearSelectionBounds();
+            listsAndSelectionIndices.remove(l);
             l.removeListSelectionListener(selectionHandler);
             updateSelectionBounds();
             return true;
