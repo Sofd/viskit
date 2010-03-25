@@ -454,10 +454,6 @@ public class JListImageListTestApp {
             }
         }
 
-        ImageListViewSelectionSynchronizationController selSyncController = new ImageListViewSelectionSynchronizationController();
-        selSyncController.setLists(lists.toArray(new JImageListView[lists.size()]));
-        selSyncController.setKeepRelativeSelectionIndices(true);
-
         toolbar.add(new JLabel("Sync: "));
         for (Color c : syncColors) {
             SyncColorState state = syncColorStates.get(c);
