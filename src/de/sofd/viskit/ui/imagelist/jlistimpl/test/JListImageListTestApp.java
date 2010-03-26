@@ -16,13 +16,9 @@ import java.io.File;
 import java.net.MalformedURLException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
 import javax.swing.AbstractAction;
-import javax.swing.ButtonModel;
 import javax.swing.DefaultListModel;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
@@ -30,7 +26,6 @@ import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
-import javax.swing.JToggleButton;
 import javax.swing.JToolBar;
 import javax.swing.ListModel;
 import javax.swing.SwingUtilities;
@@ -49,7 +44,6 @@ import de.sofd.draw2d.viewer.tools.EllipseTool;
 import de.sofd.draw2d.viewer.tools.SelectorTool;
 import de.sofd.swing.DefaultBoundedListSelectionModel;
 import de.sofd.util.FloatRange;
-import de.sofd.util.IdentityHashSet;
 import de.sofd.viskit.controllers.GenericILVCellPropertySyncController;
 import de.sofd.viskit.controllers.ImageListViewInitialWindowingController;
 import de.sofd.viskit.controllers.ImageListViewMouseMeasurementController;
@@ -60,6 +54,8 @@ import de.sofd.viskit.controllers.ImageListViewRoiToolApplicationController;
 import de.sofd.viskit.controllers.ImageListViewSelectionScrollSyncController;
 import de.sofd.viskit.controllers.ImageListViewSelectionSynchronizationController;
 import de.sofd.viskit.controllers.ImageListViewWindowingApplyToAllController;
+import de.sofd.viskit.controllers.MultiILVSyncSetController;
+import de.sofd.viskit.controllers.MultiImageListViewController;
 import de.sofd.viskit.controllers.cellpaint.ImageListViewImagePaintController;
 import de.sofd.viskit.controllers.cellpaint.ImageListViewPrintTextToCellsController;
 import de.sofd.viskit.model.DicomImageListViewModelElement;
@@ -334,75 +330,6 @@ public class JListImageListTestApp {
         return f;
     }
 
-    private Color[] syncColors = new Color[]{Color.red, Color.green, Color.cyan};
-
-    private Map<Color, SyncColorState> syncColorStates = new HashMap<Color, SyncColorState>();
-    
-    private static class SyncColorState {
-        Set<JImageListView> syncSet;
-        // TODO: generalize to support any kind of *SyncController without explicit coding (=> ListSyncController base interface with #setLists etc.)
-        ImageListViewSelectionSynchronizationController selSyncController;
-        GenericILVCellPropertySyncController windowingSyncController;
-        GenericILVCellPropertySyncController zoomPanSyncController;
-        ButtonModel selSyncCheckboxModel, windowingSyncCheckboxModel, zoomPanSyncCheckboxModel;
-    }
-    
-    {
-        ActionListener controllerUpdater = new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                updateSyncControllers();
-            }
-        };
-        for (Color c : syncColors) {
-            SyncColorState state = new SyncColorState();
-            syncColorStates.put(c, state);
-
-            state.syncSet = new IdentityHashSet<JImageListView>();
-
-            state.selSyncController = new ImageListViewSelectionSynchronizationController();
-            state.selSyncController.setKeepRelativeSelectionIndices(true);
-            state.selSyncController.setEnabled(true);
-            state.selSyncCheckboxModel = new JToggleButton.ToggleButtonModel();
-            state.selSyncCheckboxModel.addActionListener(controllerUpdater);
-            
-            state.windowingSyncController = new GenericILVCellPropertySyncController(new String[]{"windowLocation", "windowWidth"});
-            state.windowingSyncController.setEnabled(true);
-            state.windowingSyncCheckboxModel = new JToggleButton.ToggleButtonModel();
-            state.windowingSyncCheckboxModel.addActionListener(controllerUpdater);
-            
-            state.zoomPanSyncController = new GenericILVCellPropertySyncController(new String[]{"scale", "centerOffset"});
-            state.zoomPanSyncController.setEnabled(true);
-            state.zoomPanSyncCheckboxModel = new JToggleButton.ToggleButtonModel();
-            state.zoomPanSyncCheckboxModel.addActionListener(controllerUpdater);
-        }
-    }
-    
-    private void updateSyncControllers() {
-        for (Color c : syncColors) {
-            SyncColorState state = syncColorStates.get(c);
-
-            if (state.windowingSyncCheckboxModel.isSelected()) {
-                state.windowingSyncController.setLists(state.syncSet);
-            } else {
-                state.windowingSyncController.setLists(new JImageListView[0]);
-            }
-
-            if (state.selSyncCheckboxModel.isSelected()) {
-                // TODO: constraint: a list shouldn't be in more than one selSyncController at the same time
-                state.selSyncController.setLists(state.syncSet);
-            } else {
-                state.selSyncController.setLists(new JImageListView[0]);
-            }
-
-            if (state.zoomPanSyncCheckboxModel.isSelected()) {
-                state.zoomPanSyncController.setLists(state.syncSet);
-            } else {
-                state.zoomPanSyncController.setLists(new JImageListView[0]);
-            }
-        }
-    }
-    
     public JFrame newMultiListFrame(String frameTitle, GraphicsConfiguration graphicsConfig) throws Exception {
         final JFrame theFrame = (graphicsConfig == null ? new JFrame(frameTitle) : new JFrame(frameTitle, graphicsConfig));
         JToolBar toolbar = new JToolBar("toolbar");
@@ -426,6 +353,38 @@ public class JListImageListTestApp {
         //listModels.add(getViewerListModelForDirectory(new File("/home/olaf/hieronymusr/br312046/images/cd00908__center10101")));
         //listModels.add(getViewerListModelForDirectory(new File("/home/olaf/hieronymusr/br312046/images/cd00909__center10101")));
         //*/
+
+        final Color[] syncColors = new Color[]{Color.red, Color.green, Color.cyan};
+        
+        MultiILVSyncSetController multiSyncSetController = new MultiILVSyncSetController();
+        for (Color c : syncColors) {
+            multiSyncSetController.addSyncSet(c);
+        }
+        multiSyncSetController.addSyncControllerType("selection", new MultiILVSyncSetController.SyncControllerFactory() {
+            @Override
+            public MultiImageListViewController createController() {
+                ImageListViewSelectionSynchronizationController result = new ImageListViewSelectionSynchronizationController();
+                result.setKeepRelativeSelectionIndices(true);
+                result.setEnabled(true);
+                return result;
+            }
+        });
+        multiSyncSetController.addSyncControllerType("windowing", new MultiILVSyncSetController.SyncControllerFactory() {
+            @Override
+            public MultiImageListViewController createController() {
+                GenericILVCellPropertySyncController result = new GenericILVCellPropertySyncController(new String[]{"windowLocation", "windowWidth"});
+                result.setEnabled(true);
+                return result;
+            }
+        });
+        multiSyncSetController.addSyncControllerType("zoompan", new MultiILVSyncSetController.SyncControllerFactory() {
+            @Override
+            public MultiImageListViewController createController() {
+                GenericILVCellPropertySyncController result = new GenericILVCellPropertySyncController(new String[]{"scale", "centerOffset"});
+                result.setEnabled(true);
+                return result;
+            }
+        });
         
         List<JImageListView> lists = new ArrayList<JImageListView>();
         
@@ -437,6 +396,7 @@ public class JListImageListTestApp {
             listsPanel.add(lvp);
             lists.add(lvp.getListView());
             for (final Color c : syncColors) {
+                final MultiILVSyncSetController.SyncSet syncSet = multiSyncSetController.getSyncSet(c);
                 final JCheckBox cb = new JCheckBox();
                 cb.setBackground(c);
                 lvp.getToolbar().add(cb);
@@ -444,11 +404,10 @@ public class JListImageListTestApp {
                     @Override
                     public void actionPerformed(ActionEvent e) {
                         if (cb.isSelected()) {
-                            syncColorStates.get(c).syncSet.add(lvp.getListView());
+                            syncSet.addList(lvp.getListView());
                         } else {
-                            syncColorStates.get(c).syncSet.remove(lvp.getListView());
+                            syncSet.removeList(lvp.getListView());
                         }
-                        updateSyncControllers();
                     }
                 });
             }
@@ -456,20 +415,20 @@ public class JListImageListTestApp {
 
         toolbar.add(new JLabel("Sync: "));
         for (Color c : syncColors) {
-            SyncColorState state = syncColorStates.get(c);
+            final MultiILVSyncSetController.SyncSet syncSet = multiSyncSetController.getSyncSet(c);
             
             JCheckBox cb = new JCheckBox("selections");
-            cb.setModel(state.selSyncCheckboxModel);
+            cb.setModel(syncSet.getIsControllerSyncedModel("selection"));
             cb.setBackground(c);
             toolbar.add(cb);
             
             cb = new JCheckBox("windowing");
-            cb.setModel(state.windowingSyncCheckboxModel);
+            cb.setModel(syncSet.getIsControllerSyncedModel("windowing"));
             cb.setBackground(c);
             toolbar.add(cb);
 
             cb = new JCheckBox("zoom/pan");
-            cb.setModel(state.zoomPanSyncCheckboxModel);
+            cb.setModel(syncSet.getIsControllerSyncedModel("zoompan"));
             cb.setBackground(c);
             toolbar.add(cb);
         }

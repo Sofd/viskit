@@ -1,11 +1,16 @@
 package de.sofd.viskit.controllers;
 
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.IdentityHashMap;
 import java.util.Map;
 import java.util.Set;
+
+import javax.swing.ButtonModel;
+import javax.swing.JToggleButton;
 
 import de.sofd.util.IdentityHashSet;
 import de.sofd.viskit.ui.imagelist.JImageListView;
@@ -18,7 +23,7 @@ import de.sofd.viskit.ui.imagelist.glimpl.JGLImageListView;
  * can have its list of {@link JImageListView}s be kept in sync with the sync
  * set, or emptied, dynamically at any time.
  * 
- * If the sync set is modified (i.e., if {@link JImageListView}s are
+ * If a sync set is modified (i.e., if {@link JImageListView}s are
  * added/removed), which may be done at any time dynamically, all
  * MultiImageListViewControllers of the sync set that currently have their set
  * of JImageListViews kept in sync with the sync set, will have that set updated
@@ -43,10 +48,9 @@ public class MultiILVSyncSetController {
      * implementation will ensure that an instance of this class is associated
      * with each sync set. The class must have a public no-args constructor.
      * <p>
-     * You can only register have one controller per class when using this
-     * method. If you want to have multiple MultiImageListViewControllers of the
-     * same class, use the more general method
-     * {@link #addSyncControllerType(Object, SyncControllerFactory)}.
+     * You can only have one controller per class when using this method. If you
+     * want to have multiple controllers of the same class, use the more general
+     * method {@link #addSyncControllerType(Object, SyncControllerFactory)}.
      * <p>
      * Internally, this method will delegate to
      * {@link #addSyncControllerType(Object, SyncControllerFactory)} with the
@@ -176,8 +180,39 @@ public class MultiILVSyncSetController {
          * @param synced
          */
         void syncController(Object factoryKey, boolean synced);
-        
-        <C extends MultiImageListViewController> boolean isControllerSynced(Object factoryKey);
+
+        /**
+         * Getter operation for syncController(). Tells whether a given
+         * controller in this sync set (specified by its class or factory key)
+         * currently has its list of {@link JImageListView}s synced to this sync
+         * set.
+         * 
+         * @param <C>
+         * @param factoryKey
+         *            factory key or class
+         * @return
+         */
+        boolean isControllerSynced(Object factoryKey);
+
+        /**
+         * UI convenience method: ButtonModel wrapper for
+         * syncController/isControllerSynced. Returns a Swing
+         * {@link ButtonModel} (more specifically, a toggle button model
+         * suitable for use with check boxes in Swing) whose
+         * {@link ButtonModel#isSelected() selected} flag tracks the "synced"
+         * flag for a controller in this sync set (specified by its class or
+         * factory key). The tracking is fully bidirectional, i.e. setting the
+         * flag by calling a syncController() method changes the "selected" flag
+         * in the model, and actively changing the "selected" flag in the model
+         * (by calling {@link ButtonModel#setSelected(boolean) setSelected}, or
+         * by clicking a check box connected to the model) changes the "synced"
+         * flag for the controller accordingly.
+         * 
+         * @param factoryKey
+         *            factory key or class
+         * @return
+         */
+        public ButtonModel getIsControllerSyncedModel(Object factoryKey);
         
         /**
          * 
@@ -217,7 +252,7 @@ public class MultiILVSyncSetController {
         protected final Set<JImageListView> lists = new IdentityHashSet<JImageListView>();
         protected final Map<Object, MultiImageListViewController> syncControllersByFactoryKey
             = new HashMap<Object, MultiImageListViewController>();
-        protected final Map<Object, Boolean> isSyncedFlagByFactoryKey = new HashMap<Object, Boolean>();
+        protected final Map<Object, ButtonModel> isSyncedModelByFactoryKey = new HashMap<Object, ButtonModel>();
         protected final Map<String, Object> attrs = new HashMap<String, Object>();
         
         public SyncSetImpl(Object key) {
@@ -270,6 +305,13 @@ public class MultiILVSyncSetController {
             attrs.put(name, value);
         }
 
+        protected ActionListener controllerUpdater = new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                updateSyncControllers();
+            }
+        };
+
         public <C extends MultiImageListViewController> void addSyncController(Object factoryKey) {
             if (null != syncControllersByFactoryKey.get(factoryKey)) {
                 throw new IllegalStateException("trying to add more than one sync controller " + factoryKey +
@@ -278,7 +320,9 @@ public class MultiILVSyncSetController {
             SyncControllerFactory fac = syncControllerFactoriesByKey.get(factoryKey);
             MultiImageListViewController controller = fac.createController();
             syncControllersByFactoryKey.put(factoryKey, controller);
-            isSyncedFlagByFactoryKey.put(factoryKey, false);
+            ButtonModel model = new JToggleButton.ToggleButtonModel();
+            model.addActionListener(controllerUpdater);
+            isSyncedModelByFactoryKey.put(factoryKey, model);
         }
         
         @SuppressWarnings("unchecked")
@@ -302,17 +346,21 @@ public class MultiILVSyncSetController {
             if (!syncControllersByFactoryKey.containsKey(factoryKey)) {
                 throw new IllegalArgumentException("unregistered MultiImageListViewController factory: " + factoryKey);
             }
-            isSyncedFlagByFactoryKey.put(factoryKey, synced);
-            updateSyncControllers();
+            isSyncedModelByFactoryKey.get(factoryKey).setSelected(synced);
         }
         
         @Override
-        public <C extends MultiImageListViewController> boolean isControllerSynced(Object factoryKey) {
-            Boolean result = isSyncedFlagByFactoryKey.get(factoryKey);
+        public boolean isControllerSynced(Object factoryKey) {
+            ButtonModel result = isSyncedModelByFactoryKey.get(factoryKey);
             if (null == result) {
                 throw new IllegalArgumentException("unregistered MultiImageListViewController factory: " + factoryKey);
             }
-            return result;
+            return result.isSelected();
+        }
+
+        @Override
+        public ButtonModel getIsControllerSyncedModel(Object factoryKey) {
+            return isSyncedModelByFactoryKey.get(factoryKey);
         }
         
         protected void disassociateControllers() {
