@@ -1,8 +1,8 @@
 package de.sofd.viskit.controllers;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.IdentityHashMap;
 import java.util.Map;
 import java.util.Set;
@@ -30,22 +30,64 @@ import de.sofd.viskit.ui.imagelist.glimpl.JGLImageListView;
  */
 public class MultiILVSyncSetController {
 
-    protected final Set<Class<? extends MultiImageListViewController>> syncControllerClasses =
-        new HashSet<Class<? extends MultiImageListViewController>>();
+    public static interface SyncControllerFactory {
+        MultiImageListViewController createController();
+    }
+    
+    protected final Map<Object, SyncControllerFactory> syncControllerFactoriesByKey = new HashMap<Object, SyncControllerFactory>();
     
     protected final Map<Object, SyncSetImpl> syncSetsByKey = new IdentityHashMap<Object, SyncSetImpl>();
 
     /**
-     * Register a new MultiImageListViewController subclass. The implementation
-     * will ensure that an instance of this class is associated with each sync
-     * set. The class must have a public no-args constructor.
+     * Register a new {@link MultiImageListViewController} subclass. The
+     * implementation will ensure that an instance of this class is associated
+     * with each sync set. The class must have a public no-args constructor.
+     * <p>
+     * You can only register have one controller per class when using this
+     * method. If you want to have multiple MultiImageListViewControllers of the
+     * same class, use the more general method
+     * {@link #addSyncControllerType(Object, SyncControllerFactory)}.
+     * <p>
+     * Internally, this method will delegate to
+     * {@link #addSyncControllerType(Object, SyncControllerFactory)} with the
+     * class parameter as the key and an internal factory that just invokes the
+     * no-args constructor.
      * 
      * @param <C>
      * @param clazz
      */
-    public <C extends MultiImageListViewController> void addSyncControllerType(Class<C> clazz) {
+    public <C extends MultiImageListViewController> void addSyncControllerType(final Class<C> clazz) {
+        addSyncControllerType(clazz, new SyncControllerFactory() {
+            @Override
+            public C createController() {
+                try {
+                    return clazz.newInstance();
+                } catch (InstantiationException e) {
+                    throw new IllegalArgumentException(e);
+                } catch (IllegalAccessException e) {
+                    throw new IllegalArgumentException(e);
+                }
+            }
+        });
+    }
+
+    /**
+     * More generalized version of {@link #addSyncControllerType(Class)}:
+     * Instead of passing a class, you pass a special
+     * {@link SyncControllerFactory} that will be called when instances of the
+     * controller need to be created.
+     * 
+     * @param <C>
+     * @param key
+     * @param fac
+     */
+    public <C extends MultiImageListViewController> void addSyncControllerType(Object key, SyncControllerFactory fac) {
+        if (syncControllerFactoriesByKey.containsKey(key)) {
+            throw new IllegalArgumentException("duplicate sync controller factory key: " + fac);
+        }
+        syncControllerFactoriesByKey.put(key, fac);
         for (SyncSetImpl ss : syncSetsByKey.values()) {
-            ss.addSyncController(clazz);
+            ss.addSyncController(key);
         }
         updateSyncControllers();
     }
@@ -76,13 +118,24 @@ public class MultiILVSyncSetController {
          * 
          * @param <C>
          * @param clazz
-         *            the class of the controller (must one of the classes
+         *            the class of the controller (must be one of the classes
          *            registered via
          *            {@link MultiILVSyncSetController#addSyncControllerType(Class)}
          *            )
          * @return
          */
         <C extends MultiImageListViewController> C getSyncController(Class<C> clazz);
+
+        /**
+         * More general variant of {@link #getSyncController(Class)}: Takes the
+         * factory key as passed to
+         * {@link MultiILVSyncSetController#addSyncControllerType(Object, SyncControllerFactory)}
+         * rather than the class.
+         * 
+         * @param factoryKey
+         * @return
+         */
+        MultiImageListViewController getSyncController(Object factoryKey);
 
         /**
          * Arbitrary attributes may be associated with the sync set for
@@ -114,6 +167,19 @@ public class MultiILVSyncSetController {
         <C extends MultiImageListViewController> void syncController(Class<C> clazz, boolean synced);
 
         /**
+         * More general variant of {@link #syncController(Class, boolean)}:
+         * Takes the factory key as passed to
+         * {@link MultiILVSyncSetController#addSyncControllerType(Object, SyncControllerFactory)}
+         * rather than the class.
+         * 
+         * @param factoryKey
+         * @param synced
+         */
+        void syncController(Object factoryKey, boolean synced);
+        
+        <C extends MultiImageListViewController> boolean isControllerSynced(Object factoryKey);
+        
+        /**
          * 
          * @return the key that was used when adding this sync set to this
          *         controller (see
@@ -130,8 +196,8 @@ public class MultiILVSyncSetController {
      */
     public SyncSet addSyncSet(Object key) {
         SyncSetImpl syncSet = new SyncSetImpl(key);
-        for (Class<? extends MultiImageListViewController> syncControllerClass : syncControllerClasses) {
-            syncSet.addSyncController(syncControllerClass);
+        for (Object factoryKey : syncControllerFactoriesByKey.keySet()) {
+            syncSet.addSyncController(factoryKey);
         }
         syncSetsByKey.put(key, syncSet);
         return syncSet;
@@ -140,14 +206,18 @@ public class MultiILVSyncSetController {
     public SyncSet getSyncSet(Object key) {
         return syncSetsByKey.get(key);
     }
+    
+    public Collection<SyncSet> getAllSyncSets() {
+        return new ArrayList<SyncSet>(syncSetsByKey.values());
+    }
 
     protected class SyncSetImpl implements SyncSet {
 
         protected final Object key;
         protected final Set<JImageListView> lists = new IdentityHashSet<JImageListView>();
-        protected final Map<Class<? extends MultiImageListViewController>, MultiImageListViewController> syncControllersByClass
-            = new HashMap<Class<? extends MultiImageListViewController>, MultiImageListViewController>();
-        protected final Map<MultiImageListViewController, Boolean> isSyncedFlagByController = new HashMap<MultiImageListViewController, Boolean>();
+        protected final Map<Object, MultiImageListViewController> syncControllersByFactoryKey
+            = new HashMap<Object, MultiImageListViewController>();
+        protected final Map<Object, Boolean> isSyncedFlagByFactoryKey = new HashMap<Object, Boolean>();
         protected final Map<String, Object> attrs = new HashMap<String, Object>();
         
         public SyncSetImpl(Object key) {
@@ -200,47 +270,53 @@ public class MultiILVSyncSetController {
             attrs.put(name, value);
         }
 
-        public <C extends MultiImageListViewController> void addSyncController(Class<C> clazz) {
-            try {
-                if (null != syncControllersByClass.get(clazz)) {
-                    throw new IllegalStateException("trying to add more than one " + clazz + " to " + MultiILVSyncSetController.class);
-                }
-                C controller = clazz.newInstance();
-                syncControllersByClass.put(clazz, controller);
-                isSyncedFlagByController.put(controller, false);
-            } catch (InstantiationException e) {
-                throw new IllegalArgumentException(e);
-            } catch (IllegalAccessException e) {
-                throw new IllegalArgumentException(e);
+        public <C extends MultiImageListViewController> void addSyncController(Object factoryKey) {
+            if (null != syncControllersByFactoryKey.get(factoryKey)) {
+                throw new IllegalStateException("trying to add more than one sync controller " + factoryKey +
+                                                " to the same MultiILVSyncSetController");
             }
+            SyncControllerFactory fac = syncControllerFactoriesByKey.get(factoryKey);
+            MultiImageListViewController controller = fac.createController();
+            syncControllersByFactoryKey.put(factoryKey, controller);
+            isSyncedFlagByFactoryKey.put(factoryKey, false);
         }
         
         @SuppressWarnings("unchecked")
         @Override
         public <C extends MultiImageListViewController> C getSyncController(Class<C> clazz) {
-            return (C) syncControllersByClass.get(clazz);
+            return (C) syncControllersByFactoryKey.get(clazz);
+        }
+
+        @Override
+        public MultiImageListViewController getSyncController(Object factoryKey) {
+            return syncControllersByFactoryKey.get(factoryKey);
         }
 
         @Override
         public <C extends MultiImageListViewController> void syncController(Class<C> clazz, boolean synced) {
-            C controller = getSyncController(clazz);
-            if (null == controller) {
-                throw new IllegalArgumentException("unregistered MultiImageListViewController class: " + clazz);
+            syncController(clazz, synced);
+        }
+        
+        @Override
+        public void syncController(Object factoryKey, boolean synced) {
+            if (!syncControllersByFactoryKey.containsKey(factoryKey)) {
+                throw new IllegalArgumentException("unregistered MultiImageListViewController factory: " + factoryKey);
             }
-            isSyncedFlagByController.put(controller, synced);
+            isSyncedFlagByFactoryKey.put(factoryKey, synced);
             updateSyncControllers();
         }
         
-        public <C extends MultiImageListViewController> boolean isControllerSynced(Class<C> clazz) {
-            C controller = getSyncController(clazz);
-            if (null == controller) {
-                throw new IllegalArgumentException("unregistered MultiImageListViewController class: " + clazz);
+        @Override
+        public <C extends MultiImageListViewController> boolean isControllerSynced(Object factoryKey) {
+            Boolean result = isSyncedFlagByFactoryKey.get(factoryKey);
+            if (null == result) {
+                throw new IllegalArgumentException("unregistered MultiImageListViewController factory: " + factoryKey);
             }
-            return isSyncedFlagByController.get(controller);
+            return result;
         }
         
         protected void disassociateControllers() {
-            for (MultiImageListViewController c : syncControllersByClass.values()) {
+            for (MultiImageListViewController c : syncControllersByFactoryKey.values()) {
                 c.setLists(new JGLImageListView[0]);
             }
         }
@@ -248,11 +324,11 @@ public class MultiILVSyncSetController {
     
     protected void updateSyncControllers() {
         for (SyncSetImpl ss : syncSetsByKey.values()) {
-            for (Class<? extends MultiImageListViewController> scc : syncControllerClasses) {
-                if (ss.isControllerSynced(scc)) {
-                    ss.getSyncController(scc).setLists(ss.lists);
+            for (Object factoryKey : syncControllerFactoriesByKey.keySet()) {
+                if (ss.isControllerSynced(factoryKey)) {
+                    ss.getSyncController(factoryKey).setLists(ss.lists);
                 } else {
-                    ss.getSyncController(scc).setLists(new JImageListView[0]);
+                    ss.getSyncController(factoryKey).setLists(new JImageListView[0]);
                 }
             }
         }
