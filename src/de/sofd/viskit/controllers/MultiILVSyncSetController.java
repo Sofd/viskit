@@ -22,13 +22,22 @@ import de.sofd.viskit.ui.imagelist.glimpl.JGLImageListView;
  * {@link MultiImageListViewController}s. Each such MultiImageListViewController
  * can have its list of {@link JImageListView}s be kept in sync with the sync
  * set, or emptied, dynamically at any time.
- * 
+ * <p>
  * If a sync set is modified (i.e., if {@link JImageListView}s are
  * added/removed), which may be done at any time dynamically, all
  * MultiImageListViewControllers of the sync set that currently have their set
  * of JImageListViews kept in sync with the sync set, will have that set updated
  * accordingly.
- * 
+ * <p>
+ * The MultiImageListViewControllers aren't added individually to each sync set.
+ * Instead, you register the class of the controller (by passing the
+ * MultiImageListViewController subclass to
+ * {@link #addSyncControllerType(Class)}, or by passing a more general "factory"
+ * for controllers to
+ * {@link #addSyncControllerType(Object, SyncControllerFactory)}), and the
+ * MultiILVSyncSetController will then ensure than instances of the controller
+ * are automatically created and added to each sync set.
+ * <p>
  * The sync sets don't have to be disjoint (i.e. they may overlap).
  * 
  * @author olaf
@@ -48,9 +57,10 @@ public class MultiILVSyncSetController {
      * implementation will ensure that an instance of this class is associated
      * with each sync set. The class must have a public no-args constructor.
      * <p>
-     * You can only have one controller per class when using this method. If you
-     * want to have multiple controllers of the same class, use the more general
-     * method {@link #addSyncControllerType(Object, SyncControllerFactory)}.
+     * You can only have one controller per class and sync set when using this
+     * method. If you want to have multiple controllers of the same class in
+     * each sync set, use the more general method
+     * {@link #addSyncControllerType(Object, SyncControllerFactory)}.
      * <p>
      * Internally, this method will delegate to
      * {@link #addSyncControllerType(Object, SyncControllerFactory)} with the
@@ -83,6 +93,10 @@ public class MultiILVSyncSetController {
      * 
      * @param <C>
      * @param key
+     *            arbitrary key object that may later be used to refer to this
+     *            controller type again, e.g. when retrieving the controller
+     *            instance created for it for a specific sync set (
+     *            {@link SyncSet#getSyncController(Object)})
      * @param fac
      */
     public <C extends MultiImageListViewController> void addSyncControllerType(Object key, SyncControllerFactory fac) {
