@@ -260,6 +260,14 @@ public class MultiILVSyncSetController {
         return new ArrayList<SyncSet>(syncSetsByKey.values());
     }
 
+    public void disconnect() {
+        for (SyncSetImpl syncSet : syncSetsByKey.values()) {
+            syncSet.clear();
+        }
+        syncSetsByKey.clear();
+        syncControllerFactoriesByKey.clear();
+    }
+
     protected class SyncSetImpl implements SyncSet {
 
         protected final Object key;
@@ -382,6 +390,14 @@ public class MultiILVSyncSetController {
                 c.setLists(new JGLImageListView[0]);
             }
         }
+
+        protected void clear() {
+            disassociateControllers();
+            lists.clear();
+            attrs.clear();
+            isSyncedModelByFactoryKey.clear();
+            syncControllersByFactoryKey.clear();
+        }
     }
     
     protected void updateSyncControllers() {
@@ -395,7 +411,7 @@ public class MultiILVSyncSetController {
             }
         }
     }
-    
+
 
 }
 
