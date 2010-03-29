@@ -130,6 +130,10 @@ public class MultiILVSyncSetController {
         
         void removeList(JImageListView list);
 
+        boolean isEmpty();
+
+        int getSize();
+
         /**
          * Retrieve one of the {@link MultiImageListViewController}s associated
          * with this sync set, given the class of the controller
@@ -315,6 +319,16 @@ public class MultiILVSyncSetController {
                 this.lists.add(l);
             }
             updateSyncControllers();
+        }
+
+        @Override
+        public int getSize() {
+            return this.lists.size();
+        }
+
+        @Override
+        public boolean isEmpty() {
+            return getSize() == 0;
         }
 
         @Override
