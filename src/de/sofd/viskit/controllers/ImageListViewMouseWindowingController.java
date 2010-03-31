@@ -111,19 +111,27 @@ public class ImageListViewMouseWindowingController {
         @Override
         public void mouseDragged(MouseEvent e) {
             if (e.getButton() == WINDOWING_MOUSE_BUTTON || (e.getModifiers() & WINDOWING_MOUSE_MASK) != 0) {
-                ImageListViewCell sourceCell = (ImageListViewCell) e.getSource();
+                final ImageListViewCell sourceCell = (ImageListViewCell) e.getSource();
                 if (sourceCell != null && sourceCell == currentCell) {
                     FloatRange usedPxRange = sourceCell.getDisplayedModelElement().getUsedPixelValuesRange();
-                    int mouseIncrement = 1 + (int)(usedPxRange.getDelta() / 300);
+                    final int mouseIncrement = 1 + (int)(usedPxRange.getDelta() / 300);
                     // TODO: floating-point mouseIncrements would be better...
                     // TODO: account for cell size as well maybe? (bigger mouse increment when the cell is small)
-                    Point sourcePosition = e.getPoint();
-                    sourceCell.setWindowLocation(sourceCell.getWindowLocation() + mouseIncrement * (sourcePosition.x - lastPosition.x));
-                    int newWW = sourceCell.getWindowWidth() + mouseIncrement * (sourcePosition.y - lastPosition.y);
-                    if (newWW < 1) {
-                        newWW = 1;
-                    }
-                    sourceCell.setWindowWidth(newWW);
+                    final Point sourcePosition = e.getPoint();
+                    sourceCell.runWithPropChangingInteractively(ImageListViewCell.PROP_WINDOWLOCATION, new Runnable() {
+                        @Override
+                        public void run() {
+                            sourceCell.setWindowLocation(sourceCell.getWindowLocation() + mouseIncrement * (sourcePosition.x - lastPosition.x));
+                        }
+                    });
+                    int tmpNewWW = sourceCell.getWindowWidth() + mouseIncrement * (sourcePosition.y - lastPosition.y);
+                    final int newWW = tmpNewWW < 1 ? 1 : tmpNewWW;
+                    sourceCell.runWithPropChangingInteractively(ImageListViewCell.PROP_WINDOWWIDTH, new Runnable() {
+                        @Override
+                        public void run() {
+                            sourceCell.setWindowWidth(newWW);
+                        }
+                    });
                     lastPosition = sourcePosition;
                     e.consume();
                 }

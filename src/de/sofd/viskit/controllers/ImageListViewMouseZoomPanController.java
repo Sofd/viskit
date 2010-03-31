@@ -73,11 +73,11 @@ public class ImageListViewMouseZoomPanController {
         public void changeScaleAndTranslationOfCell(ImageListViewCell cell, double scaleChange, Point translationChange) {
             double newScale = cell.getScale() * scaleChange;
             if (newScale > 0.1 && newScale < 10) {
-                cell.setScale(newScale);
+                cell.setInteractively(ImageListViewCell.PROP_SCALE, newScale);
             }
             Point2D centerOffset = cell.getCenterOffset();
-            cell.setCenterOffset(centerOffset.getX() + translationChange.x,
-                                 centerOffset.getY() + translationChange.y);
+            cell.setInteractively(ImageListViewCell.PROP_CENTEROFFSET,
+                              new Point2D.Double(centerOffset.getX() + translationChange.x, centerOffset.getY() + translationChange.y));
             cell.refresh();
         }
 

@@ -1,5 +1,6 @@
 package de.sofd.viskit.controllers;
 
+import de.sofd.viskit.ui.imagelist.ImageListViewCell;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 
@@ -14,6 +15,8 @@ import de.sofd.viskit.ui.imagelist.JImageListView;
  * @author Olaf Klischat
  */
 public abstract class ImageListViewCellPropertySyncControllerBase extends DefaultMultiImageListViewController {
+
+    protected boolean ignoreNonInteractiveChanges = false;
 
     public ImageListViewCellPropertySyncControllerBase() {
     }
@@ -40,6 +43,24 @@ public abstract class ImageListViewCellPropertySyncControllerBase extends Defaul
         return retval;
     }
 
+    /**
+     * Get the value of ignoreNonInteractiveChanges
+     *
+     * @return the value of ignoreNonInteractiveChanges
+     */
+    public boolean isIgnoreNonInteractiveChanges() {
+        return ignoreNonInteractiveChanges;
+    }
+
+    /**
+     * Set the value of ignoreNonInteractiveChanges
+     *
+     * @param ignoreNonInteractiveChanges new value of ignoreNonInteractiveChanges
+     */
+    public void setIgnoreNonInteractiveChanges(boolean ignoreNonInteractiveChanges) {
+        this.ignoreNonInteractiveChanges = ignoreNonInteractiveChanges;
+    }
+
     private PropertyChangeListener listsCellPropertyChangeListener = new PropertyChangeListener() {
 
         private boolean inChange = false;
@@ -51,6 +72,12 @@ public abstract class ImageListViewCellPropertySyncControllerBase extends Defaul
             }
             if (inChange) {
                 return;
+            }
+            if (!isIgnoreNonInteractiveChanges()) {
+                ImageListViewCell sourceCell = (ImageListViewCell) evt.getSource();
+                if (! sourceCell.isInteractivelyChangingProp(evt.getPropertyName())) {
+                    return;
+                }
             }
             inChange = true;
             try {

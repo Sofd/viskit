@@ -186,7 +186,9 @@ public interface ImageListViewCell {
      * @param runnable
      */
     public void runWithPropChangingInteractively(String propName, Runnable runnable);
-    
+
+    public void setInteractively(String propName, Object value);
+
     void refresh();
 
     /**

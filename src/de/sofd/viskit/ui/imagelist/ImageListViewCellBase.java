@@ -7,9 +7,14 @@ import de.sofd.viskit.draw2d.vieweradapters.ViskitDrawingObjectViewerAdapterFact
 import java.awt.Dimension;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Point2D;
+import java.beans.BeanInfo;
+import java.beans.Introspector;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
+import java.beans.PropertyDescriptor;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -31,40 +36,6 @@ public class ImageListViewCellBase implements ImageListViewCell {
     private boolean interactiveWindowingInProgress;
     private DrawingViewer roiDrawingViewer;
     private final Set<String> interactivelyChangingProps = new HashSet<String>();
-
-    /**
-     * The properties that are currently being changed interactively (by end user interaction,
-     * e.g. with the mouse or keyboard). For example, if the user changes the {@link #setS
-     *
-     *
-     *
-     * @return the value of interactivelyChangingProps
-     */
-    @Override
-    public String[] getInteractivelyChangingProps() {
-        return interactivelyChangingProps.toArray(new String[interactivelyChangingProps.size()]);
-    }
-
-    @Override
-    public boolean isInteractivelyChangingProp(String propName) {
-        return interactivelyChangingProps.contains(propName);
-    }
-
-    @Override
-    public void runWithPropChangingInteractively(String propName, Runnable runnable) {
-        // TODO: check whether propName is one of the PROP_* constants? Ugly and not so easy (props defined in subclasses...)
-        boolean wasChanging = isInteractivelyChangingProp(propName);
-        if (!wasChanging) {
-            interactivelyChangingProps.add(propName);
-        }
-        try {
-            runnable.run();
-        } finally {
-            if (!wasChanging) {
-                interactivelyChangingProps.remove(propName);
-            }
-        }
-    }
 
     protected ImageListViewCellBase(JImageListView owner, ImageListViewModelElement displayedModelElement) {
         this.owner = owner;
@@ -226,6 +197,62 @@ public class ImageListViewCellBase implements ImageListViewCell {
         this.centerOffset = new Point2D.Double(x, y);
         propertyChangeSupport.firePropertyChange(PROP_CENTEROFFSET, oldCenterOffset, centerOffset);
     }
+
+    /**
+     * The properties that are currently being changed interactively (by end user interaction,
+     * e.g. with the mouse or keyboard). For example, if the user changes the {@link #setS
+     *
+     *
+     *
+     * @return the value of interactivelyChangingProps
+     */
+    @Override
+    public String[] getInteractivelyChangingProps() {
+        return interactivelyChangingProps.toArray(new String[interactivelyChangingProps.size()]);
+    }
+
+    @Override
+    public boolean isInteractivelyChangingProp(String propName) {
+        return interactivelyChangingProps.contains(propName);
+    }
+
+    @Override
+    public void runWithPropChangingInteractively(String propName, Runnable runnable) {
+        // TODO: check whether propName is one of the PROP_* constants? Ugly and not so easy (props defined in subclasses...)
+        boolean wasChanging = isInteractivelyChangingProp(propName);
+        if (!wasChanging) {
+            interactivelyChangingProps.add(propName);
+        }
+        try {
+            runnable.run();
+        } finally {
+            if (!wasChanging) {
+                interactivelyChangingProps.remove(propName);
+            }
+        }
+    }
+
+    @Override
+    public void setInteractively(final String propName, final Object value) {
+        // TODO: efficiency?
+        runWithPropChangingInteractively(propName, new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    BeanInfo bi = Introspector.getBeanInfo(ImageListViewCellBase.this.getClass());
+                    for (PropertyDescriptor pd : bi.getPropertyDescriptors()) {
+                        if (! pd.getName().equals(propName)) {
+                            continue;
+                        }
+                        pd.getWriteMethod().invoke(ImageListViewCellBase.this, value);
+                    }
+                } catch (Exception e) {
+                    throw new RuntimeException(e);
+                }
+            }
+        });
+    }
+
 
     /**
      * Get the value of roiDrawingViewer
