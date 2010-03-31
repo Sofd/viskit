@@ -136,6 +136,56 @@ public interface ImageListViewCell {
 
     void setLookupTable(LookupTable lut);
     
+    /**
+     * The properties of this cell
+     * that are currently being changed as a direct result of an end user interaction,
+     * e.g. with the mouse or keyboard. For example, if the end user changes the
+     * {@link #setScale(scale) scale} of the cell using the mouse, PROP_SCALE will be included
+     * in this property. If some piece of code (e.g. a controller like
+     * {@link GenericILVCellPropertySyncController}) copies this change over
+     * into another cell, the resulting property change in that cell will
+     * *not* lead to PROP_SCALE being included in that cell's
+     * interactivelyChangingProps, because the change was caused by
+     * a piece of code rather than the end user directly.
+     * <p>
+     * This allows interested parties to react differently to property
+     * changes depending on whether they occur directly by user interaction
+     * or by some program. Almost all controllers that somehow synchronize
+     * property changes between cells (e.g. the mentioned
+     * {@link GenericILVCellPropertySyncController}) will normally do that
+     * only if the initial change was the result of a user interaction. This
+     * is normally the desired behaviour, as it prevents inadvertend copying
+     * of automatic or internal property changes.
+     * <p>
+     * This property can't be managed automatically. External parties
+     * (e.g. controllers like the mentioned {@link GenericILVCellPropertySyncController})
+     * must decide themselves which property changes are "interactive"
+     * and which are not, and include the respective property in this
+     * property if necessary. Convenience methods like
+     * {@link #runWithPropChangingInteractively(java.lang.String, java.lang.Runnable) }
+     * make this easier.
+     *
+     * @return the value of interactivelyChangingProps
+     */
+    public String[] getInteractivelyChangingProps();
+
+    /**
+     * Convenience query method that tells whether propName is
+     * currently included in {@link #getInteractivelyChangingProps() }.
+     *
+     * @param propName
+     * @return
+     */
+    public boolean isInteractivelyChangingProp(String propName);
+
+    /**
+     * Run the runnable with propName included in {@link #getInteractivelyChangingProps() }
+     * as long as the runnable runs, and being removed afterwards.
+     *
+     * @param propName
+     * @param runnable
+     */
+    public void runWithPropChangingInteractively(String propName, Runnable runnable);
     
     void refresh();
 

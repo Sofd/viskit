@@ -9,6 +9,8 @@ import java.awt.geom.AffineTransform;
 import java.awt.geom.Point2D;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * Base class for most {@link ImageListViewCell} implementations. Implements
@@ -28,6 +30,41 @@ public class ImageListViewCellBase implements ImageListViewCell {
     private Point2D centerOffset;
     private boolean interactiveWindowingInProgress;
     private DrawingViewer roiDrawingViewer;
+    private final Set<String> interactivelyChangingProps = new HashSet<String>();
+
+    /**
+     * The properties that are currently being changed interactively (by end user interaction,
+     * e.g. with the mouse or keyboard). For example, if the user changes the {@link #setS
+     *
+     *
+     *
+     * @return the value of interactivelyChangingProps
+     */
+    @Override
+    public String[] getInteractivelyChangingProps() {
+        return interactivelyChangingProps.toArray(new String[interactivelyChangingProps.size()]);
+    }
+
+    @Override
+    public boolean isInteractivelyChangingProp(String propName) {
+        return interactivelyChangingProps.contains(propName);
+    }
+
+    @Override
+    public void runWithPropChangingInteractively(String propName, Runnable runnable) {
+        // TODO: check whether propName is one of the PROP_* constants? Ugly and not so easy (props defined in subclasses...)
+        boolean wasChanging = isInteractivelyChangingProp(propName);
+        if (!wasChanging) {
+            interactivelyChangingProps.add(propName);
+        }
+        try {
+            runnable.run();
+        } finally {
+            if (!wasChanging) {
+                interactivelyChangingProps.remove(propName);
+            }
+        }
+    }
 
     protected ImageListViewCellBase(JImageListView owner, ImageListViewModelElement displayedModelElement) {
         this.owner = owner;
