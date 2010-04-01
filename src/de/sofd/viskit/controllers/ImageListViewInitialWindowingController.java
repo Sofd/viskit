@@ -1,7 +1,6 @@
 package de.sofd.viskit.controllers;
 
 import de.sofd.util.FloatRange;
-import de.sofd.viskit.model.DicomImageListViewModelElement;
 import de.sofd.viskit.model.ImageListViewModelElement;
 import de.sofd.viskit.ui.imagelist.ImageListViewCell;
 import de.sofd.viskit.ui.imagelist.JImageListView;
@@ -19,28 +18,40 @@ import javax.media.opengl.GL;
 import javax.media.opengl.GLAutoDrawable;
 
 /**
- * Controller that references a JImageListView and an "enabled" flag. When
- * enabled, the controller ensures that the windowing parameters of all cells
- * will be initialized once to reasonable default values (if the model element
- * of the respective cell is a {@link DicomImageListViewModelElement}, and there
- * are windowing DICOM tags, initialize to that, otherwise, initialize to the
- * optimal window for the respective image.
+ * Controller that references a single JImageListView and provides a
+ * lazy initialization of properties of the controller's cells, which
+ * may be faster than initializing all cell properties of all the cells
+ * up-front. {@link #initializeCell(de.sofd.viskit.ui.imagelist.ImageListViewCell) }
+ * is called to perform the actual late initialization of a cell.
+ * By default, this method set the cell's windowing parameters to
+ * optimal values (those are expensive to determine, and it would
+ * take too long to calculate them for all cells before the JImageListView
+ * is displayed, thus the need for this controller). You may override
+ * that method (possibly in an anonymous subclass) to initialize anything
+ * else.
  * <p>
- * The controller will ensure that the initialization happens in the background
- * or when the cell to be initialized is first drawn. This ensures that not all
- * cells are initialized up-front, and thus the initialization time before the
- * list can be displayed won't be very long for lists containing many images.
+ * The late initialization of a cell is performed immediately before
+ * it is first drawn. This has some implications: Late-initialized
+ * properties of cells that have never been drawn yet (e.g. because
+ * the user never scrolled them into the JImageListView's visible area)
+ * will not have been initialized, and thus getting their values
+ * might yield unexpected (i.e. default/uninitialized) results.
  * <p>
- * (this optimization is the reason why we have this controller at all -- it we
- * didn't care about initialization times, we could just initialize all the
- * cells synchronously when they're created)
- * 
+ * Thus, this controller is primarily just a means to speed up initialization
+ * times if you want to perform a lenghty initialization on all cells.
+ * If this is not the case (for example, just setting the windowing parameters
+ * of all cells to some constant value will be fast enough even if
+ * there are many thousands of cells in the list), those parameters
+ * should just be set directly, and this controller should not be used.
+ * <p>
+ * TODO: Rename to ImageListViewLazyCellInitializationController
+ *
  * @author olaf
  */
 public class ImageListViewInitialWindowingController {
     
     // implementation strategy: use a CellPaintListener that's called before the image of the cell is drawn,
-    // initialize the windowing there, memorize which cells have already been initialized
+    // initialize the cell there, memorize which cells have already been initialized
 
     protected JImageListView controlledImageListView;
     public static final String PROP_CONTROLLEDIMAGELISTVIEW = "controlledImageListView";
@@ -110,8 +121,46 @@ public class ImageListViewInitialWindowingController {
 
     public void reset() {
         alreadyInitializedImagesKeys.clear();
+        if (null != controlledImageListView) {
+            controlledImageListView.refreshCells();
+        }
+    }
+
+    /**
+     * Initialize a cell immediately (non-lazily).
+     *
+     * @param cell
+     * @param force if true, initialize the cell even if it already was initialized by this controller before
+     */
+    public void initializeCellImmediately(ImageListViewCell cell, boolean force) {
+        if (controlledImageListView != null && cell.getOwner() == controlledImageListView) {
+            if (force || !alreadyInitializedImagesKeys.contains(cell.getDisplayedModelElement().getImageKey())) {
+                initializeCell(cell);
+                controlledImageListView.refreshCells();
+            }
+        }
     }
     
+    /**
+     * Initialize all cells of the {@link #getControlledImageListView() controlled list view}
+     * immediately (non-lazily).
+     *
+     * @param cell
+     * @param force if true, also initialize cells that have already been initialized by this controller before
+     */
+    public void initializeAllCellsImmediately(boolean force) {
+        if (controlledImageListView != null) {
+            int count = controlledImageListView.getLength();
+            for (int i = 0; i < count; i++) {
+                ImageListViewCell cell = controlledImageListView.getCell(i);
+                if (force || !alreadyInitializedImagesKeys.contains(cell.getDisplayedModelElement().getImageKey())) {
+                    initializeCell(cell);
+                }
+            }
+            controlledImageListView.refreshCells();
+        }
+    }
+
     /**
      * Keys ( {@link ImageListViewModelElement#getImageKey()} of model elements
      * that have already been initialized.
@@ -120,9 +169,28 @@ public class ImageListViewInitialWindowingController {
      */
     protected final Set<Object> alreadyInitializedImagesKeys = new HashSet<Object>();
 
+    /**
+     * Method that actually does the initialization. Sets windowing to optimal
+     * parameters by default, may be overridden/replaced by subclasses. Never
+     * called by subclasses.
+     *
+     * @param cell
+     */
+    protected void initializeCell(final ImageListViewCell cell) {
+        final FloatRange usedRange = cell.getDisplayedModelElement().getUsedPixelValuesRange();
+        ImageListViewWindowingApplyToAllController.runWithAllControllersInhibited(new Runnable() {
+            @Override
+            public void run() {
+                cell.setWindowWidth((int) usedRange.getDelta());
+                cell.setWindowLocation((int) (usedRange.getMin() + usedRange.getMax()) / 2);
+            }
+        });
+    }
+
+
     protected CellHandler cellHandler = new CellHandler();
-    
-    private class CellHandler implements ImageListViewCellPaintListener, PropertyChangeListener {
+
+    protected class CellHandler implements ImageListViewCellPaintListener, PropertyChangeListener {
         private boolean inProgrammedChange = false;
         
         @Override
@@ -150,14 +218,7 @@ public class ImageListViewInitialWindowingController {
                 if (alreadyInitializedImagesKeys.contains(imageKey)) {
                     return;
                 }
-                final FloatRange usedRange = cell.getDisplayedModelElement().getUsedPixelValuesRange();
-                ImageListViewWindowingApplyToAllController.runWithAllControllersInhibited(new Runnable() {
-                    @Override
-                    public void run() {
-                        cell.setWindowWidth((int) usedRange.getDelta());
-                        cell.setWindowLocation((int) (usedRange.getMin() + usedRange.getMax()) / 2);
-                    }
-                });
+                initializeCell(cell);
                 alreadyInitializedImagesKeys.add(imageKey);
             } finally {
                 inProgrammedChange = false;
