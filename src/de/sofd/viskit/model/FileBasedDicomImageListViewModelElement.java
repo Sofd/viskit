@@ -37,11 +37,11 @@ public class FileBasedDicomImageListViewModelElement extends CachingDicomImageLi
         setUrl(url, checkReadability);
     }
 
-    public FileBasedDicomImageListViewModelElement(String fileName) throws MalformedURLException {
+    public FileBasedDicomImageListViewModelElement(String fileName) {
         this(new File(fileName), true);
     }
 
-    public FileBasedDicomImageListViewModelElement(String fileName, boolean checkReadability) throws MalformedURLException {
+    public FileBasedDicomImageListViewModelElement(String fileName, boolean checkReadability) {
         this(new File(fileName), checkReadability);
     }
 
