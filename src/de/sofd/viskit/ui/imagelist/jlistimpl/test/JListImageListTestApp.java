@@ -228,11 +228,7 @@ public class JListImageListTestApp {
                     for (int i = 0; i < children.length; i++) {
                         if (children[i].endsWith(".dcm")) {
                             System.out.println(children[i]);
-                            try {
-                                model.addElement(new FileBasedDicomImageListViewModelElement(jFileChooser1.getSelectedFile().getPath() + File.separator + children[i]));
-                            } catch (MalformedURLException ex) {
-                                ex.printStackTrace();
-                            }
+                            model.addElement(new FileBasedDicomImageListViewModelElement(jFileChooser1.getSelectedFile().getPath() + File.separator + children[i]));
                         }
                     }
                     viewer.setModel(model);
