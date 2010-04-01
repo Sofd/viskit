@@ -16,7 +16,9 @@ import java.beans.PropertyChangeSupport;
  * The special {@link DynScope} constant {@link #DSK_INHIBIT} is provided for
  * external parties to temporarily disable this controller in any invocations
  * down the callstack from a specific point in an external control flow.
- * 
+ * <p>
+ * TODO: Generalize to ImageListViewCellPropChangeApplyToAllController ?
+ *
  * @author olaf
  */
 public class ImageListViewWindowingApplyToAllController {
@@ -25,30 +27,15 @@ public class ImageListViewWindowingApplyToAllController {
     public static final String PROP_CONTROLLEDIMAGELISTVIEW = "controlledImageListView";
     private boolean enabled;
     public static final String PROP_ENABLED = "enabled";
+    protected boolean ignoreNonInteractiveChanges = true;
+    protected boolean isInhibited = false;
 
     /**
-     * Constant to be passed to the {@link DynScope}facility to inhibit any
-     * activity of instances of this controller down the callstack from a
-     * specific point. Sample usage:
-     * 
-     * <code>
-     * DynScope.runWith(ImageListViewWindowingApplyToAllController.DSK_INHIBIT, new Runnable() {
-     *    @Override
-     *    public void run() {
-     *        // inside this method and in any piece of code called from here,
-     *        // any ImageListViewWindowingApplyToAllController invocation code
-     *        // will be disabled
-     *        ...
-     *        // e.g.:
-     *        JImageListView someList = ...;
-     *        someList.getCell(xx).setWindowWidth(500); // this change WON'T be copied to other cells of someList,
-     *                                                  // even if a ImageListViewWindowingApplyToAllController is
-     *                                                  // set and enabled for it.
-     *    }
-     * }
-     * </code>
+     * Constant to be passed to the {@link DynScope}facility to implement
+     * {@link #runWithAllControllersInhibited(java.lang.Runnable) }. Won't use
+     * a static boolean variable for that because we want this to be thread-local.
      */
-    public static final String DSK_INHIBIT = ImageListViewWindowingApplyToAllController.class.getName() + ".dynscope_inhibit";
+    protected static final String DSK_GLOBAL_INHIBIT = ImageListViewWindowingApplyToAllController.class.getName() + ".dynscope_global_inhibit";
 
     public ImageListViewWindowingApplyToAllController() {
     }
@@ -78,6 +65,24 @@ public class ImageListViewWindowingApplyToAllController {
     }
 
     /**
+     * Get the value of ignoreNonInteractiveChanges
+     *
+     * @return the value of ignoreNonInteractiveChanges
+     */
+    public boolean isIgnoreNonInteractiveChanges() {
+        return ignoreNonInteractiveChanges;
+    }
+
+    /**
+     * Set the value of ignoreNonInteractiveChanges
+     *
+     * @param ignoreNonInteractiveChanges new value of ignoreNonInteractiveChanges
+     */
+    public void setIgnoreNonInteractiveChanges(boolean ignoreNonInteractiveChanges) {
+        this.ignoreNonInteractiveChanges = ignoreNonInteractiveChanges;
+    }
+
+    /**
      * Get the value of controlledImageListView
      *
      * @return the value of controlledImageListView
@@ -103,6 +108,24 @@ public class ImageListViewWindowingApplyToAllController {
         propertyChangeSupport.firePropertyChange(PROP_CONTROLLEDIMAGELISTVIEW, oldControlledImageListView, controlledImageListView);
     }
 
+    public void runWithControllerInhibited(Runnable r) {
+        boolean wasInhibited = isInhibited;
+        isInhibited = true;
+        try {
+            r.run();
+        } finally {
+            isInhibited = wasInhibited;
+        }
+    }
+
+    public static void runWithAllControllersInhibited(Runnable r) {
+        DynScope.runWith(DSK_GLOBAL_INHIBIT, r);
+    }
+
+    protected boolean isInhibited() {
+        return isInhibited || DynScope.contains(DSK_GLOBAL_INHIBIT);
+    }
+
     private PropertyChangeListener cellWindowingChangeHandler = new PropertyChangeListener() {
         private boolean inProgrammedChange = false;
         @Override
@@ -117,8 +140,14 @@ public class ImageListViewWindowingApplyToAllController {
                 !evt.getPropertyName().equals(ImageListViewCell.PROP_WINDOWWIDTH)) {
                 return;
             }
-            if (DynScope.contains(DSK_INHIBIT)) {
+            if (isInhibited()) {
                 return;
+            }
+            if (isIgnoreNonInteractiveChanges()) {
+                ImageListViewCell sourceCell = (ImageListViewCell) evt.getSource();
+                if (! sourceCell.isInteractivelyChangingProp(evt.getPropertyName())) {
+                    return;
+                }
             }
             ImageListViewCell sourceCell = (ImageListViewCell) evt.getSource();
             for (int i = 0; i < controlledImageListView.getLength(); i++) {

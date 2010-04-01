@@ -16,7 +16,7 @@ import de.sofd.viskit.ui.imagelist.JImageListView;
  */
 public abstract class ImageListViewCellPropertySyncControllerBase extends DefaultMultiImageListViewController {
 
-    protected boolean ignoreNonInteractiveChanges = false;
+    protected boolean ignoreNonInteractiveChanges = true;
 
     public ImageListViewCellPropertySyncControllerBase() {
     }
@@ -44,7 +44,7 @@ public abstract class ImageListViewCellPropertySyncControllerBase extends Defaul
     }
 
     /**
-     * Get the value of ignoreNonInteractiveChanges
+     * Get the value of ignoreNonInteractiveChanges (see {@link #setIgnoreNonInteractiveChanges(boolean) })
      *
      * @return the value of ignoreNonInteractiveChanges
      */
@@ -53,7 +53,11 @@ public abstract class ImageListViewCellPropertySyncControllerBase extends Defaul
     }
 
     /**
-     * Set the value of ignoreNonInteractiveChanges
+     * Enable or disable the ignoreNonInteractiveChanges flag (see
+     * {@link #isIgnoreNonInteractiveChanges() }). If this flag is enabled
+     * (it is by default), then the controller will ignore (i.e. not synchronize)
+     * any changes that did not occur as a direct result of a user interaction
+     * (mouse drag etc.). See
      *
      * @param ignoreNonInteractiveChanges new value of ignoreNonInteractiveChanges
      */
@@ -73,7 +77,7 @@ public abstract class ImageListViewCellPropertySyncControllerBase extends Defaul
             if (inChange) {
                 return;
             }
-            if (!isIgnoreNonInteractiveChanges()) {
+            if (isIgnoreNonInteractiveChanges()) {
                 ImageListViewCell sourceCell = (ImageListViewCell) evt.getSource();
                 if (! sourceCell.isInteractivelyChangingProp(evt.getPropertyName())) {
                     return;

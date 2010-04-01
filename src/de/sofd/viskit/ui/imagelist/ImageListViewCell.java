@@ -3,6 +3,7 @@ package de.sofd.viskit.ui.imagelist;
 import de.sofd.viskit.model.ImageListViewModelElement;
 import de.sofd.viskit.model.LookupTable;
 import de.sofd.draw2d.viewer.DrawingViewer;
+import de.sofd.viskit.controllers.ImageListViewMouseWindowingController;
 import java.awt.Dimension;
 import java.awt.geom.Point2D;
 import java.beans.PropertyChangeListener;
@@ -158,10 +159,11 @@ public interface ImageListViewCell {
      * of automatic or internal property changes.
      * <p>
      * This property can't be managed automatically. External parties
-     * (e.g. controllers like the mentioned {@link GenericILVCellPropertySyncController})
+     * (e.g. controllers like {@link ImageListViewMouseWindowingController})
      * must decide themselves which property changes are "interactive"
      * and which are not, and include the respective property in this
      * property if necessary. Convenience methods like
+     * {@link #setInteractively(java.lang.String, java.lang.Object) } or
      * {@link #runWithPropChangingInteractively(java.lang.String, java.lang.Runnable) }
      * make this easier.
      *
@@ -187,6 +189,18 @@ public interface ImageListViewCell {
      */
     public void runWithPropChangingInteractively(String propName, Runnable runnable);
 
+    /**
+     * Set the property named propName to value, with the "interactively changing"
+     * flag (see {@link #getInteractivelyChangingProps() }) of the property activated.
+     * <p>
+     * For example, cell.setInteractively("windowWidth", 100)
+     * will have the same effect as cell.setWindowWidth(100), except
+     * that "windowWidth" will be included in {@link #getInteractivelyChangingProps() }
+     * as long as the setInteractively method runs.
+     *
+     * @param propName
+     * @param value
+     */
     public void setInteractively(String propName, Object value);
 
     void refresh();

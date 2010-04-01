@@ -1,6 +1,5 @@
 package de.sofd.viskit.controllers;
 
-import de.sofd.util.DynScope;
 import de.sofd.util.FloatRange;
 import de.sofd.viskit.model.DicomImageListViewModelElement;
 import de.sofd.viskit.model.ImageListViewModelElement;
@@ -152,7 +151,7 @@ public class ImageListViewInitialWindowingController {
                     return;
                 }
                 final FloatRange usedRange = cell.getDisplayedModelElement().getUsedPixelValuesRange();
-                DynScope.runWith(ImageListViewWindowingApplyToAllController.DSK_INHIBIT, new Runnable() {
+                ImageListViewWindowingApplyToAllController.runWithAllControllersInhibited(new Runnable() {
                     @Override
                     public void run() {
                         cell.setWindowWidth((int) usedRange.getDelta());
