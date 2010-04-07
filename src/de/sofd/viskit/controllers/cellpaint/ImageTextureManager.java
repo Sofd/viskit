@@ -166,6 +166,28 @@ public class ImageTextureManager {
                     preScale = 0.5F;
                     preOffset = 0.5F;
                 } else if (rawImgProxy.getPixelFormat() == RawImage.PIXEL_FORMAT_LUMINANCE &&
+                           rawImgProxy.getPixelType() == RawImage.PIXEL_TYPE_UNSIGNED_16BIT) {
+                    logger.info("(creating texture from raw 16-bit unsigned image pixel data)");
+                    RawImage rawImg = elt.getRawImage();
+                    TextureData imageTextureData =
+                        new TextureData(  GL2.GL_LUMINANCE16F, // int internalFormat,  // GL_*_SNORM result in GL_INVALID_ENUM and all-white texels on tack (GeForce 8600 GT/nvidia 190.42)
+                                          rawImg.getWidth(), // int width,
+                                          rawImg.getHeight(), // int height,
+                                          0,     // int border,
+                                          GL.GL_LUMINANCE, // int pixelFormat,
+                                          GL.GL_UNSIGNED_SHORT, // int pixelType,
+                                          false, // boolean mipmap,
+                                          false, // boolean dataIsCompressed,
+                                          false, // boolean mustFlipVertically,  // TODO: correct?
+                                          rawImg.getPixelData(), // Buffer buffer,
+                                          null // Flusher flusher);
+                                          );
+                    imageTextureData.flush();
+                    gl.glActiveTexture(GL2.GL_TEXTURE1);
+                    imageTexture = new Texture(imageTextureData);
+                    preScale = 1.0F;
+                    preOffset = 0.0F;
+                } else if (rawImgProxy.getPixelFormat() == RawImage.PIXEL_FORMAT_LUMINANCE &&
                            rawImgProxy.getPixelType() == RawImage.PIXEL_TYPE_UNSIGNED_12BIT) {
                     logger.info("(creating texture from raw 12-bit unsigned image pixel data)");
                     RawImage rawImg = elt.getRawImage();
