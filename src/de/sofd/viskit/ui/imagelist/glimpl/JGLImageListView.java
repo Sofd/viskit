@@ -377,6 +377,7 @@ public class JGLImageListView extends JImageListView {
             gl.glClearColor(0,0,0,0);
             gl.glShadeModel(gl.GL_FLAT);
             sharedContextData.ref(getCellsViewer().getContext());
+            logger.debug("new GLCanvas created, refcount=" + sharedContextData.getRefCount());
             if (sharedContextData.getRefCount() == 1) {
                 SharedContextData.callContextInitCallbacks(sharedContextData, gl);
                 SwingUtilities.invokeLater(new Runnable() {
@@ -561,9 +562,11 @@ public class JGLImageListView extends JImageListView {
 
         @Override
         public void dispose(GLAutoDrawable glAutoDrawable) {
+            logger.debug("disposing GLCanvas...");
             sharedContextData.unref();
             instances.remove(JGLImageListView.this);
             // TODO: call dispose methods on paint listeners here
+            logger.debug("GLCanvas disposed, refcount=" + sharedContextData.getRefCount() + ", GLCanvas inst. count = " + instances.size());
         }
 
     };

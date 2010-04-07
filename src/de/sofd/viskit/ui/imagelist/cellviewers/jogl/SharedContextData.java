@@ -7,6 +7,7 @@ import java.util.LinkedList;
 import java.util.Map;
 import javax.media.opengl.GL;
 import javax.media.opengl.GLContext;
+import org.apache.log4j.Logger;
 
 /**
  * {@link GLImageListViewCellViewer} uses this class to inform outside parties
@@ -20,6 +21,8 @@ import javax.media.opengl.GLContext;
  * @author olaf
  */
 public class SharedContextData {
+
+    static final Logger logger = Logger.getLogger(SharedContextData.class);
 
     private int refCount = 0;
     private GLContext glContext = null;
@@ -60,7 +63,7 @@ public class SharedContextData {
         if (refCount == 0) {
             // TODO: this is triggered when the user scrolls through the grid quickly. Investigate!
             //throw new IllegalStateException("too many unref calls...");
-            System.err.println("too many unref calls...");
+            logger.error("too many unref calls...");
             return;
         }
         refCount--;
