@@ -30,6 +30,7 @@ import de.sofd.viskit.model.LookupTable;
 import de.sofd.viskit.ui.imagelist.ImageListViewCell;
 import de.sofd.viskit.ui.imagelist.JImageListView;
 import javax.media.opengl.GLException;
+import org.apache.log4j.Logger;
 
 /**
  * Cell-painting controller that paints the image of the cell's model element
@@ -38,6 +39,8 @@ import javax.media.opengl.GLException;
  * @author olaf
  */
 public class ImageListViewImagePaintController extends CellPaintControllerBase {
+
+    static final Logger logger = Logger.getLogger(ImageListViewImagePaintController.class);
 
     static {
         ShaderManager.init("shader");
@@ -117,7 +120,14 @@ public class ImageListViewImagePaintController extends CellPaintControllerBase {
             gl.glScaled(cell.getScale(), cell.getScale(), 1);
             ImageTextureManager.TextureRef texRef = ImageTextureManager.bindImageTexture(gl, sharedContextData, cell.getDisplayedModelElement());
             LookupTable lut = cell.getLookupTable();
-            rescaleShader.bind();  // TODO: rescaleShader's internal gl may be outdated here...? (but shaders are shared betw. contexts, so if it's outdated, we'll have other problems as well...)
+            try {
+                rescaleShader.bind();  // TODO: rescaleShader's internal gl may be outdated here...? (but shaders are shared betw. contexts, so if it's outdated, we'll have other problems as well...)
+            } catch (GLException e) {
+                // TODO: this is a total hack to "resolve" the above. It should not really be done; there is no guarantee
+                // the exception is raised anyway
+                logger.error("binding the rescale GL shader failed, trying to compile it anew", e);
+                initializeGLShader(gl);
+            }
             rescaleShader.bindUniform("tex", 1);
             if (lut != null) {
                 LookupTableTextureManager.bindLutTexture(gl, sharedContextData, cell.getLookupTable());
