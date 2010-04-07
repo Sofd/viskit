@@ -29,6 +29,7 @@ import de.sofd.viskit.model.ImageListViewModelElement;
 import de.sofd.viskit.model.LookupTable;
 import de.sofd.viskit.ui.imagelist.ImageListViewCell;
 import de.sofd.viskit.ui.imagelist.JImageListView;
+import javax.media.opengl.GLException;
 
 /**
  * Cell-painting controller that paints the image of the cell's model element
@@ -86,7 +87,10 @@ public class ImageListViewImagePaintController extends CellPaintControllerBase {
     
     @Override
     protected void glDrawableInitialized(GLAutoDrawable glAutoDrawable) {
-        GL2 gl = glAutoDrawable.getGL().getGL2();
+        initializeGLShader(glAutoDrawable.getGL().getGL2());
+    }
+    
+    protected void initializeGLShader(GL2 gl) {
         try {
             ShaderManager.read(gl, "rescaleop");
             rescaleShader = ShaderManager.get("rescaleop");
@@ -98,12 +102,10 @@ public class ImageListViewImagePaintController extends CellPaintControllerBase {
             rescaleShader.addProgramUniform("lutTex");
             rescaleShader.addProgramUniform("useLut");
         } catch (Exception e) {
-            System.err.println("FATAL");
-            e.printStackTrace();
-            System.exit(1);
+            throw new RuntimeException("couldn't initialize GL shader: " + e.getLocalizedMessage(), e);
         }
     }
-    
+
     @Override
     protected void paintGL(ImageListViewCell cell, GL2 gl, Map<String, Object> sharedContextData) {
         Dimension cellSize = cell.getLatestSize();
@@ -115,7 +117,7 @@ public class ImageListViewImagePaintController extends CellPaintControllerBase {
             gl.glScaled(cell.getScale(), cell.getScale(), 1);
             ImageTextureManager.TextureRef texRef = ImageTextureManager.bindImageTexture(gl, sharedContextData, cell.getDisplayedModelElement());
             LookupTable lut = cell.getLookupTable();
-            rescaleShader.bind();  // TODO: rescaleShader's internal gl may be outdated here...?
+            rescaleShader.bind();  // TODO: rescaleShader's internal gl may be outdated here...? (but shaders are shared betw. contexts, so if it's outdated, we'll have other problems as well...)
             rescaleShader.bindUniform("tex", 1);
             if (lut != null) {
                 LookupTableTextureManager.bindLutTexture(gl, sharedContextData, cell.getLookupTable());
