@@ -377,7 +377,7 @@ public class JGLImageListView extends JImageListView {
             gl.glClearColor(0,0,0,0);
             gl.glShadeModel(gl.GL_FLAT);
             sharedContextData.ref(getCellsViewer().getContext());
-            logger.debug("new GLCanvas created, refcount=" + sharedContextData.getRefCount());
+            logger.debug("new GLCanvas being initialized, refcount=" + sharedContextData.getRefCount());
             if (sharedContextData.getRefCount() == 1) {
                 SharedContextData.callContextInitCallbacks(sharedContextData, gl);
                 SwingUtilities.invokeLater(new Runnable() {
