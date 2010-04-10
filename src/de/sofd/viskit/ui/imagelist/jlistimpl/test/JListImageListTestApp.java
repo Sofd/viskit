@@ -28,6 +28,7 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JToolBar;
 import javax.swing.ListModel;
+import javax.swing.ListSelectionModel;
 import javax.swing.SwingUtilities;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
@@ -492,10 +493,26 @@ public class JListImageListTestApp {
             //scaleModeCombo.addItem(JGridImageListView.MyScaleMode.newCellGridMode(8, 8));
             toolbar.add(scaleModeCombo);
             scaleModeCombo.setEditable(false);
+            /*
             Bindings.createAutoBinding(UpdateStrategy.READ_WRITE,
                                        listView, BeanProperty.create("scaleMode"),
                                        scaleModeCombo, BeanProperty.create("selectedItem")).bind();
-
+            */
+            scaleModeCombo.addActionListener(new ActionListener() {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    // if exactly one element is selected and visible, make sure it stays so after the scaleMode change
+                    ListSelectionModel sm = listView.getSelectionModel();
+                    int oldSelIdx = sm.getMinSelectionIndex();
+                    boolean mustRetainOldIdx = oldSelIdx != -1 && sm.getMaxSelectionIndex() == oldSelIdx && listView.isVisibleIndex(oldSelIdx);
+                    listView.setScaleMode((JImageListView.ScaleMode) scaleModeCombo.getSelectedItem());
+                    if (mustRetainOldIdx && ! listView.isVisibleIndex(oldSelIdx)) {
+                        listView.getSelectionModel().setLeadSelectionIndex(oldSelIdx);
+                    }
+                }
+            });
+            scaleModeCombo.setSelectedItem(listView.getScaleMode());
+            
             toolbar.add(new JLabel("lut:"));
             final JComboBox lutCombo = new JComboBox();
             for (LookupTable lut : LookupTables.getAllKnownLuts()) {

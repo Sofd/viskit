@@ -595,6 +595,10 @@ public abstract class JImageListView extends JPanel {
 
     public abstract int getLastVisibleIndex();
     
+    public boolean isVisibleIndex(int i) {
+        return i >= getFirstVisibleIndex() && i <= getLastVisibleIndex();
+    }
+    
     public abstract void ensureIndexIsVisible(int idx);
 
     /**
