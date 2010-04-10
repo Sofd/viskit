@@ -695,6 +695,31 @@ public class JGLImageListView extends JImageListView {
         }
         return modelIndex;
     }
+    
+    public Point convertToCellRelative(Point listRelative, int modelIndex) {
+        int fvi = getFirstVisibleIndex();
+        if (modelIndex < fvi) {
+            return null;
+        }
+        int colCount = getScaleMode().getCellColumnCount();
+        int rowCount = getScaleMode().getCellRowCount();
+        int dispCount = colCount * rowCount;
+        if (modelIndex >= fvi + dispCount) {
+            return null;
+        }
+        if (modelIndex >= getModel().getSize()) {
+            return null;
+        }
+        int iBox = modelIndex - fvi;
+        int boxColumn = iBox % colCount;
+        int boxRow = iBox / colCount;
+        Dimension canvasSize = cellsViewer.getSize();
+        int boxWidth = canvasSize.width / colCount;
+        int boxHeight = canvasSize.height / rowCount;
+        int cellPosX = listRelative.x - boxColumn * boxWidth - CELL_BORDER_WIDTH;
+        int cellPosY = listRelative.y - boxRow * boxHeight - CELL_BORDER_WIDTH;
+        return new Point(cellPosX, cellPosY);
+    }
 
     private MouseAdapter cellMouseEventDispatcher = new MouseAdapter() {
 
@@ -761,6 +786,22 @@ public class JGLImageListView extends JImageListView {
             ImageListViewCell sourceCell = getCell(modelIdx);
             MouseEvent ce = Misc.deepCopy(evt);
             ce.setSource(sourceCell);
+            accountForMouseDragSourceCell(ce);
+            ImageListViewCell correctedSourceCell = (ImageListViewCell) ce.getSource();
+            if (!(correctedSourceCell.equals(sourceCell))) {
+                int correctedIndex = getIndexOf(correctedSourceCell);
+                if (correctedIndex == -1) {
+                    forgetCurrentDragStartCell();
+                } else {
+                    Point correctedMousePosInCell = convertToCellRelative(ce.getPoint(), correctedIndex);
+                    if (null != correctedMousePosInCell) {
+                        mousePosInCell = correctedMousePosInCell;
+                        sourceCell = correctedSourceCell;
+                    }
+                }
+                // TODO: the mouse drag source cell correction stops working when the mouse is
+                //       too far outside the whole list, or inside the list but not over any cell
+            }
             ce.translatePoint(mousePosInCell.x - ce.getX(), mousePosInCell.y - ce.getY());
             if (ce instanceof MouseWheelEvent) {
                 fireCellMouseWheelEvent((MouseWheelEvent) ce);
@@ -768,6 +809,43 @@ public class JGLImageListView extends JImageListView {
                 fireCellMouseEvent(ce);
             }
         }
+    }
+
+    private ImageListViewCell currentDragStartCell = null;
+
+    /**
+     * Method for ensuring that when dragging (pressing+moving) the mouse out of
+     * the cell the drag was started in, all the mouse drag events are still
+     * delivered to that cell rather than the cell under the mouse.
+     * <p>
+     * Precondition: evt is a mouse event whose getSource() is the cell under
+     * the mouse
+     * <p>
+     * Postcondition: if evt is a mouseDrag event and the drag began in another
+     * cell, evt's source is set to that cell
+     * 
+     * @param evt
+     */
+    protected void accountForMouseDragSourceCell(MouseEvent evt) {
+        switch (evt.getID()) {
+        case MouseEvent.MOUSE_PRESSED:
+            currentDragStartCell = (ImageListViewCell) evt.getSource();
+            break;
+            
+        case MouseEvent.MOUSE_DRAGGED:
+            if (null != currentDragStartCell) {
+                evt.setSource(currentDragStartCell);
+            }
+            break;
+            
+        default:
+            currentDragStartCell = null;
+        }
+        // TODO: handle the case that currentDragStartCell gets deleted from the list or is scrolled out of view
+    }
+    
+    protected void forgetCurrentDragStartCell() {
+        currentDragStartCell = null;
     }
 
     @Override
