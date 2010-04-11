@@ -26,6 +26,7 @@ public class ImageListViewMouseZoomPanController {
 
     protected JImageListView controlledImageListView;
     public static final String PROP_CONTROLLEDIMAGELISTVIEW = "controlledImageListView";
+    private boolean doubleClickResetEnabled = true;
 
     public ImageListViewMouseZoomPanController() {
     }
@@ -62,6 +63,24 @@ public class ImageListViewMouseZoomPanController {
             controlledImageListView.addCellMouseWheelListener(mouseHandler);
         }
         propertyChangeSupport.firePropertyChange(PROP_CONTROLLEDIMAGELISTVIEW, oldControlledImageListView, controlledImageListView);
+    }
+
+    /**
+     * Get the value of doubleClickResetEnabled
+     *
+     * @return the value of doubleClickResetEnabled
+     */
+    public boolean isDoubleClickResetEnabled() {
+        return doubleClickResetEnabled;
+    }
+
+    /**
+     * Set the value of doubleClickResetEnabled
+     *
+     * @param doubleClickResetEnabled new value of doubleClickResetEnabled
+     */
+    public void setDoubleClickResetEnabled(boolean doubleClickResetEnabled) {
+        this.doubleClickResetEnabled = doubleClickResetEnabled;
     }
 
     private MouseAdapter mouseHandler = new MouseAdapter() {
@@ -117,7 +136,7 @@ public class ImageListViewMouseZoomPanController {
 
         @Override
         public void mouseClicked(MouseEvent evt) {
-            if (controlledImageListView.getModel().getSize() > 0) {
+            if (doubleClickResetEnabled && controlledImageListView.getModel().getSize() > 0) {
                 if (evt.getClickCount() == 2 && evt.isShiftDown() && (evt.getButton() == MOUSE_BUTTON || (evt.getModifiers() & MOUSE_MASK) != 0)) {
                     ImageListViewCell cell = (ImageListViewCell) evt.getSource();
                     if (cell != null) {
