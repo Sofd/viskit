@@ -55,6 +55,7 @@ import de.sofd.viskit.controllers.ImageListViewRoiToolApplicationController;
 import de.sofd.viskit.controllers.ImageListViewSelectionScrollSyncController;
 import de.sofd.viskit.controllers.ImageListViewSelectionSynchronizationController;
 import de.sofd.viskit.controllers.ImageListViewWindowingApplyToAllController;
+import de.sofd.viskit.controllers.ImageListViewZoomPanApplyToAllController;
 import de.sofd.viskit.controllers.MultiILVSyncSetController;
 import de.sofd.viskit.controllers.MultiImageListViewController;
 import de.sofd.viskit.controllers.cellpaint.ImageListViewImagePaintController;
@@ -548,6 +549,13 @@ public class JListImageListTestApp {
             Bindings.createAutoBinding(UpdateStrategy.READ_WRITE,
                     wndAllController, BeanProperty.create("enabled"),
                     wndAllCheckbox, BeanProperty.create("selected")).bind();
+
+            ImageListViewZoomPanApplyToAllController zpAllController = new ImageListViewZoomPanApplyToAllController(listView);
+            JCheckBox zpAllCheckbox = new JCheckBox("z/p all");
+            toolbar.add(zpAllCheckbox);
+            Bindings.createAutoBinding(UpdateStrategy.READ_WRITE,
+                    zpAllController, BeanProperty.create("enabled"),
+                    zpAllCheckbox, BeanProperty.create("selected")).bind();
         }
 
         public JImageListView getListView() {
