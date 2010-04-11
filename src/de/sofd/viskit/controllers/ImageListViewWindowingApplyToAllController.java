@@ -13,10 +13,6 @@ import java.beans.PropertyChangeSupport;
  * parameters of any of the list's cells and copies those changes to all other
  * cells of the list.
  * <p>
- * The special {@link DynScope} constant {@link #DSK_INHIBIT} is provided for
- * external parties to temporarily disable this controller in any invocations
- * down the callstack from a specific point in an external control flow.
- * <p>
  * TODO: Generalize to ImageListViewCellPropChangeApplyToAllController ?
  *
  * @author olaf
@@ -108,6 +104,12 @@ public class ImageListViewWindowingApplyToAllController {
         propertyChangeSupport.firePropertyChange(PROP_CONTROLLEDIMAGELISTVIEW, oldControlledImageListView, controlledImageListView);
     }
 
+    /**
+     * Disable this controller, run the Runnable, and enable the controller
+     * again (if it was enabled before).
+     * 
+     * @param r
+     */
     public void runWithControllerInhibited(Runnable r) {
         boolean wasInhibited = isInhibited;
         isInhibited = true;
@@ -118,6 +120,12 @@ public class ImageListViewWindowingApplyToAllController {
         }
     }
 
+    /**
+     * Disable all instances of this class, run the Runnable, and enable the
+     * instances again (those that were enabled before).
+     * 
+     * @param r
+     */
     public static void runWithAllControllersInhibited(Runnable r) {
         DynScope.runWith(DSK_GLOBAL_INHIBIT, r);
     }
