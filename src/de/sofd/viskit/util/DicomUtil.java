@@ -134,7 +134,7 @@ public class DicomUtil {
         public static final MainAxisDirection[] ALL = {PLUS_X, MINUS_X, PLUS_Y, MINUS_Y, PLUS_Z, MINUS_Z};
     };
     
-    public static enum PatientBasedMainAxisOrientation {SAGGITAL, CORONAL, TRANSVERSAL};
+    public static enum PatientBasedMainAxisOrientation {SAGITAL, CORONAL, TRANSVERSAL};
     
     private static final MainAxisOrientation[] mainAxisOrientationByDirection = {  // index = direction.ordinal()
         MainAxisOrientation.X, MainAxisOrientation.X,
@@ -157,7 +157,7 @@ public class DicomUtil {
     }
     
     private static final PatientBasedMainAxisOrientation[] sliceOrientationBySurfaceNormalOrientation = {  // index = orientation.ordinal(), orient. in patient-based CS
-        PatientBasedMainAxisOrientation.SAGGITAL,
+        PatientBasedMainAxisOrientation.SAGITAL,
         PatientBasedMainAxisOrientation.CORONAL,
         PatientBasedMainAxisOrientation.TRANSVERSAL
     };

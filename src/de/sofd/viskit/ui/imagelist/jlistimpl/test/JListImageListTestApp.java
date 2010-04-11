@@ -371,10 +371,10 @@ public class JListImageListTestApp {
         //listModels.add(getViewerListModelForDirectory(new File("/home/olaf/gi/Images/cd00900__center10102")));
         //listModels.add(getViewerListModelForDirectory(new File("/home/olaf/gi/Images/cd00901__center14146")));
 
-        listModels.add(getViewerListModelForDirectory(new File("/home/olaf/hieronymusr/br312046/images/cd00900__center10102")));
+        listModels.add(getViewerListModelForDirectory(new File("/Users/fokko/disk312046/Images/cd00902__center10101")));
         ///*
-        listModels.add(getViewerListModelForDirectory(new File("/home/olaf/hieronymusr/br312046/images/cd00901__center14146")));
-        listModels.add(getViewerListModelForDirectory(new File("/home/olaf/hieronymusr/br312046/images/cd00902__center10101")));
+        listModels.add(getViewerListModelForDirectory(new File("/Users/fokko/disk312046/Images/cd00903__center10101")));
+        listModels.add(getViewerListModelForDirectory(new File("/Users/fokko/disk312046/Images/cd00904__center10101")));
         /*
         listModels.add(getViewerListModelForDirectory(new File("/home/olaf/hieronymusr/br312046/images/cd00903__center10101")));
         listModels.add(getViewerListModelForDirectory(new File("/home/olaf/hieronymusr/br312046/images/cd00904__center10101")));
