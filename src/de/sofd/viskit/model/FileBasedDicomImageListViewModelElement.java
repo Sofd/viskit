@@ -181,7 +181,7 @@ public class FileBasedDicomImageListViewModelElement extends CachingDicomImageLi
                 urlIn.close();
             }
         } catch (IOException e) {
-            throw new IllegalStateException("error trying to extract image from DICOM object", e);
+            throw new IllegalStateException("error trying to extract image from DICOM object: " + getUrl(), e);
         }
     }
 
@@ -216,7 +216,7 @@ public class FileBasedDicomImageListViewModelElement extends CachingDicomImageLi
                 urlIn.close();
             }
         } catch (IOException e) {
-            throw new IllegalStateException("error trying to extract image from DICOM object", e);
+            throw new IllegalStateException("error trying to extract image from DICOM object: " + getUrl(), e);
         }
     }
 

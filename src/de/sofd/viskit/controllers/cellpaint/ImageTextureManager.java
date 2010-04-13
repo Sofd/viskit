@@ -213,6 +213,7 @@ public class ImageTextureManager {
                 
             }
             if (null == imageTexture) {
+                logger.info("(creating texture from AWT image (fallback -- inefficient))");
                 //TextureData imageTextureData = AWTTextureIO.newTextureData(elt.getImage(), true);  // with mipmapping
                 TextureData imageTextureData = AWTTextureIO.newTextureData(elt.getImage(), false);   // w/o mipmapping
                 imageTextureData.flush();
