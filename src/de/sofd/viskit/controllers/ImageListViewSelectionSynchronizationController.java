@@ -234,7 +234,7 @@ public class ImageListViewSelectionSynchronizationController implements MultiIma
                 }
             } finally {
                 inProgrammedSelectionChange = false;
-                dumpSelectionIndices();
+                //dumpSelectionIndices();
             }
         }
     };
