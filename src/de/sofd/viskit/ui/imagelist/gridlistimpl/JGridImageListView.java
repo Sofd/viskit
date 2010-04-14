@@ -147,7 +147,7 @@ public class JGridImageListView extends JImageListView {
     public static class MyScaleMode implements ScaleMode {
         private final int cellRowCount, cellColumnCount;
 
-        private MyScaleMode(int cellRowCount, int cellColumnCount) {
+        public MyScaleMode(int cellRowCount, int cellColumnCount) {
             this.cellRowCount = cellRowCount;
             this.cellColumnCount = cellColumnCount;
         }
