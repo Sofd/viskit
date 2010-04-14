@@ -146,6 +146,21 @@ public class ImageListViewImagePaintController extends CellPaintControllerBase {
                 float ww = cell.getWindowWidth() / nGrayvalues;
                 float scale = 1F/ww;
                 float offset = (ww/2-wl)*scale;
+                // HACK HACK: Apply DICOM rescale slope/intercept values if present. TODO: DICOM-specific code doesn't belong here?
+                ImageListViewModelElement elt = cell.getDisplayedModelElement();
+                if (elt instanceof DicomImageListViewModelElement) {
+                    try {
+                        DicomImageListViewModelElement delt = (DicomImageListViewModelElement) elt;
+                        if (delt.getDicomImageMetaData().contains(Tag.RescaleSlope) && delt.getDicomImageMetaData().contains(Tag.RescaleIntercept)) {
+                            float rscSlope = delt.getDicomImageMetaData().getFloat(Tag.RescaleSlope);
+                            float rscIntercept = delt.getDicomImageMetaData().getFloat(Tag.RescaleIntercept) / nGrayvalues;
+                            offset = scale * rscIntercept + offset;
+                            scale = scale * rscSlope;
+                        }
+                    } catch (Exception e) {
+                        //ignore -- no error, use default preScale/preOffset
+                    }
+                }
                 rescaleShader.bindUniform("scale", scale);
                 rescaleShader.bindUniform("offset", offset);
                 //rescaleShader.bindUniform("scale", 1.0F);
