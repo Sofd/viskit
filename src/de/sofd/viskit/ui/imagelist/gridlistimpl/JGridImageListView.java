@@ -77,6 +77,8 @@ public class JGridImageListView extends JImageListView {
     public static enum RendererType {JAVA2D, OPENGL};
 
     private RendererType rendererType = RendererType.JAVA2D;
+    
+    private boolean inExternalSetFirstVisibleIdx = false;
 
     public JGridImageListView() {
         setLayout(new GridLayout(1, 1));
@@ -84,6 +86,14 @@ public class JGridImageListView extends JImageListView {
             @Override
             protected void setupUiInteractions() {
                 //super.setupUiInteractions();
+            }
+            @Override
+            public void setFirstDisplayedIdx(int newValue) {
+                if (!inExternalSetFirstVisibleIdx) {
+                    JGridImageListView.this.setFirstVisibleIndex(newValue);
+                    return;
+                }
+                super.setFirstDisplayedIdx(newValue);
             }
         };
         setupInternalUiInteractions();
@@ -177,7 +187,12 @@ public class JGridImageListView extends JImageListView {
     @Override
     public void setFirstVisibleIndex(int newValue) {
         super.setFirstVisibleIndex(newValue);
-        
+        inExternalSetFirstVisibleIdx = true;
+        try {
+            wrappedGridList.setFirstDisplayedIdx(getFirstVisibleIndex());
+        } finally {
+            inExternalSetFirstVisibleIdx = false;
+        }
     }
     
     @Override
