@@ -18,9 +18,11 @@ import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.GridLayout;
 import java.awt.Point;
+import java.awt.event.ActionEvent;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.awt.event.InputEvent;
+import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelEvent;
@@ -30,14 +32,23 @@ import java.util.Collection;
 
 import javax.media.opengl.GL;
 import javax.media.opengl.GLAutoDrawable;
+import javax.swing.AbstractAction;
+import javax.swing.Action;
+import javax.swing.ActionMap;
 import javax.swing.DefaultListModel;
+import javax.swing.InputMap;
 import javax.swing.JComponent;
 import javax.swing.JPanel;
+import javax.swing.KeyStroke;
 import javax.swing.ListModel;
+import javax.swing.ListSelectionModel;
 import javax.swing.SwingUtilities;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.LineBorder;
 import javax.swing.event.ListDataEvent;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
+
 import org.dcm4che2.data.Tag;
 
 /**
@@ -69,7 +80,13 @@ public class JGridImageListView extends JImageListView {
 
     public JGridImageListView() {
         setLayout(new GridLayout(1, 1));
-        wrappedGridList = new JGridList();
+        wrappedGridList = new JGridList() {
+            @Override
+            protected void setupUiInteractions() {
+                //super.setupUiInteractions();
+            }
+        };
+        setupInternalUiInteractions();
         wrappedGridList.setVisible(true);
         this.add(wrappedGridList);
         setModel(new DefaultListModel());
@@ -129,12 +146,46 @@ public class JGridImageListView extends JImageListView {
         wrappedGridList.setModel(wrappedGridListModel = copyModel(getModel()));
     }
 
+    // delegate our selectionModel property to wrappedGridList's selectionModel
+    
     @Override
-    public int getLastVisibleIndex() {
-        return getFirstVisibleIndex() + getScaleMode().getCellColumnCount() * getScaleMode().getCellRowCount();
+    public ListSelectionModel getSelectionModel() {
+        return wrappedGridList.getSelectionModel();
     }
     
-    //TODO: impl: setFirstVisibleIndex(), + prop change event
+    @Override
+    public void setSelectionModel(ListSelectionModel selectionModel) {
+        ListSelectionModel oldSelectionModel = getSelectionModel();
+        if (oldSelectionModel != null) {
+            oldSelectionModel.removeListSelectionListener(listSelectionListener);
+        }
+        wrappedGridList.setSelectionModel(selectionModel);
+        if (wrappedGridList.getSelectionModel() != null) {
+            wrappedGridList.getSelectionModel().addListSelectionListener(listSelectionListener);
+        }
+        firePropertyChange(PROP_SELECTIONMODEL, oldSelectionModel, selectionModel);
+    }
+    
+    private ListSelectionListener listSelectionListener = new ListSelectionListener() {
+        @Override
+        public void valueChanged(ListSelectionEvent e) {
+            selectionChanged(e);
+            fireListSelectionEvent(e.getFirstIndex(), e.getLastIndex(), e.getValueIsAdjusting());
+        }
+    };
+    
+    @Override
+    public void setFirstVisibleIndex(int newValue) {
+        super.setFirstVisibleIndex(newValue);
+        
+    }
+    
+    @Override
+    public int getLastVisibleIndex() {
+        return getFirstVisibleIndex() + getScaleMode().getCellColumnCount() * getScaleMode().getCellRowCount() - 1;
+    }
+    
+    //TODO: setFirstVisibleIndex() prop change event
     
     public void ensureIndexIsVisible(int idx) {
         wrappedGridList.ensureIndexIsVisible(idx);
@@ -503,4 +554,78 @@ public class JGridImageListView extends JImageListView {
         }
     }
 
+    protected void setupInternalUiInteractions() {
+        wrappedGridList.setFocusable(true);
+        wrappedGridList.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                if (null == getSelectionModel() || null == getModel()) {
+                    return;
+                }
+                requestFocus();
+                if (e.getButton() != MouseEvent.BUTTON1) { return; }
+                int clickedModelIndex = wrappedGridList.findModelIndexAt(e.getPoint());
+                if (clickedModelIndex != -1) {
+                    if ((e.getModifiersEx() & MouseEvent.CTRL_DOWN_MASK) == 0) {
+                        getSelectionModel().setSelectionInterval(clickedModelIndex, clickedModelIndex);
+                    } else {
+                        getSelectionModel().addSelectionInterval(clickedModelIndex, clickedModelIndex);
+                    }
+                }
+            }
+        });
+
+        InputMap inputMap = this.getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
+        ActionMap actionMap = this.getActionMap();
+        if (inputMap != null && actionMap != null) {
+            inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_UP, 0), "up");
+            actionMap.put("up", new AbstractAction() {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    shiftSelectionBy(-getScaleMode().getCellColumnCount());
+                }
+            });
+            inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_DOWN, 0), "down");
+            actionMap.put("down", new AbstractAction() {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    shiftSelectionBy(getScaleMode().getCellColumnCount());
+                }
+            });
+            inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_LEFT, 0), "left");
+            actionMap.put("left", new SelectionShiftAction(-1));
+            inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_RIGHT, 0), "right");
+            actionMap.put("right", new SelectionShiftAction(1));
+        }
+    }
+
+    protected Action upAction = new AbstractAction() {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+        }
+    };
+    
+    protected void shiftSelectionBy(int shift) {
+        if (null == getSelectionModel() || null == getModel()) {
+            return;
+        }
+        int idx = getSelectionModel().getLeadSelectionIndex();
+        if (idx != -1) {
+            idx += shift;
+            if (idx >= 0 && idx < getModel().getSize()) {
+                getSelectionModel().setSelectionInterval(idx, idx);
+            }
+        }
+    }
+    
+    protected class SelectionShiftAction extends AbstractAction {
+        private int shift;
+        public SelectionShiftAction(int shift) {
+            this.shift = shift;
+        }
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            shiftSelectionBy(shift);
+        }
+    }
 }
