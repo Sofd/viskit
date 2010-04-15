@@ -15,6 +15,7 @@ import de.sofd.viskit.ui.imagelist.cellviewers.java2d.ImageListViewCellViewer;
 import de.sofd.viskit.ui.imagelist.event.cellpaint.ImageListViewCellPaintListener;
 
 import java.awt.Color;
+import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.GridLayout;
 import java.awt.Point;
@@ -97,6 +98,7 @@ public class JGridImageListView extends JImageListView {
             }
         };
         setupInternalUiInteractions();
+        wrappedGridList.setBackground(Color.BLACK);
         wrappedGridList.setVisible(true);
         this.add(wrappedGridList);
         setModel(new DefaultListModel());
@@ -116,6 +118,11 @@ public class JGridImageListView extends JImageListView {
                 //   as well?
             }
         });
+    }
+    
+    @Override
+    protected void copyUiStateToSubComponent(Component c) {
+        // do nothing so we keep the wrappedGridList's bg color
     }
 
     @Override
@@ -392,6 +399,7 @@ public class JGridImageListView extends JImageListView {
                 switch (rendererType) {
                     case JAVA2D:
                         resultComponent = new ImageListViewCellViewer(cell);
+                        resultComponent.setBackground(Color.BLACK);
                         break;
 
                     case OPENGL:

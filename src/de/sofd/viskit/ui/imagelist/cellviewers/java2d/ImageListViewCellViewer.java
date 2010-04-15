@@ -1,5 +1,6 @@
 package de.sofd.viskit.ui.imagelist.cellviewers.java2d;
 
+import java.awt.Color;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.geom.AffineTransform;
@@ -29,9 +30,9 @@ public class ImageListViewCellViewer extends BaseImageListViewCellViewer {
         repaint();
     }
 
-
     @Override
     protected void paintComponent(Graphics g) {
+        super.paintComponent(g);
         Graphics2D g2d = (Graphics2D) g;
         super.paintComponent(g2d);
 
