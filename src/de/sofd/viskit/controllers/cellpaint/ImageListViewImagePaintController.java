@@ -225,30 +225,37 @@ public class ImageListViewImagePaintController extends CellPaintControllerBase {
     }
 
     protected BufferedImage getWindowedImage(ImageListViewCell displayedCell) {
-        // TODO: caching of windowed images, probably using
-        //       displayedCell.getDisplayedModelElement().getImageKey() and the windowing parameters as the cache key
-        BufferedImage srcImg = displayedCell.getDisplayedModelElement().getImage();
-        BufferedImage windowedImage;
-        // TODO: use the model element's RawImage instead of the BufferedImage when possible
-        ///*
-        if (srcImg.getColorModel().getColorSpace().getType() == ColorSpace.TYPE_GRAY) {
-            windowedImage = windowMonochrome(displayedCell, srcImg, displayedCell.getWindowLocation(), displayedCell.getWindowWidth());
-        } else if (srcImg.getColorModel().getColorSpace().isCS_sRGB()) {
-            windowedImage = windowRGB(srcImg, displayedCell.getWindowLocation(), displayedCell.getWindowWidth());
+        BufferedImage windowedImage = tryWindowRawImage(displayedCell);
+        if (windowedImage != null) {
+            return windowedImage;
         } else {
-            throw new IllegalStateException("don't know how to window image with color space " + srcImg.getColorModel().getColorSpace());
-            // TODO: do something cleverer here? Like, create windowedImage
-            //    with a color space that's "compatible" to srcImg (using
-            //    some createCompatibleImage() method in BufferedImage or elsewhere),
-            //    window all bands of that, and let the JRE figure out how to draw the result?
+            // TODO: caching of windowed images, probably using
+            //       displayedCell.getDisplayedModelElement().getImageKey() and the windowing parameters as the cache key
+            BufferedImage srcImg = displayedCell.getDisplayedModelElement().getImage();
+            // TODO: use the model element's RawImage instead of the BufferedImage when possible
+            ///*
+            if (srcImg.getColorModel().getColorSpace().getType() == ColorSpace.TYPE_GRAY) {
+                windowedImage = windowMonochrome(displayedCell, srcImg, displayedCell.getWindowLocation(), displayedCell.getWindowWidth());
+            } else if (srcImg.getColorModel().getColorSpace().isCS_sRGB()) {
+                windowedImage = windowRGB(srcImg, displayedCell.getWindowLocation(), displayedCell.getWindowWidth());
+            } else {
+                throw new IllegalStateException("don't know how to window image with color space " + srcImg.getColorModel().getColorSpace());
+                // TODO: do something cleverer here? Like, create windowedImage
+                //    with a color space that's "compatible" to srcImg (using
+                //    some createCompatibleImage() method in BufferedImage or elsewhere),
+                //    window all bands of that, and let the JRE figure out how to draw the result?
+            }
+            //*/
+            //windowedImage = windowWithRasterOp(srcImg, windowLocation, windowWidth);
+            //windowedImage = srcImg;
+    
+            return windowedImage;
         }
-        //*/
-        //windowedImage = windowWithRasterOp(srcImg, windowLocation, windowWidth);
-        //windowedImage = srcImg;
-
-        return windowedImage;
     }
 
+    private BufferedImage tryWindowRawImage(ImageListViewCell displayedCell) {
+        return null;
+    }
 
     private BufferedImage windowMonochrome(ImageListViewCell displayedCell, BufferedImage srcImg, float windowLocation, float windowWidth) {
         BufferedImage destImg = new BufferedImage(srcImg.getWidth(), srcImg.getHeight(), BufferedImage.TYPE_INT_RGB);
