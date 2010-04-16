@@ -144,27 +144,35 @@ public class JGLImageListView extends JImageListView {
     @Override
     protected void modelIntervalAdded(ListDataEvent e) {
         super.modelIntervalAdded(e);
-        cellsViewer.repaint();
-        // TODO: set initial scale
+        if (cellsViewer != null) {
+            cellsViewer.repaint();
+            // TODO: set initial scale
+        }
     }
 
     @Override
     protected void modelIntervalRemoved(ListDataEvent e) {
         super.modelIntervalRemoved(e);
-        cellsViewer.repaint();
+        if (cellsViewer != null) {
+            cellsViewer.repaint();
+        }
     }
 
     @Override
     protected void modelContentsChanged(ListDataEvent e) {
         super.modelContentsChanged(e);
-        cellsViewer.repaint();
+        if (cellsViewer != null) {
+            cellsViewer.repaint();
+        }
     }
 
     @Override
     public void setFirstVisibleIndex(int newValue) {
         super.setFirstVisibleIndex(newValue);
         updateScrollbar();
-        cellsViewer.repaint();
+        if (cellsViewer != null) {
+            cellsViewer.repaint();
+        }
     }
     
     @Override
