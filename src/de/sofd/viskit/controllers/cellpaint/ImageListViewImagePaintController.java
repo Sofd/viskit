@@ -11,6 +11,7 @@ import java.awt.image.BufferedImageOp;
 import java.awt.image.Raster;
 import java.awt.image.RescaleOp;
 import java.awt.image.WritableRaster;
+import java.nio.ShortBuffer;
 import java.util.Map;
 
 import javax.media.opengl.GL;
@@ -298,83 +299,45 @@ public class ImageListViewImagePaintController extends CellPaintControllerBase {
         // transformation to output grayscale range ( [0,256) )
         LinAlg.matrMult1D(new float[]{256, 0}, pixelTransform, pixelTransform);
         
-        return null;
-        
-        /*
-        Texture imageTexture = null;
-        float preScale = 1.0F, preOffset = 0.0F;
-        if (elt.hasRawImage() && elt.isRawImagePreferable()) {
-            RawImage rawImgProxy = elt.getProxyRawImage();
-            if (rawImgProxy.getPixelFormat() == RawImage.PIXEL_FORMAT_LUMINANCE &&
-                    rawImgProxy.getPixelType() == RawImage.PIXEL_TYPE_SIGNED_16BIT) {
-                logger.info("(creating texture from raw 16-bit signed image pixel data)");
-                RawImage rawImg = elt.getRawImage();
-                TextureData imageTextureData =
-                    new TextureData(  GL2.GL_LUMINANCE16F, // int internalFormat,  // GL_*_SNORM result in GL_INVALID_ENUM and all-white texels on tack (GeForce 8600 GT/nvidia 190.42)
-                                      rawImg.getWidth(), // int width,
-                                      rawImg.getHeight(), // int height,
-                                      0,     // int border,
-                                      GL.GL_LUMINANCE, // int pixelFormat,
-                                      GL.GL_SHORT, // int pixelType,
-                                      false, // boolean mipmap,
-                                      false, // boolean dataIsCompressed,
-                                      false, // boolean mustFlipVertically,  // TODO: correct?
-                                      rawImg.getPixelData(), // Buffer buffer,
-                                      null // Flusher flusher);
-                                      );
-                imageTextureData.flush();
-                gl.glActiveTexture(GL2.GL_TEXTURE1);
-                imageTexture = new Texture(imageTextureData);
-                preScale = 0.5F;
-                preOffset = 0.5F;
-            } else if (rawImgProxy.getPixelFormat() == RawImage.PIXEL_FORMAT_LUMINANCE &&
-                       rawImgProxy.getPixelType() == RawImage.PIXEL_TYPE_UNSIGNED_16BIT) {
-                logger.info("(creating texture from raw 16-bit unsigned image pixel data)");
-                RawImage rawImg = elt.getRawImage();
-                TextureData imageTextureData =
-                    new TextureData(  GL2.GL_LUMINANCE16F, // int internalFormat,  // GL_*_SNORM result in GL_INVALID_ENUM and all-white texels on tack (GeForce 8600 GT/nvidia 190.42)
-                                      rawImg.getWidth(), // int width,
-                                      rawImg.getHeight(), // int height,
-                                      0,     // int border,
-                                      GL.GL_LUMINANCE, // int pixelFormat,
-                                      GL.GL_UNSIGNED_SHORT, // int pixelType,
-                                      false, // boolean mipmap,
-                                      false, // boolean dataIsCompressed,
-                                      false, // boolean mustFlipVertically,  // TODO: correct?
-                                      rawImg.getPixelData(), // Buffer buffer,
-                                      null // Flusher flusher);
-                                      );
-                imageTextureData.flush();
-                gl.glActiveTexture(GL2.GL_TEXTURE1);
-                imageTexture = new Texture(imageTextureData);
-                preScale = 1.0F;
-                preOffset = 0.0F;
-            } else if (rawImgProxy.getPixelFormat() == RawImage.PIXEL_FORMAT_LUMINANCE &&
-                       rawImgProxy.getPixelType() == RawImage.PIXEL_TYPE_UNSIGNED_12BIT) {
-                logger.info("(creating texture from raw 12-bit unsigned image pixel data)");
-                RawImage rawImg = elt.getRawImage();
-                TextureData imageTextureData =
-                    new TextureData(  GL2.GL_LUMINANCE16, // NOT GL_LUMINANCE12 b/c pixelType is 16-bit and we'd thus lose precision
-                                      rawImg.getWidth(), // int width,
-                                      rawImg.getHeight(), // int height,
-                                      0,     // int border,
-                                      GL.GL_LUMINANCE, // int pixelFormat,
-                                      GL.GL_UNSIGNED_SHORT, // int pixelType,
-                                      false, // boolean mipmap,
-                                      false, // boolean dataIsCompressed,
-                                      false, // boolean mustFlipVertically,  // TODO: correct?
-                                      rawImg.getPixelData(), // Buffer buffer,
-                                      null // Flusher flusher);
-                                      );
-                imageTextureData.flush();
-                gl.glActiveTexture(GL2.GL_TEXTURE1);
-                imageTexture = new Texture(imageTextureData);
-                preScale = (float) (1<<16) / (1<<12);
-                preOffset = 0.0F;
+        RawImage rimg = elt.getRawImage();
+        if (rimg.getPixelFormat() != RawImage.PIXEL_FORMAT_LUMINANCE) {
+            return null;  // can't window raw RGB images for now
+        } else {
+            switch (rimg.getPixelType()) {
+            // will only window RawImages whose pixelData buffer is a ShortBuffer for now
+            case RawImage.PIXEL_TYPE_SIGNED_12BIT:
+            case RawImage.PIXEL_TYPE_SIGNED_16BIT:
+            case RawImage.PIXEL_TYPE_UNSIGNED_12BIT:
+            case RawImage.PIXEL_TYPE_UNSIGNED_16BIT:
+                //TODO: maybe reuse BufferedImages of the same size to relieve the GC
+                float txscale = pixelTransform[0];
+                float txoffset = pixelTransform[1];
+                ShortBuffer srcBuffer = (ShortBuffer) rimg.getPixelData();
+                int w = rimg.getWidth();
+                int h = rimg.getHeight();
+                int index = 0;
+                BufferedImage result = new BufferedImage(w, h, BufferedImage.TYPE_INT_RGB);
+                WritableRaster resultRaster = result.getRaster();
+                for (int y = 0; y < h; y++) {
+                    for (int x = 0; x < w; x++) {
+                        float destGrayValue = txscale * srcBuffer.get(index++) + txoffset;
+                        //clamp
+                        if (destGrayValue < 0) {
+                            destGrayValue = 0;
+                        } else if (destGrayValue >= 256) {
+                            destGrayValue = 255;
+                        }
+                        resultRaster.setSample(x, y, 0, destGrayValue);
+                        resultRaster.setSample(x, y, 1, destGrayValue);
+                        resultRaster.setSample(x, y, 2, destGrayValue);
+                    }
+                }
+                return result;
+                
+            default:
+                return null;
             }
-            
         }
-        */
     }
 
     private BufferedImage windowMonochrome(ImageListViewCell displayedCell, BufferedImage srcImg, float windowLocation, float windowWidth) {
