@@ -13,20 +13,25 @@ import java.awt.image.RescaleOp;
 import java.awt.image.WritableRaster;
 import java.util.Map;
 
+import javax.media.opengl.GL;
 import javax.media.opengl.GL2;
 import javax.media.opengl.GLAutoDrawable;
 
 import org.dcm4che2.data.DicomObject;
 import org.dcm4che2.data.Tag;
 
+import com.sun.opengl.util.texture.Texture;
 import com.sun.opengl.util.texture.TextureCoords;
+import com.sun.opengl.util.texture.TextureData;
 
 import de.sofd.util.FloatRange;
 import de.sofd.viskit.image3D.jogl.util.GLShader;
+import de.sofd.viskit.image3D.jogl.util.LinAlg;
 import de.sofd.viskit.image3D.jogl.util.ShaderManager;
 import de.sofd.viskit.model.DicomImageListViewModelElement;
 import de.sofd.viskit.model.ImageListViewModelElement;
 import de.sofd.viskit.model.LookupTable;
+import de.sofd.viskit.model.RawImage;
 import de.sofd.viskit.ui.imagelist.ImageListViewCell;
 import de.sofd.viskit.ui.imagelist.JImageListView;
 import javax.media.opengl.GLException;
@@ -254,7 +259,122 @@ public class ImageListViewImagePaintController extends CellPaintControllerBase {
     }
 
     private BufferedImage tryWindowRawImage(ImageListViewCell displayedCell) {
+        ImageListViewModelElement elt = displayedCell.getDisplayedModelElement();
+        if (!(elt.hasRawImage() && elt.isRawImagePreferable())) {
+            return null;
+        }
+        
+        logger.debug("trying to create windowed BufferedImage for: " + elt.getImageKey());
+
+        float[] pixelTransform = new float[]{1,0}; // compute the complete raw input => output pixel transformation in here
+        
+        // rescale/slope tags
+        if (elt instanceof DicomImageListViewModelElement) {
+            try {
+                DicomImageListViewModelElement delt = (DicomImageListViewModelElement) elt;
+                if (delt.getDicomImageMetaData().contains(Tag.RescaleSlope) && delt.getDicomImageMetaData().contains(Tag.RescaleIntercept)) {
+                    float rscSlope = delt.getDicomImageMetaData().getFloat(Tag.RescaleSlope);
+                    float rscIntercept = delt.getDicomImageMetaData().getFloat(Tag.RescaleIntercept);
+                    LinAlg.matrMult1D(new float[]{rscSlope, rscIntercept}, pixelTransform, pixelTransform);
+                }
+            } catch (Exception e) {
+                //ignore -- no error
+            }
+        }
+        
+        // normalization to [0,1]
+        FloatRange pxValuesRange = elt.getPixelValuesRange();
+        float minGrayvalue = pxValuesRange.getMin();
+        float nGrayvalues = pxValuesRange.getDelta();
+        LinAlg.matrMult1D(new float[]{1.0F/nGrayvalues, minGrayvalue/nGrayvalues}, pixelTransform, pixelTransform);
+        
+        // window level/width
+        float wl = (displayedCell.getWindowLocation() - minGrayvalue) / nGrayvalues;
+        float ww = displayedCell.getWindowWidth() / nGrayvalues;
+        float scale = 1F/ww;
+        float offset = (ww/2-wl)*scale;
+        LinAlg.matrMult1D(new float[]{scale, offset}, pixelTransform, pixelTransform);
+        
+        // transformation to output grayscale range ( [0,256) )
+        LinAlg.matrMult1D(new float[]{256, 0}, pixelTransform, pixelTransform);
+        
         return null;
+        
+        /*
+        Texture imageTexture = null;
+        float preScale = 1.0F, preOffset = 0.0F;
+        if (elt.hasRawImage() && elt.isRawImagePreferable()) {
+            RawImage rawImgProxy = elt.getProxyRawImage();
+            if (rawImgProxy.getPixelFormat() == RawImage.PIXEL_FORMAT_LUMINANCE &&
+                    rawImgProxy.getPixelType() == RawImage.PIXEL_TYPE_SIGNED_16BIT) {
+                logger.info("(creating texture from raw 16-bit signed image pixel data)");
+                RawImage rawImg = elt.getRawImage();
+                TextureData imageTextureData =
+                    new TextureData(  GL2.GL_LUMINANCE16F, // int internalFormat,  // GL_*_SNORM result in GL_INVALID_ENUM and all-white texels on tack (GeForce 8600 GT/nvidia 190.42)
+                                      rawImg.getWidth(), // int width,
+                                      rawImg.getHeight(), // int height,
+                                      0,     // int border,
+                                      GL.GL_LUMINANCE, // int pixelFormat,
+                                      GL.GL_SHORT, // int pixelType,
+                                      false, // boolean mipmap,
+                                      false, // boolean dataIsCompressed,
+                                      false, // boolean mustFlipVertically,  // TODO: correct?
+                                      rawImg.getPixelData(), // Buffer buffer,
+                                      null // Flusher flusher);
+                                      );
+                imageTextureData.flush();
+                gl.glActiveTexture(GL2.GL_TEXTURE1);
+                imageTexture = new Texture(imageTextureData);
+                preScale = 0.5F;
+                preOffset = 0.5F;
+            } else if (rawImgProxy.getPixelFormat() == RawImage.PIXEL_FORMAT_LUMINANCE &&
+                       rawImgProxy.getPixelType() == RawImage.PIXEL_TYPE_UNSIGNED_16BIT) {
+                logger.info("(creating texture from raw 16-bit unsigned image pixel data)");
+                RawImage rawImg = elt.getRawImage();
+                TextureData imageTextureData =
+                    new TextureData(  GL2.GL_LUMINANCE16F, // int internalFormat,  // GL_*_SNORM result in GL_INVALID_ENUM and all-white texels on tack (GeForce 8600 GT/nvidia 190.42)
+                                      rawImg.getWidth(), // int width,
+                                      rawImg.getHeight(), // int height,
+                                      0,     // int border,
+                                      GL.GL_LUMINANCE, // int pixelFormat,
+                                      GL.GL_UNSIGNED_SHORT, // int pixelType,
+                                      false, // boolean mipmap,
+                                      false, // boolean dataIsCompressed,
+                                      false, // boolean mustFlipVertically,  // TODO: correct?
+                                      rawImg.getPixelData(), // Buffer buffer,
+                                      null // Flusher flusher);
+                                      );
+                imageTextureData.flush();
+                gl.glActiveTexture(GL2.GL_TEXTURE1);
+                imageTexture = new Texture(imageTextureData);
+                preScale = 1.0F;
+                preOffset = 0.0F;
+            } else if (rawImgProxy.getPixelFormat() == RawImage.PIXEL_FORMAT_LUMINANCE &&
+                       rawImgProxy.getPixelType() == RawImage.PIXEL_TYPE_UNSIGNED_12BIT) {
+                logger.info("(creating texture from raw 12-bit unsigned image pixel data)");
+                RawImage rawImg = elt.getRawImage();
+                TextureData imageTextureData =
+                    new TextureData(  GL2.GL_LUMINANCE16, // NOT GL_LUMINANCE12 b/c pixelType is 16-bit and we'd thus lose precision
+                                      rawImg.getWidth(), // int width,
+                                      rawImg.getHeight(), // int height,
+                                      0,     // int border,
+                                      GL.GL_LUMINANCE, // int pixelFormat,
+                                      GL.GL_UNSIGNED_SHORT, // int pixelType,
+                                      false, // boolean mipmap,
+                                      false, // boolean dataIsCompressed,
+                                      false, // boolean mustFlipVertically,  // TODO: correct?
+                                      rawImg.getPixelData(), // Buffer buffer,
+                                      null // Flusher flusher);
+                                      );
+                imageTextureData.flush();
+                gl.glActiveTexture(GL2.GL_TEXTURE1);
+                imageTexture = new Texture(imageTextureData);
+                preScale = (float) (1<<16) / (1<<12);
+                preOffset = 0.0F;
+            }
+            
+        }
+        */
     }
 
     private BufferedImage windowMonochrome(ImageListViewCell displayedCell, BufferedImage srcImg, float windowLocation, float windowWidth) {

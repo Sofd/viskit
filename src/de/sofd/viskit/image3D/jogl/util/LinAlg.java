@@ -167,6 +167,34 @@ public class LinAlg {
         multiply(1.0F/l, v, dest);
         return dest;
     }
+    
+    /**
+     * Like {@link #fillMultiplication(float[], float[], float[])}, but for R^1 (i.e.
+     * 2x2 matrices describing affine transformations in R^1 ("y=mx+n"), useful for
+     * combining (concatening) things like rescale/slope (windowing) transformations
+     * of grey values.
+     * 
+     * @param a
+     * @param b
+     * @param res
+     * @return
+     */
+    public static float[] matrMult1D(float[] a, float[] b, float[] res) {
+        float[] a2 = a;
+        if (a2 == res) {
+            a2 = copyArr(a, null);
+        }
+        float[] b2 = b;
+        if (b2 == res) {
+            b2 = copyArr(b, null);
+        }
+        if (null == res) {
+            res = new float[2];
+        }
+        res[0] = a[0] * b[0];
+        res[1] = a[0] * b[1] + a[1];
+        return res;
+    }
 
     public static float[] matrixJ2DtoJOGL(AffineTransform at) {
         double[] values = new double[6];
