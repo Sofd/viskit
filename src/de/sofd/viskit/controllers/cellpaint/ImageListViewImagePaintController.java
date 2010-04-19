@@ -265,7 +265,7 @@ public class ImageListViewImagePaintController extends CellPaintControllerBase {
             return null;
         }
         
-        logger.debug("trying to create windowed BufferedImage for: " + elt.getImageKey());
+        //logger.debug("trying to create windowed BufferedImage for: " + elt.getImageKey());
 
         float[] pixelTransform = new float[]{1,0}; // compute the complete raw input => output pixel transformation in here
         

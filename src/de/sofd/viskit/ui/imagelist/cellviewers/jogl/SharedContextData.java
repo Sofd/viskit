@@ -44,6 +44,10 @@ public class SharedContextData {
     // in it, when it is first created, Check for the presence of that mark whenever the context is
     // to be used, re-initialize the context if the mark is missing.
 
+    // TODO: on top of that, why do we have to do all this ref conting stuff anyway? It would be much better
+    // to have an offscreen GL context that is never disposed (before the JVM session ends), and share all
+    // shared context data with that, so it'll never run out of date
+
     /**
      * Used by GLContext creators (e.g. ) only (when initializing a new context).
      *
@@ -68,7 +72,11 @@ public class SharedContextData {
         }
         refCount--;
         if (refCount == 0) {
+            // at this point, there are no longer any SharedContextDatas in the JVM (this mostly happens
+            // when the last GLCanvas/GLDrawable is disposed). Ideally, this would never happen because
+            // we should have an offscreen GL context that is never disposed (see above todo)
             this.glContext = null;
+            this.attributes.clear();
         }
     }
 
