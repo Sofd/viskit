@@ -102,7 +102,95 @@ public class LinAlg {
         }
     }
 
+    public static float[] inverse(float[] src, float[] dest) {
+        assert(src.length == 4);
+        if (dest == null) {
+            dest = new float[src.length];
+        } else if (dest == src) {
+            src = copyArr(src, null);
+        }
+        // adapted from http://download.intel.com/design/PentiumIII/sml/24504301.pdf (Cramer's rule)
+        float[] tmp = new float[12]; /* temp array for pairs */
+        float[] srct = new float[16]; /* array of transpose source matrix */
+        float det; /* determinant */
+        /* transpose matrix */
+        for (int i = 0; i < 4; i++) {
+            srct[i] = src[i*4];
+            srct[i + 4] = src[i*4 + 1];
+            srct[i + 8] = src[i*4 + 2];
+            srct[i + 12] = src[i*4 + 3];
+        }
+        /* calculate pairs for first 8 elements (cofactors) */
+        tmp[0] = srct[10] * srct[15];
+        tmp[1] = srct[11] * srct[14];
+        tmp[2] = srct[9] * srct[15];
+        tmp[3] = srct[11] * srct[13];
+        tmp[4] = srct[9] * srct[14];
+        tmp[5] = srct[10] * srct[13];
+        tmp[6] = srct[8] * srct[15];
+        tmp[7] = srct[11] * srct[12];
+        tmp[8] = srct[8] * srct[14];
+        tmp[9] = srct[10] * srct[12];
+        tmp[10] = srct[8] * srct[13];
+        tmp[11] = srct[9] * srct[12];
+        /* calculate first 8 elements (cofactors) */
+        dest[0] = tmp[0]*srct[5] + tmp[3]*srct[6] + tmp[4]*srct[7];
+        dest[0] -= tmp[1]*srct[5] + tmp[2]*srct[6] + tmp[5]*srct[7];
+        dest[1] = tmp[1]*srct[4] + tmp[6]*srct[6] + tmp[9]*srct[7];
+        dest[1] -= tmp[0]*srct[4] + tmp[7]*srct[6] + tmp[8]*srct[7];
+        dest[2] = tmp[2]*srct[4] + tmp[7]*srct[5] + tmp[10]*srct[7];
+        dest[2] -= tmp[3]*srct[4] + tmp[6]*srct[5] + tmp[11]*srct[7];
+        dest[3] = tmp[5]*srct[4] + tmp[8]*srct[5] + tmp[11]*srct[6];
+        dest[3] -= tmp[4]*srct[4] + tmp[9]*srct[5] + tmp[10]*srct[6];
+        dest[4] = tmp[1]*srct[1] + tmp[2]*srct[2] + tmp[5]*srct[3];
+        dest[4] -= tmp[0]*srct[1] + tmp[3]*srct[2] + tmp[4]*srct[3];
+        dest[5] = tmp[0]*srct[0] + tmp[7]*srct[2] + tmp[8]*srct[3];
+        dest[5] -= tmp[1]*srct[0] + tmp[6]*srct[2] + tmp[9]*srct[3];
+        dest[6] = tmp[3]*srct[0] + tmp[6]*srct[1] + tmp[11]*srct[3];
+        dest[6] -= tmp[2]*srct[0] + tmp[7]*srct[1] + tmp[10]*srct[3];
+        dest[7] = tmp[4]*srct[0] + tmp[9]*srct[1] + tmp[10]*srct[2];
+        dest[7] -= tmp[5]*srct[0] + tmp[8]*srct[1] + tmp[11]*srct[2];
+        /* calculate pairs for second 8 elements (cofactors) */
+        tmp[0] = srct[2]*srct[7];
+        tmp[1] = srct[3]*srct[6];
+        tmp[2] = srct[1]*srct[7];
+        tmp[3] = srct[3]*srct[5];
+        tmp[4] = srct[1]*srct[6];
+        tmp[5] = srct[2]*srct[5];
+        tmp[6] = srct[0]*srct[7];
+        tmp[7] = srct[3]*srct[4];
+        tmp[8] = srct[0]*srct[6];
+        tmp[9] = srct[2]*srct[4];
+        tmp[10] = srct[0]*srct[5];
+        tmp[11] = srct[1]*srct[4];
+        /* calculate second 8 elements (cofactors) */
+        dest[8] = tmp[0]*srct[13] + tmp[3]*srct[14] + tmp[4]*srct[15];
+        dest[8] -= tmp[1]*srct[13] + tmp[2]*srct[14] + tmp[5]*srct[15];
+        dest[9] = tmp[1]*srct[12] + tmp[6]*srct[14] + tmp[9]*srct[15];
+        dest[9] -= tmp[0]*srct[12] + tmp[7]*srct[14] + tmp[8]*srct[15];
+        dest[10] = tmp[2]*srct[12] + tmp[7]*srct[13] + tmp[10]*srct[15];
+        dest[10]-= tmp[3]*srct[12] + tmp[6]*srct[13] + tmp[11]*srct[15];
+        dest[11] = tmp[5]*srct[12] + tmp[8]*srct[13] + tmp[11]*srct[14];
+        dest[11]-= tmp[4]*srct[12] + tmp[9]*srct[13] + tmp[10]*srct[14];
+        dest[12] = tmp[2]*srct[10] + tmp[5]*srct[11] + tmp[1]*srct[9];
+        dest[12]-= tmp[4]*srct[11] + tmp[0]*srct[9] + tmp[3]*srct[10];
+        dest[13] = tmp[8]*srct[11] + tmp[0]*srct[8] + tmp[7]*srct[10];
+        dest[13]-= tmp[6]*srct[10] + tmp[9]*srct[11] + tmp[1]*srct[8];
+        dest[14] = tmp[6]*srct[9] + tmp[11]*srct[11] + tmp[3]*srct[8];
+        dest[14]-= tmp[10]*srct[11] + tmp[2]*srct[8] + tmp[7]*srct[9];
+        dest[15] = tmp[10]*srct[10] + tmp[4]*srct[8] + tmp[9]*srct[9];
+        dest[15]-= tmp[8]*srct[9] + tmp[11]*srct[10] + tmp[5]*srct[8];
+        /* calculate determinant */
+        det=srct[0]*dest[0]+srct[1]*dest[1]+srct[2]*dest[2]+srct[3]*dest[3];
+        /* calculate matrix inverse */
+        det = 1/det;
+        for (int j = 0; j < 16; j++) {
+            dest[j] *= det;
+        }
+        return dest;
+    }
 
+    
     public static float[] copyArr(float[] src, float[] dest) {
         if (dest == null) {
             dest = new float[src.length];
@@ -168,6 +256,7 @@ public class LinAlg {
         return dest;
     }
     
+
     /**
      * Like {@link #fillMultiplication(float[], float[], float[])}, but for R^1 (i.e.
      * 2x2 matrices describing affine transformations in R^1 ("y=mx+n"), useful for
