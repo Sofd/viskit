@@ -190,6 +190,21 @@ public class LinAlg {
         return dest;
     }
 
+    public static float[] mtimesv(float[] m, float[] v, float[] dest) {
+        if (dest == null) {
+            dest = new float[4];
+        }
+        if (v.length == 3) {
+            v = new float[]{v[0], v[1], v[2], 1};
+        }
+        for (int r=0; r < dest.length; r++) {
+            dest[r] = 0;
+            for (int c=0; c<4; c++) {
+                dest[r] += m[c*4+r] * v[c];
+            }
+        }
+        return dest;
+    }
     
     public static float[] copyArr(float[] src, float[] dest) {
         if (dest == null) {
