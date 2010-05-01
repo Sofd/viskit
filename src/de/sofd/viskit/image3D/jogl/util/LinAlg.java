@@ -82,6 +82,19 @@ public class LinAlg {
         fillMultiplication(a, tm, res);
     }
 
+    public static void fillScale(float[] a,
+                                 float   sx,
+                                 float   sy,
+                                 float   sz,
+                                 float[] res) {
+        float[] tm = new float[16];
+        fillIdentity(tm);
+        tm[0]  = sx;
+        tm[5]  = sy;
+        tm[10] = sz;
+        fillMultiplication(a, tm, res);
+    }
+    
     public static void fillMultiplication(float[] a, float[] b, float[] res) {
         float[] a2 = a;
         if (a2 == res) {
