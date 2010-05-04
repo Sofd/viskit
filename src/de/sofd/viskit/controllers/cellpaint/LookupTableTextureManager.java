@@ -101,6 +101,6 @@ public class LookupTableTextureManager {
     }
 
     public static void unbindCurrentLutTexture(GL2 gl) {
-        gl.glBindTexture(GL.GL_TEXTURE_2D, 0);
+        gl.glBindTexture(GL.GL_TEXTURE_1D, 0);
     }
 }
