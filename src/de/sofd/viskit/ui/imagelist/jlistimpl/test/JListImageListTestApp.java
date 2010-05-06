@@ -69,6 +69,7 @@ import de.sofd.viskit.ui.LookupTableCellRenderer;
 import de.sofd.viskit.ui.RoiToolPanel;
 import de.sofd.viskit.ui.imagelist.ImageListViewCell;
 import de.sofd.viskit.ui.imagelist.JImageListView;
+import de.sofd.viskit.ui.imagelist.ImageListViewCell.CompositingMode;
 import de.sofd.viskit.ui.imagelist.event.ImageListViewCellAddEvent;
 import de.sofd.viskit.ui.imagelist.event.ImageListViewEvent;
 import de.sofd.viskit.ui.imagelist.event.ImageListViewListener;
@@ -368,13 +369,25 @@ public class JListImageListTestApp {
         toolbar.setFloatable(false);
         
         List<ListModel> listModels = new ArrayList<ListModel>();
+        //listModels.add(getViewerListModelForDirectory(new File("/home/olaf/headvolume")));
+        //listModels.add(getViewerListModelForDirectory(new File("/home/olaf/oliverdicom/series1")));
+        //listModels.add(getViewerListModelForDirectory(new File("/home/olaf/oliverdicom/INCISIX")));
+        listModels.add(getViewerListModelForDirectory(new File("/shares/projects/StudyBrowser/data/disk312043/Images/cd810__center4001")));
+        //listModels.add(getViewerListModelForDirectory(new File("/shares/projects/StudyBrowser/data/disk312043/Images/cd833__center4001")));
+        listModels.add(getViewerListModelForDirectory(new File("/shares/projects/StudyBrowser/data/disk312043/Images/cd865__center4001")));
+        //listModels.add(getViewerListModelForDirectory(new File("/home/olaf/oliverdicom/ARTIFIX")));
+        //listModels.add(getViewerListModelForDirectory(new File("/home/olaf/oliverdicom/BRAINIX")));
+        //listModels.add(getViewerListModelForDirectory(new File("/tmp/cd00926__center10101")));
+        //listModels.add(getViewerListModelForDirectory(new File("/tmp/cd00927__center10103")));
         //listModels.add(getViewerListModelForDirectory(new File("/home/olaf/gi/Images/cd00900__center10102")));
         //listModels.add(getViewerListModelForDirectory(new File("/home/olaf/gi/Images/cd00901__center14146")));
-
-        listModels.add(getViewerListModelForDirectory(new File("/Users/fokko/disk312046/Images/cd00902__center10101")));
+        
+        //listModels.add(getViewerListModelForDirectory(new File("/home/sofd/disk88888/Images/cd88888010__center100")));
+        //listModels.add(getViewerListModelForDirectory(new File("/home/olaf/hieronymusr/br312046/images/cd00900__center10102")));
         ///*
-        listModels.add(getViewerListModelForDirectory(new File("/Users/fokko/disk312046/Images/cd00903__center10101")));
-        listModels.add(getViewerListModelForDirectory(new File("/Users/fokko/disk312046/Images/cd00904__center10101")));
+        //listModels.add(getViewerListModelForDirectory(new File("/Users/fokko/disk312046/Images/cd00903__center10101")));
+        //listModels.add(getViewerListModelForDirectory(new File("/Users/fokko/disk312046/Images/cd00904__center10101")));
+        //listModels.add(getViewerListModelForDirectory(new File("/home/olaf/hieronymusr/disk312046/Images/cd00917__center10102")));
         /*
         listModels.add(getViewerListModelForDirectory(new File("/home/olaf/hieronymusr/br312046/images/cd00903__center10101")));
         listModels.add(getViewerListModelForDirectory(new File("/home/olaf/hieronymusr/br312046/images/cd00904__center10101")));
@@ -449,8 +462,27 @@ public class JListImageListTestApp {
         public ListViewPanel() {
             this.setLayout(new BorderLayout());
             listView = newJGLImageListView();
+            //listView = newJGridImageListView(false);
             this.add(listView, BorderLayout.CENTER);
-            new ImageListViewInitialWindowingController(listView).setEnabled(true);
+            new ImageListViewInitialWindowingController(listView) {
+                @Override
+                protected void initializeCell(final ImageListViewCell cell) {
+                    try {
+                        final DicomImageListViewModelElement delt = (DicomImageListViewModelElement) cell.getDisplayedModelElement();
+                        ImageListViewWindowingApplyToAllController.runWithAllControllersInhibited(new Runnable() {
+                            @Override
+                            public void run() {
+                                double wl = delt.getDicomImageMetaData().getDouble(Tag.WindowCenter);
+                                double ww = delt.getDicomImageMetaData().getDouble(Tag.WindowWidth);
+                                cell.setWindowWidth((int)ww);
+                                cell.setWindowLocation((int)wl);
+                            }
+                        });
+                    } catch (Exception e) {
+                        super.initializeCell(cell);
+                    }
+                }
+            }.setEnabled(true);
             new ImageListViewMouseWindowingController(listView);
             new ImageListViewMouseZoomPanController(listView);
             new ImageListViewRoiInputEventController(listView);
@@ -462,12 +494,13 @@ public class JListImageListTestApp {
             sssc.setAllowEmptySelection(false);
             sssc.setEnabled(true);
             
-            final ImageListViewPrintTextToCellsController ptc = new ImageListViewPrintTextToCellsController(listView) {
+            final ImageListViewPrintTextToCellsController ptc = new ImageListViewPrintTextToCellsController(listView, JImageListView.PAINT_ZORDER_IMAGE-1) {
                 @Override
                 protected String[] getTextToPrint(ImageListViewCell cell) {
-                    DicomImageListViewModelElement elt = (DicomImageListViewModelElement) cell.getDisplayedModelElement();
+                    final DicomImageListViewModelElement elt = (DicomImageListViewModelElement) cell.getDisplayedModelElement();
                     DicomObject dicomImageMetaData = elt.getDicomImageMetaData();
                     return new String[] {
+                            "" + elt.getImageKey(),
                             "PN: " + dicomImageMetaData.getString(Tag.PatientName),
                             "SL: " + dicomImageMetaData.getString(Tag.SliceLocation),
                             "wl/ww: " + cell.getWindowLocation() + "/" + cell.getWindowWidth(),
@@ -534,6 +567,21 @@ public class JListImageListTestApp {
                 }
             });
             toolbar.add(lutCombo);
+            
+            /*
+            final JCheckBox alphaBlendCheckbox = new JCheckBox("blend");
+            toolbar.add(alphaBlendCheckbox);
+            alphaBlendCheckbox.addActionListener(new ActionListener() {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    ImageListViewCell.CompositingMode cm = alphaBlendCheckbox.isSelected() ? CompositingMode.CM_BLEND : CompositingMode.CM_REPLACE;
+                    for (int i = 0; i < listView.getLength(); i++) {
+                        listView.getCell(i).setCompositingMode(cm);
+                    }
+                }
+            });
+            */
+
             /*
             toolbar.add(new AbstractAction("setEmptyModel") {
                 @Override

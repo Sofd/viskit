@@ -110,6 +110,7 @@ public class ImageListViewImagePaintController extends CellPaintControllerBase {
             rescaleShader.addProgramUniform("tex");
             rescaleShader.addProgramUniform("lutTex");
             rescaleShader.addProgramUniform("useLut");
+            rescaleShader.addProgramUniform("useLutAlphaBlending");
         } catch (Exception e) {
             throw new RuntimeException("couldn't initialize GL shader: " + e.getLocalizedMessage(), e);
         }
@@ -139,8 +140,16 @@ public class ImageListViewImagePaintController extends CellPaintControllerBase {
                 LookupTableTextureManager.bindLutTexture(gl, sharedContextData, cell.getLookupTable());
                 rescaleShader.bindUniform("lutTex", 2);
                 rescaleShader.bindUniform("useLut", true);
+                switch (cell.getCompositingMode()) {
+                case CM_BLEND:
+                    rescaleShader.bindUniform("useLutAlphaBlending", true);
+                    break;
+                default:
+                    rescaleShader.bindUniform("useLutAlphaBlending", false);
+                }
             } else {
                 rescaleShader.bindUniform("useLut", false);
+                rescaleShader.bindUniform("useLutAlphaBlending", false);
             }
             rescaleShader.bindUniform("preScale", texRef.getPreScale());
             rescaleShader.bindUniform("preOffset", texRef.getPreOffset());

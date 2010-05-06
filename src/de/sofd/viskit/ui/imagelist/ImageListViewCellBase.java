@@ -30,6 +30,7 @@ public class ImageListViewCellBase implements ImageListViewCell {
     private int windowLocation;
     private int windowWidth;
     private LookupTable lookupTable;
+    private CompositingMode compositingMode = CompositingMode.CM_REPLACE;
     private double scale;
     private Dimension latestSize; // = new Dimension(0, 0);
     private Point2D centerOffset;
@@ -135,6 +136,19 @@ public class ImageListViewCellBase implements ImageListViewCell {
         LookupTable oldValue = this.lookupTable;
         this.lookupTable = lut;
         propertyChangeSupport.firePropertyChange(PROP_LOOKUPTABLE, oldValue, lookupTable);
+        refresh();
+    }
+
+    @Override
+    public CompositingMode getCompositingMode() {
+        return compositingMode;
+    }
+    
+    @Override
+    public void setCompositingMode(CompositingMode cm) {
+        CompositingMode oldValue = this.compositingMode;
+        this.compositingMode = cm;
+        propertyChangeSupport.firePropertyChange(PROP_COMPOSITINGMODE, oldValue, compositingMode);
         refresh();
     }
     
