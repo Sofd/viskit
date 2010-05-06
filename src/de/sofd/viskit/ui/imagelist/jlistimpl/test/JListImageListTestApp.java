@@ -494,7 +494,7 @@ public class JListImageListTestApp {
             sssc.setAllowEmptySelection(false);
             sssc.setEnabled(true);
             
-            final ImageListViewPrintTextToCellsController ptc = new ImageListViewPrintTextToCellsController(listView, JImageListView.PAINT_ZORDER_IMAGE-1) {
+            final ImageListViewPrintTextToCellsController ptc = new ImageListViewPrintTextToCellsController(listView) {
                 @Override
                 protected String[] getTextToPrint(ImageListViewCell cell) {
                     final DicomImageListViewModelElement elt = (DicomImageListViewModelElement) cell.getDisplayedModelElement();
