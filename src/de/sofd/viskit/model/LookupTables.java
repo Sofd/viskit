@@ -13,7 +13,7 @@ public class LookupTables {
 
     static {
         try {
-            LutController.init("img/luts");
+            LutController.init("img/luts/osx");
             LutController.loadFiles();
         } catch (IOException e) {
             throw new RuntimeException(e);
