@@ -15,6 +15,8 @@ public class LookupTables {
         try {
             LutController.init("img/luts/osx");
             LutController.loadFiles();
+            LutController.init("img/luts");
+            LutController.loadFiles();
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
