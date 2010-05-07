@@ -63,6 +63,7 @@ public class LookupTableCellRenderer implements ListCellRenderer {
             LookupTable lut = (LookupTable) value;
             resultLabel.setLut(lut);
             resultLabel.setText(lut.getName());
+            resultLabel.setForeground(Color.lightGray);
         } else {
             resultLabel.setText(value.toString());
         }
