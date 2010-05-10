@@ -82,6 +82,29 @@ public class LinAlg {
         fillMultiplication(a, tm, res);
     }
 
+    /**
+     * fill*L operations multiply the new transformation with a from
+     * the left, rather than from the right.
+     * 
+     * @param a
+     * @param tx
+     * @param ty
+     * @param tz
+     * @param res
+     */
+    public static void fillTranslationL(float[] a,
+                                        float   tx,
+                                        float   ty,
+                                        float   tz,
+                                        float[] res) {
+        float[] tm = new float[16];
+        fillIdentity(tm);
+        tm[12] = tx;
+        tm[13] = ty;
+        tm[14] = tz;
+        fillMultiplication(tm, a, res);
+    }
+    
     public static void fillScale(float[] a,
                                  float   sx,
                                  float   sy,
