@@ -176,8 +176,7 @@ public class DicomInputOutput {
                 dicomSeries.values());
 
         if (dicomList.isEmpty()) {
-            System.out.println("no dicom images");
-            System.exit(-1);
+            throw new IOException("no dicom images");
         }
         
         System.out.println("files read : " + dicomList.size());
