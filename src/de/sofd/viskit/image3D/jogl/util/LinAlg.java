@@ -14,18 +14,23 @@ public class LinAlg {
     // Beware: Very ugly. No typedefs in Java...
     // TODO: define the same operations on FloatBuffers too. Or just use some 3rd party lib...
 
-    public static void fillZeros(float[] arr) {
+    public static float[] fillZeros(float[] arr) {
+        if (null == arr) {
+            arr = new float[16];
+        }
         for (int i=0; i<arr.length; i++) {
             arr[i] = 0;
         }
+        return arr;
     }
 
-    public static void fillIdentity(float[] m) {
-        fillZeros(m);
+    public static float[] fillIdentity(float[] m) {
+        m = fillZeros(m);
         m[0] = 1;
         m[5] = 1;
         m[10] = 1;
         m[15] = 1;
+        return m;
     }
 
 
