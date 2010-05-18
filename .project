@@ -3,6 +3,9 @@
 	<name>de.sofd.viskit</name>
 	<comment></comment>
 	<projects>
+		<project>de.sofd.draw2d</project>
+		<project>de.sofd.swing</project>
+		<project>de.sofd.util</project>
 	</projects>
 	<buildSpec>
 		<buildCommand>

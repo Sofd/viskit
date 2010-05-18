@@ -13,7 +13,7 @@ import de.sofd.viskit.model.WindowingFunction;
 
 public class DicomUtil {
 
-    public static ShortBuffer getFilledShortBuffer(ArrayList<DicomObject> dicomList) {
+    public static ShortBuffer getFilledShortBuffer(ArrayList<DicomObject> dicomList, boolean rescaling) {
         if (dicomList.isEmpty())
             return null;
 
@@ -31,13 +31,19 @@ public class DicomUtil {
         {
             
             short[] pixData = dicomObject.getShorts(Tag.PixelData);
-            float rescaleIntercept = dicomObject.getFloat(Tag.RescaleIntercept);
-            float rescaleSlope = dicomObject.getFloat(Tag.RescaleSlope);
             
-            if ( rescaleSlope != 0 || rescaleIntercept != 0)
-            {
-                for ( int i = 0; i < pixData.length; ++i )
-                    pixData[i] = (short)(pixData[i]*rescaleSlope + rescaleIntercept); 
+            if ( rescaling ) {
+                float rescaleIntercept = dicomObject.getFloat(Tag.RescaleIntercept);
+                float rescaleSlope = dicomObject.getFloat(Tag.RescaleSlope);
+                
+                if ( rescaleSlope != 0 || rescaleIntercept != 0)
+                {
+                    /*System.out.println("intercept : " + rescaleIntercept);
+                    System.out.println("slope : " + rescaleSlope);*/
+                    
+                    for ( int i = 0; i < pixData.length; ++i )
+                        pixData[i] = (short)(pixData[i]*rescaleSlope + rescaleIntercept); 
+                }
             }
             
             dataBuf.put(pixData);
