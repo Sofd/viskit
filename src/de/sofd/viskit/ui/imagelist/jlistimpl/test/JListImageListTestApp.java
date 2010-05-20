@@ -17,7 +17,10 @@ import java.net.MalformedURLException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 
+import javax.media.opengl.GL;
+import javax.media.opengl.GLAutoDrawable;
 import javax.swing.AbstractAction;
 import javax.swing.DefaultListModel;
 import javax.swing.JCheckBox;
@@ -73,6 +76,8 @@ import de.sofd.viskit.ui.imagelist.ImageListViewCell.CompositingMode;
 import de.sofd.viskit.ui.imagelist.event.ImageListViewCellAddEvent;
 import de.sofd.viskit.ui.imagelist.event.ImageListViewEvent;
 import de.sofd.viskit.ui.imagelist.event.ImageListViewListener;
+import de.sofd.viskit.ui.imagelist.event.cellpaint.ImageListViewCellPaintEvent;
+import de.sofd.viskit.ui.imagelist.event.cellpaint.ImageListViewCellPaintListener;
 import de.sofd.viskit.ui.imagelist.glimpl.JGLImageListView;
 import de.sofd.viskit.ui.imagelist.gridlistimpl.JGridImageListView;
 import de.sofd.viskit.ui.imagelist.jlistimpl.JListImageListView;
@@ -403,9 +408,38 @@ public class JListImageListTestApp {
         
         JPanel listsPanel = new JPanel();
         listsPanel.setLayout(new GridLayout((listModels.size() - 1) / 3 + 1, Math.min(listModels.size(), 3), 10, 10));
+        int lnum = 0;
         for (ListModel lm : listModels) {
+            lnum++;
+            final long t0 = System.currentTimeMillis();
             final ListViewPanel lvp = new ListViewPanel();
+            // initialization performance measurement: add a cell paint listener
+            // to take the time when a cell in the list is first drawn,
+            // which happens when the list has been completely initialized and the list's UI is coming up
+            final int[] lnumCaptured = new int[]{lnum};
+            lvp.getListView().addCellPaintListener(JImageListView.PAINT_ZORDER_IMAGE+100, new ImageListViewCellPaintListener() {
+                long t1 = -1;
+                @Override
+                public void onCellPaint(ImageListViewCellPaintEvent e) {
+                    if (t1 == -1) {
+                        t1 = System.currentTimeMillis();
+                        System.out.println("list " + lnumCaptured[0] + " UI coming up after " + (t1-t0) + " ms.");
+                    }
+                }
+                @Override
+                public void glSharedContextDataInitialization(GL gl,
+                        Map<String, Object> sharedData) {
+                }
+                @Override
+                public void glDrawableInitialized(GLAutoDrawable glAutoDrawable) {
+                }
+                @Override
+                public void glDrawableDisposing(GLAutoDrawable glAutoDrawable) {
+                }
+            });
             lvp.getListView().setModel(lm);
+            long t1 = System.currentTimeMillis();
+            System.out.println("list " + lnum + ": list.setModell() took " + (t1-t0) + " ms.");
             listsPanel.add(lvp);
             lists.add(lvp.getListView());
             for (final Color c : syncColors) {
