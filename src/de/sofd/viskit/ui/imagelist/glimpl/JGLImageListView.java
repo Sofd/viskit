@@ -85,12 +85,15 @@ public class JGLImageListView extends JImageListView {
         if (instances.isEmpty() || sharedContextData.getGlContext() != null) {
             createGlCanvas();
         }
+
         instances.add(this);
         setScaleMode(new MyScaleMode(2, 2));
         scrollBar = new JScrollBar(JScrollBar.VERTICAL);
         this.add(scrollBar, BorderLayout.EAST);
         scrollBar.getModel().addChangeListener(scrollbarChangeListener);
+
         setSelectionModel(new DefaultListSelectionModel());
+
     }
 
     private void createGlCanvas() {

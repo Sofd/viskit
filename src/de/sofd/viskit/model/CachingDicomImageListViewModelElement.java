@@ -107,13 +107,13 @@ public abstract class CachingDicomImageListViewModelElement extends AbstractImag
     // TODO: unify the two caches into one
 
     private static LRUMemoryCache<Object, DicomObject> dcmObjectCache
-        = new LRUMemoryCache<Object, DicomObject>(5);
+        = new LRUMemoryCache<Object, DicomObject>(Config.prop.getI("de.sofd.viskit.dcmObjectCacheSize"));
 
     private static LRUMemoryCache<Object, BufferedImage> imageCache
-        = new LRUMemoryCache<Object, BufferedImage>(5);
+        = new LRUMemoryCache<Object, BufferedImage>(Config.prop.getI("de.sofd.viskit.imageCacheSize"));
 
     private static LRUMemoryCache<Object, DicomObject> rawDicomImageMetadataCache
-        = new LRUMemoryCache<Object, DicomObject>(2000);
+        = new LRUMemoryCache<Object, DicomObject>(Config.prop.getI("de.sofd.viskit.rawDicomImageMetadataCacheSize"));
 
 
     @Override

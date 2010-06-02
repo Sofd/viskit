@@ -98,15 +98,16 @@ public class JListImageListTestApp {
         //JFrame f2 = newFrame("Viskit ImageList test app window 2", (gs.length > 1 ? gs[1].getDefaultConfiguration() : null));
 
         //// creating them like this apparently works better
-        //JFrame f1 = newSingleListFrame("Viskit ImageList test app window 1", null);
+        JFrame f1 = newSingleListFrame("Viskit ImageList test app window 1", null);
         //JFrame f2 = newSingleListFrame("Viskit ImageList test app window 2", null);
-        JFrame f2 = newMultiListFrame("Multi-List frame", null);
+        //JFrame f2 = newMultiListFrame("Multi-List frame", null);
     }
     
     public JFrame newSingleListFrame(String frameTitle, GraphicsConfiguration graphicsConfig) throws Exception {
         //final DefaultListModel model = getTestImageViewerListModel();
         //final DefaultListModel model = getViewerListModelForDirectory(new File("/home/olaf/gi/resources/DICOM-Testbilder/1578"));
-        final DefaultListModel model = getViewerListModelForDirectory(new File("/home/olaf/gi/Images/cd00900__center10102"));
+        //final DefaultListModel model = getViewerListModelForDirectory(new File("/home/olaf/gi/Images/cd00900__center10102"));
+        final DefaultListModel model = getViewerListModelForDirectory(new File("D:\\dicom\\serie1"));
         //final DefaultListModel model = getViewerListModelForDirectory(new File("/home/olaf/gi/pet-studie/cd855__center4001"));
         //final DefaultListModel model = getViewerListModelForDirectory(new File("/shares/shared/projekts/disk312043/Images/cd822__center4001"));
         //final DefaultListModel model = getViewerListModelForDirectory(new File("/shares/shared/projekts/disk312043/Images/cd836__center4001"));
@@ -119,8 +120,8 @@ public class JListImageListTestApp {
         final JImageListView viewer;
         //viewer = newJListImageListView();
         //viewer = newJGridImageListView(true);
-        //viewer = newJGridImageListView(false);
-        viewer = newJGLImageListView();
+        viewer = newJGridImageListView(false);
+        //viewer = newJGLImageListView();
         
         new ImageListViewInitialWindowingController(viewer).setEnabled(true);
         viewer.setModel(model);
@@ -377,9 +378,11 @@ public class JListImageListTestApp {
         //listModels.add(getViewerListModelForDirectory(new File("/home/olaf/headvolume")));
         //listModels.add(getViewerListModelForDirectory(new File("/home/olaf/oliverdicom/series1")));
         //listModels.add(getViewerListModelForDirectory(new File("/home/olaf/oliverdicom/INCISIX")));
-        listModels.add(getViewerListModelForDirectory(new File("/shares/projects/StudyBrowser/data/disk312043/Images/cd810__center4001")));
+        //listModels.add(getViewerListModelForDirectory(new File("/shares/projects/StudyBrowser/data/disk312043/Images/cd810__center4001")));
+        listModels.add(getViewerListModelForDirectory(new File("D:\\dicom\\serie1")));
+        listModels.add(getViewerListModelForDirectory(new File("D:\\dicom\\serie1")));
         //listModels.add(getViewerListModelForDirectory(new File("/shares/projects/StudyBrowser/data/disk312043/Images/cd833__center4001")));
-        listModels.add(getViewerListModelForDirectory(new File("/shares/projects/StudyBrowser/data/disk312043/Images/cd865__center4001")));
+        //listModels.add(getViewerListModelForDirectory(new File("/shares/projects/StudyBrowser/data/disk312043/Images/cd865__center4001")));
         //listModels.add(getViewerListModelForDirectory(new File("/home/olaf/oliverdicom/ARTIFIX")));
         //listModels.add(getViewerListModelForDirectory(new File("/home/olaf/oliverdicom/BRAINIX")));
         //listModels.add(getViewerListModelForDirectory(new File("/tmp/cd00926__center10101")));
@@ -495,8 +498,8 @@ public class JListImageListTestApp {
         
         public ListViewPanel() {
             this.setLayout(new BorderLayout());
-            listView = newJGLImageListView();
-            //listView = newJGridImageListView(false);
+            //listView = newJGLImageListView();
+            listView = newJGridImageListView(false);
             this.add(listView, BorderLayout.CENTER);
             new ImageListViewInitialWindowingController(listView) {
                 @Override
