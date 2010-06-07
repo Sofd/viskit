@@ -31,6 +31,7 @@ public class ImageListViewCellBase implements ImageListViewCell {
     private int windowWidth;
     private LookupTable lookupTable;
     private CompositingMode compositingMode = CompositingMode.CM_REPLACE;
+    private boolean outputGrayscaleRGBs = false;
     private double scale;
     private Dimension latestSize; // = new Dimension(0, 0);
     private Point2D centerOffset;
@@ -151,6 +152,20 @@ public class ImageListViewCellBase implements ImageListViewCell {
         propertyChangeSupport.firePropertyChange(PROP_COMPOSITINGMODE, oldValue, compositingMode);
         refresh();
     }
+    
+    @Override
+    public boolean isOutputGrayscaleRGBs() {
+        return outputGrayscaleRGBs;
+    }
+    
+    @Override
+    public void setOutputGrayscaleRGBs(boolean outputGrayscaleRGBs) {
+        boolean oldValue = this.outputGrayscaleRGBs;
+        this.outputGrayscaleRGBs = outputGrayscaleRGBs;
+        propertyChangeSupport.firePropertyChange(PROP_OUTPUTGRAYSCALERGBS, oldValue, outputGrayscaleRGBs);
+        refresh();
+    }
+    
     
     /**
      * Get the value of scale
