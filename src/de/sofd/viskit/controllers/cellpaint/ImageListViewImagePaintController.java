@@ -125,7 +125,7 @@ public class ImageListViewImagePaintController extends CellPaintControllerBase {
             gl.glTranslated(cellSize.getWidth() / 2, cellSize.getHeight() / 2, 0);
             gl.glTranslated(cell.getCenterOffset().getX(), cell.getCenterOffset().getY(), 0);
             gl.glScaled(cell.getScale(), cell.getScale(), 1);
-            ImageTextureManager.TextureRef texRef = ImageTextureManager.bindImageTexture(gl, GL2.GL_TEXTURE1, sharedContextData, cell.getDisplayedModelElement());
+            ImageTextureManager.TextureRef texRef = ImageTextureManager.bindImageTexture(gl, GL2.GL_TEXTURE1, sharedContextData, cell.getDisplayedModelElement(), cell.isOutputGrayscaleRGBs());
             LookupTable lut = cell.getLookupTable();
             try {
                 rescaleShader.bind();  // TODO: rescaleShader's internal gl may be outdated here...? (but shaders are shared betw. contexts, so if it's outdated, we'll have other problems as well...)

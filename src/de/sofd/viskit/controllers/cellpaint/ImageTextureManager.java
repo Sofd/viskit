@@ -114,7 +114,7 @@ public class ImageTextureManager {
 
     private static final String TEX_STORE = "texturesStore";
 
-    public static TextureRef bindImageTexture(GL2 gl, int texUnit, Map<String, Object> sharedContextData, ImageListViewModelElement elt) {
+    public static TextureRef bindImageTexture(GL2 gl, int texUnit, Map<String, Object> sharedContextData, ImageListViewModelElement elt, boolean outputGrayscaleRGBs) {
         TextureRefStore texRefStore = (TextureRefStore) sharedContextData.get(TEX_STORE);
         if (null == texRefStore) {
             System.out.println("CREATING NEW TextureRefStore");
