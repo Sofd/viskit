@@ -57,7 +57,7 @@ public class LookupTableTextureManager {
 
     private static final String TEX_STORE = "lutTexturesStore";
 
-    public static TextureRef bindLutTexture(GL2 gl, Map<String, Object> sharedContextData, LookupTable lut) {
+    public static TextureRef bindLutTexture(GL2 gl, int texUnit, Map<String, Object> sharedContextData, LookupTable lut) {
         if (lut == null) {
             return null;
         }
@@ -75,7 +75,7 @@ public class LookupTableTextureManager {
             int[] texId = new int[1];
             gl.glGenTextures(1, texId, 0);
             gl.glEnable(GL2.GL_TEXTURE_1D);
-            gl.glActiveTexture(GL2.GL_TEXTURE2);
+            gl.glActiveTexture(texUnit);
             gl.glBindTexture(gl.GL_TEXTURE_1D, texId[0]);
             FloatBuffer lutToUse = lut.getRGBAValues();
             gl.glTexImage1D(
@@ -95,7 +95,7 @@ public class LookupTableTextureManager {
             texRefStore.putTexRef(lut, texRef, gl);
         }
         gl.glEnable(GL2.GL_TEXTURE_1D);
-        gl.glActiveTexture(GL2.GL_TEXTURE2);
+        gl.glActiveTexture(texUnit);
         gl.glBindTexture(GL2.GL_TEXTURE_1D, texRef.getTexId());
         return texRef;
     }
