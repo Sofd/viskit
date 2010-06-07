@@ -88,6 +88,7 @@ public class ImageListViewPrintTextToCellsController extends CellPaintController
         GLUT glut = new GLUT();
         gl.glPushAttrib(GL2.GL_CURRENT_BIT|GL2.GL_ENABLE_BIT);
         try {
+            gl.glDisable(GL2.GL_TEXTURE_2D);
             gl.glShadeModel(GL2.GL_FLAT);
             gl.glColor3f((float) textColor.getRed() / 255F,
                          (float) textColor.getGreen() / 255F,
