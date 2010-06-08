@@ -162,6 +162,8 @@ public class ImageListViewImagePaintController extends CellPaintControllerBase {
                 float scale = 1F/ww;
                 float offset = (ww/2-wl)*scale;
                 // HACK HACK: Apply DICOM rescale slope/intercept values if present. TODO: DICOM-specific code doesn't belong here?
+                // TODO: this will cause the "optimal windowing" parameters as calculated by e.g. ImageListViewInitialWindowingController
+                // to produce wrongly windowed images. Happens e.g. with the Charite dental images.
                 ImageListViewModelElement elt = cell.getDisplayedModelElement();
                 if (elt instanceof DicomImageListViewModelElement) {
                     try {
