@@ -475,18 +475,17 @@ public class JGLImageListView extends JImageListView {
                         // draw cell
                         ViskitGC gc = new ViskitGC(gl);
                         
-                        // call paint listeners for stuff below the image in the z order
-                        // Eventually all painting, including the image and ROIs, should happen in PaintListeners
+                        // call paint listeners for stuff below the ROIs in ascending z order
+                        // At the moment we still paint the ROIs in here, and everything else in PaintListeners.
+                        // Eventually all painting, including the ROIs, should happen in PaintListeners
                         fireCellPaintEvent(new ImageListViewCellPaintEvent(cell, gc, null, sharedContextData.getAttributes()),
-                                           Integer.MIN_VALUE, JImageListView.PAINT_ZORDER_IMAGE + 1);
+                                           Integer.MIN_VALUE, JImageListView.PAINT_ZORDER_ROI);
     
-                        //paintImage(cell, gc);
-                        
                         paintRois(cell, gc);
                         
-                        // stuff above the ROIs in the z order
+                        // stuff above the ROIs in ascending z order
                         fireCellPaintEvent(new ImageListViewCellPaintEvent(cell, gc, null, sharedContextData.getAttributes()),
-                                           JImageListView.PAINT_ZORDER_ROI + 1, Integer.MAX_VALUE);
+                                           JImageListView.PAINT_ZORDER_ROI, Integer.MAX_VALUE);
                     } catch (Exception e) {
                         logger.error("error displaying " + cell.getDisplayedModelElement(), e);
                     } finally {
@@ -501,7 +500,13 @@ public class JGLImageListView extends JImageListView {
             //gl.glPopMatrix();
         }
 
-        
+        /**
+         * ROI painting. TODO: Move this into a paint listener, just like the
+         * other painting jobs (image, overlay texts).
+         * 
+         * @param cell
+         * @param gc
+         */
         private void paintRois(ImageListViewCell cell, ViskitGC gc) {
             GL2 gl = gc.getGl().getGL2();
             gl.glPushMatrix();
