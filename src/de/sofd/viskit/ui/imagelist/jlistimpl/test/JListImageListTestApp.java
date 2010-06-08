@@ -98,9 +98,9 @@ public class JListImageListTestApp {
         //JFrame f2 = newFrame("Viskit ImageList test app window 2", (gs.length > 1 ? gs[1].getDefaultConfiguration() : null));
 
         //// creating them like this apparently works better
-        JFrame f1 = newSingleListFrame("Viskit ImageList test app window 1", null);
+        //JFrame f1 = newSingleListFrame("Viskit ImageList test app window 1", null);
         //JFrame f2 = newSingleListFrame("Viskit ImageList test app window 2", null);
-        //JFrame f2 = newMultiListFrame("Multi-List frame", null);
+        JFrame f2 = newMultiListFrame("Multi-List frame", null);
     }
     
     public JFrame newSingleListFrame(String frameTitle, GraphicsConfiguration graphicsConfig) throws Exception {
@@ -379,10 +379,17 @@ public class JListImageListTestApp {
         //listModels.add(getViewerListModelForDirectory(new File("/home/olaf/oliverdicom/series1")));
         //listModels.add(getViewerListModelForDirectory(new File("/home/olaf/oliverdicom/INCISIX")));
         //listModels.add(getViewerListModelForDirectory(new File("/shares/projects/StudyBrowser/data/disk312043/Images/cd810__center4001")));
-        listModels.add(getViewerListModelForDirectory(new File("D:\\dicom\\serie1")));
-        listModels.add(getViewerListModelForDirectory(new File("D:\\dicom\\serie1")));
         //listModels.add(getViewerListModelForDirectory(new File("/shares/projects/StudyBrowser/data/disk312043/Images/cd833__center4001")));
+
+        //listModels.add(getViewerListModelForDirectory(new File("/shares/projects/StudyBrowser/data/disk312043/Images/cd810__center4001")));
+        //listModels.add(getViewerListModelForDirectory(new File("/tmp/540010014")));
+        //listModels.add(getViewerListModelForDirectory(new File("/shares/projects/StudyBrowser/data/disk312043/Images/cd810__center4001")));
+        //listModels.add(getViewerListModelForDirectory(new File("/shares/projects/StudyBrowser/data/disk312043/Images/cd810__center4001")));
+        //listModels.add(getViewerListModelForDirectory(new File("/shares/projects/StudyBrowser/data/disk312043/Images/cd810__center4001")));
+
         //listModels.add(getViewerListModelForDirectory(new File("/shares/projects/StudyBrowser/data/disk312043/Images/cd865__center4001")));
+        //listModels.add(getViewerListModelForDirectory(new File("/home/olaf/gi/pet-studie/cd855__center4001")));
+        
         //listModels.add(getViewerListModelForDirectory(new File("/home/olaf/oliverdicom/ARTIFIX")));
         //listModels.add(getViewerListModelForDirectory(new File("/home/olaf/oliverdicom/BRAINIX")));
         //listModels.add(getViewerListModelForDirectory(new File("/tmp/cd00926__center10101")));
@@ -396,12 +403,12 @@ public class JListImageListTestApp {
         //listModels.add(getViewerListModelForDirectory(new File("/Users/fokko/disk312046/Images/cd00903__center10101")));
         //listModels.add(getViewerListModelForDirectory(new File("/Users/fokko/disk312046/Images/cd00904__center10101")));
         //listModels.add(getViewerListModelForDirectory(new File("/home/olaf/hieronymusr/disk312046/Images/cd00917__center10102")));
-        /*
         listModels.add(getViewerListModelForDirectory(new File("/home/olaf/hieronymusr/br312046/images/cd00903__center10101")));
-        listModels.add(getViewerListModelForDirectory(new File("/home/olaf/hieronymusr/br312046/images/cd00904__center10101")));
-        listModels.add(getViewerListModelForDirectory(new File("/home/olaf/hieronymusr/br312046/images/cd00905__center10101")));
-        listModels.add(getViewerListModelForDirectory(new File("/home/olaf/hieronymusr/br312046/images/cd00906__center10102")));
+        //listModels.add(getViewerListModelForDirectory(new File("/home/olaf/hieronymusr/br312046/images/cd00904__center10101")));
+        //listModels.add(getViewerListModelForDirectory(new File("/home/olaf/hieronymusr/br312046/images/cd00905__center10101")));
+        //listModels.add(getViewerListModelForDirectory(new File("/home/olaf/hieronymusr/br312046/images/cd00906__center10102")));
         listModels.add(getViewerListModelForDirectory(new File("/home/olaf/hieronymusr/br312046/images/cd00907__center10102")));
+        //listModels.add(getViewerListModelForDirectory(new File("/home/olaf/gi/resources/DICOM-Testbilder/1578")));
         //*/
         //listModels.add(getViewerListModelForDirectory(new File("/home/olaf/hieronymusr/br312046/images/cd00908__center10101")));
         //listModels.add(getViewerListModelForDirectory(new File("/home/olaf/hieronymusr/br312046/images/cd00909__center10101")));
@@ -498,8 +505,8 @@ public class JListImageListTestApp {
         
         public ListViewPanel() {
             this.setLayout(new BorderLayout());
-            //listView = newJGLImageListView();
-            listView = newJGridImageListView(false);
+            listView = newJGLImageListView();
+            //listView = newJGridImageListView(false);
             this.add(listView, BorderLayout.CENTER);
             new ImageListViewInitialWindowingController(listView) {
                 @Override
@@ -629,18 +636,40 @@ public class JListImageListTestApp {
             */
             
             ImageListViewWindowingApplyToAllController wndAllController = new ImageListViewWindowingApplyToAllController(listView);
-            JCheckBox wndAllCheckbox = new JCheckBox("wnd.all");
+            JCheckBox wndAllCheckbox = new JCheckBox("wAll");
             toolbar.add(wndAllCheckbox);
             Bindings.createAutoBinding(UpdateStrategy.READ_WRITE,
                     wndAllController, BeanProperty.create("enabled"),
                     wndAllCheckbox, BeanProperty.create("selected")).bind();
 
             ImageListViewZoomPanApplyToAllController zpAllController = new ImageListViewZoomPanApplyToAllController(listView);
-            JCheckBox zpAllCheckbox = new JCheckBox("z/p all");
+            JCheckBox zpAllCheckbox = new JCheckBox("zAll");
             toolbar.add(zpAllCheckbox);
             Bindings.createAutoBinding(UpdateStrategy.READ_WRITE,
                     zpAllController, BeanProperty.create("enabled"),
                     zpAllCheckbox, BeanProperty.create("selected")).bind();
+            toolbar.add(new AbstractAction("wO") {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    ImageListViewModelElement elt = listView.getSelectedValue();
+                    if (null != elt) {
+                        ImageListViewCell cell = listView.getCellForElement(elt);
+                        FloatRange usedRange = cell.getDisplayedModelElement().getUsedPixelValuesRange();
+                        cell.setWindowWidth((int) usedRange.getDelta());
+                        cell.setWindowLocation((int) (usedRange.getMin() + usedRange.getMax()) / 2);
+                    }
+                }
+            });
+            final JCheckBox cb = new JCheckBox("G");
+            toolbar.add(cb);
+            cb.addActionListener(new ActionListener() {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    for (int i = 0; i < listView.getLength(); i++) {
+                        listView.getCell(i).setOutputGrayscaleRGBs(cb.isSelected());
+                    }
+                }
+            });
         }
 
         public JImageListView getListView() {
