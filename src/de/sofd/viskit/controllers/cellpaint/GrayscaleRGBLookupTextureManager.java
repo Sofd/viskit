@@ -57,7 +57,7 @@ public class GrayscaleRGBLookupTextureManager {
     public static TextureRef bindGrayscaleRGBLutTexture(GL2 gl, int texUnit, Map<String, Object> sharedContextData, ImageListViewModelElement elt) {
         TextureRefStore texRefStore = (TextureRefStore) sharedContextData.get(TEX_STORE);
         if (null == texRefStore) {
-            logger.info("CREATING NEW TextureRef store for 12-bit grayscale=>RGB LUT textures");
+            logger.info("CREATING NEW TextureRef store for grayscale=>RGB LUT textures");
             texRefStore = new TextureRefStore();
             sharedContextData.put(TEX_STORE, texRefStore);
         }
@@ -84,7 +84,8 @@ public class GrayscaleRGBLookupTextureManager {
             gl.glActiveTexture(texUnit);
             gl.glBindTexture(gl.GL_TEXTURE_1D, texId[0]);
             int usedBitCount = (bitCount == 0 ? 8 : bitCount);
-            int searchWindowWidth = (usedBitCount == 16 ? 12 : (usedBitCount == 12 ? 7 : 0));
+            //int searchWindowWidth = (usedBitCount == 16 ? 14 : (usedBitCount == 12 ? 7 : 0));  // use this for production (maybe)
+            int searchWindowWidth = (usedBitCount == 16 ? 50 : (usedBitCount == 12 ? 40 : 0));  // use this for testing (much higher computation time, more coloured image on color screen, theoretically better grayscale reproduction on grayscale screen)
             ByteBuffer texData = GrayscaleUtil.computeGrayTo8bitRGBMappingTable(usedBitCount, searchWindowWidth);
             gl.glTexImage1D(
                     gl.GL_TEXTURE_1D,   // target
@@ -93,7 +94,7 @@ public class GrayscaleRGBLookupTextureManager {
                     texData.capacity() / 3,  //width
                     0,                  // border
                     gl.GL_RGB,         // format
-                    gl.GL_BYTE,        // type
+                    gl.GL_UNSIGNED_BYTE,        // type
                     texData            // data
                     );
             gl.glTexParameteri(GL_TEXTURE_1D, GL.GL_TEXTURE_WRAP_S, GL2.GL_CLAMP);
