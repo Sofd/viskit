@@ -1,10 +1,5 @@
 package de.sofd.viskit.controllers.cellpaint;
 
-import static javax.media.opengl.GL.GL_LINEAR;
-import static javax.media.opengl.GL.GL_TEXTURE_MAG_FILTER;
-import static javax.media.opengl.GL.GL_TEXTURE_MIN_FILTER;
-import static javax.media.opengl.GL.GL_TEXTURE_WRAP_S;
-import static javax.media.opengl.GL2.GL_CLAMP;
 import static javax.media.opengl.GL2GL3.GL_TEXTURE_1D;
 
 import java.nio.FloatBuffer;
@@ -88,9 +83,9 @@ public class LookupTableTextureManager {
                     gl.GL_FLOAT,        // type
                     lutToUse            // data
                     );
-            gl.glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_WRAP_S, GL_CLAMP);
-            gl.glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-            gl.glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+            gl.glTexParameteri(GL_TEXTURE_1D, GL.GL_TEXTURE_WRAP_S, GL2.GL_CLAMP);
+            gl.glTexParameteri(GL_TEXTURE_1D, GL.GL_TEXTURE_MIN_FILTER, GL.GL_NEAREST);
+            gl.glTexParameteri(GL_TEXTURE_1D, GL.GL_TEXTURE_MAG_FILTER, GL.GL_NEAREST);
             texRef = new TextureRef(texId[0]);
             texRefStore.putTexRef(lut, texRef, gl);
         }
