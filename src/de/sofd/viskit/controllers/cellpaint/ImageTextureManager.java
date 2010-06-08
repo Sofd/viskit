@@ -214,7 +214,7 @@ public class ImageTextureManager {
                     imageTextureData.flush();
                     gl.glActiveTexture(texUnit);
                     imageTexture = new Texture(imageTextureData);
-                    preScale = (float) (1<<16 - 1) / (1<<12 - 1); // raw 0..65535 =^= normalized 0..1; used range 0..4095 =^= shaded 0..1 => shaded = raw/4095 = normalized * 65535/4095
+                    preScale = (float) (1<<16) / (1<<12); // see doc/opengl/texture-coords-and-filtering.txt on why this is right and not (1<<16-1)/(1<<12-1)
                     preOffset = 0.0F;
                 }
                 
