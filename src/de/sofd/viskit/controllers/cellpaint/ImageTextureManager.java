@@ -114,7 +114,7 @@ public class ImageTextureManager {
 
     private static final String TEX_STORE = "texturesStore";
 
-    public static TextureRef bindImageTexture(GL2 gl, int texUnit, Map<String, Object> sharedContextData, ImageListViewModelElement elt, boolean outputGrayscaleRGBs) {
+    public static TextureRef bindImageTexture(GL2 gl, int texUnit, Map<String, Object> sharedContextData, ImageListViewModelElement elt/*, boolean outputGrayscaleRGBs*/) {
         TextureRefStore texRefStore = (TextureRefStore) sharedContextData.get(TEX_STORE);
         if (null == texRefStore) {
             System.out.println("CREATING NEW TextureRefStore");
@@ -139,6 +139,13 @@ public class ImageTextureManager {
         
         if (null == texRef) {
             logger.info("need to create texture for: " + elt.getImageKey());
+            // TODO: maybe strive to allocate textures with non-normalized, integer-valued texel values, which
+            // is recommended by nVidia for 12-bit grayscale displays to preserve image fidelity (but it really
+            // shouldn't make a difference in my opinion -- single precision floats normalized to [0,1] texel
+            // values range should provide more than enough precision). See the
+            // integer texture extension (http://www.opengl.org/registry/specs/EXT/texture_integer.txt) and
+            // the nvidia document for grayscale displays (http://www.nvidia.com/docs/IO/40049/TB-04631-001_v02.pdf)
+            // for details
             Texture imageTexture = null;
             float preScale = 1.0F, preOffset = 0.0F;
             if (elt.hasRawImage() && elt.isRawImagePreferable()) {
