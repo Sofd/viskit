@@ -8,7 +8,6 @@ import java.util.ArrayList;
 import org.apache.log4j.*;
 import org.dcm4che2.data.DicomObject;
 
-import de.sofd.viskit.image3D.model.VolumeBasicConfig;
 import de.sofd.viskit.image3D.vtk.util.Dicom2ImageData;
 
 /**
@@ -44,10 +43,9 @@ public class ContourView extends VtkScenePanel {
      * Erzeugt Render-Pipeline für Ausgabe.
      * 
      * @param dicomList Liste mit Dicom-Objekten
-     * @param basicConfig Basis-Konfiguration der Dicom-Bilder, mit z.B. Höhe und Breite der Bilder
      * @throws IOException
      */
-    public ContourView(ArrayList<DicomObject> dicomList, VolumeBasicConfig basicConfig) throws IOException {
+    public ContourView(ArrayList<DicomObject> dicomList) throws IOException {
         super(500, 500);
         
         long time1 = System.currentTimeMillis();

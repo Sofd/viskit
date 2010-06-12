@@ -147,6 +147,10 @@ public class TransferFrame extends JFrame {
         return panel;
     }
 
+    public VolumeObject getVolumeObject() {
+        return volumeObject;
+    }
+
     protected JPanel getWindowingCenterPanel(TransferController transferController) {
         JPanel panel = new JPanel();
         panel.setAlignmentX(Component.LEFT_ALIGNMENT);

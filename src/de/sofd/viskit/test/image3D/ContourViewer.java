@@ -56,7 +56,7 @@ public class ContourViewer extends JFrame implements ChangeListener, ActionListe
         VolumeBasicConfig basicConfig = volumeConfig.getBasicConfig();
         ArrayList<DicomObject> dicomList = DicomInputOutput.readDir( basicConfig.getImageDirectory(), null, basicConfig.getImageStart(), basicConfig.getImageEnd(), basicConfig.getImageStride() );
         
-        contourView = new ContourView(dicomList, basicConfig);
+        contourView = new ContourView(dicomList);
         
         JPanel panel = new JPanel(new BorderLayout());
         panel.add(contourView, BorderLayout.CENTER);

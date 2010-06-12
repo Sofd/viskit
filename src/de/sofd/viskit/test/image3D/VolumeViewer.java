@@ -56,7 +56,7 @@ public class VolumeViewer extends JFrame implements ChangeListener, ActionListen
         VolumeBasicConfig basicConfig = volumeConfig.getBasicConfig();
         ArrayList<DicomObject> dicomList = DicomInputOutput.readDir( basicConfig.getImageDirectory(), null, basicConfig.getImageStart(), basicConfig.getImageEnd(), basicConfig.getImageStride() );
         
-        volumeView = new VolumeView(dicomList, basicConfig);
+        volumeView = new VolumeView(dicomList);
         
         JPanel panel = new JPanel(new BorderLayout());
         panel.add(volumeView, BorderLayout.CENTER);

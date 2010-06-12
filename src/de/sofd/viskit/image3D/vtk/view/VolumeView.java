@@ -9,7 +9,6 @@ import org.apache.log4j.*;
 import org.dcm4che2.data.DicomObject;
 import org.dcm4che2.data.Tag;
 
-import de.sofd.viskit.image3D.model.VolumeBasicConfig;
 import de.sofd.viskit.image3D.vtk.controller.*;
 import de.sofd.viskit.image3D.vtk.util.Dicom2ImageData;
 
@@ -44,7 +43,7 @@ public class VolumeView extends VtkScenePanel {
 
     protected vtkVolume volume;
 
-    public VolumeView(ArrayList<DicomObject> dicomList, VolumeBasicConfig basicConfig) throws IOException {
+    public VolumeView(ArrayList<DicomObject> dicomList) throws IOException {
         super(500, 500);
         
         long time1 = System.currentTimeMillis();
