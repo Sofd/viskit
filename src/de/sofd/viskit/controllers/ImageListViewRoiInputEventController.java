@@ -1,6 +1,8 @@
 package de.sofd.viskit.controllers;
 
 import de.sofd.util.Misc;
+import de.sofd.viskit.model.DicomImageListViewModelElement;
+import de.sofd.viskit.model.ImageListViewModelElement;
 import de.sofd.viskit.ui.imagelist.ImageListViewCell;
 import de.sofd.viskit.ui.imagelist.JImageListView;
 import java.awt.Dimension;
@@ -10,6 +12,7 @@ import java.awt.event.MouseWheelEvent;
 import java.awt.geom.Point2D;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
+import org.dcm4che2.data.Tag;
 
 /**
  *
@@ -105,8 +108,8 @@ public class ImageListViewRoiInputEventController {
                 // TODO: generalized cell -> image AffineTransformation instead of this zoom/pan vector hackery? But one
                 //       would have to update that whenever cell.getLatestSize() changes...
 
-                Point2D imgSize = new Point2D.Double(cell.getScale() * cell.getDisplayedModelElement().getImage().getWidth(),
-                                                     cell.getScale() * cell.getDisplayedModelElement().getImage().getHeight());
+                Point2D imgSize = new Point2D.Double(cell.getScale() * getOriginalImageWidth(cell),
+                                                     cell.getScale() * getOriginalImageHeight(cell));
                 Dimension cellSize = cell.getLatestSize();
                 Point2D imageOffset = new Point2D.Double((cellSize.width + 2 * cell.getCenterOffset().getX() - (int) imgSize.getX()) / 2,
                                                          (cellSize.height + 2 * cell.getCenterOffset().getY() - (int) imgSize.getY()) / 2);
@@ -118,6 +121,32 @@ public class ImageListViewRoiInputEventController {
                 if (refreshCell) {
                     controlledImageListView.refreshCell(cell);
                 }
+            }
+        }
+
+        public int getOriginalImageWidth(ImageListViewCell cell) {
+            ImageListViewModelElement elt = cell.getDisplayedModelElement();
+            if (elt instanceof DicomImageListViewModelElement) {
+                // performance optimization for this case -- read the value from DICOM metadata instead of getting the image
+                DicomImageListViewModelElement dicomElt = (DicomImageListViewModelElement) elt;
+                return dicomElt.getDicomImageMetaData().getInt(Tag.Columns);
+            } else if (elt.hasRawImage() && elt.isRawImagePreferable()){
+                return elt.getRawImage().getWidth();
+            } else {
+                return elt.getImage().getWidth();
+            }
+        }
+
+        public int getOriginalImageHeight(ImageListViewCell cell) {
+            ImageListViewModelElement elt = cell.getDisplayedModelElement();
+            if (elt instanceof DicomImageListViewModelElement) {
+                // performance optimization for this case -- read the value from DICOM metadata instead of getting the image
+                DicomImageListViewModelElement dicomElt = (DicomImageListViewModelElement) elt;
+                return dicomElt.getDicomImageMetaData().getInt(Tag.Rows);
+            } else if (elt.hasRawImage() && elt.isRawImagePreferable()){
+                return elt.getRawImage().getHeight();
+            } else {
+                return elt.getImage().getHeight();
             }
         }
 
