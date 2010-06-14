@@ -3,14 +3,12 @@ package de.sofd.viskit.image3D.vtk.view;
 import vtk.*;
 
 import java.io.*;
-import java.nio.ShortBuffer;
 import java.util.ArrayList;
 
 import org.apache.log4j.*;
 import org.dcm4che2.data.DicomObject;
 
-import de.sofd.viskit.image3D.model.VolumeBasicConfig;
-import de.sofd.viskit.util.DicomUtil;
+import de.sofd.viskit.image3D.vtk.util.Dicom2ImageData;
 
 /**
  * @author oliver
@@ -45,32 +43,14 @@ public class ContourView extends VtkScenePanel {
      * Erzeugt Render-Pipeline für Ausgabe.
      * 
      * @param dicomList Liste mit Dicom-Objekten
-     * @param basicConfig Basis-Konfiguration der Dicom-Bilder, mit z.B. Höhe und Breite der Bilder
      * @throws IOException
      */
-    public ContourView(ArrayList<DicomObject> dicomList, VolumeBasicConfig basicConfig) throws IOException {
+    public ContourView(ArrayList<DicomObject> dicomList) throws IOException {
         super(500, 500);
         
         long time1 = System.currentTimeMillis();
         
-        //Liste mit Dicom-Bildern in vtk-Array mit short-Werten umwandeln 
-        ShortBuffer dataBuf = DicomUtil.getFilledShortBuffer( dicomList, false );
-        logger.debug("capacity : " + dataBuf.capacity());
-        short[] shorts = new short[dataBuf.capacity()];
-        dataBuf.get(shorts);
-        vtkShortArray dataArray = new vtkShortArray();
-        dataArray.SetJavaArray(shorts);
-        logger.debug("array size " + dataArray.GetDataSize());
-        
-        //vtkImageData-Objekt mit short-Werten erzeugen
-        imageData = new vtkImageData();
-        imageData.SetScalarTypeToShort();
-        imageData.SetNumberOfScalarComponents(1);
-        imageData.SetDimensions(basicConfig.getPixelWidth(), basicConfig.getPixelHeight(), basicConfig.getSlices());
-        imageData.SetSpacing(basicConfig.getSpacing().toDoubleArray());
-        imageData.SetOrigin(0, 0, 0);
-        
-        imageData.GetPointData().SetScalars(dataArray);
+        imageData = Dicom2ImageData.getImageData(dicomList);
         
         imageData.Update();
         imageData.UpdateData();

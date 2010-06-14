@@ -214,7 +214,7 @@ public class ImageTextureManager {
                     imageTextureData.flush();
                     gl.glActiveTexture(texUnit);
                     imageTexture = new Texture(imageTextureData);
-                    preScale = (float) (1<<16) / (1<<12);
+                    preScale = (float) (1<<16) / (1<<12); // see doc/opengl/texture-coords-and-filtering.txt on why this is right and not (1<<16-1)/(1<<12-1)
                     preOffset = 0.0F;
                 }
                 
@@ -237,6 +237,8 @@ public class ImageTextureManager {
         }
         gl.glEnable(GL.GL_TEXTURE_2D);
         gl.glActiveTexture(texUnit);
+        gl.glTexParameteri(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_MIN_FILTER, GL.GL_LINEAR);
+        gl.glTexParameteri(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_MAG_FILTER, GL.GL_LINEAR);
         gl.glBindTexture(GL.GL_TEXTURE_2D, texRef.getTexId());
         return texRef;
     }

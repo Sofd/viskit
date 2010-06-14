@@ -111,6 +111,8 @@ public class ImageListViewImagePaintController extends CellPaintControllerBase {
             rescaleShader.addProgramUniform("lutTex");
             rescaleShader.addProgramUniform("useLut");
             rescaleShader.addProgramUniform("useLutAlphaBlending");
+            rescaleShader.addProgramUniform("useGrayscaleRGBOutput");
+            rescaleShader.addProgramUniform("grayscaleRgbTex");
         } catch (Exception e) {
             throw new RuntimeException("couldn't initialize GL shader: " + e.getLocalizedMessage(), e);
         }
@@ -136,7 +138,13 @@ public class ImageListViewImagePaintController extends CellPaintControllerBase {
                 initializeGLShader(gl);
             }
             rescaleShader.bindUniform("tex", 1);
-            if (lut != null) {
+            if (cell.isOutputGrayscaleRGBs()) {
+                GrayscaleRGBLookupTextureManager.bindGrayscaleRGBLutTexture(gl, GL2.GL_TEXTURE3, sharedContextData, cell.getDisplayedModelElement());
+                rescaleShader.bindUniform("grayscaleRgbTex", 3);
+                rescaleShader.bindUniform("useGrayscaleRGBOutput", true);
+                rescaleShader.bindUniform("useLut", false);
+                rescaleShader.bindUniform("useLutAlphaBlending", false);
+            } else if (lut != null) {
                 LookupTableTextureManager.bindLutTexture(gl, GL2.GL_TEXTURE2, sharedContextData, cell.getLookupTable());
                 rescaleShader.bindUniform("lutTex", 2);
                 rescaleShader.bindUniform("useLut", true);
@@ -147,9 +155,11 @@ public class ImageListViewImagePaintController extends CellPaintControllerBase {
                 default:
                     rescaleShader.bindUniform("useLutAlphaBlending", false);
                 }
+                rescaleShader.bindUniform("useGrayscaleRGBOutput", false);
             } else {
                 rescaleShader.bindUniform("useLut", false);
                 rescaleShader.bindUniform("useLutAlphaBlending", false);
+                rescaleShader.bindUniform("useGrayscaleRGBOutput", false);
             }
             rescaleShader.bindUniform("preScale", texRef.getPreScale());
             rescaleShader.bindUniform("preOffset", texRef.getPreOffset());

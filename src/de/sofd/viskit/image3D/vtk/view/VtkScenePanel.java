@@ -24,8 +24,7 @@ public class VtkScenePanel extends vtkPanel {
         
         light = new vtkLight();
         
-        DefaultVtkSceneInputController controller
-            = new DefaultVtkSceneInputController(renderer, renderWindow, this);
+        DefaultVtkSceneInputController controller =    getNewController();
         
         this.addMouseListener(controller);
         this.addMouseMotionListener(controller);
@@ -34,6 +33,10 @@ public class VtkScenePanel extends vtkPanel {
 
     public vtkLight getLight() {
         return light;
+    }
+    
+    protected DefaultVtkSceneInputController getNewController() {
+        return new DefaultVtkSceneInputController(renderer, renderWindow, this);
     }
 
     public void pickActor(int x, int y) {
@@ -89,6 +92,30 @@ public class VtkScenePanel extends vtkPanel {
 
     public void setLightFollowsCameraOn() {
         this.isLightFollowingCamera = true;
+    }
+    
+    @Override
+    protected synchronized void setWindow()
+    {
+        if ( renderWindow == null )
+            return;
+        
+        // set the window id and the active camera
+        camera = renderer.GetActiveCamera();
+        
+        if ( !isLightSet ) {
+            setLight();
+        }
+        
+        RenderCreate(renderWindow);
+        
+        Lock();
+        renderWindow.SetSize(getWidth(), getHeight());
+        UnLock();
+        
+        isWindowSet = true;
+        // notify observers that we have a renderwindow created
+        windowSetObservable.notifyObservers();
     }
     
     public void translateCamera(int x, int y, int lastX, int lastY) {
@@ -151,30 +178,6 @@ public class VtkScenePanel extends vtkPanel {
             resetCameraClippingRange();
         }
         
-    }
-    
-    @Override
-    protected synchronized void setWindow()
-    {
-        if ( renderWindow == null )
-            return;
-        
-        // set the window id and the active camera
-        camera = renderer.GetActiveCamera();
-        
-        if ( !isLightSet ) {
-            setLight();
-        }
-        
-        RenderCreate(renderWindow);
-        
-        Lock();
-        renderWindow.SetSize(getWidth(), getHeight());
-        UnLock();
-        
-        isWindowSet = true;
-        // notify observers that we have a renderwindow created
-        windowSetObservable.notifyObservers();
     }
 
     

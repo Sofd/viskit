@@ -1,0 +1,30 @@
+questions for nVidia grayscale people (but TODO: look at their code
+samples before sending this off):
+
+- grayscale display works on Linux (Ubuntu 9.10, nVidia driver <TODO>)
+  and Quadro FX 580 as well, with full 5 MP resolution. Colors
+  converted to gray values look OK
+
+  - why? Does that mean that pixel packing occurs and this
+    configuration also works? Wouldn't the DVI cable otherwise be
+    unable to transmit that resolution? Or is the refresh rate reduced
+    accordingly?
+
+  - if the refresh rate is reduced: wouldn't the grayscale
+    reproduction still be accurate?
+
+- (referring to
+  http://www.nvidia.com/docs/IO/40049/TB-04631-001_v02.pdf)
+
+- is the unnormalized unsigned-int texture (internalFormat
+  GL_ALPHA16UI_EXT) really necessary if you don't care about saving
+  texture memory?
+
+- why should it be necessary to download a new 1D LUT texture whenever
+  the windowing contrast/level is changed? In our tests we just
+  applied the windowing parameters to the grayscale texel values in
+  the shader and then used the resulting windowed grayscale value for
+  looking up the RGB triple in a single, non-changing LUT. With the 1D
+  texture filter set to nearest-neighbor, interpolation between RGB
+  values from the LUT is avoided, so the resulting RGB colors should
+  be accurate.

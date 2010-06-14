@@ -1,5 +1,6 @@
 package de.sofd.viskit.test.image3D;
 
+import de.sofd.swing.*;
 import de.sofd.viskit.image.*;
 import de.sofd.viskit.image3D.model.*;
 import de.sofd.viskit.image3D.vtk.VTK;
@@ -43,11 +44,6 @@ public class ContourViewer extends JFrame implements ChangeListener, ActionListe
         
     protected ContourView contourView;
     
-    protected JSlider contourSlider;
-    
-    
-    protected JSpinner contourSpinner;
-    
     public ContourViewer() throws Exception
     {
         super("ContourViewer");
@@ -60,7 +56,7 @@ public class ContourViewer extends JFrame implements ChangeListener, ActionListe
         VolumeBasicConfig basicConfig = volumeConfig.getBasicConfig();
         ArrayList<DicomObject> dicomList = DicomInputOutput.readDir( basicConfig.getImageDirectory(), null, basicConfig.getImageStart(), basicConfig.getImageEnd(), basicConfig.getImageStride() );
         
-        contourView = new ContourView(dicomList, basicConfig);
+        contourView = new ContourView(dicomList);
         
         JPanel panel = new JPanel(new BorderLayout());
         panel.add(contourView, BorderLayout.CENTER);
@@ -111,26 +107,13 @@ public class ContourViewer extends JFrame implements ChangeListener, ActionListe
     }
     
     
-    private JPanel getContourSliderPanel(String name, int min, int max, int value) {
-        JPanel panel = new JPanel(new BorderLayout());
-        panel.setPreferredSize(new Dimension(200, 40));
-        panel.setMaximumSize(new Dimension(200, 40));
+    private JPanel getSliderPanel(String name, int min, int max, int value, int stepSize) {
+        JSliderWithSpinnerPanel panel = new JSliderWithSpinnerPanel(name, min, max, value, stepSize, this);
+        panel.setPreferredSize(new Dimension(200, 45));
+        panel.setMaximumSize(new Dimension(200, 45));
         
-        contourSlider = new JSlider(min, max, value);
-        contourSlider.setName("slider:"+name);
-        contourSlider.addChangeListener(this);
-        contourSlider.setPaintLabels(true);
-        
-        JPanel panelN = new JPanel(new BorderLayout());
-        panelN.add(new JLabel(name), BorderLayout.WEST);
-        
-        contourSpinner = new JSpinner(new SpinnerNumberModel(value, 0, max, 1));
-        contourSpinner.setName("spinner:"+name);
-        contourSpinner.addChangeListener(this);
-        panelN.add(contourSpinner, BorderLayout.CENTER);
-        
-        panel.add(panelN, BorderLayout.NORTH);
-        panel.add(contourSlider, BorderLayout.SOUTH);
+        panel.getSlider().addChangeListener(this);
+        panel.getSpinner().addChangeListener(this);
         
         return panel;
     }
@@ -145,7 +128,7 @@ public class ContourViewer extends JFrame implements ChangeListener, ActionListe
         double[] range = contourView.getImageData().GetScalarRange();
         System.out.println("range " + range[0] + " " + range[1]);
         
-        panel.add(getContourSliderPanel("Contour Level : ", (int)range[0], (int)range[1]+300, 500));
+        panel.add(getSliderPanel("Contour Level : ", (int)range[0], (int)range[1]+300, 500, 25));
         panel.add(Box.createVerticalStrut(15));
         panel.add(getCheckboxPanel("Image smoothing", true));
         panel.add(getCheckboxPanel("Decimation", false));
@@ -182,49 +165,25 @@ public class ContourViewer extends JFrame implements ChangeListener, ActionListe
     public void stateChanged(ChangeEvent e) {
         Component source = (Component)e.getSource();
         
-        if ( "slider:Contour Level : ".equals(source.getName()))
+        if ( "Contour Level : ".equals(source.getName()) && source instanceof JSlider )
         {
             JSlider slider = (JSlider)source;
-            
-            updateContourSpinner(slider.getValue());
             
             if ( ! slider.getValueIsAdjusting()) {
                 contourView.updateContourLevel(slider.getValue());
             }
         }
-        else if ( "spinner:Contour Level : ".equals(source.getName()))
+        else if ( "Contour Level : ".equals(source.getName()) && source instanceof JSpinner )
         {
             JSpinner spinner = (JSpinner)source;
             
             int value = ((SpinnerNumberModel)spinner.getModel()).getNumber().intValue();
-            updateContourSlider(value);
+            
             contourView.updateContourLevel(value);
         }
     }
     
-    protected void updateContourSlider(final int value) {
-        SwingUtilities.invokeLater(new Runnable()
-        {
-            public void run()
-            {
-                contourSlider.removeChangeListener(ContourViewer.this);
-                contourSlider.setValue(value);
-                contourSlider.addChangeListener(ContourViewer.this);
-            }
-        });
-    }
-
-    protected void updateContourSpinner(final int value) {
-        SwingUtilities.invokeLater(new Runnable()
-        {
-            public void run()
-            {
-                contourSpinner.removeChangeListener(ContourViewer.this);
-                contourSpinner.setValue(value);
-                contourSpinner.addChangeListener(ContourViewer.this);
-            }
-        });
-    }
+    
 
     
 }

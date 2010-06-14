@@ -65,8 +65,6 @@ public class TransferController implements ActionListener, ChangeListener
 
     protected GPUVolumeView volumeView;
 
-    protected VolumeObject volumeObject;
-
     protected WindowingMode windowingMode;
 
     protected TransferFrame transferFrame;
@@ -77,8 +75,7 @@ public class TransferController implements ActionListener, ChangeListener
     {
         this.sliceCanvas = sliceCanvas;
         this.volumeView = volumeView;
-        this.volumeObject = volumeObject;
-
+        
         this.windowingMode = WindowingMode.WINDOWING_MODE_LOCAL;
         
         this.thread = new TransferUpdateRunnable(sliceCanvas, volumeView);
@@ -104,7 +101,7 @@ public class TransferController implements ActionListener, ChangeListener
             else if ( "Global ( absolute )".equals( mode ) )
                 windowingMode = WindowingMode.WINDOWING_MODE_GLOBAL_ABSOLUTE;
 
-            volumeObject.updateWindowing( windowingMode );
+            getVolumeObject().updateWindowing( windowingMode );
 
             sliceCanvas.display();
             
@@ -119,7 +116,7 @@ public class TransferController implements ActionListener, ChangeListener
 
             transferFrame.resetWindowingModeBox();
 
-            volumeObject.reloadOriginalWindowing();
+            getVolumeObject().reloadOriginalWindowing();
 
             transferFrame.updateValues();
 
@@ -133,7 +130,7 @@ public class TransferController implements ActionListener, ChangeListener
             JComboBox comboBox = (JComboBox)event.getSource();
             String tf = (String)comboBox.getSelectedItem();
 
-            volumeObject.getTransferFunction().setBuffer( LutController.getLutMap().get(tf).getBuffer() );
+            getVolumeObject().getTransferFunction().setBuffer( LutController.getLutMap().get(tf).getBuffer() );
             
             sliceCanvas.display();
             
@@ -147,7 +144,7 @@ public class TransferController implements ActionListener, ChangeListener
     {
         return transferFrame;
     }
-
+    
     public void setTransferFrame( TransferFrame transferFrame )
     {
         this.transferFrame = transferFrame;
@@ -160,23 +157,23 @@ public class TransferController implements ActionListener, ChangeListener
 
         if ( "winCenter".equals( slider.getName() ) )
         {
-            volumeObject.updateWindowCenter( (short)slider.getValue(), windowingMode );
+            getVolumeObject().updateWindowCenter( (short)slider.getValue(), windowingMode );
             
             if ( ! slider.getValueIsAdjusting() )
             {
-                volumeObject.setUpdateGradientTexture(true);
-                volumeObject.setUpdateConvolutionTexture(true);
+                getVolumeObject().setUpdateGradientTexture(true);
+                getVolumeObject().setUpdateConvolutionTexture(true);
             }
             
             volumeView.updateTransferScala();
         }
         else if ( "winWidth".equals( slider.getName() ) )
         {
-            volumeObject.updateWindowWidth( (short)slider.getValue(), windowingMode );
+            getVolumeObject().updateWindowWidth( (short)slider.getValue(), windowingMode );
             
             if ( ! slider.getValueIsAdjusting() ) {
-                volumeObject.setUpdateGradientTexture(true);
-                volumeObject.setUpdateConvolutionTexture(true);
+                getVolumeObject().setUpdateGradientTexture(true);
+                getVolumeObject().setUpdateConvolutionTexture(true);
             }
             
             volumeView.updateTransferScala();
@@ -187,6 +184,10 @@ public class TransferController implements ActionListener, ChangeListener
         
         SwingUtilities.invokeLater( thread );
 
+    }
+    
+    protected VolumeObject getVolumeObject() {
+        return transferFrame.getVolumeObject();
     }
 
 }

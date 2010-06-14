@@ -113,7 +113,7 @@ public class GPUVolumeViewer extends JFrame implements MouseListener
                     transferController.setTransferFrame( transferFrame );
                     sliceCanvas.getSliceViewController().setTransferFrame( transferFrame );
                     
-                    VolumeController volumeController = new VolumeController( volumeView, volumeObject );
+                    VolumeController volumeController = new VolumeController( volumeView );
                     
                     final VolumeControlFrame volumeControlView = new VolumeControlFrame( volumeObject.getVolumeConfig(), volumeController );
                     volumeControlView.setLocationRelativeTo( null );

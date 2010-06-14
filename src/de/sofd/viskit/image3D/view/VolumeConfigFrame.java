@@ -129,7 +129,7 @@ public class VolumeConfigFrame extends JFrame {
         startButton = new JButton("Start");
         startButton.setMaximumSize(new Dimension(100, 30));
         startButton.setPreferredSize(new Dimension(100, 30));
-        startButton.addActionListener(new VolumeViewStartController(this, volumeConfig));
+        startButton.addActionListener(new VolumeViewStartController(this));
         
         panel.add(startButton);
 

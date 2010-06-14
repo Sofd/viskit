@@ -15,7 +15,7 @@ public class GradientVolumeBuffer extends VolumeBuffer
     protected GLShader shader;
 
     protected VolumeObject volumeObject;
-    
+        
     public GradientVolumeBuffer( IntDimension3D size, GLShader shader, VolumeObject volumeObject )
     {
         super( size );
