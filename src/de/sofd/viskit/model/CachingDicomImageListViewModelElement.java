@@ -167,6 +167,7 @@ public abstract class CachingDicomImageListViewModelElement extends AbstractImag
 
     @Override
     public BufferedImage getImage() {
+        
         BufferedImage result = imageCache.get(getImageKey());
         if (result == null) {
             result = getBackendImage();
@@ -217,6 +218,7 @@ public abstract class CachingDicomImageListViewModelElement extends AbstractImag
         // TODO: account for endianness (Tag.HighBit)
         int pixelFormat, pixelType;
         // TODO: maybe use static multidimensional tables instead of nested switch statements
+
         switch (bitsAllocated) {
             case 8:
                 return null;

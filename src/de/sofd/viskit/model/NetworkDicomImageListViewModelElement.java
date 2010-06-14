@@ -1,15 +1,10 @@
 package de.sofd.viskit.model;
 
-import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.Iterator;
-import javax.imageio.ImageIO;
-import javax.imageio.ImageReader;
-import javax.imageio.stream.ImageInputStream;
 import org.apache.log4j.Logger;
 import org.dcm4che2.data.DicomObject;
 import org.dcm4che2.io.DicomInputStream;
@@ -156,42 +151,6 @@ public class NetworkDicomImageListViewModelElement extends CachingDicomImageList
         }
     }
 
-    @Override
-    protected BufferedImage getBackendImage() {
-
-        // optimized implementation which extracts the image directly from the file,
-        // rather than the superclass implementation, which would extract it from
-        // #getBackendDicomObject() and thus incur a temporary in-memory DicomObject.
-        checkInitialized();
-        Iterator it = ImageIO.getImageReadersByFormatName("RAWDICOM");
-        if (!it.hasNext()) {
-            throw new IllegalStateException("The DICOM image I/O filter (from dcm4che1) must be available to read images.");
-        }
-        ImageReader reader = (ImageReader) it.next();
-
-        try {
-            // the ImageInputStream below does NOT close the wrapped URL input stream on close(). Thus
-            // we have to keep a reference to the URL input stream and close it ourselves.
-            InputStream urlIn = url.openStream();
-            try {
-                ImageInputStream in = ImageIO.createImageInputStream(urlIn);
-                if (null == in) {
-                    throw new IllegalStateException("The DICOM image I/O filter (from dcm4che1) must be available to read images.");
-                }
-                try {
-                    reader.setInput(in);
-                    return reader.read(0);
-                } finally {
-                    in.close();
-                }
-            } finally {
-                urlIn.close();
-            }
-        } catch (IOException e) {
-            throw new IllegalStateException("error trying to extract image from DICOM object: " + getUrl(), e);
-        }
-    }
-    
     /**
      * To minimize network traffic metadata are obtained from dcmObjectCache
      */
