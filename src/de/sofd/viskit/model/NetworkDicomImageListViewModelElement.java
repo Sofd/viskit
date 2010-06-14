@@ -10,6 +10,7 @@ import java.util.Iterator;
 import javax.imageio.ImageIO;
 import javax.imageio.ImageReader;
 import javax.imageio.stream.ImageInputStream;
+import org.apache.log4j.Logger;
 import org.dcm4che2.data.DicomObject;
 import org.dcm4che2.io.DicomInputStream;
 
@@ -24,8 +25,12 @@ import org.dcm4che2.io.DicomInputStream;
  */
 public class NetworkDicomImageListViewModelElement extends CachingDicomImageListViewModelElement {
 
+    static final Logger logger = Logger.getLogger(NetworkDicomImageListViewModelElement.class);
+
     private /*final*/ URL url;
     private File urlAsFile; // url as a file again (if it represents one), for user convenience
+
+    private INetworkLoadingObserver networkLoadingObserver;
 
     protected NetworkDicomImageListViewModelElement() {
     }
@@ -153,6 +158,7 @@ public class NetworkDicomImageListViewModelElement extends CachingDicomImageList
 
     @Override
     protected BufferedImage getBackendImage() {
+
         // optimized implementation which extracts the image directly from the file,
         // rather than the superclass implementation, which would extract it from
         // #getBackendDicomObject() and thus incur a temporary in-memory DicomObject.
@@ -197,6 +203,30 @@ public class NetworkDicomImageListViewModelElement extends CachingDicomImageList
     @Override
     protected DicomObject getBackendDicomImageMetaData() {
         return getBackendDicomObject();
+    }
+
+    @Override
+    public DicomObject getDicomObject() {
+        DicomObject dicomObject = super.getDicomObject();
+
+        if (networkLoadingObserver != null)
+            networkLoadingObserver.update();
+        
+        return dicomObject;
+    }
+
+    /**
+     * @return the networkLoadingObserver
+     */
+    public INetworkLoadingObserver getNetworkLoadingObserver() {
+        return networkLoadingObserver;
+    }
+
+    /**
+     * @param networkLoadingObserver the networkLoadingObserver to set
+     */
+    public void setNetworkLoadingObserver(INetworkLoadingObserver networkLoadingObserver) {
+        this.networkLoadingObserver = networkLoadingObserver;
     }
 
 }

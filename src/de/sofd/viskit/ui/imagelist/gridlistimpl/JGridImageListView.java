@@ -295,7 +295,7 @@ public class JGridImageListView extends JImageListView {
     @Override
     protected void doSetScaleMode(ScaleMode oldScaleMode, ScaleMode newScaleMode) {
         MyScaleMode sm = (MyScaleMode) newScaleMode;
-        wrappedGridList.setGridSizes(sm.getCellColumnCount(), sm.getCellRowCount());
+        wrappedGridList.setGridSizes(sm.getCellRowCount(), sm.getCellColumnCount());
         updateCellSizes(true, true);
     }
 
