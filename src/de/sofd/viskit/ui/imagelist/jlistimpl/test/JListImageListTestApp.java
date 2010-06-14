@@ -660,6 +660,17 @@ public class JListImageListTestApp {
                     }
                 }
             });
+            toolbar.add(new AbstractAction("wA") {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    ImageListViewModelElement elt = listView.getSelectedValue();
+                    if (null != elt) {
+                        ImageListViewCell cell = listView.getCellForElement(elt);
+                        cell.setWindowWidth(4095);
+                        cell.setWindowLocation(2047);
+                    }
+                }
+            });
             final JCheckBox cb = new JCheckBox("G");
             toolbar.add(cb);
             cb.addActionListener(new ActionListener() {
