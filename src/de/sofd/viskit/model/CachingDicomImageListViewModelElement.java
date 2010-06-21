@@ -1,6 +1,5 @@
 package de.sofd.viskit.model;
 
-import de.sofd.draw2d.Drawing;
 import de.sofd.util.FloatRange;
 import de.sofd.viskit.test.windowing.RawDicomImageReader;
 import java.awt.image.BufferedImage;
@@ -22,6 +21,7 @@ import org.dcm4che2.io.DicomOutputStream;
 import org.dcm4che2.media.FileMetaInformation;
 
 import com.sun.opengl.util.BufferUtil;
+import org.apache.log4j.Logger;
 
 /**
  * Implements getDicomObject(), getImage() as caching delegators to the (subclass-provided)
@@ -32,6 +32,8 @@ import com.sun.opengl.util.BufferUtil;
  * @author olaf
  */
 public abstract class CachingDicomImageListViewModelElement extends AbstractImageListViewModelElement implements DicomImageListViewModelElement {
+
+    private static final Logger logger = Logger.getLogger(CachingDicomImageListViewModelElement.class);
 
     static {
         RawDicomImageReader.registerWithImageIO();
@@ -79,7 +81,8 @@ public abstract class CachingDicomImageListViewModelElement extends AbstractImag
             }
             try {
                 reader.setInput(in);
-                return reader.read(0);
+                BufferedImage bimg = reader.read(0);
+                return bimg;
             } finally {
                 in.close();
             }
@@ -167,7 +170,6 @@ public abstract class CachingDicomImageListViewModelElement extends AbstractImag
 
     @Override
     public BufferedImage getImage() {
-        
         BufferedImage result = imageCache.get(getImageKey());
         if (result == null) {
             result = getBackendImage();

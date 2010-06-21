@@ -14,16 +14,13 @@ import java.awt.image.WritableRaster;
 import java.nio.ShortBuffer;
 import java.util.Map;
 
-import javax.media.opengl.GL;
 import javax.media.opengl.GL2;
 import javax.media.opengl.GLAutoDrawable;
 
 import org.dcm4che2.data.DicomObject;
 import org.dcm4che2.data.Tag;
 
-import com.sun.opengl.util.texture.Texture;
 import com.sun.opengl.util.texture.TextureCoords;
-import com.sun.opengl.util.texture.TextureData;
 
 import de.sofd.util.FloatRange;
 import de.sofd.viskit.image3D.jogl.util.GLShader;
@@ -308,15 +305,15 @@ public class ImageListViewImagePaintController extends CellPaintControllerBase {
         FloatRange pxValuesRange = elt.getPixelValuesRange();
         float minGrayvalue = pxValuesRange.getMin();
         float nGrayvalues = pxValuesRange.getDelta();
-        LinAlg.matrMult1D(new float[]{1.0F/nGrayvalues, minGrayvalue/nGrayvalues}, pixelTransform, pixelTransform);
-        
+        LinAlg.matrMult1D(new float[]{1.0F/nGrayvalues, -minGrayvalue/nGrayvalues}, pixelTransform, pixelTransform);
+
         // window level/width
         float wl = (displayedCell.getWindowLocation() - minGrayvalue) / nGrayvalues;
         float ww = displayedCell.getWindowWidth() / nGrayvalues;
         float scale = 1F/ww;
         float offset = (ww/2-wl)*scale;
         LinAlg.matrMult1D(new float[]{scale, offset}, pixelTransform, pixelTransform);
-        
+
         // transformation to output grayscale range ( [0,256) )
         LinAlg.matrMult1D(new float[]{256, 0}, pixelTransform, pixelTransform);
         
@@ -333,6 +330,7 @@ public class ImageListViewImagePaintController extends CellPaintControllerBase {
                 //TODO: maybe reuse BufferedImages of the same size to relieve the GC
                 float txscale = pixelTransform[0];
                 float txoffset = pixelTransform[1];
+
                 ShortBuffer srcBuffer = (ShortBuffer) rimg.getPixelData();
                 int w = rimg.getWidth();
                 int h = rimg.getHeight();
