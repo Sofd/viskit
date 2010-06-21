@@ -1,10 +1,12 @@
 package de.sofd.viskit.model;
 
+import java.applet.AppletContext;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.net.URLConnection;
 import org.apache.log4j.Logger;
 import org.dcm4che2.data.DicomObject;
 import org.dcm4che2.io.DicomInputStream;
@@ -20,12 +22,14 @@ import org.dcm4che2.io.DicomInputStream;
  */
 public class NetworkDicomImageListViewModelElement extends CachingDicomImageListViewModelElement {
 
-    static final Logger logger = Logger.getLogger(NetworkDicomImageListViewModelElement.class);
+    private static final Logger logger = Logger.getLogger(NetworkDicomImageListViewModelElement.class);
 
     private /*final*/ URL url;
     private File urlAsFile; // url as a file again (if it represents one), for user convenience
 
     private INetworkLoadingObserver networkLoadingObserver;
+
+    protected AppletContext appletContext;
 
     protected NetworkDicomImageListViewModelElement() {
     }
@@ -57,6 +61,10 @@ public class NetworkDicomImageListViewModelElement extends CachingDicomImageList
         } catch (MalformedURLException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    public void setAppletContext(AppletContext appletContext) {
+        this.appletContext = appletContext;
     }
 
     protected void setUrl(URL url) {
@@ -139,9 +147,29 @@ public class NetworkDicomImageListViewModelElement extends CachingDicomImageList
     protected DicomObject getBackendDicomObject() {
         checkInitialized();
         try {
-            DicomInputStream din = new DicomInputStream(url.openStream());
+
+            URLConnection connection = url.openConnection();
+            connection.setUseCaches(true);
+            connection.setDefaultUseCaches(true);
+
+            //connection.setRequestProperty("Cache-Control", "must-revalidate");
+            
+            /*Map<String, java.util.List<String>> headerFields = connection.getHeaderFields();
+            for (String key : headerFields.keySet()) {
+                System.out.print("key : " + key + ", values : ");
+                for (String value : headerFields.get(key)) {
+                    System.out.print(value + ";");
+                }
+                System.out.println();
+            }*/
+                
+            InputStream is = connection.getInputStream();
+            DicomInputStream din = new DicomInputStream(is);
+                
             try {
-                return din.readDicomObject();
+                DicomObject dicomObject = din.readDicomObject();
+                
+                return dicomObject;
             } finally {
                 din.close();
             }
