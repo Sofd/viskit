@@ -14,7 +14,7 @@ public class ConvolutionVolumeBuffer extends VolumeBuffer
     protected GLShader shader;
 
     protected VolumeObject volumeObject;
-
+    
     public ConvolutionVolumeBuffer( IntDimension3D size, GLShader shader, VolumeObject volumeObject )
     {
         super( size );

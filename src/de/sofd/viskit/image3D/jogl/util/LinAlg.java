@@ -307,6 +307,16 @@ public class LinAlg {
         return dest;
     }
 
+    public static float[] vminusv(float[] v1, float[] v2, float[] dest) {
+        if (dest == null) {
+            dest = new float[4];
+        }
+        dest[0] = v1[0] - v2[0];
+        dest[1] = v1[1] - v2[1];
+        dest[2] = v1[2] - v2[2];
+        return dest;
+    }
+
     public static float length(float[] v) {
         return (float) Math.sqrt(v[0]*v[0] + v[1]*v[1] + v[2]*v[2]);
     }

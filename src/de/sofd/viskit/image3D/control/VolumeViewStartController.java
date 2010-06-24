@@ -25,13 +25,11 @@ public class VolumeViewStartController implements ActionListener
 {
     static final Logger logger = Logger.getLogger( VolumeViewStartController.class );
     
-    protected VolumeConfig volumeConfig;
     protected VolumeConfigFrame volumeConfigFrame;
     
-    public VolumeViewStartController(VolumeConfigFrame volumeConfigFrame, VolumeConfig volumeConfig)
+    public VolumeViewStartController(VolumeConfigFrame volumeConfigFrame)
     {
         this.volumeConfigFrame = volumeConfigFrame;
-        this.volumeConfig = volumeConfig;
     }
 
     @Override
@@ -53,7 +51,7 @@ public class VolumeViewStartController implements ActionListener
                 {
                 
                     /** VolumeObject erstellen */
-                    VolumeBasicConfig basicConfig = volumeConfig.getBasicConfig();
+                    VolumeBasicConfig basicConfig = volumeConfigFrame.getVolumeConfig().getBasicConfig();
                     ArrayList<DicomObject> dicomList = DicomInputOutput.readDir( basicConfig.getImageDirectory(), null, basicConfig.getImageStart(), basicConfig.getImageEnd(), basicConfig.getImageStride() );
                     
                     //ShortBuffer dataBuf = DicomUtil.getFilledShortBuffer( dicomList );
@@ -63,7 +61,7 @@ public class VolumeViewStartController implements ActionListener
                     ShortRange range = ImageUtil.getRange( dataBufList );
                     
                     ShortBuffer windowing = DicomUtil.getWindowing( dicomList, range );
-                    VolumeObject volumeObject = new VolumeObject( dicomList, windowing, dataBufList, volumeConfig, range );
+                    VolumeObject volumeObject = new VolumeObject( dicomList, windowing, dataBufList, volumeConfigFrame.getVolumeConfig(), range );
                     
                     //liste wird von hier an nicht mehr benötigt
                     dicomList = null;
@@ -101,7 +99,7 @@ public class VolumeViewStartController implements ActionListener
                     sliceCanvas.getSliceViewController().setTransferFrame( transferFrame );
                     
                     /** VolumeControlFrame erstellen */
-                    VolumeController volumeController = new VolumeController( volumeView, volumeObject );
+                    VolumeController volumeController = new VolumeController( volumeView );
                     final VolumeControlFrame volumeControlView = new VolumeControlFrame( volumeObject.getVolumeConfig(), volumeController );
                     volumeControlView.setLocationRelativeTo( null );
                     volumeControlView.setVisible( true );
