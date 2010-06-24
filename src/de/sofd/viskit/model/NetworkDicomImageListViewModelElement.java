@@ -8,7 +8,9 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
 import org.apache.log4j.Logger;
+import org.dcm4che2.data.BasicDicomObject;
 import org.dcm4che2.data.DicomObject;
+import org.dcm4che2.data.Tag;
 import org.dcm4che2.io.DicomInputStream;
 
 /**
@@ -151,17 +153,6 @@ public class NetworkDicomImageListViewModelElement extends CachingDicomImageList
             URLConnection connection = url.openConnection();
             connection.setUseCaches(true);
             connection.setDefaultUseCaches(true);
-
-            //connection.setRequestProperty("Cache-Control", "must-revalidate");
-            
-            /*Map<String, java.util.List<String>> headerFields = connection.getHeaderFields();
-            for (String key : headerFields.keySet()) {
-                System.out.print("key : " + key + ", values : ");
-                for (String value : headerFields.get(key)) {
-                    System.out.print(value + ";");
-                }
-                System.out.println();
-            }*/
                 
             InputStream is = connection.getInputStream();
             DicomInputStream din = new DicomInputStream(is);
@@ -179,17 +170,11 @@ public class NetworkDicomImageListViewModelElement extends CachingDicomImageList
         }
     }
 
-    /**
-     * To minimize network traffic metadata are obtained from dcmObjectCache
-     */
-    @Override
-    public DicomObject getDicomImageMetaData() {
-        return getDicomObject();
-    }
-
     @Override
     protected DicomObject getBackendDicomImageMetaData() {
-        return getBackendDicomObject();
+        DicomObject result = new BasicDicomObject();
+        getDicomObject().subSet(0, Tag.PixelData - 1).copyTo(result); 
+        return result;
     }
 
     @Override

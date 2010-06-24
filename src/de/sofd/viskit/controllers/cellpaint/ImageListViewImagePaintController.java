@@ -32,6 +32,7 @@ import de.sofd.viskit.model.LookupTable;
 import de.sofd.viskit.model.RawImage;
 import de.sofd.viskit.ui.imagelist.ImageListViewCell;
 import de.sofd.viskit.ui.imagelist.JImageListView;
+import java.nio.IntBuffer;
 import javax.media.opengl.GLException;
 import org.apache.log4j.Logger;
 
@@ -315,13 +316,13 @@ public class ImageListViewImagePaintController extends CellPaintControllerBase {
             // will only window RawImages whose pixelData buffer is a ShortBuffer for now
             case RawImage.PIXEL_TYPE_SIGNED_12BIT:
             case RawImage.PIXEL_TYPE_SIGNED_16BIT:
-            case RawImage.PIXEL_TYPE_UNSIGNED_12BIT:
-            case RawImage.PIXEL_TYPE_UNSIGNED_16BIT:
+            case RawImage.PIXEL_TYPE_UNSIGNED_12BIT: {
                 //TODO: maybe reuse BufferedImages of the same size to relieve the GC
                 float txscale = pixelTransform[0];
                 float txoffset = pixelTransform[1];
-
+                
                 ShortBuffer srcBuffer = (ShortBuffer) rimg.getPixelData();
+                
                 int w = rimg.getWidth();
                 int h = rimg.getHeight();
                 int index = 0;
@@ -342,7 +343,35 @@ public class ImageListViewImagePaintController extends CellPaintControllerBase {
                     }
                 }
                 return result;
-                
+            }
+            //...and IntBuffer
+            case RawImage.PIXEL_TYPE_UNSIGNED_16BIT: {
+                //TODO: maybe reuse BufferedImages of the same size to relieve the GC
+                float txscale = pixelTransform[0];
+                float txoffset = pixelTransform[1];
+
+                IntBuffer srcBuffer = (IntBuffer) rimg.getPixelData();
+                int w = rimg.getWidth();
+                int h = rimg.getHeight();
+                int index = 0;
+                BufferedImage result = new BufferedImage(w, h, BufferedImage.TYPE_INT_RGB);
+                WritableRaster resultRaster = result.getRaster();
+                for (int y = 0; y < h; y++) {
+                    for (int x = 0; x < w; x++) {
+                        float destGrayValue = txscale * srcBuffer.get(index++) + txoffset;
+                        //clamp
+                        if (destGrayValue < 0) {
+                            destGrayValue = 0;
+                        } else if (destGrayValue >= 256) {
+                            destGrayValue = 255;
+                        }
+                        resultRaster.setSample(x, y, 0, destGrayValue);
+                        resultRaster.setSample(x, y, 1, destGrayValue);
+                        resultRaster.setSample(x, y, 2, destGrayValue);
+                    }
+                }
+                return result;
+            }
             default:
                 return null;
             }

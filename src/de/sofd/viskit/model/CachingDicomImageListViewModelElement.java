@@ -21,6 +21,7 @@ import org.dcm4che2.io.DicomOutputStream;
 import org.dcm4che2.media.FileMetaInformation;
 
 import com.sun.opengl.util.BufferUtil;
+import java.nio.IntBuffer;
 import org.apache.log4j.Logger;
 
 /**
@@ -129,6 +130,10 @@ public abstract class CachingDicomImageListViewModelElement extends AbstractImag
         return result;
     }
 
+    public boolean isDicomMetadataCached() {
+        return rawDicomImageMetadataCache.containsKey(getImageKey());
+    }
+
     public boolean isDicomObjectCached() {
         return dcmObjectCache.containsKey(getImageKey());
     }
@@ -140,6 +145,7 @@ public abstract class CachingDicomImageListViewModelElement extends AbstractImag
     @Override
     public DicomObject getDicomImageMetaData() {
         DicomObject result = rawDicomImageMetadataCache.get(getImageKey());
+        
         if (result == null) {
             result = getBackendDicomImageMetaData();
             rawDicomImageMetadataCache.put(getImageKey(), result);
@@ -191,7 +197,17 @@ public abstract class CachingDicomImageListViewModelElement extends AbstractImag
     @Override
     public RawImage getRawImage() {
         RawImageImpl result = (RawImageImpl) getProxyRawImage();
-        result.setPixelData(BufferUtil.newShortBuffer(getDicomObject().getShorts(Tag.PixelData))); // type of buffer may later depend on image metadata
+
+        DicomObject dicomObject = getDicomObject();
+
+        if (result.getPixelType() != RawImage.PIXEL_TYPE_UNSIGNED_16BIT) {
+            //signed
+            result.setPixelData(BufferUtil.newShortBuffer(dicomObject.getShorts(Tag.PixelData))); // type of buffer may later depend on image metadata
+        } else {
+            //unsigned int
+            result.setPixelData(BufferUtil.newIntBuffer(dicomObject.getInts(Tag.PixelData))); // type of buffer may later depend on image metadata
+        }
+        
         return result;
     }
 
@@ -206,6 +222,16 @@ public abstract class CachingDicomImageListViewModelElement extends AbstractImag
 
     protected RawImageImpl maybeGetProxyRawImage() {
         DicomObject imgMetadata = getDicomImageMetaData();
+        
+        String transferSyntaxUID = imgMetadata.getString(Tag.TransferSyntaxUID);
+        System.out.println(getImageKey());
+        System.out.println("transferSyntaxUID : " + transferSyntaxUID);
+        //jpeg or rle compressed
+        if (transferSyntaxUID != null && 
+                (transferSyntaxUID.startsWith("1.2.840.10008.1.2.4") ||
+                 transferSyntaxUID.startsWith("1.2.840.10008.1.2.5")))
+            return null;
+        
         int bitsAllocated = imgMetadata.getInt(Tag.BitsAllocated);
         if (bitsAllocated <= 0) {
             return null;
@@ -240,6 +266,7 @@ public abstract class CachingDicomImageListViewModelElement extends AbstractImag
             default:
                 return null;
         }
+
         int width = imgMetadata.getInt(Tag.Columns);
         int height = imgMetadata.getInt(Tag.Rows);
         return new RawImageImpl(width, height, pixelFormat, pixelType, null);
@@ -289,22 +316,46 @@ public abstract class CachingDicomImageListViewModelElement extends AbstractImag
     }
 
     protected void setUsedPixelValuesRange() {
-        if (hasRawImage() && isRawImagePreferable()) {
+        DicomObject metadata = getDicomImageMetaData();
+
+        int min = 200;
+        int max = 800;
+
+        if (metadata.contains(Tag.SmallestImagePixelValue) && metadata.contains(Tag.LargestImagePixelValue)) {
+            min = metadata.getInt(Tag.SmallestImagePixelValue);
+            max = metadata.getInt(Tag.LargestImagePixelValue);
+        } else if (hasRawImage() && isRawImagePreferable()) {
+            //unsigned short? (0-64000)
             RawImage img = getRawImage();  // we rely on this being fast after the first call b/c of BasicDicomObject's internal caching of getShorts(Tag.PixelData)
-            short min = Short.MAX_VALUE;
-            short max = Short.MIN_VALUE;
+
             int pxCount = (img.getPixelFormat() == RawImage.PIXEL_FORMAT_RGB ? 3 : 1) * img.getWidth() * img.getHeight();
-            ShortBuffer buf = (ShortBuffer) img.getPixelData();
-            for (int i = 0; i < pxCount; i++) {
-                short val = buf.get(i);
-                if (val < min) { min = val; }
-                if (val > max) { max = val; }
+
+            if (img.getPixelType() != RawImage.PIXEL_TYPE_UNSIGNED_16BIT) {
+                //unsigned 12 bit or signed
+                min = Short.MAX_VALUE;
+                max = Short.MIN_VALUE;
+                ShortBuffer buf = (ShortBuffer) img.getPixelData();
+                for (int i = 0; i < pxCount; i++) {
+                    short val = buf.get(i);
+                    if (val < min) { min = val; }
+                    if (val > max) { max = val; }
+                }
+            } else {
+                //unsigned 16 bit
+                min = Short.MAX_VALUE*2+1;
+                max = 0;
+                IntBuffer buf = (IntBuffer) img.getPixelData();
+                for (int i = 0; i < pxCount; i++) {
+                    int val = buf.get(i);
+                    if (val < min) { min = val; }
+                    if (val > max) { max = val; }
+                }
             }
-            usedPixelValuesRange = new FloatRange(min, max);
         } else {
             // TODO: obtain from getImage();
-            usedPixelValuesRange = new FloatRange(200, 800);
         }
+
+        usedPixelValuesRange = new FloatRange(min, max);
     }
 
 }

@@ -72,7 +72,7 @@ public interface RawImage {
     public static final int PIXEL_TYPE_SIGNED_16BIT = 4;
 
     /**
-     * stored in shorts. getPixelData() instanceof ShortBuffer
+     * stored in ints. getPixelData() instanceof IntBuffer
      */
     public static final int PIXEL_TYPE_UNSIGNED_16BIT = 5;
 }
