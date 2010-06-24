@@ -37,12 +37,12 @@ public class LinAlg {
     /**
      * res := a * (rotation matrix defined by angle, x, y, z)
      */
-    public static void fillRotation(float[] a,
-                                    float      angle,
-                                    float      x,
-                                    float      y,
-                                    float      z,
-                                    float[] res) {
+    public static float[] fillRotation(float[] a,
+                                       float      angle,
+                                       float      x,
+                                       float      y,
+                                       float      z,
+                                       float[] res) {
         // (straight from http://www.opengl.org/sdk/docs/man/xhtml/glRotate.xml)
         float aRad = angle * (float)Math.PI / 180;
         float c = (float) Math.cos(aRad);
@@ -70,21 +70,21 @@ public class LinAlg {
         rm[14] = 0;
         rm[15] = 1;
 
-        fillMultiplication(a, rm, res);
+        return fillMultiplication(a, rm, res);
     }
 
 
-    public static void fillTranslation(float[] a,
-                                       float   tx,
-                                       float   ty,
-                                       float   tz,
-                                       float[] res) {
+    public static float[] fillTranslation(float[] a,
+                                          float   tx,
+                                          float   ty,
+                                          float   tz,
+                                          float[] res) {
         float[] tm = new float[16];
         fillIdentity(tm);
         tm[12] = tx;
         tm[13] = ty;
         tm[14] = tz;
-        fillMultiplication(a, tm, res);
+        return fillMultiplication(a, tm, res);
     }
 
     /**
@@ -97,33 +97,36 @@ public class LinAlg {
      * @param tz
      * @param res
      */
-    public static void fillTranslationL(float[] a,
-                                        float   tx,
-                                        float   ty,
-                                        float   tz,
-                                        float[] res) {
+    public static float[] fillTranslationL(float[] a,
+                                           float   tx,
+                                           float   ty,
+                                           float   tz,
+                                           float[] res) {
         float[] tm = new float[16];
         fillIdentity(tm);
         tm[12] = tx;
         tm[13] = ty;
         tm[14] = tz;
-        fillMultiplication(tm, a, res);
+        return fillMultiplication(tm, a, res);
     }
     
-    public static void fillScale(float[] a,
-                                 float   sx,
-                                 float   sy,
-                                 float   sz,
-                                 float[] res) {
+    public static float[] fillScale(float[] a,
+                                    float   sx,
+                                    float   sy,
+                                    float   sz,
+                                    float[] res) {
         float[] tm = new float[16];
         fillIdentity(tm);
         tm[0]  = sx;
         tm[5]  = sy;
         tm[10] = sz;
-        fillMultiplication(a, tm, res);
+        return fillMultiplication(a, tm, res);
     }
     
-    public static void fillMultiplication(float[] a, float[] b, float[] res) {
+    public static float[] fillMultiplication(float[] a, float[] b, float[] res) {
+        if (res == null) {
+            res = new float[16];
+        }
         float[] a2 = a;
         if (a2 == res) {
             a2 = copyArr(a, null);
@@ -141,6 +144,7 @@ public class LinAlg {
                 }
             }
         }
+        return res;
     }
 
     public static float[] inverse(float[] src, float[] dest) {
