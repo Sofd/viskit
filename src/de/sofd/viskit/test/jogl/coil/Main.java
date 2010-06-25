@@ -1,8 +1,9 @@
 package de.sofd.viskit.test.jogl.coil;
 
-import de.sofd.viskit.image3D.jogl.util.LinAlg;
 import com.sun.opengl.util.Animator;
 import de.sofd.lang.Runnable1;
+import de.sofd.math.LinAlg;
+
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.event.ActionEvent;
