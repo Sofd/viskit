@@ -1,11 +1,11 @@
 package de.sofd.viskit.test.jogl.coil;
 
-import de.sofd.viskit.image3D.jogl.util.LinAlg;
 import com.sun.opengl.util.texture.Texture;
 import com.sun.opengl.util.texture.TextureCoords;
 import com.sun.opengl.util.texture.TextureData;
 import com.sun.opengl.util.texture.TextureIO;
 import de.sofd.lang.Runnable2;
+import de.sofd.math.LinAlg;
 import de.sofd.util.DynScope;
 import de.sofd.viskit.image3D.jogl.util.GLShader;
 import java.io.FileInputStream;

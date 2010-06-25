@@ -403,16 +403,24 @@ public class JListImageListTestApp {
         //listModels.add(getViewerListModelForDirectory(new File("/Users/fokko/disk312046/Images/cd00903__center10101")));
         //listModels.add(getViewerListModelForDirectory(new File("/Users/fokko/disk312046/Images/cd00904__center10101")));
         //listModels.add(getViewerListModelForDirectory(new File("/home/olaf/hieronymusr/disk312046/Images/cd00917__center10102")));
-        listModels.add(getViewerListModelForDirectory(new File("/home/olaf/hieronymusr/br312046/images/cd00903__center10101")));
+        ///listModels.add(getViewerListModelForDirectory(new File("/home/olaf/hieronymusr/br312046/images/cd00903__center10101")));
         //listModels.add(getViewerListModelForDirectory(new File("/home/olaf/hieronymusr/br312046/images/cd00904__center10101")));
         //listModels.add(getViewerListModelForDirectory(new File("/home/olaf/hieronymusr/br312046/images/cd00905__center10101")));
         //listModels.add(getViewerListModelForDirectory(new File("/home/olaf/hieronymusr/br312046/images/cd00906__center10102")));
-        listModels.add(getViewerListModelForDirectory(new File("/home/olaf/hieronymusr/br312046/images/cd00907__center10102")));
+        ///listModels.add(getViewerListModelForDirectory(new File("/home/olaf/hieronymusr/br312046/images/cd00907__center10102")));
         //listModels.add(getViewerListModelForDirectory(new File("/home/olaf/gi/resources/DICOM-Testbilder/1578")));
         //*/
         //listModels.add(getViewerListModelForDirectory(new File("/home/olaf/hieronymusr/br312046/images/cd00908__center10101")));
         //listModels.add(getViewerListModelForDirectory(new File("/home/olaf/hieronymusr/br312046/images/cd00909__center10101")));
         //*/
+        //listModels.add(getViewerListModelForDirectory(new File("/home/olaf/hieronymusr/br312046/images/cd00907__center10102")));
+        //listModels.add(getViewerListModelForDirectory(new File("/shares/shared/olaf/cd823__center4001")));
+
+        //listModels.add(getViewerListModelForDirectory(new File("/home/olaf/hieronymusr/br312046/images/cd00907__center10102")));
+        //listModels.add(getViewerListModelForDirectory(new File("/shares/shared/olaf/cd823__center4001")));
+        
+        listModels.add(getViewerListModelForDirectory(new File("/home/olaf/hieronymusr/br312043/images/cd800__center4001")));
+        listModels.add(getViewerListModelForDirectory(new File("/home/olaf/hieronymusr/br312043/images/cd801__center4001")));
 
         List<JImageListView> lists = new ArrayList<JImageListView>();
         

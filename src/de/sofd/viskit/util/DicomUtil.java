@@ -7,8 +7,8 @@ import org.dcm4che2.data.*;
 
 import com.sun.opengl.util.*;
 
+import de.sofd.math.LinAlg;
 import de.sofd.util.*;
-import de.sofd.viskit.image3D.jogl.util.LinAlg;
 import de.sofd.viskit.model.WindowingFunction;
 
 public class DicomUtil {
