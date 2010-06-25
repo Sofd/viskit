@@ -289,36 +289,9 @@ public abstract class CachingDicomImageListViewModelElement extends AbstractImag
     protected void setUsedPixelValuesRange() {
         DicomObject metadata = getDicomImageMetaData();
 
-        int min = 200;
-        int max = 800;
+        int min = Integer.MAX_VALUE;
+        int max = Integer.MIN_VALUE;
         
-        int pixelType = getPixelType(metadata);
-
-        switch (pixelType) {
-            case RawImage.PIXEL_TYPE_UNSIGNED_BYTE:
-            //case RawImage.PIXEL_FORMAT_LUMINANCE:
-                min = 0;
-                max = 255;
-                break;
-            case RawImage.PIXEL_TYPE_SIGNED_12BIT:
-                min = Short.MIN_VALUE / 16;
-                max = (1 + Short.MAX_VALUE) / 16 - 1;
-                break;
-            case RawImage.PIXEL_TYPE_UNSIGNED_12BIT:
-                min = 0;
-                max = (1 + Short.MAX_VALUE) / 8 - 1;
-                break;
-            case RawImage.PIXEL_TYPE_SIGNED_16BIT:
-                min = Short.MIN_VALUE;
-                max = Short.MAX_VALUE;
-                break;
-            case RawImage.PIXEL_TYPE_UNSIGNED_16BIT:
-                min = 0;
-                max = (1 + Short.MAX_VALUE) * 2 - 1;
-                break;
-
-        }
-
         if (metadata.contains(Tag.SmallestImagePixelValue) && metadata.contains(Tag.LargestImagePixelValue)) {
             min = metadata.getInt(Tag.SmallestImagePixelValue);
             max = metadata.getInt(Tag.LargestImagePixelValue);
@@ -344,8 +317,9 @@ public abstract class CachingDicomImageListViewModelElement extends AbstractImag
                 }
             }
         } else {
-            
             // TODO: obtain from getImage();
+            min = 200;
+            max = 800;
         }
 
         usedPixelValuesRange = new FloatRange(min, max);
