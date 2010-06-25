@@ -232,43 +232,17 @@ public abstract class CachingDicomImageListViewModelElement extends AbstractImag
                  transferSyntaxUID.startsWith("1.2.840.10008.1.2.5")))
             return null;
         
-        int bitsAllocated = imgMetadata.getInt(Tag.BitsAllocated);
-        if (bitsAllocated <= 0) {
+        int pixelType = getPixelType(imgMetadata);
+        if (pixelType == RawImage.PIXEL_TYPE_NOT_SUPPORTED)
             return null;
-        }
-        int bitsStored = imgMetadata.getInt(Tag.BitsStored);
-        if (bitsStored <= 0) {
-            return null;
-        }
-        boolean isSigned = (1 == imgMetadata.getInt(Tag.PixelRepresentation));
-        // TODO: return null if compressed
-        // TODO: support for RGB (at least don't misinterpret it as luminance)
-        // TODO: account for endianness (Tag.HighBit)
-        int pixelFormat, pixelType;
-        // TODO: maybe use static multidimensional tables instead of nested switch statements
 
-        switch (bitsAllocated) {
-            case 8:
-                return null;
-            case 16:
-                pixelFormat = RawImage.PIXEL_FORMAT_LUMINANCE;
-                switch (bitsStored) {
-                    case 12:
-                        pixelType = (isSigned ? RawImage.PIXEL_TYPE_SIGNED_12BIT : RawImage.PIXEL_TYPE_UNSIGNED_12BIT);
-                        break;
-                    case 16:
-                        pixelType = (isSigned ? RawImage.PIXEL_TYPE_SIGNED_16BIT : RawImage.PIXEL_TYPE_UNSIGNED_16BIT);
-                        break;
-                    default:
-                        return null;
-                }
-                break;
-            default:
-                return null;
-        }
+        int pixelFormat = getPixelFormat(imgMetadata);
+        if (pixelFormat == RawImage.PIXEL_FORMAT_NOT_SUPPORTED)
+            return null;
 
         int width = imgMetadata.getInt(Tag.Columns);
         int height = imgMetadata.getInt(Tag.Rows);
+        
         return new RawImageImpl(width, height, pixelFormat, pixelType, null);
     }
 
@@ -281,30 +255,27 @@ public abstract class CachingDicomImageListViewModelElement extends AbstractImag
     }
 
     protected void setPixelValuesRange() {
-        if (hasRawImage() && isRawImagePreferable()) {
-            RawImage imgMetaData = getProxyRawImage();
-            // TODO: maybe use static multidimensional tables instead of nested switch statements
-            switch (imgMetaData.getPixelType()) {
-                case RawImage.PIXEL_TYPE_UNSIGNED_BYTE:
-                    pixelValuesRange = new FloatRange(0, 255);
-                    break;
-                case RawImage.PIXEL_TYPE_UNSIGNED_12BIT:
-                    pixelValuesRange = new FloatRange(0, 4095);
-                    break;
-                case RawImage.PIXEL_TYPE_UNSIGNED_16BIT:
-                    pixelValuesRange = new FloatRange(0, 65535);
-                    break;
-                case RawImage.PIXEL_TYPE_SIGNED_12BIT:
-                    pixelValuesRange = new FloatRange(-2048, 2047);
-                    break;
-                case RawImage.PIXEL_TYPE_SIGNED_16BIT:
-                    pixelValuesRange = new FloatRange(-32768, 32767);
-                    break;
-            }
-        } else {
-            // TODO: obtain from getImage();
-            pixelValuesRange = new FloatRange(0, 4095);
+        int pixelType = getPixelType(getDicomImageMetaData());
+        
+        // TODO: maybe use static multidimensional tables instead of nested switch statements
+        switch (pixelType) {
+            case RawImage.PIXEL_TYPE_UNSIGNED_BYTE:
+                pixelValuesRange = new FloatRange(0, 255);
+                break;
+            case RawImage.PIXEL_TYPE_UNSIGNED_12BIT:
+                pixelValuesRange = new FloatRange(0, 4095);
+                break;
+            case RawImage.PIXEL_TYPE_UNSIGNED_16BIT:
+                pixelValuesRange = new FloatRange(0, 65535);
+                break;
+            case RawImage.PIXEL_TYPE_SIGNED_12BIT:
+                pixelValuesRange = new FloatRange(-2048, 2047);
+                break;
+            case RawImage.PIXEL_TYPE_SIGNED_16BIT:
+                pixelValuesRange = new FloatRange(-32768, 32767);
+                break;
         }
+        
     }
 
     @Override
@@ -320,20 +291,43 @@ public abstract class CachingDicomImageListViewModelElement extends AbstractImag
 
         int min = 200;
         int max = 800;
+        
+        int pixelType = getPixelType(metadata);
+
+        switch (pixelType) {
+            case RawImage.PIXEL_TYPE_UNSIGNED_BYTE:
+            //case RawImage.PIXEL_FORMAT_LUMINANCE:
+                min = 0;
+                max = 255;
+                break;
+            case RawImage.PIXEL_TYPE_SIGNED_12BIT:
+                min = Short.MIN_VALUE / 16;
+                max = (1 + Short.MAX_VALUE) / 16 - 1;
+                break;
+            case RawImage.PIXEL_TYPE_UNSIGNED_12BIT:
+                min = 0;
+                max = (1 + Short.MAX_VALUE) / 8 - 1;
+                break;
+            case RawImage.PIXEL_TYPE_SIGNED_16BIT:
+                min = Short.MIN_VALUE;
+                max = Short.MAX_VALUE;
+                break;
+            case RawImage.PIXEL_TYPE_UNSIGNED_16BIT:
+                min = 0;
+                max = (1 + Short.MAX_VALUE) * 2 - 1;
+                break;
+
+        }
 
         if (metadata.contains(Tag.SmallestImagePixelValue) && metadata.contains(Tag.LargestImagePixelValue)) {
             min = metadata.getInt(Tag.SmallestImagePixelValue);
             max = metadata.getInt(Tag.LargestImagePixelValue);
         } else if (hasRawImage() && isRawImagePreferable()) {
-            //unsigned short? (0-64000)
-            RawImage img = getRawImage();  // we rely on this being fast after the first call b/c of BasicDicomObject's internal caching of getShorts(Tag.PixelData)
-
+            RawImage img = getRawImage();
             int pxCount = (img.getPixelFormat() == RawImage.PIXEL_FORMAT_RGB ? 3 : 1) * img.getWidth() * img.getHeight();
 
             if (img.getPixelType() != RawImage.PIXEL_TYPE_UNSIGNED_16BIT) {
-                //unsigned 12 bit or signed
-                min = Short.MAX_VALUE;
-                max = Short.MIN_VALUE;
+                //unsigned 8 bit or 12 bit or signed
                 ShortBuffer buf = (ShortBuffer) img.getPixelData();
                 for (int i = 0; i < pxCount; i++) {
                     short val = buf.get(i);
@@ -342,8 +336,6 @@ public abstract class CachingDicomImageListViewModelElement extends AbstractImag
                 }
             } else {
                 //unsigned 16 bit
-                min = Short.MAX_VALUE*2+1;
-                max = 0;
                 IntBuffer buf = (IntBuffer) img.getPixelData();
                 for (int i = 0; i < pxCount; i++) {
                     int val = buf.get(i);
@@ -352,10 +344,61 @@ public abstract class CachingDicomImageListViewModelElement extends AbstractImag
                 }
             }
         } else {
+            
             // TODO: obtain from getImage();
         }
 
         usedPixelValuesRange = new FloatRange(min, max);
+    }
+
+    protected int getPixelFormat(DicomObject dicomObject) {
+        int bitsAllocated = dicomObject.getInt(Tag.BitsAllocated);
+
+        int pixelFormat = (bitsAllocated == 16 ? RawImage.PIXEL_FORMAT_LUMINANCE : RawImage.PIXEL_FORMAT_NOT_SUPPORTED);
+
+        return pixelFormat;
+    }
+
+    protected int getPixelType(DicomObject dicomObject) {
+        int bitsAllocated = dicomObject.getInt(Tag.BitsAllocated);
+        if (bitsAllocated <= 0) {
+            return RawImage.PIXEL_TYPE_NOT_SUPPORTED;
+        }
+
+        int bitsStored = dicomObject.getInt(Tag.BitsStored);
+        if (bitsStored <= 0) {
+            return RawImage.PIXEL_TYPE_NOT_SUPPORTED;
+        }
+        boolean isSigned = (1 == dicomObject.getInt(Tag.PixelRepresentation));
+        // TODO: return RawImage.PIXEL_TYPE_NOT_SUPPORTED; if compressed
+        // TODO: support for RGB (at least don't misinterpret it as luminance)
+        // TODO: account for endianness (Tag.HighBit)
+        int pixelType;
+        // TODO: maybe use static multidimensional tables instead of nested switch statements
+
+        switch (bitsAllocated) {
+            case 8:
+                if (bitsStored == 8 && !isSigned)
+                    return RawImage.PIXEL_TYPE_UNSIGNED_BYTE;
+                
+                return RawImage.PIXEL_TYPE_NOT_SUPPORTED;
+            case 16:
+                switch (bitsStored) {
+                    case 12:
+                        pixelType = (isSigned ? RawImage.PIXEL_TYPE_SIGNED_12BIT : RawImage.PIXEL_TYPE_UNSIGNED_12BIT);
+                        break;
+                    case 16:
+                        pixelType = (isSigned ? RawImage.PIXEL_TYPE_SIGNED_16BIT : RawImage.PIXEL_TYPE_UNSIGNED_16BIT);
+                        break;
+                    default:
+                        return RawImage.PIXEL_TYPE_NOT_SUPPORTED;
+                }
+                break;
+            default:
+                return RawImage.PIXEL_TYPE_NOT_SUPPORTED;
+        }
+
+        return pixelType;
     }
 
 }

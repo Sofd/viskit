@@ -324,6 +324,7 @@ public class ImageListViewImagePaintController extends CellPaintControllerBase {
         } else {
             switch (rimg.getPixelType()) {
             // will only window RawImages whose pixelData buffer is a ShortBuffer for now
+            case RawImage.PIXEL_TYPE_UNSIGNED_BYTE:
             case RawImage.PIXEL_TYPE_SIGNED_12BIT:
             case RawImage.PIXEL_TYPE_SIGNED_16BIT:
             case RawImage.PIXEL_TYPE_UNSIGNED_12BIT: {
