@@ -1,0 +1,38 @@
+Anforderungen:
+
+- ImageListViewModelElements sollen sich im Hintergrund initialisieren
+  (insbesondere: das Bild laden) können, ohne dass das GUI solange
+  hängt.
+
+- Zellen mit einem noch nicht initialisierten Modellelement sollten
+  visuell als "nicht initialisiert" gezeichnet werden (Sanduhrsymbol
+  o.ä.), ohne den GUI-Thread zu blockieren. Auf diese Weise sollte die
+  UI-Blockierung beim erstmaligen Anzeigen großer Listen verschwinden,
+  und es sollte dem Anwender möglich sein, sofort in ScaleModes mit
+  sehr vielen gleichzeitig sichtbaren Zellen umzuschalten, ohne dass
+  es zu langen Blockaden kommt.
+
+- Setzen von Cellproperties auf Zellen mit nicht initialisierten
+  Modellelementen sollte funktionieren (z.B.: (windowAll
+  (ILVWindowingApplyToAllController) aktiv, eine Zelle wird
+  gefenstert, bevor alle Bilder geladen sind => Fensterung sollte auch
+  in Zellen mit noch nicht geladenen Bildern übernommen werden und das
+  entspr. Bild mit der Fensterung angezeigt werden, sobald es geladen
+  ist)
+
+- idealerweise sollte auch ein zwischenzeitliches Neuinitialisieren
+  eines Modellelements möglich sein, d.h. ein schon initialisiertes
+  Element sollte wieder in den Zustand "nicht initialisiert" springen
+  können (nötig z.B. dann, wenn man in Zukunft mal das Bild eine
+  Modellelements neu laden oder mehrere Bilder pro Modellelement
+  (nach)laden kann)
+
+
+- die Listenklassen (JGLImageListView etc.) sollten weiterhin
+  single-threaded (UI-Thread) bleiben (sonst wird die Komplexität zu
+  hoch); somit wird auch das von den Listen aufgerufene API der
+  Modellelemente von der Liste ausschließlich im UI-Thread aufgerufen.
+
+  Multithreading sollte ausschließlich in der Implementation der
+  Modellelemente verwendet werden (ggf. in passende Basis- oder
+  Aggregationsklasse rausziehen)
