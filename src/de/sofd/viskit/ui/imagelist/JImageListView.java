@@ -33,6 +33,8 @@ import javax.swing.event.ListDataListener;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 
+import org.apache.log4j.Logger;
+
 import de.sofd.draw2d.viewer.DrawingViewer;
 import de.sofd.draw2d.viewer.backend.DrawingViewerBackend;
 import de.sofd.lang.Runnable1;
@@ -65,6 +67,8 @@ import de.sofd.viskit.ui.imagelist.event.cellpaint.ImageListViewCellPaintListene
  * @author olaf
  */
 public abstract class JImageListView extends JPanel {
+
+    static final Logger logger = Logger.getLogger(JImageListView.class);
 
     private ListModel model;
     public static final String PROP_MODEL = "model";
@@ -271,15 +275,22 @@ public abstract class JImageListView extends JPanel {
      * @param scaleMode new value of scaleMode
      */
     public void setScaleMode(ScaleMode scaleMode) {
-        if (! getSupportedScaleModes().contains(scaleMode)) {
-            throw new IllegalArgumentException("Unsupported scale mode: " + scaleMode);
-        }
+        //if (! getSupportedScaleModes().contains(scaleMode)) {
+        //    throw new IllegalArgumentException("Unsupported scale mode: " + scaleMode);
+        //}
         if (Misc.equal(scaleMode, getScaleMode())) {
             return;
         }
         ScaleMode oldScaleMode = this.scaleMode;
         this.scaleMode = scaleMode;
-        doSetScaleMode(oldScaleMode, this.scaleMode);
+        try {
+            doSetScaleMode(oldScaleMode, this.scaleMode);
+        } catch (Exception e) {
+            //TODO: test this out...
+            logger.error("Exception in doSetScaleMode. Resetting to previous scaleMode.", e);
+            setScaleMode(oldScaleMode);
+            throw new IllegalStateException("Exception in doSetScaleMode. Previous scaleMode was successfully restored.", e);
+        }
         firePropertyChange(PROP_SCALEMODE, oldScaleMode, scaleMode);
     }
 
