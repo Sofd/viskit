@@ -2,6 +2,8 @@ package de.sofd.viskit.model;
 
 import org.dcm4che2.data.DicomObject;
 
+import de.sofd.util.Histogram;
+
 /**
  * Base interface for ImageListViewModelElements that wrap a DicomObject containing
  * the image represented by the model element.
@@ -23,4 +25,10 @@ public interface DicomImageListViewModelElement extends ImageListViewModelElemen
      *         everything except the actual pixel data -- if that's faster to acquire.
      */
     DicomObject getDicomImageMetaData();
+
+    /**
+     * 
+     * @return histogram of image
+     */
+    Histogram getHistogram();
 }

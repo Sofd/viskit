@@ -228,9 +228,11 @@ public class RawDicomImageReader extends ImageReader {
         if (iis == null) {
             throw new IllegalStateException("Input not set!");
         }
+
         if (ds != null) {
             return;
         }
+
         dis = new DicomInputStream(iis);
         dis.setHandler(new StopTagInputHandler(Tag.PixelData));
         ds = dis.readDicomObject();
@@ -264,8 +266,10 @@ public class RawDicomImageReader extends ImageReader {
             if (compressed) {
                 ImageReaderFactory f = ImageReaderFactory.getInstance();
                 log.debug("Transfer syntax for image is " + tsuid
-                        + " with image reader class " + f.getClass());
+                    + " with image reader class " + f.getClass());
                 f.adjustDatasetForTransferSyntax(ds, tsuid);
+                
+                
             }
         }
     }
@@ -437,13 +441,21 @@ public class RawDicomImageReader extends ImageReader {
     @Override
     public BufferedImage read(int imageIndex, ImageReadParam param)
             throws IOException {
+
         if (OverlayUtils.isOverlay(imageIndex)) {
             readMetaData();
             String rgbs = (param != null) ? ((DicomImageReadParam) param)
                     .getOverlayRGB() : null;
             return OverlayUtils.extractOverlay(ds, imageIndex, this, rgbs);
         }
-        initImageReader(imageIndex);
+
+        try {
+            initImageReader(imageIndex);
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new IOException(e);
+        }
+
         if (param == null) {
             param = getDefaultReadParam();
         }
@@ -453,7 +465,7 @@ public class RawDicomImageReader extends ImageReader {
             copyReadParam(param, param1);
             bi = reader.read(0, param1);
             postDecompress();
-        } else if( pmi.endsWith("422") || pmi.endsWith("420") ) {
+        } else if( pmi != null && (pmi.endsWith("422") || pmi.endsWith("420")) ) {
             WritableRaster wr = (WritableRaster) readRaster(imageIndex, param);
             bi = new BufferedImage(ColorModelFactory.createColorModel(ds),
                     wr, false, null);

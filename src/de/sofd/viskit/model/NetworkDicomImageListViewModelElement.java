@@ -13,6 +13,8 @@ import org.dcm4che2.data.DicomObject;
 import org.dcm4che2.data.Tag;
 import org.dcm4che2.io.DicomInputStream;
 
+import javax.imageio.stream.FileCacheImageInputStream;
+
 /**
  * Cached DicomImageListViewModelElement that obtains the DICOM object from an external
  * standard DICOM file whose location is given by a URL (so the file may be
@@ -155,11 +157,11 @@ public class NetworkDicomImageListViewModelElement extends CachingDicomImageList
             connection.setDefaultUseCaches(true);
                 
             InputStream is = connection.getInputStream();
-            DicomInputStream din = new DicomInputStream(is);
-                
+            // mark/reset not supported for url so using FileCacheImageInputStream
+            DicomInputStream din = new DicomInputStream(new FileCacheImageInputStream(is, null));
+
             try {
                 DicomObject dicomObject = din.readDicomObject();
-                
                 return dicomObject;
             } finally {
                 din.close();
@@ -200,5 +202,17 @@ public class NetworkDicomImageListViewModelElement extends CachingDicomImageList
     public void setNetworkLoadingObserver(INetworkLoadingObserver networkLoadingObserver) {
         this.networkLoadingObserver = networkLoadingObserver;
     }
+    
+    /*protected void setUsedPixelValuesRange() {
+        System.out.println(getUrl());
+        super.setUsedPixelValuesRange();
+    }
+    
+    @Override
+    public Histogram getHistogram() {
+        System.out.println(getUrl());
+        return super.getHistogram();
+    }*/
+    
 
 }

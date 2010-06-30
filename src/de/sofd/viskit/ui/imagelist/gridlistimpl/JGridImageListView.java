@@ -307,6 +307,7 @@ public class JGridImageListView extends JImageListView {
             }
             Dimension cellImgDisplaySize = new Dimension(wrappedGridList.getSize().width / getScaleMode().getCellColumnCount() - 2 * WrappedGridListComponentFactory.BORDER_WIDTH,
                                                          wrappedGridList.getSize().height / getScaleMode().getCellRowCount()- 2 * WrappedGridListComponentFactory.BORDER_WIDTH);
+            
             int count = getModel().getSize();
             for (int i = 0; i < count; i++) {
                 ImageListViewCell cell = getCell(i);
