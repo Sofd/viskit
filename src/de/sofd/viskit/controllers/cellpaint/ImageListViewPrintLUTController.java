@@ -5,21 +5,11 @@ import static com.sun.opengl.util.gl2.GLUT.BITMAP_8_BY_13;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics2D;
-import java.awt.Image;
 import java.awt.RenderingHints;
-import java.awt.color.ColorSpace;
-import java.awt.geom.AffineTransform;
 import java.awt.geom.Point2D;
-import java.awt.image.AffineTransformOp;
 import java.awt.image.BufferedImage;
-import java.awt.image.BufferedImageOp;
-import java.awt.image.ColorModel;
-import java.awt.image.ComponentColorModel;
-import java.awt.image.DataBuffer;
-import java.awt.image.Raster;
-import java.awt.image.WritableRaster;
-import java.nio.FloatBuffer;
-import java.util.Hashtable;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 import javax.media.opengl.GL2;
@@ -32,9 +22,13 @@ import de.sofd.viskit.ui.imagelist.ImageListViewCell;
 import de.sofd.viskit.ui.imagelist.JImageListView;
 
 /**
+ * Controller that draws a lookup table legend to the cell elements. The size of
+ * the legend can be changed. The position of the legend is adjusted to the cell
+ * size. If the cell size is smaller than the defined minimum cell size, the
+ * legend will not be drawn.
  * 
  * @author honglinh
- *
+ * 
  */
 public class ImageListViewPrintLUTController extends CellPaintControllerBase {
 
@@ -73,6 +67,7 @@ public class ImageListViewPrintLUTController extends CellPaintControllerBase {
         }    
    
         int[] lutValues = calculateLutScala(cell);
+        
         // calculate lut and text position
         Point2D lutPosition = calculateLutPosition(cellSize);
         Point2D textPosition = calculateTextPosition(lutPosition);
@@ -88,22 +83,33 @@ public class ImageListViewPrintLUTController extends CellPaintControllerBase {
                          (float) textColor.getBlue() / 255F);
             int posx = (int) textPosition.getX();
             int posy = (int) textPosition.getY();
-            int lineHeight = lutHeight/(lutValues.length-1)-5;
+            int lineHeight = lutHeight / (lutValues.length - 1) - 5;
             for (int value : lutValues) {
-                String tmp = value+"";
-                gl.glRasterPos2i(posx-tmp.length()*10, posy);
-                glut.glutBitmapString(BITMAP_8_BY_13, value+"");
+                String tmp = value + "";
+                gl.glRasterPos2i(posx - tmp.length() * 10, posy);
+                glut.glutBitmapString(BITMAP_8_BY_13, value + "");
                 posy += lineHeight;
             }
         } finally {
             gl.glPopAttrib();
         }
-        
         gl.glDisable(GL2.GL_TEXTURE_2D);
-        LookupTableTextureManager.bindLutTexture(gl, GL2.GL_TEXTURE2, sharedContextData, lut);
+        
+        gl.glTranslated(lutPosition.getX(), lutPosition.getY(), 0);
+        
+        // draw border
+        gl.glPushAttrib(GL2.GL_CURRENT_BIT);
+        gl.glBegin(GL2.GL_QUADS);
+        gl.glColor3f(0.5f, 0.5f, 0.5f);
+        gl.glVertex2i(-1, -1);
+        gl.glVertex2i(-1,lutHeight+1);
+        gl.glVertex2i(lutWidth+1, lutHeight+1);
+        gl.glVertex2i(lutWidth+1, -1);
+        gl.glEnd();
+        gl.glPopAttrib();
         
         // draw lut legend
-        gl.glTranslated(lutPosition.getX(), lutPosition.getY(), 0);
+        LookupTableTextureManager.bindLutTexture(gl, GL2.GL_TEXTURE2, sharedContextData, lut);
         gl.glTexEnvi(GL2.GL_TEXTURE_ENV, GL2.GL_TEXTURE_ENV_MODE, GL2.GL_REPLACE);
         gl.glBegin(GL2.GL_QUADS);
         gl.glMultiTexCoord1f(GL2.GL_TEXTURE2,0);gl.glVertex2i(0, 0);
@@ -116,8 +122,6 @@ public class ImageListViewPrintLUTController extends CellPaintControllerBase {
         gl.glDisable(GL2.GL_TEXTURE_1D);
     }
     
-
-
     @Override
     protected void paintJ2D(ImageListViewCell cell, Graphics2D g2d) {
            Dimension cellSize = cell.getLatestSize();
@@ -152,14 +156,20 @@ public class ImageListViewPrintLUTController extends CellPaintControllerBase {
             g2d.drawString(value+"",posx-tmp.length()*10, posy);
             posy += lineHeight;
         }
-        // draw lut legend        
-        BufferedImage lutImage = LutController.getLutMap().get(lut.getName()).getBimg();
-        BufferedImage rotatedImage = rotateImage(lutImage);                      
-        BufferedImage scaledImage= new BufferedImage(lutWidth,lutHeight,lutImage.getType());
-        Graphics2D graphics2D = scaledImage.createGraphics();
+        // draw lut legend                     
+        BufferedImage lutImage= new BufferedImage(lutWidth,lutHeight,BufferedImage.TYPE_INT_ARGB);
+        Graphics2D graphics2D = lutImage.createGraphics();
         graphics2D.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
-        graphics2D.drawImage(rotatedImage, 0,0,lutWidth,lutHeight,null);
-        userGraphics.drawImage(scaledImage,null, (int)lutPosition.getX(), (int)lutPosition.getY());
+        graphics2D.drawImage(rotateImage(LutController.getLutMap().get(lut.getName()).getBimg()), 0,0,lutWidth,lutHeight,null);
+        
+        // create bordered image
+        BufferedImage borderedImage = new BufferedImage(lutImage.getWidth()+2,lutImage.getHeight()+2,lutImage.getType());        
+        Graphics2D graphic = borderedImage.createGraphics();
+        graphic.setColor(Color.GRAY);
+        graphic.fillRect(0,0,borderedImage.getWidth(),borderedImage.getHeight());
+        graphic.drawImage(lutImage,1,1,null);
+        
+        userGraphics.drawImage(borderedImage,null, (int)lutPosition.getX(), (int)lutPosition.getY());
     }
     
     private BufferedImage rotateImage(BufferedImage image) {
@@ -179,12 +189,9 @@ public class ImageListViewPrintLUTController extends CellPaintControllerBase {
     private int[] calculateLutScala(ImageListViewCell cell) {
         int wl = cell.getWindowLocation();
         int ww = cell.getWindowWidth();     
-        
-        // TODO dynamically calculate values; based on number of intervals
-        // calculate displayed values 
         int upperBoundary = wl+ww/2;
         int lowerBoundary = wl-ww/2;
-        int middle = upperBoundary + lowerBoundary / 2;
+        int middle = (upperBoundary + lowerBoundary) / 2;
         int[] lutValues = {upperBoundary,middle,lowerBoundary};
         return lutValues;
     }
@@ -225,7 +232,7 @@ public class ImageListViewPrintLUTController extends CellPaintControllerBase {
         return minimumCellSize;
     }
 
-    public void setMinimumCellSize(Point2D minimumCellSize) {
-        this.minimumCellSize = minimumCellSize;
+    public void setMinimumCellSize(int x, int y) {
+        this.minimumCellSize = new Point2D.Double(x, y);
     }
 }
