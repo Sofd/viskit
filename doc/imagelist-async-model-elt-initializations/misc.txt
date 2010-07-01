@@ -35,4 +35,53 @@ Anforderungen:
 
   Multithreading sollte ausschließlich in der Implementation der
   Modellelemente verwendet werden (ggf. in passende Basis- oder
-  Aggregationsklasse rausziehen)
+  Aggregationsklasse rausziehen). Vermutlich sollten hier
+  konfigurierbare Threadpools benutzt werden, um eine bestimmte
+  Maximalzahl Modellelemente parallel zu initialisieren.
+
+- mögliche Sonderfälle:
+
+  - Multiframe-DICOMs (sobald die in Viskit unterstützt werden):
+
+    - wenn man ein Modellelement pro Frame hat, sollte das DICOM
+      trotzdem nur einmal geladen werden
+
+    - mglw. (oder immer?) sind die Pixeldaten aller Frames in
+      demselben einzigen PixelData-Tag drin. => auch dieses sollte
+      ggf. nur einmal gelesen und dann zwischen den Modellelementen
+      geshared werden
+
+  - mehrere Bilder pro Modellelement/Zelle, z.B. ROI-Layer oder
+    Messergebnistabellen wie bei den Forschern (sobald die in Viskit
+    unterstützt werden):
+
+    - (Anzeige in der Zelle müsste über separaten Cellpaint-Controller
+      erfolgen, evtl. auch über entspr. parametrisierbar gemachten
+      ILVImagePaintController)
+
+        
+
+
+Entwurf:
+
+interface ImageListViewModelElement {
+
+    //additional methods:
+
+    property isInitialized;  //=>getter/setter method (setter protected), PropChangeEvent firing (=> add/removeProChListener methods, like in ImageListViewCell)
+
+    //Die Zelle bzw. das Modellelement könnte zu beliebigen
+    //Zeitpunkten dieses Property ändern und dadurch eine Änderung des
+    //isInitialized-States nach außen anzeigen (z.B. wenn intern das
+    //Laden des Bildes abgeschlossen ist)
+
+    //die Liste würde Änderungen dieses Properties auf allem Zellen
+    //überwachen und entspr. reagieren.
+
+    //TODO: "startInitialization"-Nachricht von Liste an
+    //Modellelement, z.B. wenn es erstmals sichtbar wird?
+
+}
+
+
+TODO: weiter...
