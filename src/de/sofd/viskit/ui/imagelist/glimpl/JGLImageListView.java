@@ -526,8 +526,15 @@ public class JGLImageListView extends JImageListView {
             }
         }
 
+        int lastX=-1, lastY=-1, lastW=-1, lastH=-1;
+
         @Override
         public void reshape(GLAutoDrawable glAutoDrawable, int x, int y, int width, int height) {
+            if (x==lastX && y==lastY && width==lastW && height==lastH) {
+                //sometimes OSX issues spurious reshape() calls when the size hasn't changed at all
+                return;
+            }
+            lastX = x; lastY = y; lastW = width; lastH = height;
             GL2 gl = (GL2) glAutoDrawable.getGL();
             setupEye2ViewportTransformation(gl);
             Runnable r = new Runnable() {
