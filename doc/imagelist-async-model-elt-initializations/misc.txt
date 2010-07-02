@@ -154,5 +154,14 @@ interface ImageListViewModelElement {
     (s.a. ../textureCreationSpeed/results.txt -- demnach scheint da
     einiges zu gehen)
 
+  - was machen, wenn so viele Bilder/Texturen gleichzeitig angezeigt
+    werden sollen, dass sie nicht alle in den Cache von
+    ImageTextureManager passen? Im Moment würde cache-Thrashing
+    auftreten, da bei jedem Renderdurchlauf (display()-Methode)
+    Texturen gelöscht und andere erzeugt werden müssten -- d.h. das
+    Rendering würde schlagartig sehr viel langsamer werden, sobald der
+    Anwender in einen scaleMode schaltet, der mehr Texturen
+    gleichzeitig sichtbar macht als in den Cache-Speicher passen
+
 
 TODO: weiter...
