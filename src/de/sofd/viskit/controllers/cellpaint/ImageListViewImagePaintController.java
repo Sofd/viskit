@@ -352,7 +352,7 @@ public class ImageListViewImagePaintController extends CellPaintControllerBase {
                 BufferedImage result = new BufferedImage(w, h, BufferedImage.TYPE_INT_RGB);
                 WritableRaster resultRaster = result.getRaster();
                 if (lut != null) {
-                    //separate loop for LUTs to minimize the work to be done in the innermost loop body (the difference is probably neglectible though..)
+                    //separate loop for LUTs to spare one if-then-else in the innermost loop body (the difference is probably neglectible though..)
                     for (int y = 0; y < h; y++) {
                         for (int x = 0; x < w; x++) {
                             int destLutIndex = (int)(txscale * srcBuffer.get(index++) + txoffset);
@@ -403,7 +403,7 @@ public class ImageListViewImagePaintController extends CellPaintControllerBase {
                 BufferedImage result = new BufferedImage(w, h, BufferedImage.TYPE_INT_RGB);
                 WritableRaster resultRaster = result.getRaster();
                 if (lut != null) {
-                    //separate loop for LUTs to minimize the work to be done in the innermost loop body (the difference is probably neglectible though..)
+                    //separate loop for LUTs to spare one if-then-else in the innermost loop body (the difference is probably neglectible though..)
                     for (int y = 0; y < h; y++) {
                         for (int x = 0; x < w; x++) {
                             int destLutIndex = (int)(txscale * srcBuffer.get(index++) + txoffset);

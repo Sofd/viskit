@@ -597,6 +597,7 @@ public class JListImageListTestApp {
             
             toolbar.add(new JLabel("lut:"));
             final JComboBox lutCombo = new JComboBox();
+            lutCombo.addItem("[none]");
             for (LookupTable lut : LookupTables.getAllKnownLuts()) {
                 lutCombo.addItem(lut);
             }
@@ -605,7 +606,10 @@ public class JListImageListTestApp {
                 @Override
                 public void itemStateChanged(ItemEvent e) {
                     if (e.getStateChange() == ItemEvent.SELECTED) {
-                        LookupTable lut = (LookupTable) lutCombo.getSelectedItem();
+                        LookupTable lut = null;
+                        if (lutCombo.getSelectedItem() instanceof LookupTable) {
+                            lut = (LookupTable) lutCombo.getSelectedItem();
+                        }
                         System.out.println("activating lut: " + lut);
                         for (int i = 0; i < listView.getLength(); i++) {
                             listView.getCell(i).setLookupTable(lut);
