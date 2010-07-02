@@ -471,6 +471,10 @@ public class JListImageListTestApp {
             }
         }
 
+        RoiToolPanel roiToolPanel = new RoiToolPanel();
+        toolbar.add(roiToolPanel);
+        new ImageListViewRoiToolApplicationController(lists.toArray(new JImageListView[0])).setRoiToolPanel(roiToolPanel);
+        
         toolbar.add(new JLabel("Sync: "));
         for (Color c : syncColors) {
             final MultiILVSyncSetController.SyncSet syncSet = multiSyncSetController.getSyncSet(c);
