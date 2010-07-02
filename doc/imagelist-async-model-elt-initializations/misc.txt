@@ -59,29 +59,100 @@ Anforderungen:
       erfolgen, evtl. auch über entspr. parametrisierbar gemachten
       ILVImagePaintController)
 
+    - Problem: wenn mehrere Bilder pro ModelElement: Jedes Bild kann
+      u.U. separat geladen werden etc. => man bräuchte eigentlich
+      einen initializationState (s.u.) pro Bild, bzw. als
+      Verallgemeinerung allgemein mehrere initializationStates. Das
+      wird aber echt kompliziert => machen wir erstmal nicht?
+
         
+
+
+- property initializationState {UNINITIALIZED, INITIALIZED, ERROR}
+
+- property String errorMessage  ?
+
+- Visualisierung des UNINITIALIZED - State (Sanduhr etc.) auch in
+  einem PaintListener?  => PaintListener (oder PaintController)
+  sollten sagen können, in welchen initializationStates sie aufgerufen
+  werden sollen
+
+
+
+
+
 
 
 Entwurf:
 
 interface ImageListViewModelElement {
 
-    //additional methods:
+    //.....
 
-    property isInitialized;  //=>getter/setter method (setter protected), PropChangeEvent firing (=> add/removeProChListener methods, like in ImageListViewCell)
+    //additional stuff:
+
+    enum InitializationState {UNINITIALIZED, INITIALIZED, ERROR};
+
+    /**
+     * property => getter/setter method (setter protected),
+     * PropChangeEvent firing (=> add/removeProChListener methods,
+     * like in ImageListViewCell)
+     *
+     * May be in any of the 3 states immediately after construction,
+     * can transform from any of the 3 states to other any other one
+     * at any time. The model element may update its state at any time
+     * to mark things like e.g. "my image has finished loading" (state
+     * is set to INITIALIZED), "there was an error" (state is set to
+     * ERROR) etc. The list listens for initializationState changes in
+     * any of its model elements and reacts (updates model element's
+     * display accordingly, e.g. with an hourglass or an error
+     * display).
+     */
+    property InitializationState initializationState;
 
     //Die Zelle bzw. das Modellelement könnte zu beliebigen
     //Zeitpunkten dieses Property ändern und dadurch eine Änderung des
-    //isInitialized-States nach außen anzeigen (z.B. wenn intern das
+    //initializationState nach außen anzeigen (z.B. wenn intern das
     //Laden des Bildes abgeschlossen ist)
 
     //die Liste würde Änderungen dieses Properties auf allem Zellen
-    //überwachen und entspr. reagieren.
+    //überwachen und entspr. reagieren. (Sanduhranzeige etc.)
+
+    //die eigentliche Visualisierung des UNINITIALIZED- oder
+    //ERROR-States (Sanduhr etc.) erfolgt nicht durch die Liste
+    //selber, sondern wie alle anderen Zell-Maloperationen in
+    //PaintListenern
+
+    //=> PaintListener (oder PaintController?)  sollten sagen können,
+    //in welchen initializationStates sie aufgerufen werden sollen
+
 
     //TODO: "startInitialization"-Nachricht von Liste an
     //Modellelement, z.B. wenn es erstmals sichtbar wird?
 
+    property String errorMessage; //? (defined if initializationState==ERROR)
+
+
 }
+
+- offene Punkte:
+
+  - wie erwähnt sollte alle Kommunikation Liste<->Modellelemente
+    single-threaded im UI-Thread erfolgen. Evtl. könnte die Liste
+    aktiv checken, dass die Modellelemente z.B. PropChangeEvents für
+    das initializationState-Property in diesem Thread feuern
+    (Exception werfen falls nicht => fail-fast-Verhalten)
+
+  - das Laden von Bilden in Texturen kann u.U. länger dauern, erfolgt
+    im Moment aber notwendigerweise wie alle OpenGL-Operationen fest
+    im UI-Thread. PBOs könnten helfen -- siehe
+    opengl-pbos-discussion.txt (IRC-Diskussion mit MatthiasM
+    u.a.). Vorher checken, ob es hilft, die Größe der Textur
+    (Länge/Breite) auf das nächsthöhere Vielfache von 32 (oder die
+    nächsthöhere Zweierpotenz?) anzupassen und das beim Rendern über
+    die Texturkoordinaten auszugleichen
+    (s.a. ../textureCreationSpeed/results.txt -- demnach scheint da
+    einiges zu gehen)
 
 
 TODO: weiter...
