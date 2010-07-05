@@ -69,6 +69,7 @@ import de.sofd.viskit.model.FileBasedDicomImageListViewModelElement;
 import de.sofd.viskit.model.ImageListViewModelElement;
 import de.sofd.viskit.model.LookupTable;
 import de.sofd.viskit.model.LookupTables;
+import de.sofd.viskit.model.StaticModelFactory;
 import de.sofd.viskit.ui.LookupTableCellRenderer;
 import de.sofd.viskit.ui.RoiToolPanel;
 import de.sofd.viskit.ui.imagelist.ImageListViewCell;
@@ -100,7 +101,7 @@ public class JListImageListTestApp {
 
         //// creating them like this apparently works better
         //JFrame f1 = newSingleListFrame("Viskit ImageList test app window 1", null);
-        //JFrame f2 = newSingleListFrame("Viskit ImageList test app window 2", null);
+//        JFrame f2 = newSingleListFrame("Viskit ImageList test app window 2", null);
         JFrame f2 = newMultiListFrame("Multi-List frame", null);
     }
     
@@ -108,7 +109,10 @@ public class JListImageListTestApp {
         //final DefaultListModel model = getTestImageViewerListModel();
         //final DefaultListModel model = getViewerListModelForDirectory(new File("/home/olaf/gi/resources/DICOM-Testbilder/1578"));
         //final DefaultListModel model = getViewerListModelForDirectory(new File("/home/olaf/gi/Images/cd00900__center10102"));
-        final DefaultListModel model = getViewerListModelForDirectory(new File("D:\\dicom\\serie1"));
+//        final DefaultListModel model = StaticModelFactory.createModelFromDir(new File("/home/honglinh/Desktop/dicomfiles1"));
+        final DefaultListModel model = StaticModelFactory.createModelFromDir(new File("/home/honglinh/Desktop/multiframedicoms"));
+//        StaticModelFactory.createModelFromDir(new File("/home/honglinh/Desktop/multiframedicoms"));
+
         //final DefaultListModel model = getViewerListModelForDirectory(new File("/home/olaf/gi/pet-studie/cd855__center4001"));
         //final DefaultListModel model = getViewerListModelForDirectory(new File("/shares/shared/projekts/disk312043/Images/cd822__center4001"));
         //final DefaultListModel model = getViewerListModelForDirectory(new File("/shares/shared/projekts/disk312043/Images/cd836__center4001"));
@@ -121,8 +125,8 @@ public class JListImageListTestApp {
         final JImageListView viewer;
         //viewer = newJListImageListView();
         //viewer = newJGridImageListView(true);
-        viewer = newJGridImageListView(false);
-        //viewer = newJGLImageListView();
+//        viewer = newJGridImageListView(false);
+        viewer = newJGLImageListView();
         
         new ImageListViewInitialWindowingController(viewer).setEnabled(true);
         viewer.setModel(model);
@@ -309,6 +313,7 @@ public class JListImageListTestApp {
                 DicomImageListViewModelElement elt = (DicomImageListViewModelElement) cell.getDisplayedModelElement();
                 DicomObject dicomImageMetaData = elt.getDicomImageMetaData();
                 return new String[] {
+                        "# Frames: " + dicomImageMetaData.getString(Tag.NumberOfFrames),
                         "PN: " + dicomImageMetaData.getString(Tag.PatientName),
                         "SL: " + dicomImageMetaData.getString(Tag.SliceLocation),
                         "wl/ww: " + cell.getWindowLocation() + "/" + cell.getWindowWidth(),
@@ -379,8 +384,12 @@ public class JListImageListTestApp {
         //listModels.add(getViewerListModelForDirectory(new File("/home/olaf/headvolume")));
         //listModels.add(getViewerListModelForDirectory(new File("/home/olaf/oliverdicom/series1")));
         //listModels.add(getViewerListModelForDirectory(new File("/home/olaf/oliverdicom/INCISIX")));
-        listModels.add(getViewerListModelForDirectory(new File("/home/honglinh/Desktop/dicomfiles1")));
-        listModels.add(getViewerListModelForDirectory(new File("/home/honglinh/Desktop/dicomfiles1")));
+        listModels.add(StaticModelFactory.createModelFromDir(new File("/home/honglinh/Desktop/multiframedicoms")));
+        listModels.add(StaticModelFactory.createModelFromDir(new File("/home/honglinh/Desktop/dicomfiles1")));
+        
+//        listModels.add(getViewerListModelForDirectory(new File("/home/honglinh/Desktop/dicomfiles1")));
+//        listModels.add(getViewerListModelForDirectory(new File("/home/honglinh/Desktop/dicomfiles1")));
+
         //listModels.add(getViewerListModelForDirectory(new File("/shares/projects/StudyBrowser/data/disk312043/Images/cd833__center4001")));
 //        listModels.add(getViewerListModelForDirectory(new File("/shares/projects/StudyBrowser/data/disk312043/Images/cd865__center4001")));
         //listModels.add(getViewerListModelForDirectory(new File("/home/olaf/oliverdicom/ARTIFIX")));
@@ -412,8 +421,8 @@ public class JListImageListTestApp {
         //listModels.add(getViewerListModelForDirectory(new File("/home/olaf/hieronymusr/br312046/images/cd00907__center10102")));
         //listModels.add(getViewerListModelForDirectory(new File("/shares/shared/olaf/cd823__center4001")));
         
-        listModels.add(getViewerListModelForDirectory(new File("/home/olaf/hieronymusr/br312043/images/cd800__center4001")));
-        listModels.add(getViewerListModelForDirectory(new File("/home/olaf/hieronymusr/br312043/images/cd801__center4001")));
+//        listModels.add(getViewerListModelForDirectory(new File("/home/olaf/hieronymusr/br312043/images/cd800__center4001")));
+//        listModels.add(getViewerListModelForDirectory(new File("/home/olaf/hieronymusr/br312043/images/cd801__center4001")));
 
         List<JImageListView> lists = new ArrayList<JImageListView>();
         
@@ -550,6 +559,7 @@ public class JListImageListTestApp {
                     DicomObject dicomImageMetaData = elt.getDicomImageMetaData();
                     return new String[] {
                             "" + elt.getImageKey(),
+                            "# Frames: " + dicomImageMetaData.getString(Tag.NumberOfFrames),
                             "PN: " + dicomImageMetaData.getString(Tag.PatientName),
                             "SL: " + dicomImageMetaData.getString(Tag.SliceLocation),
                             "wl/ww: " + cell.getWindowLocation() + "/" + cell.getWindowWidth(),
@@ -746,6 +756,7 @@ public class JListImageListTestApp {
         System.err.println("" + result.size() + " images found in " + dir);
         return result;
     }
+    
     
     protected static DefaultListModel getTestImageViewerListModel() {
         final DefaultListModel result = new DefaultListModel();

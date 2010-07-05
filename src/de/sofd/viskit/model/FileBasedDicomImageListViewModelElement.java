@@ -7,12 +7,18 @@ import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Iterator;
+
 import javax.imageio.ImageIO;
 import javax.imageio.ImageReader;
 import javax.imageio.stream.ImageInputStream;
+
 import org.dcm4che2.data.DicomObject;
+import org.dcm4che2.data.Tag;
 import org.dcm4che2.imageio.plugins.dcm.DicomStreamMetaData;
+import org.dcm4che2.imageioimpl.plugins.dcm.DicomImageReaderSpi;
 import org.dcm4che2.io.DicomInputStream;
+
+import com.sun.opengl.util.BufferUtil;
 
 /**
  * Cached DicomImageListViewModelElement that obtains the DICOM object from an external
@@ -25,6 +31,8 @@ public class FileBasedDicomImageListViewModelElement extends CachingDicomImageLi
 
     private /*final*/ URL url;
     private File urlAsFile; // url as a file again (if it represents one), for user convenience
+    private int frameNumber = 0;
+    private int totalFrameNumber = -1;
 
     protected FileBasedDicomImageListViewModelElement() {
     }
@@ -73,6 +81,55 @@ public class FileBasedDicomImageListViewModelElement extends CachingDicomImageLi
             checkReadable(url);
         }
         this.url = url;
+    }
+
+    /**
+     * set the frame number this model element represents in case of a multiframe DICOM object. Initially the first
+     * frame is displayed (default). This is also the case if the DICOM object
+     * is a singleframe DICOM object
+     * 
+     * @param frame
+     */
+    public void setFrameNumber(int frame) {
+        int numFrames = getTotalFrameNumber();
+        if(frame < 0 || frame >= numFrames) {
+            throw new IllegalArgumentException("the frame number must be at least 0 and must exceed "+(numFrames-1) + " (# frames in this DICOM object)");
+        }
+        this.frameNumber = frame;
+    }
+    
+    /**
+     * 
+     * @return the total number of frames of this model element
+     */
+    public int getTotalFrameNumber() {
+        if (totalFrameNumber == -1) {
+            ImageReader reader;
+            int numFrames;
+            ImageInputStream in;
+            InputStream urlIn;
+            try {
+                reader = new DicomImageReaderSpi().createReaderInstance();
+                urlIn = url.openStream();
+                in = ImageIO.createImageInputStream(urlIn);
+                if (null == in) {
+                    throw new IllegalStateException(
+                            "The DICOM image I/O filter (from dcm4che1) must be available to read images.");
+                }
+                try {
+                    reader.setInput(in);
+                    numFrames = reader.getNumImages(true);
+                } finally {
+                    in.close();
+                    urlIn.close();
+                }
+            }
+            catch (IOException e) {
+                throw new IllegalStateException("error reading DICOM object from " + url, e);
+            }
+            return numFrames;
+        }
+        return totalFrameNumber;
     }
 
     /**
@@ -131,7 +188,7 @@ public class FileBasedDicomImageListViewModelElement extends CachingDicomImageLi
     @Override
     public Object getImageKey() {
         checkInitialized();
-        return url;
+        return url.toString()+"#"+frameNumber;
     }
 
     @Override
@@ -149,20 +206,51 @@ public class FileBasedDicomImageListViewModelElement extends CachingDicomImageLi
             throw new IllegalStateException("error reading DICOM object from " + url, e);
         }
     }
+    
+    @Override
+    public RawImage getRawImage() {
+        RawImageImpl result = (RawImageImpl) getProxyRawImage();
 
+        DicomObject dicomObject = getDicomObject();
+        int height = dicomObject.getInt(Tag.Columns);
+        int width = dicomObject.getInt(Tag.Rows);
+
+        if (result.getPixelType() != RawImage.PIXEL_TYPE_UNSIGNED_16BIT) {
+            //signed
+            short[] shorts = dicomObject.getShorts(Tag.PixelData);
+            short []shortfield = new short[height*width];
+            for(int i = 0;i< height;i++) {
+                for(int j = 0;j<width;j++) {
+                    shortfield[i*width+j] = shorts[width*height*frameNumber+i*width+j];
+                }
+            }
+            result.setPixelData(BufferUtil.newShortBuffer(shortfield));
+        } else {
+            //unsigned int
+            int[] ints = dicomObject.getInts(Tag.PixelData);
+            int []intfield = new int[height*width];
+            for(int i = 0;i< height;i++) {
+                for(int j = 0;j<width;j++) {
+                    intfield[i*width+j] = ints[width*height*frameNumber+i*width+j];
+                }
+            }
+            result.setPixelData(BufferUtil.newIntBuffer(intfield));
+        }
+        return result;
+    }
+    
     @Override
     protected BufferedImage getBackendImage() {
         // optimized implementation which extracts the image directly from the file,
         // rather than the superclass implementation, which would extract it from
         // #getBackendDicomObject() and thus incur a temporary in-memory DicomObject.
         checkInitialized();
-        Iterator it = ImageIO.getImageReadersByFormatName("RAWDICOM");
-        if (!it.hasNext()) {
-            throw new IllegalStateException("The DICOM image I/O filter (from dcm4che1) must be available to read images.");
-        }
-        ImageReader reader = (ImageReader) it.next();
+
+        ImageReader reader;
 
         try {
+            reader = new DicomImageReaderSpi().createReaderInstance();
+            
             // the ImageInputStream below does NOT close the wrapped URL input stream on close(). Thus
             // we have to keep a reference to the URL input stream and close it ourselves.
             InputStream urlIn = url.openStream();
@@ -173,7 +261,7 @@ public class FileBasedDicomImageListViewModelElement extends CachingDicomImageLi
                 }
                 try {
                     reader.setInput(in);
-                    return reader.read(0);
+                    return reader.read(frameNumber);
                 } finally {
                     in.close();
                 }
