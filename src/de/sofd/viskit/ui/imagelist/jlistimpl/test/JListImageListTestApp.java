@@ -64,6 +64,7 @@ import de.sofd.viskit.controllers.MultiImageListViewController;
 import de.sofd.viskit.controllers.cellpaint.ImageListViewImagePaintController;
 import de.sofd.viskit.controllers.cellpaint.ImageListViewPrintLUTController;
 import de.sofd.viskit.controllers.cellpaint.ImageListViewPrintTextToCellsController;
+import de.sofd.viskit.controllers.cellpaint.ImageListViewRoiPaintController;
 import de.sofd.viskit.model.DicomImageListViewModelElement;
 import de.sofd.viskit.model.FileBasedDicomImageListViewModelElement;
 import de.sofd.viskit.model.ImageListViewModelElement;
@@ -100,7 +101,7 @@ public class JListImageListTestApp {
         //JFrame f2 = newFrame("Viskit ImageList test app window 2", (gs.length > 1 ? gs[1].getDefaultConfiguration() : null));
 
         //// creating them like this apparently works better
-        //JFrame f1 = newSingleListFrame("Viskit ImageList test app window 1", null);
+//        JFrame f1 = newSingleListFrame("Viskit ImageList test app window 1", null);
 //        JFrame f2 = newSingleListFrame("Viskit ImageList test app window 2", null);
         JFrame f2 = newMultiListFrame("Multi-List frame", null);
     }
@@ -300,6 +301,8 @@ public class JListImageListTestApp {
                                    wndAllCheckbox, BeanProperty.create("selected")).bind();
 
         new ImageListViewImagePaintController(viewer).setEnabled(true);
+        
+        new ImageListViewRoiPaintController(viewer).setEnabled(true);
         
         ImageListViewSelectionScrollSyncController sssc = new ImageListViewSelectionScrollSyncController(viewer);
         sssc.setScrollPositionTracksSelection(true);
@@ -519,8 +522,8 @@ public class JListImageListTestApp {
         
         public ListViewPanel() {
             this.setLayout(new BorderLayout());
-            listView = newJGLImageListView();
-//            listView = newJGridImageListView(false);
+//            listView = newJGLImageListView();
+            listView = newJGridImageListView(false);
             this.add(listView, BorderLayout.CENTER);
             new ImageListViewInitialWindowingController(listView) {
                 @Override
@@ -572,6 +575,8 @@ public class JListImageListTestApp {
             
             final ImageListViewPrintLUTController plutc = new ImageListViewPrintLUTController(listView);
             plutc.setEnabled(true);
+            
+            new ImageListViewRoiPaintController(listView).setEnabled(true);
             
             new ImageListViewMouseMeasurementController(listView).setEnabled(true);
 
