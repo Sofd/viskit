@@ -26,9 +26,6 @@ public class NetworkDicomImageListViewModelElement extends CachingDicomImageList
 
     private static final Logger logger = Logger.getLogger(NetworkDicomImageListViewModelElement.class);
 
-    private /*final*/ URL url;
-    private File urlAsFile; // url as a file again (if it represents one), for user convenience
-
     private INetworkLoadingObserver networkLoadingObserver;
 
     protected AppletContext appletContext;
@@ -69,82 +66,6 @@ public class NetworkDicomImageListViewModelElement extends CachingDicomImageList
         this.appletContext = appletContext;
     }
 
-    protected void setUrl(URL url) {
-        setUrl(url, true);
-    }
-
-    protected void setUrl(URL url, boolean checkReadability) {
-        if (url == null) {
-            throw new NullPointerException("null url passed");
-        }
-        if (this.url != null) {
-            throw new IllegalStateException("FileBasedDicomImageListViewModelElement: don't change the URL once it's been set -- cache invalidation in that case is unsupported");
-        }
-        if (checkReadability) {
-            checkReadable(url);
-        }
-        this.url = url;
-    }
-
-    /**
-     *
-     * @return the URL the model element wraps
-     */
-    public URL getUrl() {
-        return url;
-    }
-
-    /**
-     * Convenience method that returns {@link #getUrl()} as a file object, if
-     * this model element was constructed as wrapping a file.
-     *
-     * @return the file represented by {@link #getUrl()}, if any. null
-     *         otherwise.
-     */
-    public File getFile() {
-        return urlAsFile;
-    }
-
-    protected void checkInitialized() {
-        if (this.url == null) {
-            throw new IllegalStateException("NetworkDicomImageListViewModelElement: URL not initialized");
-        }
-    }
-
-    public void checkReadable() {
-        checkReadable(this.url);
-    }
-
-    protected static void checkReadable(URL url) {
-        try {
-            InputStream in = null;
-            try {
-                in = url.openConnection().getInputStream();
-            } finally {
-                if (null != in) {
-                    in.close();
-                }
-            }
-        } catch (IOException e) {
-            throw new IllegalStateException("DICOM object not accessible: " + url, e);
-        }
-    }
-
-    public boolean isReadable() {
-        try {
-            checkReadable(this.url);
-            return true;
-        } catch (Exception e) {
-            return false;
-        }
-    }
-
-    @Override
-    public Object getImageKey() {
-        checkInitialized();
-        return url;
-    }
-
     @Override
     protected DicomObject getBackendDicomObject() {
         checkInitialized();
@@ -168,6 +89,11 @@ public class NetworkDicomImageListViewModelElement extends CachingDicomImageList
             // TODO return error object instead?
             throw new IllegalStateException("error reading DICOM object from " + url, e);
         }
+    }
+    
+    @Override
+    public Object getDicomObjectKey() {
+        return url;
     }
 
     @Override

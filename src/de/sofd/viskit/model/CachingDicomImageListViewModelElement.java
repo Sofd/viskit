@@ -5,7 +5,10 @@ import de.sofd.viskit.test.windowing.RawDicomImageReader;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
+import java.net.URL;
 import java.nio.ShortBuffer;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
@@ -17,6 +20,7 @@ import org.dcm4che2.data.BasicDicomObject;
 import org.dcm4che2.data.DicomObject;
 import org.dcm4che2.data.Tag;
 import org.dcm4che2.data.UID;
+import org.dcm4che2.imageioimpl.plugins.dcm.DicomImageReaderSpi;
 import org.dcm4che2.io.DicomOutputStream;
 import org.dcm4che2.media.FileMetaInformation;
 
@@ -34,11 +38,149 @@ import org.apache.log4j.Logger;
  */
 public abstract class CachingDicomImageListViewModelElement extends AbstractImageListViewModelElement implements DicomImageListViewModelElement {
 
+    protected /*final*/ URL url;
+    protected File urlAsFile; // url as a file again (if it represents one), for user convenience
+    protected int frameNumber = 0;
+    protected int totalFrameNumber = -1;
+    
     private static final Logger logger = Logger.getLogger(CachingDicomImageListViewModelElement.class);
 
     static {
         RawDicomImageReader.registerWithImageIO();
     }
+    
+    protected void setUrl(URL url) {
+        setUrl(url, true);
+    }
+
+    protected void setUrl(URL url, boolean checkReadability) {
+        if (url == null) {
+            throw new NullPointerException("null url passed");
+        }
+        if (this.url != null) {
+            throw new IllegalStateException("FileBasedDicomImageListViewModelElement: don't change the URL once it's been set -- cache invalidation in that case is unsupported");
+        }
+        if (checkReadability) {
+            checkReadable(url);
+        }
+        this.url = url;
+    }
+    
+    public void checkReadable() {
+        checkReadable(this.url);
+    }
+    
+    protected static void checkReadable(URL url) {
+        try {
+            InputStream in = null;
+            try {
+                in = url.openConnection().getInputStream();
+            } finally {
+                if (null != in) {
+                    in.close();
+                }
+            }
+        } catch (IOException e) {
+            throw new IllegalStateException("DICOM object not accessible: " + url, e);
+        }
+    }
+    
+    public boolean isReadable() {
+        try {
+            checkReadable(this.url);
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
+    }
+    
+    /**
+    *
+    * @return the URL the model element wraps
+    */
+   public URL getUrl() {
+       return url;
+   }
+
+   /**
+    * Convenience method that returns {@link #getUrl()} as a file object, if
+    * this model element was constructed as wrapping a file.
+    *
+    * @return the file represented by {@link #getUrl()}, if any. null
+    *         otherwise.
+    */
+   public File getFile() {
+       return urlAsFile;
+   }
+
+   protected void checkInitialized() {
+       if (this.url == null) {
+           throw new IllegalStateException("NetworkDicomImageListViewModelElement: URL not initialized");
+       }
+   }
+   
+    /**
+     * set the frame number this model element represents in case of a multiframe DICOM object. Initially the first
+     * frame is displayed (default). This is also the case if the DICOM object
+     * is a singleframe DICOM object
+     * 
+     * @param frame
+     */
+   public void setFrameNumber(int frame) {
+        int numFrames = getTotalFrameNumber();
+        if(frame < 0 || frame >= numFrames) {
+            throw new IllegalArgumentException("the frame number must be at least 0 and must exceed "+(numFrames-1) + " (# frames in this DICOM object)");
+        }
+       this.frameNumber = frame;
+   }
+   
+   @Override
+   public int getFrameNumber() {
+       return this.frameNumber;
+   }
+   
+   @Override
+   public int getTotalFrameNumber() {
+        if (totalFrameNumber == -1) {
+            ImageReader reader;
+            int numFrames;
+            ImageInputStream in;
+            InputStream urlIn;
+            try {
+                reader = new DicomImageReaderSpi().createReaderInstance();
+                urlIn = url.openStream();
+                in = ImageIO.createImageInputStream(urlIn);
+                if (null == in) {
+                    throw new IllegalStateException(
+                            "The DICOM image I/O filter (from dcm4che1) must be available to read images.");
+                }
+                try {
+                    reader.setInput(in);
+                    numFrames = reader.getNumImages(true);
+                } finally {
+                    in.close();
+                    urlIn.close();
+                }
+            }
+            catch (IOException e) {
+                throw new IllegalStateException("error reading DICOM object from " + url, e);
+            }
+            return numFrames;
+        }
+        return totalFrameNumber;
+    }
+    
+    @Override
+    public Object getImageKey() {
+        checkInitialized();
+        return url.toString()+"#"+frameNumber;
+    }
+    
+    /**
+     * 
+     * @return the unique identifier of a DICOM object
+     */
+    protected abstract Object getDicomObjectKey();
 
     /**
      * Extract from the backend and return the DicomObject. This method should not cache the
@@ -122,20 +264,20 @@ public abstract class CachingDicomImageListViewModelElement extends AbstractImag
 
     @Override
     public DicomObject getDicomObject() {
-        DicomObject result = dcmObjectCache.get(getImageKey());
+        DicomObject result = dcmObjectCache.get(getDicomObjectKey());
         if (result == null) {
             result = getBackendDicomObject();
-            dcmObjectCache.put(getImageKey(), result);
+            dcmObjectCache.put(getDicomObjectKey(), result);
         }
         return result;
     }
 
     public boolean isDicomMetadataCached() {
-        return rawDicomImageMetadataCache.containsKey(getImageKey());
+        return rawDicomImageMetadataCache.containsKey(getDicomObjectKey());
     }
 
     public boolean isDicomObjectCached() {
-        return dcmObjectCache.containsKey(getImageKey());
+        return dcmObjectCache.containsKey(getDicomObjectKey());
     }
 
     public boolean isImageCached() {
@@ -144,11 +286,11 @@ public abstract class CachingDicomImageListViewModelElement extends AbstractImag
 
     @Override
     public DicomObject getDicomImageMetaData() {
-        DicomObject result = rawDicomImageMetadataCache.get(getImageKey());
+        DicomObject result = rawDicomImageMetadataCache.get(getDicomObjectKey());
         
         if (result == null) {
             result = getBackendDicomImageMetaData();
-            rawDicomImageMetadataCache.put(getImageKey(), result);
+            rawDicomImageMetadataCache.put(getDicomObjectKey(), result);
         }
         return result;
     }
@@ -193,23 +335,32 @@ public abstract class CachingDicomImageListViewModelElement extends AbstractImag
     public boolean isRawImagePreferable() {
         return hasRawImage();
     }
-
+    
     @Override
     public RawImage getRawImage() {
         RawImageImpl result = (RawImageImpl) getProxyRawImage();
 
         DicomObject dicomObject = getDicomObject();
+        int height = dicomObject.getInt(Tag.Columns);
+        int width = dicomObject.getInt(Tag.Rows);
 
         if (result.getPixelType() != RawImage.PIXEL_TYPE_UNSIGNED_16BIT) {
             //signed
-            result.setPixelData(BufferUtil.newShortBuffer(dicomObject.getShorts(Tag.PixelData))); // type of buffer may later depend on image metadata
+            short[] shorts = dicomObject.getShorts(Tag.PixelData);
+            
+            ShortBuffer tmp = ShortBuffer.wrap(shorts);
+            tmp.position(height*width*frameNumber);
+            result.setPixelData(tmp.slice());
         } else {
             //unsigned int
-            result.setPixelData(BufferUtil.newIntBuffer(dicomObject.getInts(Tag.PixelData))); // type of buffer may later depend on image metadata
+            int[] ints = dicomObject.getInts(Tag.PixelData);
+            IntBuffer tmp = IntBuffer.wrap(ints);
+            tmp.position(height*width*frameNumber);
+            result.setPixelData(tmp.slice());
         }
-        
         return result;
     }
+    
 
     @Override
     public RawImage getProxyRawImage() {

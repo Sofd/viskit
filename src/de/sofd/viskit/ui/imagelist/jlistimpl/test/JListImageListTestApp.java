@@ -13,7 +13,6 @@ import java.awt.event.ItemListener;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.File;
-import java.net.MalformedURLException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -36,6 +35,8 @@ import javax.swing.SwingUtilities;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 
+import org.apache.log4j.BasicConfigurator;
+import org.apache.log4j.Logger;
 import org.dcm4che2.data.DicomObject;
 import org.dcm4che2.data.Tag;
 import org.jdesktop.beansbinding.BeanProperty;
@@ -75,7 +76,6 @@ import de.sofd.viskit.ui.LookupTableCellRenderer;
 import de.sofd.viskit.ui.RoiToolPanel;
 import de.sofd.viskit.ui.imagelist.ImageListViewCell;
 import de.sofd.viskit.ui.imagelist.JImageListView;
-import de.sofd.viskit.ui.imagelist.ImageListViewCell.CompositingMode;
 import de.sofd.viskit.ui.imagelist.event.ImageListViewCellAddEvent;
 import de.sofd.viskit.ui.imagelist.event.ImageListViewEvent;
 import de.sofd.viskit.ui.imagelist.event.ImageListViewListener;
@@ -316,7 +316,7 @@ public class JListImageListTestApp {
                 DicomImageListViewModelElement elt = (DicomImageListViewModelElement) cell.getDisplayedModelElement();
                 DicomObject dicomImageMetaData = elt.getDicomImageMetaData();
                 return new String[] {
-                        "# Frames: " + dicomImageMetaData.getString(Tag.NumberOfFrames),
+                        "Frame: " + elt.getFrameNumber()+"/"+(elt.getTotalFrameNumber()-1),
                         "PN: " + dicomImageMetaData.getString(Tag.PatientName),
                         "SL: " + dicomImageMetaData.getString(Tag.SliceLocation),
                         "wl/ww: " + cell.getWindowLocation() + "/" + cell.getWindowWidth(),
@@ -522,8 +522,8 @@ public class JListImageListTestApp {
         
         public ListViewPanel() {
             this.setLayout(new BorderLayout());
-//            listView = newJGLImageListView();
-            listView = newJGridImageListView(false);
+            listView = newJGLImageListView();
+//            listView = newJGridImageListView(false);
             this.add(listView, BorderLayout.CENTER);
             new ImageListViewInitialWindowingController(listView) {
                 @Override
@@ -562,7 +562,7 @@ public class JListImageListTestApp {
                     DicomObject dicomImageMetaData = elt.getDicomImageMetaData();
                     return new String[] {
                             "" + elt.getImageKey(),
-                            "# Frames: " + dicomImageMetaData.getString(Tag.NumberOfFrames),
+                            "Frame: " + elt.getFrameNumber()+"/"+(elt.getTotalFrameNumber()-1),
                             "PN: " + dicomImageMetaData.getString(Tag.PatientName),
                             "SL: " + dicomImageMetaData.getString(Tag.SliceLocation),
                             "wl/ww: " + cell.getWindowLocation() + "/" + cell.getWindowWidth(),
@@ -577,7 +577,7 @@ public class JListImageListTestApp {
             plutc.setEnabled(true);
             
             new ImageListViewRoiPaintController(listView).setEnabled(true);
-            
+
             new ImageListViewMouseMeasurementController(listView).setEnabled(true);
 
             toolbar = new JToolBar();
@@ -720,9 +720,6 @@ public class JListImageListTestApp {
 
     }
     
-    
-    
-    
     protected JListImageListView newJListImageListView() {
         JListImageListView viewer = new JListImageListView();
         viewer.setSelectionModel(new DefaultBoundedListSelectionModel());
@@ -775,6 +772,7 @@ public class JListImageListTestApp {
     public static void main(String[] args) throws Exception {
         //System.out.println("press enter..."); System.in.read();   // use when profiling startup performance
         System.out.println("go");
+//        BasicConfigurator.configure();
         SwingUtilities.invokeLater(new Runnable() {
 
             @Override
