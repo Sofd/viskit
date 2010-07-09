@@ -2,7 +2,7 @@ package de.sofd.viskit.model;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Arrays;
+import java.util.Comparator;
 
 import javax.imageio.ImageReader;
 import javax.imageio.stream.FileImageInputStream;
@@ -12,22 +12,35 @@ import org.apache.log4j.Logger;
 import org.dcm4che2.imageioimpl.plugins.dcm.DicomImageReaderSpi;
 
 /**
+ * Concrete class that creates a model from a directory containing DICOM files.
+ * If a file is a singleframe DICOM a model element
+ * {@link ImageListViewModelElement} will be created. If a file is a multiframe
+ * DICOM for each frame a model element {@link ImageListViewModelElement} will
+ * be created.
  * 
  * @author honglinh
- *
+ * 
  */
-public class StaticModelFactory {
+public class DicomModelFactory extends ModelFactory {
     
-    protected static final Logger logger = Logger.getLogger(StaticModelFactory.class);
+    public DicomModelFactory() {
+    }
     
-    public static DefaultListModel createModelFromDir(File dir) {
+    public DicomModelFactory(Comparator<File> c) {
+        this.comparator = c;
+    }
+    
+    protected static final Logger logger = Logger.getLogger(DicomModelFactory.class);
+    
+    @Override
+    public DefaultListModel createModelFromDir(File dir) {
         DefaultListModel result = new DefaultListModel();
-        File[] files = dir.listFiles();
-        Arrays.sort(files);
+        File[] files = readFilesFromDir(dir);
         for (File f : files) {
             if (!f.getName().toLowerCase().endsWith(".dcm")) {
                 continue;
             }
+            System.out.println(f.getName());
             ImageReader reader;
             try {
                 reader = new DicomImageReaderSpi().createReaderInstance();
@@ -44,7 +57,7 @@ public class StaticModelFactory {
                 logger.debug(" > Frame "+ (i+1));
             }
             } catch (IOException e) {
-                e.printStackTrace();
+                throw new IllegalStateException("error trying to extract frames from DICOM object: " + f, e);
             }
         }
         return result;

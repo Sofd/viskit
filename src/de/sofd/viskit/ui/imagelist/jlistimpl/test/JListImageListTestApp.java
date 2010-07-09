@@ -35,8 +35,6 @@ import javax.swing.SwingUtilities;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 
-import org.apache.log4j.BasicConfigurator;
-import org.apache.log4j.Logger;
 import org.dcm4che2.data.DicomObject;
 import org.dcm4che2.data.Tag;
 import org.jdesktop.beansbinding.BeanProperty;
@@ -67,11 +65,13 @@ import de.sofd.viskit.controllers.cellpaint.ImageListViewPrintLUTController;
 import de.sofd.viskit.controllers.cellpaint.ImageListViewPrintTextToCellsController;
 import de.sofd.viskit.controllers.cellpaint.ImageListViewRoiPaintController;
 import de.sofd.viskit.model.DicomImageListViewModelElement;
+import de.sofd.viskit.model.DicomModelFactory;
 import de.sofd.viskit.model.FileBasedDicomImageListViewModelElement;
+import de.sofd.viskit.model.IntuitiveFileNameComparator;
 import de.sofd.viskit.model.ImageListViewModelElement;
 import de.sofd.viskit.model.LookupTable;
 import de.sofd.viskit.model.LookupTables;
-import de.sofd.viskit.model.StaticModelFactory;
+import de.sofd.viskit.model.ModelFactory;
 import de.sofd.viskit.ui.LookupTableCellRenderer;
 import de.sofd.viskit.ui.RoiToolPanel;
 import de.sofd.viskit.ui.imagelist.ImageListViewCell;
@@ -107,11 +107,12 @@ public class JListImageListTestApp {
     }
     
     public JFrame newSingleListFrame(String frameTitle, GraphicsConfiguration graphicsConfig) throws Exception {
+        ModelFactory factory = new DicomModelFactory(new IntuitiveFileNameComparator());
         //final DefaultListModel model = getTestImageViewerListModel();
         //final DefaultListModel model = getViewerListModelForDirectory(new File("/home/olaf/gi/resources/DICOM-Testbilder/1578"));
         //final DefaultListModel model = getViewerListModelForDirectory(new File("/home/olaf/gi/Images/cd00900__center10102"));
 //        final DefaultListModel model = StaticModelFactory.createModelFromDir(new File("/home/honglinh/Desktop/dicomfiles1"));
-        final DefaultListModel model = StaticModelFactory.createModelFromDir(new File("/home/honglinh/Desktop/multiframedicoms"));
+        final DefaultListModel model = factory.createModelFromDir(new File("/home/honglinh/Desktop/multiframedicoms"));
 //        StaticModelFactory.createModelFromDir(new File("/home/honglinh/Desktop/multiframedicoms"));
 
         //final DefaultListModel model = getViewerListModelForDirectory(new File("/home/olaf/gi/pet-studie/cd855__center4001"));
@@ -383,12 +384,14 @@ public class JListImageListTestApp {
         JToolBar toolbar = new JToolBar("toolbar");
         toolbar.setFloatable(false);
         
+        ModelFactory factory = new DicomModelFactory(new IntuitiveFileNameComparator());
+        
         List<ListModel> listModels = new ArrayList<ListModel>();
         //listModels.add(getViewerListModelForDirectory(new File("/home/olaf/headvolume")));
         //listModels.add(getViewerListModelForDirectory(new File("/home/olaf/oliverdicom/series1")));
         //listModels.add(getViewerListModelForDirectory(new File("/home/olaf/oliverdicom/INCISIX")));
-        listModels.add(StaticModelFactory.createModelFromDir(new File("/home/honglinh/Desktop/multiframedicoms")));
-        listModels.add(StaticModelFactory.createModelFromDir(new File("/home/honglinh/Desktop/dicomfiles1")));
+        listModels.add(factory.createModelFromDir(new File("/home/honglinh/Desktop/multiframedicoms")));
+        listModels.add(factory.createModelFromDir(new File("/home/honglinh/Desktop/dicomfiles1")));
         
 //        listModels.add(getViewerListModelForDirectory(new File("/home/honglinh/Desktop/dicomfiles1")));
 //        listModels.add(getViewerListModelForDirectory(new File("/home/honglinh/Desktop/dicomfiles1")));
