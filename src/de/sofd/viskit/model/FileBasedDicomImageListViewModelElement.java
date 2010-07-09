@@ -26,6 +26,8 @@ import org.dcm4che2.io.DicomInputStream;
  */
 public class FileBasedDicomImageListViewModelElement extends CachingDicomImageListViewModelElement {
 
+    protected /*final*/ URL url;
+    protected File urlAsFile; // url as a file again (if it represents one), for user convenience
 
     protected FileBasedDicomImageListViewModelElement() {
     }
@@ -59,6 +61,112 @@ public class FileBasedDicomImageListViewModelElement extends CachingDicomImageLi
         }
     }
 
+    protected void setUrl(URL url) {
+        setUrl(url, true);
+    }
+
+    protected void setUrl(URL url, boolean checkReadability) {
+        if (url == null) {
+            throw new NullPointerException("null url passed");
+        }
+        if (this.url != null) {
+            throw new IllegalStateException("FileBasedDicomImageListViewModelElement: don't change the URL once it's been set -- cache invalidation in that case is unsupported");
+        }
+        if (checkReadability) {
+            checkReadable(url);
+        }
+        this.url = url;
+    }
+    
+    
+    protected void checkInitialized() {
+        if (this.url == null) {
+            throw new IllegalStateException("NetworkDicomImageListViewModelElement: URL not initialized");
+        }
+    }
+
+    public void checkReadable() {
+        checkReadable(this.url);
+    }
+    
+    protected static void checkReadable(URL url) {
+        try {
+            InputStream in = null;
+            try {
+                in = url.openConnection().getInputStream();
+            } finally {
+                if (null != in) {
+                    in.close();
+                }
+            }
+        } catch (IOException e) {
+            throw new IllegalStateException("DICOM object not accessible: " + url, e);
+        }
+    }
+    
+    public boolean isReadable() {
+        try {
+            checkReadable(this.url);
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
+    }
+    
+
+    /**
+     *
+     * @return the URL the model element wraps
+     */
+    public URL getUrl() {
+        return url;
+    }
+
+    /**
+     * Convenience method that returns {@link #getUrl()} as a file object, if
+     * this model element was constructed as wrapping a file.
+     *
+     * @return the file represented by {@link #getUrl()}, if any. null
+     *         otherwise.
+     */
+    public File getFile() {
+        return urlAsFile;
+    }
+
+    @Override
+    public int getTotalFrameNumber() {
+        if (totalFrameNumber == -1) {
+            // optimized implementation which reads the number directly from the file,
+            // rather than the superclass implementation, which would extract it from
+            // #getDicomObject() and thus incur a temporary in-memory DicomObject.
+            ImageReader reader;
+            int numFrames;
+            ImageInputStream in;
+            InputStream urlIn;
+            try {
+                reader = new DicomImageReaderSpi().createReaderInstance();
+                urlIn = url.openStream();
+                in = ImageIO.createImageInputStream(urlIn);
+                if (null == in) {
+                    throw new IllegalStateException(
+                            "The DICOM image I/O filter (from dcm4che1) must be available to read images.");
+                }
+                try {
+                    reader.setInput(in);
+                    numFrames = reader.getNumImages(true);
+                } finally {
+                    in.close();
+                    urlIn.close();
+                }
+            }
+            catch (IOException e) {
+                throw new IllegalStateException("error reading DICOM object from " + url, e);
+            }
+            return numFrames;
+        }
+        return totalFrameNumber;
+    }
+
     @Override
     protected DicomObject getBackendDicomObject() {
         checkInitialized();
@@ -77,6 +185,7 @@ public class FileBasedDicomImageListViewModelElement extends CachingDicomImageLi
     
     @Override
     public Object getDicomObjectKey() {
+        checkInitialized();
         return url;
     }
     

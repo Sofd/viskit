@@ -38,8 +38,6 @@ import org.apache.log4j.Logger;
  */
 public abstract class CachingDicomImageListViewModelElement extends AbstractImageListViewModelElement implements DicomImageListViewModelElement {
 
-    protected /*final*/ URL url;
-    protected File urlAsFile; // url as a file again (if it represents one), for user convenience
     protected int frameNumber = 0;
     protected int totalFrameNumber = -1;
     
@@ -49,76 +47,7 @@ public abstract class CachingDicomImageListViewModelElement extends AbstractImag
         RawDicomImageReader.registerWithImageIO();
     }
     
-    protected void setUrl(URL url) {
-        setUrl(url, true);
-    }
 
-    protected void setUrl(URL url, boolean checkReadability) {
-        if (url == null) {
-            throw new NullPointerException("null url passed");
-        }
-        if (this.url != null) {
-            throw new IllegalStateException("FileBasedDicomImageListViewModelElement: don't change the URL once it's been set -- cache invalidation in that case is unsupported");
-        }
-        if (checkReadability) {
-            checkReadable(url);
-        }
-        this.url = url;
-    }
-    
-    public void checkReadable() {
-        checkReadable(this.url);
-    }
-    
-    protected static void checkReadable(URL url) {
-        try {
-            InputStream in = null;
-            try {
-                in = url.openConnection().getInputStream();
-            } finally {
-                if (null != in) {
-                    in.close();
-                }
-            }
-        } catch (IOException e) {
-            throw new IllegalStateException("DICOM object not accessible: " + url, e);
-        }
-    }
-    
-    public boolean isReadable() {
-        try {
-            checkReadable(this.url);
-            return true;
-        } catch (Exception e) {
-            return false;
-        }
-    }
-    
-    /**
-    *
-    * @return the URL the model element wraps
-    */
-   public URL getUrl() {
-       return url;
-   }
-
-   /**
-    * Convenience method that returns {@link #getUrl()} as a file object, if
-    * this model element was constructed as wrapping a file.
-    *
-    * @return the file represented by {@link #getUrl()}, if any. null
-    *         otherwise.
-    */
-   public File getFile() {
-       return urlAsFile;
-   }
-
-   protected void checkInitialized() {
-       if (this.url == null) {
-           throw new IllegalStateException("NetworkDicomImageListViewModelElement: URL not initialized");
-       }
-   }
-   
     /**
      * set the frame number this model element represents in case of a multiframe DICOM object. Initially the first
      * frame is displayed (default). This is also the case if the DICOM object
@@ -126,30 +55,42 @@ public abstract class CachingDicomImageListViewModelElement extends AbstractImag
      * 
      * @param frame
      */
-   public void setFrameNumber(int frame) {
-        int numFrames = getTotalFrameNumber();
-        if(frame < 0 || frame >= numFrames) {
-            throw new IllegalArgumentException("the frame number must be at least 0 and must exceed "+(numFrames-1) + " (# frames in this DICOM object)");
-        }
-       this.frameNumber = frame;
-   }
+    public void setFrameNumber(int frame) {
+         int numFrames = getTotalFrameNumber(); 
+         if(frame < 0 || frame >= numFrames) {
+             throw new IllegalArgumentException("the frame number must be at least 0 and must exceed "+(numFrames-1) + " (# frames in this DICOM object)");
+         }
+         this.frameNumber = frame;
+    }
    
-   @Override
-   public int getFrameNumber() {
-       return this.frameNumber;
-   }
+    @Override
+    public int getFrameNumber() {
+        return this.frameNumber;
+    }
    
-   @Override
-   public int getTotalFrameNumber() {
+    @Override
+    public int getTotalFrameNumber() {
         if (totalFrameNumber == -1) {
+            // extract the frame count from the getDicomObject() by default.
             ImageReader reader;
             int numFrames;
             ImageInputStream in;
-            InputStream urlIn;
             try {
+                DicomObject dcmObj = getDicomObject();
+                ByteArrayOutputStream bos = new ByteArrayOutputStream(200000);
+                DicomOutputStream dos = new DicomOutputStream(bos);
+                String tsuid = dcmObj.getString(Tag.TransferSyntaxUID);
+                if (null == tsuid) {
+                    tsuid = UID.ImplicitVRLittleEndian;
+                }
+                FileMetaInformation fmi = new FileMetaInformation(dcmObj);
+                fmi = new FileMetaInformation(fmi.getMediaStorageSOPClassUID(), fmi.getMediaStorageSOPInstanceUID(), tsuid);
+                dos.writeFileMetaInformation(fmi.getDicomObject());
+                dos.writeDataset(dcmObj, tsuid);
+                dos.close();
+                
                 reader = new DicomImageReaderSpi().createReaderInstance();
-                urlIn = url.openStream();
-                in = ImageIO.createImageInputStream(urlIn);
+                in = ImageIO.createImageInputStream(new ByteArrayInputStream(bos.toByteArray()));
                 if (null == in) {
                     throw new IllegalStateException(
                             "The DICOM image I/O filter (from dcm4che1) must be available to read images.");
@@ -159,11 +100,10 @@ public abstract class CachingDicomImageListViewModelElement extends AbstractImag
                     numFrames = reader.getNumImages(true);
                 } finally {
                     in.close();
-                    urlIn.close();
                 }
             }
             catch (IOException e) {
-                throw new IllegalStateException("error reading DICOM object from " + url, e);
+                throw new IllegalStateException("error reading DICOM object from " + getDicomObjectKey(), e);
             }
             return numFrames;
         }
@@ -172,8 +112,7 @@ public abstract class CachingDicomImageListViewModelElement extends AbstractImag
     
     @Override
     public Object getImageKey() {
-        checkInitialized();
-        return url.toString()+"#"+frameNumber;
+        return getDicomObjectKey() + "#" + frameNumber;
     }
     
     /**
