@@ -40,7 +40,7 @@ public class DicomModelFactory extends ModelFactory {
             if (!f.getName().toLowerCase().endsWith(".dcm")) {
                 continue;
             }
-            System.out.println(f.getName());
+            logger.debug(f.getName());
             ImageReader reader;
             try {
                 reader = new DicomImageReaderSpi().createReaderInstance();

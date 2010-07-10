@@ -1,21 +1,20 @@
 package de.sofd.viskit.model;
 
-import de.sofd.util.FloatRange;
-import de.sofd.viskit.test.windowing.RawDicomImageReader;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
-import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
-import java.net.URL;
+import java.nio.IntBuffer;
 import java.nio.ShortBuffer;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Map.Entry;
+
 import javax.imageio.ImageIO;
 import javax.imageio.ImageReader;
 import javax.imageio.stream.ImageInputStream;
+
+import org.apache.log4j.Logger;
 import org.dcm4che2.data.BasicDicomObject;
 import org.dcm4che2.data.DicomObject;
 import org.dcm4che2.data.Tag;
@@ -24,9 +23,8 @@ import org.dcm4che2.imageioimpl.plugins.dcm.DicomImageReaderSpi;
 import org.dcm4che2.io.DicomOutputStream;
 import org.dcm4che2.media.FileMetaInformation;
 
-import com.sun.opengl.util.BufferUtil;
-import java.nio.IntBuffer;
-import org.apache.log4j.Logger;
+import de.sofd.util.FloatRange;
+import de.sofd.viskit.test.windowing.RawDicomImageReader;
 
 /**
  * Implements getDicomObject(), getImage() as caching delegators to the (subclass-provided)
@@ -314,8 +312,8 @@ public abstract class CachingDicomImageListViewModelElement extends AbstractImag
         DicomObject imgMetadata = getDicomImageMetaData();
         
         String transferSyntaxUID = imgMetadata.getString(Tag.TransferSyntaxUID);
-        System.out.println(getImageKey());
-        System.out.println("transferSyntaxUID : " + transferSyntaxUID);
+        logger.debug(getImageKey());
+        logger.debug("transferSyntaxUID : " + transferSyntaxUID);
         //jpeg or rle compressed
         if (transferSyntaxUID != null && 
                 (transferSyntaxUID.startsWith("1.2.840.10008.1.2.4") ||
