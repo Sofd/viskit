@@ -68,46 +68,58 @@ public abstract class CachingDicomImageListViewModelElement extends AbstractImag
    
     @Override
     public int getTotalFrameNumber() {
-        if (totalFrameNumber == -1) {
-            // extract the frame count from the getDicomObject() by default.
-            ImageReader reader;
-            int numFrames;
-            ImageInputStream in;
-            try {
-                DicomObject dcmObj = getDicomObject();
-                ByteArrayOutputStream bos = new ByteArrayOutputStream(200000);
-                DicomOutputStream dos = new DicomOutputStream(bos);
-                String tsuid = dcmObj.getString(Tag.TransferSyntaxUID);
-                if (null == tsuid) {
-                    tsuid = UID.ImplicitVRLittleEndian;
-                }
-                FileMetaInformation fmi = new FileMetaInformation(dcmObj);
-                fmi = new FileMetaInformation(fmi.getMediaStorageSOPClassUID(), fmi.getMediaStorageSOPInstanceUID(), tsuid);
-                dos.writeFileMetaInformation(fmi.getDicomObject());
-                dos.writeDataset(dcmObj, tsuid);
-                dos.close();
-                
-                reader = new DicomImageReaderSpi().createReaderInstance();
-                in = ImageIO.createImageInputStream(new ByteArrayInputStream(bos.toByteArray()));
-                if (null == in) {
-                    throw new IllegalStateException(
-                            "The DICOM image I/O filter (from dcm4che1) must be available to read images.");
-                }
-                try {
-                    reader.setInput(in);
-                    numFrames = reader.getNumImages(true);
-                } finally {
-                    in.close();
-                }
+        Object dcmKey = getDicomObjectKey();
+        Integer cached = frameCountByDcmObjectIdCache.get(dcmKey);
+        if (cached == null) {
+            if (totalFrameNumber == -1) {
+                cached = doGetTotalFrameNumber();
+                totalFrameNumber = cached;
+            } else {
+                cached = totalFrameNumber;
             }
-            catch (IOException e) {
-                throw new IllegalStateException("error reading DICOM object from " + getDicomObjectKey(), e);
-            }
-            return numFrames;
+            frameCountByDcmObjectIdCache.put(dcmKey, cached);
         }
-        return totalFrameNumber;
+        return cached;
     }
     
+    protected int doGetTotalFrameNumber() {
+        // extract the frame count from the getDicomObject() by default.
+        ImageReader reader;
+        int numFrames;
+        ImageInputStream in;
+        try {
+            DicomObject dcmObj = getDicomObject();
+            ByteArrayOutputStream bos = new ByteArrayOutputStream(200000);
+            DicomOutputStream dos = new DicomOutputStream(bos);
+            String tsuid = dcmObj.getString(Tag.TransferSyntaxUID);
+            if (null == tsuid) {
+                tsuid = UID.ImplicitVRLittleEndian;
+            }
+            FileMetaInformation fmi = new FileMetaInformation(dcmObj);
+            fmi = new FileMetaInformation(fmi.getMediaStorageSOPClassUID(), fmi.getMediaStorageSOPInstanceUID(), tsuid);
+            dos.writeFileMetaInformation(fmi.getDicomObject());
+            dos.writeDataset(dcmObj, tsuid);
+            dos.close();
+            
+            reader = new DicomImageReaderSpi().createReaderInstance();
+            in = ImageIO.createImageInputStream(new ByteArrayInputStream(bos.toByteArray()));
+            if (null == in) {
+                throw new IllegalStateException(
+                        "The DICOM image I/O filter (from dcm4che1) must be available to read images.");
+            }
+            try {
+                reader.setInput(in);
+                numFrames = reader.getNumImages(true);
+            } finally {
+                in.close();
+            }
+        }
+        catch (IOException e) {
+            throw new IllegalStateException("error reading DICOM object from " + getDicomObjectKey(), e);
+        }
+        return numFrames;
+    }
+
     @Override
     public Object getImageKey() {
         return getDicomObjectKey() + "#" + frameNumber;
@@ -198,6 +210,8 @@ public abstract class CachingDicomImageListViewModelElement extends AbstractImag
     private static LRUMemoryCache<Object, DicomObject> rawDicomImageMetadataCache
         = new LRUMemoryCache<Object, DicomObject>(Config.prop.getI("de.sofd.viskit.rawDicomImageMetadataCacheSize"));
 
+    private static LRUMemoryCache<Object, Integer> frameCountByDcmObjectIdCache
+        = new LRUMemoryCache<Object, Integer>(Config.prop.getI("de.sofd.viskit.frameCountByDcmObjectIdCacheSize"));
 
     @Override
     public DicomObject getDicomObject() {

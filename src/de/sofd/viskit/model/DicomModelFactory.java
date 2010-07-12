@@ -41,23 +41,17 @@ public class DicomModelFactory extends ModelFactory {
                 continue;
             }
             logger.debug(f.getName());
-            ImageReader reader;
-            try {
-                reader = new DicomImageReaderSpi().createReaderInstance();
-
-            FileImageInputStream input = new FileImageInputStream(f);
-            reader.setInput(input);            
-            int numFrames = reader.getNumImages(true);
-            
-            logger.info("DICOM object "+f.getName()+" has "+ numFrames +" frames...");            
-            for (int i=0; i < numFrames; i++) {
-                FileBasedDicomImageListViewModelElement element = new FileBasedDicomImageListViewModelElement(f);
-                element.setFrameNumber(i);
-                result.addElement(element);
-                logger.debug(" > Frame "+ (i+1));
-            }
-            } catch (IOException e) {
-                throw new IllegalStateException("error trying to extract frames from DICOM object: " + f, e);
+            FileBasedDicomImageListViewModelElement element = new FileBasedDicomImageListViewModelElement(f);
+            result.addElement(element);
+            int numFrames = element.getTotalFrameNumber();
+            logger.info("DICOM object "+f.getName()+" has "+ numFrames +" frames...");          
+            if (numFrames > 1) {
+                for (int i = 1; i < numFrames; i++) {
+                    FileBasedDicomImageListViewModelElement felt = new FileBasedDicomImageListViewModelElement(f);
+                    felt.setFrameNumber(i);
+                    result.addElement(felt);
+                    logger.debug(" > Frame "+ (i+1));
+                }
             }
         }
         return result;

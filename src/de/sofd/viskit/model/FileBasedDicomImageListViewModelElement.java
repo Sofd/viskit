@@ -134,39 +134,36 @@ public class FileBasedDicomImageListViewModelElement extends CachingDicomImageLi
     }
 
     @Override
-    public int getTotalFrameNumber() {
-        if (totalFrameNumber == -1) {
-            // optimized implementation which reads the number directly from the file,
-            // rather than the superclass implementation, which would extract it from
-            // #getDicomObject() and thus incur a temporary in-memory DicomObject.
-            ImageReader reader;
-            int numFrames;
-            ImageInputStream in;
-            InputStream urlIn;
+    protected int doGetTotalFrameNumber() {
+        // optimized implementation which reads the number directly from the file,
+        // rather than the superclass implementation, which would extract it from
+        // #getDicomObject() and thus incur a temporary in-memory DicomObject.
+        ImageReader reader;
+        int numFrames;
+        ImageInputStream in;
+        InputStream urlIn;
+        try {
+            reader = new DicomImageReaderSpi().createReaderInstance();
+            urlIn = url.openStream();
+            in = ImageIO.createImageInputStream(urlIn);
+            if (null == in) {
+                throw new IllegalStateException(
+                        "The DICOM image I/O filter (from dcm4che1) must be available to read images.");
+            }
             try {
-                reader = new DicomImageReaderSpi().createReaderInstance();
-                urlIn = url.openStream();
-                in = ImageIO.createImageInputStream(urlIn);
-                if (null == in) {
-                    throw new IllegalStateException(
-                            "The DICOM image I/O filter (from dcm4che1) must be available to read images.");
-                }
-                try {
-                    reader.setInput(in);
-                    numFrames = reader.getNumImages(true);
-                } finally {
-                    in.close();
-                    urlIn.close();
-                }
+                reader.setInput(in);
+                numFrames = reader.getNumImages(true);
+            } finally {
+                in.close();
+                urlIn.close();
             }
-            catch (IOException e) {
-                throw new IllegalStateException("error reading DICOM object from " + url, e);
-            }
-            return numFrames;
         }
-        return totalFrameNumber;
+        catch (IOException e) {
+            throw new IllegalStateException("error reading DICOM object from " + url, e);
+        }
+        return numFrames;
     }
-
+    
     @Override
     protected DicomObject getBackendDicomObject() {
         checkInitialized();
