@@ -10,6 +10,8 @@ import javax.media.opengl.GL2;
 import javax.media.opengl.GLAutoDrawable;
 
 import de.sofd.viskit.draw2d.gc.ViskitGC;
+import de.sofd.viskit.model.ImageListViewModelElement;
+import de.sofd.viskit.model.ImageListViewModelElement.InitializationState;
 import de.sofd.viskit.ui.imagelist.ImageListViewCell;
 import de.sofd.viskit.ui.imagelist.JImageListView;
 import de.sofd.viskit.ui.imagelist.event.cellpaint.ImageListViewCellPaintEvent;
@@ -161,15 +163,8 @@ public class CellPaintControllerBase {
                 return;
             }
             inProgrammedChange = true;
-            ImageListViewCell cell = e.getSource();
             try {
-                if (e.getGc().isGraphics2DAvailable() && ! e.getGc().isGlPreferred()) {
-                    // paint using Java2D
-                    paintJ2D(cell, (Graphics2D) e.getGc().getGraphics2D().create());
-                } else {
-                   // paint using OpenGL
-                   paintGL(cell, e.getGc().getGl().getGL2(), e.getSharedContextData());
-                }
+                paint(e);
             } finally {
                 inProgrammedChange = false;
             }
@@ -181,6 +176,24 @@ public class CellPaintControllerBase {
         }
     };
 
+    protected void paint(ImageListViewCellPaintEvent e) {
+        ImageListViewCell cell = e.getSource();
+        if (!canPaintInitializationState(cell.getDisplayedModelElement().getInitializationState())) {
+            return;
+        }
+        if (e.getGc().isGraphics2DAvailable() && ! e.getGc().isGlPreferred()) {
+            // paint using Java2D
+            paintJ2D(cell, (Graphics2D) e.getGc().getGraphics2D().create());
+        } else {
+           // paint using OpenGL
+           paintGL(cell, e.getGc().getGl().getGL2(), e.getSharedContextData());
+        }
+    }
+    
+    protected boolean canPaintInitializationState(ImageListViewModelElement.InitializationState initState) {
+        return initState == InitializationState.INITIALIZED;
+    }
+    
     protected void paintJ2D(ImageListViewCell cell, Graphics2D g2d) {
         
     }

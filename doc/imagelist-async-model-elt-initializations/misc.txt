@@ -166,6 +166,14 @@ interface ImageListViewModelElement {
     Anwender in einen scaleMode schaltet, der mehr Texturen
     gleichzeitig sichtbar macht als in den Cache-Speicher passen
 
+  - manchmal würde z.B. getRawImage() erst beim Aufruf (auf einem
+    Element im State INITIALIZED) feststellen, dass das Element wieder
+    UNINITIALIZED sein sollte (z.B. weil es aus dem Cache entfernt
+    wurde). Wie lösen wir das? Spezielle Exception? Oder der
+    getRawImage()-Methode erlauben,
+    setInitializationState(UNINITIALIZED) aufzurufen (und das extern
+    abfangen) und schnell zurückzukehren?
+
   - lazy-Initialisierung von Multiframe-DICOMs...
 
 

@@ -21,7 +21,7 @@ import java.util.Map;
  */
 public abstract class AbstractImageListViewModelElement implements ImageListViewModelElement {
 
-    protected InitializationState initializationState;
+    protected InitializationState initializationState = InitializationState.INITIALIZED;
     protected Map<String, Object> attributes = new HashMap<String, Object>();
     protected final Drawing roiDrawing = new Drawing();
 
