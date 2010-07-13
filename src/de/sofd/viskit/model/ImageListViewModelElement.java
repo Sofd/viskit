@@ -4,6 +4,7 @@ import de.sofd.draw2d.Drawing;
 import de.sofd.util.FloatRange;
 import de.sofd.viskit.ui.imagelist.JImageListView;
 import java.awt.image.BufferedImage;
+import java.beans.PropertyChangeListener;
 import java.util.Collection;
 
 /**
@@ -13,6 +14,9 @@ import java.util.Collection;
  */
 public interface ImageListViewModelElement {
 
+    public static final String PROP_INITIALIZATIONSTATE = "initializationState";
+    //TODO: make the other properties bean properties as well
+    
     /**
      *
      * @return does {@link #getRawImage() } work?
@@ -88,6 +92,59 @@ public interface ImageListViewModelElement {
      */
     Drawing getRoiDrawing();
 
+    enum InitializationState {UNINITIALIZED, INITIALIZED, ERROR};
+
+    /**
+     * The initialization state of this model element.
+     * <p>
+     * This is a full bean property, including getter/setter methods and
+     * property change event firing.
+     * <p>
+     * May be in any of the 3 states immediately after construction, can
+     * transform from any of the 3 states to other any other one at any time.
+     * The model element may update its state at any time to mark things like
+     * e.g. "my image has finished loading" (state is set to INITIALIZED),
+     * "there was an error" (state is set to ERROR) etc.
+     * <p>
+     * A {@link JImageListView} listens for initializationState changes in any
+     * of its model elements and reacts (updates model element's display
+     * accordingly, e.g. with an hourglass or an error display).
+     * <p>
+     * The general contract here is that if the initialization state is set to
+     * INITIALIZED, a {@link JImageListView} that contains this model element
+     * may call all the data getter methods of the model elements (e.g.
+     * {@link #getImage()}, {@link #getRawImage()}, {@link #getRoiDrawing()} at
+     * any time, so they should operate quickly (if they don't, the UI will
+     * block). As long as the state is UNINITIALIZED, the list won't call those
+     * methods. In this case the model element may want to run some kind of
+     * background processing/thread (e.g. load the image from the backing
+     * store/network) to bring itself into a state where the data getter methods
+     * can operate quickly. When it has finished this task, it would set its
+     * initializationState property to INITIALIZED (firing the corresponding
+     * property change event) to indicate this state transition to the outside
+     * (especially to any JImageLists that contain the model element).
+     * <p>
+     * The getter and setter method of this property, just like all other
+     * methods declared in this base interface, will always be called by the
+     * containing list in the UI thread only. Also, the model element must
+     * ensure that it fires the property change events for the
+     * initializationState property in that thread as well. This means that if
+     * the model element performs some initialization tasks in a background
+     * thread, and it has finished performing that task, the resulting
+     * initializationState change (from UNINITIALIZED to INITIALIZED) must be
+     * communicated back to the UI thread (TODO: to do this portably, a
+     * toolkit-independent equivalent of Swing's SwingUtilities.invokeLater() et
+     * al. is probably needed)
+     */
+    InitializationState getInitializationState();
+
+    /**
+     * Setter for {@link #getInitializationState()}.
+     * 
+     * @param initializationState
+     */
+    void setInitializationState(InitializationState initializationState);
+
     /**
      * Store arbitrary additional data in this model element. The data can be retrieved again using
      * {@link #getAttribute(java.lang.String) }.
@@ -110,4 +167,18 @@ public interface ImageListViewModelElement {
 
     Object removeAttribute(String name);
     
+    /**
+     * Add PropertyChangeListener.
+     *
+     * @param listener
+     */
+    void addPropertyChangeListener(PropertyChangeListener listener);
+
+    /**
+     * Remove PropertyChangeListener.
+     *
+     * @param listener
+     */
+    void removePropertyChangeListener(PropertyChangeListener listener);
+
 }
