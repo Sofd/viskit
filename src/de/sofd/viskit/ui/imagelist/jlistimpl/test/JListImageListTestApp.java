@@ -10,10 +10,10 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
+import java.awt.event.MouseEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.File;
-import java.net.MalformedURLException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -36,17 +36,20 @@ import javax.swing.SwingUtilities;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 
+import org.apache.log4j.BasicConfigurator;
 import org.dcm4che2.data.DicomObject;
 import org.dcm4che2.data.Tag;
 import org.jdesktop.beansbinding.BeanProperty;
 import org.jdesktop.beansbinding.Bindings;
 import org.jdesktop.beansbinding.AutoBinding.UpdateStrategy;
+import org.jdesktop.swingx.multislider.ThumbListener;
 
 import de.sofd.draw2d.Drawing;
 import de.sofd.draw2d.DrawingObject;
 import de.sofd.draw2d.viewer.tools.EllipseTool;
 import de.sofd.draw2d.viewer.tools.SelectorTool;
 import de.sofd.swing.DefaultBoundedListSelectionModel;
+import de.sofd.swing.JLutWindowingSlider;
 import de.sofd.util.FloatRange;
 import de.sofd.viskit.controllers.GenericILVCellPropertySyncController;
 import de.sofd.viskit.controllers.ImageListViewInitialWindowingController;
@@ -57,6 +60,7 @@ import de.sofd.viskit.controllers.ImageListViewRoiInputEventController;
 import de.sofd.viskit.controllers.ImageListViewRoiToolApplicationController;
 import de.sofd.viskit.controllers.ImageListViewSelectionScrollSyncController;
 import de.sofd.viskit.controllers.ImageListViewSelectionSynchronizationController;
+import de.sofd.viskit.controllers.ImageListViewSlidingWindowingController;
 import de.sofd.viskit.controllers.ImageListViewWindowingApplyToAllController;
 import de.sofd.viskit.controllers.ImageListViewZoomPanApplyToAllController;
 import de.sofd.viskit.controllers.MultiILVSyncSetController;
@@ -68,8 +72,8 @@ import de.sofd.viskit.controllers.cellpaint.ImageListViewRoiPaintController;
 import de.sofd.viskit.model.DicomImageListViewModelElement;
 import de.sofd.viskit.model.DicomModelFactory;
 import de.sofd.viskit.model.FileBasedDicomImageListViewModelElement;
-import de.sofd.viskit.model.IntuitiveFileNameComparator;
 import de.sofd.viskit.model.ImageListViewModelElement;
+import de.sofd.viskit.model.IntuitiveFileNameComparator;
 import de.sofd.viskit.model.LookupTable;
 import de.sofd.viskit.model.LookupTables;
 import de.sofd.viskit.model.ModelFactory;
@@ -103,7 +107,7 @@ public class JListImageListTestApp {
 
         //// creating them like this apparently works better
         //JFrame f1 = newSingleListFrame("Viskit ImageList test app window 1", null);
-        //JFrame f2 = newSingleListFrame("Viskit ImageList test app window 2", null);
+//        JFrame f2 = newSingleListFrame("Viskit ImageList test app window 2", null);
         JFrame f2 = newMultiListFrame("Multi-List frame", null);
     }
     
@@ -535,8 +539,8 @@ public class JListImageListTestApp {
         
         public ListViewPanel() {
             this.setLayout(new BorderLayout());
-            listView = newJGLImageListView();
-//            listView = newJGridImageListView(false);
+//            listView = newJGLImageListView();
+            listView = newJGridImageListView(false);
             this.add(listView, BorderLayout.CENTER);
             new ImageListViewInitialWindowingController(listView) {
                 @Override
@@ -561,6 +565,7 @@ public class JListImageListTestApp {
             new ImageListViewMouseZoomPanController(listView);
             new ImageListViewRoiInputEventController(listView);
             new ImageListViewImagePaintController(listView).setEnabled(true);
+            new ImageListViewSlidingWindowingController(listView);
             
             ImageListViewSelectionScrollSyncController sssc = new ImageListViewSelectionScrollSyncController(listView);
             sssc.setScrollPositionTracksSelection(true);
@@ -595,8 +600,33 @@ public class JListImageListTestApp {
 
             toolbar = new JToolBar();
             toolbar.setFloatable(false);
+            
             this.add(toolbar, BorderLayout.PAGE_START);
 
+            final JLutWindowingSlider slider = new JLutWindowingSlider(0.0f,16000.0f);
+            slider.addMultiThumbListener(new ThumbListener() {
+
+                @Override
+                public void mousePressed(MouseEvent evt) {
+                }
+
+                @Override
+                public void thumbMoved(int thumb, float pos) {
+                    float wl = slider.getWindowLocation();
+                    float ww = slider.getWindowWidth();
+                    for (int i = 0; i < listView.getLength(); i++) {
+                        listView.getCell(i).setWindowLocation((int)wl);
+                        listView.getCell(i).setWindowWidth((int)ww);
+                    }
+                }
+
+                @Override
+                public void thumbSelected(int thumb) {
+                }
+                
+            });
+            toolbar.add(slider);
+            
             toolbar.add(new JLabel("ScaleMode:"));
             final JComboBox scaleModeCombo = new JComboBox();
             for (JImageListView.ScaleMode sm : listView.getSupportedScaleModes()) {
@@ -632,7 +662,9 @@ public class JListImageListTestApp {
             lutCombo.addItem("[none]");
             for (LookupTable lut : LookupTables.getAllKnownLuts()) {
                 lutCombo.addItem(lut);
+//                slider.setLut(lut.getRGBAValues().duplicate());
             }
+            
             lutCombo.setRenderer(new LookupTableCellRenderer(70));
             lutCombo.addItemListener(new ItemListener() {
                 @Override
@@ -641,6 +673,8 @@ public class JListImageListTestApp {
                         LookupTable lut = null;
                         if (lutCombo.getSelectedItem() instanceof LookupTable) {
                             lut = (LookupTable) lutCombo.getSelectedItem();
+                            slider.setLut(lut.getRGBAValues().duplicate());
+                            slider.repaint();
                         }
                         System.out.println("activating lut: " + lut);
                         for (int i = 0; i < listView.getLength(); i++) {
@@ -785,7 +819,7 @@ public class JListImageListTestApp {
     public static void main(String[] args) throws Exception {
         //System.out.println("press enter..."); System.in.read();   // use when profiling startup performance
         System.out.println("go");
-//        BasicConfigurator.configure();
+        BasicConfigurator.configure();
         SwingUtilities.invokeLater(new Runnable() {
 
             @Override
