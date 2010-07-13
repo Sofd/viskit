@@ -436,9 +436,15 @@ public class JListImageListTestApp {
 //        listModels.add(getViewerListModelForDirectory(new File("/home/olaf/hieronymusr/br312043/images/cd800__center4001")));
 //        listModels.add(getViewerListModelForDirectory(new File("/home/olaf/hieronymusr/br312043/images/cd801__center4001")));
         
+
+        //listModels.add(StaticModelFactory.createModelFromDir(new File("/home/olaf/hieronymusr/br312043/images/cd801__center4001")));
+        //listModels.add(StaticModelFactory.createModelFromDir(new File("/home/olaf/hieronymusr/br312046/images/cd00908__center10101")));
+        //listModels.add(factory.createModelFromDir(new File("/home/olaf/hieronymusr/br312046/images/cd00907__center10102")));
+        //listModels.add(factory.createModelFromDir(new File("/shares/projects/schering/312043/Florbetaben Training Images/S7/IMAGE")));
+        
         final long t01 = System.currentTimeMillis();
 
-        System.out.println("model creation took " + (t01-t00) + " ms.");
+        System.out.println("creation of all models took " + (t01-t00) + " ms.");
 
         List<JImageListView> lists = new ArrayList<JImageListView>();
         
@@ -459,7 +465,7 @@ public class JListImageListTestApp {
                 public void onCellPaint(ImageListViewCellPaintEvent e) {
                     if (t1 == -1) {
                         t1 = System.currentTimeMillis();
-                        System.out.println("list " + lnumCaptured[0] + " UI coming up after " + (t1-t0) + " ms.");
+                        System.out.println("list " + lnumCaptured[0] + " UI coming up after " + (t1-t0) + " ms (" + (t1-t01) + " ms after creation of all models, " + (t1-t00) + " ms after startup)");
                     }
                 }
                 @Override
@@ -475,7 +481,7 @@ public class JListImageListTestApp {
             });
             lvp.getListView().setModel(lm);
             long t1 = System.currentTimeMillis();
-            System.out.println("list " + lnum + ": list.setModell() took " + (t1-t0) + " ms.");
+            System.out.println("list " + lnum + ": list.setModel() took " + (t1-t0) + " ms.");
             listsPanel.add(lvp);
             lists.add(lvp.getListView());
             for (final Color c : syncColors) {
