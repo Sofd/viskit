@@ -130,8 +130,7 @@ public class JListImageListTestApp {
 
         final JImageListView viewer;
         //viewer = newJListImageListView();
-        //viewer = newJGridImageListView(true);
-//        viewer = newJGridImageListView(false);
+        //viewer = newJGridImageListView();
         viewer = newJGLImageListView();
         
         new ImageListViewInitialWindowingController(viewer).setEnabled(true);
@@ -545,7 +544,7 @@ public class JListImageListTestApp {
         public ListViewPanel() {
             this.setLayout(new BorderLayout());
             listView = newJGLImageListView();
-//            listView = newJGridImageListView(false);
+//            listView = newJGridImageListView();
             this.add(listView, BorderLayout.CENTER);
             new ImageListViewInitialWindowingController(listView) {
                 @Override
@@ -750,12 +749,9 @@ public class JListImageListTestApp {
         return viewer;
     }
     
-    protected JGridImageListView newJGridImageListView(boolean useOpenglRenderer) {
+    protected JGridImageListView newJGridImageListView() {
         final JGridImageListView viewer = new JGridImageListView();
         viewer.setScaleMode(JGridImageListView.MyScaleMode.newCellGridMode(2, 2));
-        if (useOpenglRenderer) {
-            ((JGridImageListView) viewer).setRendererType(JGridImageListView.RendererType.OPENGL);
-        }
         viewer.setSelectionModel(new DefaultBoundedListSelectionModel());
         return viewer;
     }

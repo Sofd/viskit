@@ -1,16 +1,5 @@
 package de.sofd.viskit.ui.imagelist.gridlistimpl;
 
-import de.sofd.swing.AbstractFramedSelectionGridListComponentFactory;
-import de.sofd.swing.JGridList;
-import de.sofd.util.DynScope;
-import de.sofd.util.Misc;
-import de.sofd.viskit.model.DicomImageListViewModelElement;
-import de.sofd.viskit.ui.imagelist.ImageListViewCell;
-import de.sofd.viskit.model.ImageListViewModelElement;
-import de.sofd.viskit.ui.imagelist.JImageListView;
-import de.sofd.viskit.ui.imagelist.cellviewers.jogl.GLImageListViewCellViewer;
-import de.sofd.viskit.ui.imagelist.cellviewers.java2d.ImageListViewCellViewer;
-
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
@@ -47,6 +36,16 @@ import javax.swing.event.ListSelectionListener;
 
 import org.dcm4che2.data.Tag;
 
+import de.sofd.swing.AbstractFramedSelectionGridListComponentFactory;
+import de.sofd.swing.JGridList;
+import de.sofd.util.DynScope;
+import de.sofd.util.Misc;
+import de.sofd.viskit.model.DicomImageListViewModelElement;
+import de.sofd.viskit.model.ImageListViewModelElement;
+import de.sofd.viskit.ui.imagelist.ImageListViewCell;
+import de.sofd.viskit.ui.imagelist.JImageListView;
+import de.sofd.viskit.ui.imagelist.cellviewers.java2d.ImageListViewCellViewer;
+
 /**
  * JImageListView implementation that uses an aggreagated {@link JGridList}.
  *
@@ -70,10 +69,6 @@ public class JGridImageListView extends JImageListView {
      */
     protected DefaultListModel wrappedGridListModel;
 
-    public static enum RendererType {JAVA2D, OPENGL};
-
-    private RendererType rendererType = RendererType.JAVA2D;
-    
     private boolean inExternalSetFirstVisibleIdx = false;
 
     public JGridImageListView() {
@@ -355,23 +350,6 @@ public class JGridImageListView extends JImageListView {
         wrappedGridList.repaintCells();
     }
 
-    public RendererType getRendererType() {
-        return rendererType;
-    }
-
-    /**
-     * 
-     * @param rendererType
-     */
-    public void setRendererType(RendererType rendererType) {
-        if (rendererType != RendererType.JAVA2D) {
-            throw new UnsupportedOperationException("only JAVA2D rendererType supported for now");
-        }
-        this.rendererType = rendererType;
-        wrappedGridList.refresh();
-    }
-
-
     class WrappedGridListComponentFactory extends AbstractFramedSelectionGridListComponentFactory {
 
         public static final int BORDER_WIDTH = 2;
@@ -382,35 +360,21 @@ public class JGridImageListView extends JImageListView {
 
         @Override
         public boolean canReuseComponents() {
-            return rendererType == RendererType.OPENGL;
+            return false;
         }
 
         @Override
         public JComponent createComponent(JGridList source, JPanel parent, Object modelItem) {
             ImageListViewModelElement elt = (ImageListViewModelElement) modelItem;
             ImageListViewCell cell = getCellForElement(elt);
-            JComponent resultComponent = null;
-            if (parent.getComponentCount() == 0) {
-                switch (rendererType) {
-                    case JAVA2D:
-                        resultComponent = new ImageListViewCellViewer(cell);
-                        resultComponent.setBackground(Color.BLACK);
-                        break;
-
-                    case OPENGL:
-                        resultComponent = new GLImageListViewCellViewer(cell);
-                        break;
-                }
-                resultComponent.setVisible(true);
-                parent.add(resultComponent);
-                //resultComponent.addMouseListener(gridComponentMouseHandler);
-                //resultComponent.addMouseMotionListener(gridComponentMouseHandler);
-                //resultComponent.addMouseWheelListener(gridComponentMouseHandler);
-            } else {
-                assert(rendererType == RendererType.OPENGL);
-                resultComponent = (JComponent) parent.getComponent(0);
-                ((GLImageListViewCellViewer) resultComponent).setDisplayedCell(cell);
-            }
+            assert (parent.getComponentCount() == 0);
+            JComponent resultComponent = new ImageListViewCellViewer(cell);
+            resultComponent.setBackground(Color.BLACK);
+            resultComponent.setVisible(true);
+            parent.add(resultComponent);
+            //resultComponent.addMouseListener(gridComponentMouseHandler);
+            //resultComponent.addMouseMotionListener(gridComponentMouseHandler);
+            //resultComponent.addMouseWheelListener(gridComponentMouseHandler);
 
             return resultComponent;
         }
