@@ -62,6 +62,7 @@ import de.sofd.viskit.controllers.ImageListViewZoomPanApplyToAllController;
 import de.sofd.viskit.controllers.MultiILVSyncSetController;
 import de.sofd.viskit.controllers.MultiImageListViewController;
 import de.sofd.viskit.controllers.cellpaint.ImageListViewImagePaintController;
+import de.sofd.viskit.controllers.cellpaint.ImageListViewInitStateIndicationPaintController;
 import de.sofd.viskit.controllers.cellpaint.ImageListViewPrintLUTController;
 import de.sofd.viskit.controllers.cellpaint.ImageListViewPrintTextToCellsController;
 import de.sofd.viskit.controllers.cellpaint.ImageListViewRoiPaintController;
@@ -308,6 +309,8 @@ public class JListImageListTestApp {
         
         new ImageListViewRoiPaintController(viewer).setEnabled(true);
         
+        new ImageListViewInitStateIndicationPaintController(viewer);
+
         ImageListViewSelectionScrollSyncController sssc = new ImageListViewSelectionScrollSyncController(viewer);
         sssc.setScrollPositionTracksSelection(true);
         sssc.setSelectionTracksScrollPosition(true);
@@ -596,6 +599,8 @@ public class JListImageListTestApp {
             plutc.setEnabled(true);
             
             new ImageListViewRoiPaintController(listView).setEnabled(true);
+            
+            new ImageListViewInitStateIndicationPaintController(listView);
 
             new ImageListViewMouseMeasurementController(listView).setEnabled(true);
 
