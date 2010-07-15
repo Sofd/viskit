@@ -16,6 +16,7 @@ import java.io.File;
 import java.net.MalformedURLException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -94,6 +95,11 @@ import de.sofd.viskit.util.DicomUtil;
  */
 public class JListImageListTestApp {
 
+    /**
+     * for accessing objects and data of this app from Beanshell or other debugging environments
+     */
+    public static Map<String, Object> debugObjects = new HashMap<String, Object>();
+    
     public JListImageListTestApp() throws Exception {
         GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
         GraphicsDevice[] gs = ge.getScreenDevices();
@@ -105,7 +111,11 @@ public class JListImageListTestApp {
         //// creating them like this apparently works better
         //JFrame f1 = newSingleListFrame("Viskit ImageList test app window 1", null);
         //JFrame f2 = newSingleListFrame("Viskit ImageList test app window 2", null);
+        //debugObjects.put("slfs", new JFrame[]{f1,f2});
         JFrame f2 = newMultiListFrame("Multi-List frame", null);
+        debugObjects.put("mlf", f2);
+
+        debugObjects.put("f", f2);
     }
     
     public JFrame newSingleListFrame(String frameTitle, GraphicsConfiguration graphicsConfig) throws Exception {
@@ -395,6 +405,8 @@ public class JListImageListTestApp {
         //ModelFactory factory = new DicomModelFactory(new IntuitiveFileNameComparator(), false);  //use this if you know (e.g. in a reading) that there are no multi-frame DICOMs in the set (much speedier)
         
         List<ListModel> listModels = new ArrayList<ListModel>();
+        debugObjects.put("listModels", listModels);
+        
         //listModels.add(getViewerListModelForDirectory(new File("/home/olaf/headvolume")));
         //listModels.add(getViewerListModelForDirectory(new File("/home/olaf/oliverdicom/series1")));
         //listModels.add(getViewerListModelForDirectory(new File("/home/olaf/oliverdicom/INCISIX")));
@@ -457,6 +469,8 @@ public class JListImageListTestApp {
             lnum++;
             final long t0 = System.currentTimeMillis();
             final ListViewPanel lvp = new ListViewPanel();
+            debugObjects.put("lvp" + lnum, lvp);
+            debugObjects.put("lv" + lnum, lvp.getListView());
             // initialization performance measurement: add a cell paint listener
             // to take the time when a cell in the list is first drawn,
             // which happens when the list has been completely initialized and the list's UI is coming up
@@ -793,7 +807,7 @@ public class JListImageListTestApp {
         //System.out.println("press enter..."); System.in.read();   // use when profiling startup performance
         System.out.println("go");
 //        BasicConfigurator.configure();
-        SwingUtilities.invokeLater(new Runnable() {
+        SwingUtilities.invokeAndWait(new Runnable() {  //invokeAndWait so a beanshell script etc. that calls us doesn't have a race
 
             @Override
             public void run() {
