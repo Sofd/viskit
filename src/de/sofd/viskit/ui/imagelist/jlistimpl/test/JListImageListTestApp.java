@@ -49,7 +49,6 @@ import de.sofd.draw2d.DrawingObject;
 import de.sofd.draw2d.viewer.tools.EllipseTool;
 import de.sofd.draw2d.viewer.tools.SelectorTool;
 import de.sofd.swing.DefaultBoundedListSelectionModel;
-import de.sofd.swing.JLutWindowingSlider;
 import de.sofd.util.FloatRange;
 import de.sofd.viskit.controllers.GenericILVCellPropertySyncController;
 import de.sofd.viskit.controllers.ImageListViewInitialWindowingController;
@@ -60,7 +59,7 @@ import de.sofd.viskit.controllers.ImageListViewRoiInputEventController;
 import de.sofd.viskit.controllers.ImageListViewRoiToolApplicationController;
 import de.sofd.viskit.controllers.ImageListViewSelectionScrollSyncController;
 import de.sofd.viskit.controllers.ImageListViewSelectionSynchronizationController;
-import de.sofd.viskit.controllers.ImageListViewSlidingWindowingController;
+import de.sofd.viskit.controllers.ImageListViewSliderWindowingController;
 import de.sofd.viskit.controllers.ImageListViewWindowingApplyToAllController;
 import de.sofd.viskit.controllers.ImageListViewZoomPanApplyToAllController;
 import de.sofd.viskit.controllers.MultiILVSyncSetController;
@@ -77,6 +76,7 @@ import de.sofd.viskit.model.IntuitiveFileNameComparator;
 import de.sofd.viskit.model.LookupTable;
 import de.sofd.viskit.model.LookupTables;
 import de.sofd.viskit.model.ModelFactory;
+import de.sofd.viskit.ui.JLutWindowingSlider;
 import de.sofd.viskit.ui.LookupTableCellRenderer;
 import de.sofd.viskit.ui.RoiToolPanel;
 import de.sofd.viskit.ui.imagelist.ImageListViewCell;
@@ -565,7 +565,8 @@ public class JListImageListTestApp {
             new ImageListViewMouseZoomPanController(listView);
             new ImageListViewRoiInputEventController(listView);
             new ImageListViewImagePaintController(listView).setEnabled(true);
-            new ImageListViewSlidingWindowingController(listView);
+            final JLutWindowingSlider slider = new JLutWindowingSlider(0.0f,16000.0f);
+            new ImageListViewSliderWindowingController(listView,slider);
             
             ImageListViewSelectionScrollSyncController sssc = new ImageListViewSelectionScrollSyncController(listView);
             sssc.setScrollPositionTracksSelection(true);
@@ -603,28 +604,28 @@ public class JListImageListTestApp {
             
             this.add(toolbar, BorderLayout.PAGE_START);
 
-            final JLutWindowingSlider slider = new JLutWindowingSlider(0.0f,16000.0f);
-            slider.addMultiThumbListener(new ThumbListener() {
 
-                @Override
-                public void mousePressed(MouseEvent evt) {
-                }
-
-                @Override
-                public void thumbMoved(int thumb, float pos) {
-                    float wl = slider.getWindowLocation();
-                    float ww = slider.getWindowWidth();
-                    for (int i = 0; i < listView.getLength(); i++) {
-                        listView.getCell(i).setWindowLocation((int)wl);
-                        listView.getCell(i).setWindowWidth((int)ww);
-                    }
-                }
-
-                @Override
-                public void thumbSelected(int thumb) {
-                }
-                
-            });
+//            slider.addMultiThumbListener(new ThumbListener() {
+//
+//                @Override
+//                public void mousePressed(MouseEvent evt) {
+//                }
+//
+//                @Override
+//                public void thumbMoved(int thumb, float pos) {
+//                    float wl = slider.getWindowLocation();
+//                    float ww = slider.getWindowWidth();
+//                    for (int i = 0; i < listView.getLength(); i++) {
+//                        listView.getCell(i).setWindowLocation((int)wl);
+//                        listView.getCell(i).setWindowWidth((int)ww);
+//                    }
+//                }
+//
+//                @Override
+//                public void thumbSelected(int thumb) {
+//                }
+//                
+//            });
             toolbar.add(slider);
             
             toolbar.add(new JLabel("ScaleMode:"));
@@ -662,7 +663,6 @@ public class JListImageListTestApp {
             lutCombo.addItem("[none]");
             for (LookupTable lut : LookupTables.getAllKnownLuts()) {
                 lutCombo.addItem(lut);
-//                slider.setLut(lut.getRGBAValues().duplicate());
             }
             
             lutCombo.setRenderer(new LookupTableCellRenderer(70));
@@ -673,8 +673,8 @@ public class JListImageListTestApp {
                         LookupTable lut = null;
                         if (lutCombo.getSelectedItem() instanceof LookupTable) {
                             lut = (LookupTable) lutCombo.getSelectedItem();
-                            slider.setLut(lut.getRGBAValues().duplicate());
-                            slider.repaint();
+                            slider.setLut(lut);
+
                         }
                         System.out.println("activating lut: " + lut);
                         for (int i = 0; i < listView.getLength(); i++) {
@@ -722,6 +722,18 @@ public class JListImageListTestApp {
             Bindings.createAutoBinding(UpdateStrategy.READ_WRITE,
                     zpAllController, BeanProperty.create("enabled"),
                     zpAllCheckbox, BeanProperty.create("selected")).bind();
+            
+            toolbar.add(new AbstractAction("wS") {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    ImageListViewModelElement elt = listView.getSelectedValue();
+                    if (null != elt) {
+                        ImageListViewCell cell = listView.getCellForElement(elt);
+                        cell.setWindowLocation((int)slider.getWindowLocation());
+                        cell.setWindowWidth((int)slider.getWindowWidth());
+                    }
+                }
+            });
             toolbar.add(new AbstractAction("wO") {
                 @Override
                 public void actionPerformed(ActionEvent e) {
