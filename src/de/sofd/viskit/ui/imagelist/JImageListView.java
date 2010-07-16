@@ -407,6 +407,9 @@ public abstract class JImageListView extends JPanel {
     private PropertyChangeListener modelElementPropertyChangeEventForwarder = new PropertyChangeListener() {
         @Override
         public void propertyChange(PropertyChangeEvent evt) {
+            if (ImageListViewModelElement.PROP_INITIALIZATIONSTATE.equals(evt.getPropertyName())) {
+                refreshCellForElement((ImageListViewModelElement)evt.getSource());
+            }
             JImageListView.this.fireModelElementPropertyChangeEvent(evt);
         }
     };
