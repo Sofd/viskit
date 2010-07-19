@@ -6,13 +6,19 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.IntBuffer;
 import java.nio.ShortBuffer;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.Map.Entry;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadFactory;
 
 import javax.imageio.ImageIO;
 import javax.imageio.ImageReader;
 import javax.imageio.stream.ImageInputStream;
+import javax.swing.SwingUtilities;
 
 import org.apache.log4j.Logger;
 import org.dcm4che2.data.BasicDicomObject;
@@ -39,13 +45,80 @@ public abstract class CachingDicomImageListViewModelElement extends AbstractImag
     protected int frameNumber = 0;
     protected int totalFrameNumber = -1;
     
+    protected boolean asyncMode = true;
+    
     private static final Logger logger = Logger.getLogger(CachingDicomImageListViewModelElement.class);
 
     static {
         RawDicomImageReader.registerWithImageIO();
     }
     
+    /**
+     * use our own thread factory for the imageFetchingJobsExecutor because the
+     * default one creates non-daemon threads, which may prevent JVM shutdowns
+     * in certain situations
+     */
+    private static ThreadFactory ourThreadFactory = new ThreadFactory() {
+        private ThreadFactory defaultThreadFactory = Executors.defaultThreadFactory();
 
+        @Override
+        public Thread newThread(Runnable r) {
+            Thread t = defaultThreadFactory.newThread(r);
+            t.setName("Viskit-ImageFetchingJob");
+            t.setDaemon(true);
+            return t;
+        }
+    };
+
+    private static ExecutorService imageFetchingJobsExecutor = Executors.newFixedThreadPool(3, ourThreadFactory);
+
+    /**
+     * Caller must ensure to setInitializationState(UNINITIALIZED) only after getDicomObjectKey() et al. return
+     * correct, final values.
+     */
+    @Override
+    public void setInitializationState(InitializationState initializationState) {
+        if (initializationState == getInitializationState()) {
+            return;
+        }
+        super.setInitializationState(initializationState);
+        if (initializationState == InitializationState.UNINITIALIZED) {
+            if (!asyncMode) {
+                throw new IllegalStateException("BUG: attempt to set UNINITIALIZED state in synchronous mode");
+            }
+            imageFetchingJobsExecutor.submit(new Runnable() {
+                @Override
+                public void run() {
+                    logger.debug("background-loading: " + getDicomObjectKey());
+                    DicomObject dcmObj;
+                    //synchronized (dcmObjectCache) {  // not doing this b/c getBackendDicomObject() may block for a long time...so maybe two threads fetch the same dicom -- not a problem, right?
+                    dcmObj = dcmObjectCache.get(getDicomObjectKey());
+                    if (dcmObj == null) {
+                        dcmObj = getBackendDicomObject();
+                        dcmObjectCache.put(getDicomObjectKey(), dcmObj);
+                    }
+                    //}
+    
+                    DicomObject dcmMetadata = rawDicomImageMetadataCache.get(getDicomObjectKey());
+                    if (null == dcmMetadata) {
+                        dcmMetadata = new BasicDicomObject();
+                        dcmObj.subSet(0, Tag.PixelData - 1).copyTo(dcmMetadata);
+                        rawDicomImageMetadataCache.put(getDicomObjectKey(), dcmMetadata);
+                    }
+                    
+                    SwingUtilities.invokeLater(new Runnable() {  //TODO: this may create 100s of Runnables in a short time. use our own queue instead?
+                        @Override
+                        public void run() {
+                            setInitializationState(InitializationState.INITIALIZED);
+                        }
+                    });
+                }
+            });
+        }
+    }
+    
+    // TODO: frameNumber as c'tor parameter (we can't support later setFrameNumber() calls anyway b/c the keys would change)
+    
     /**
      * set the frame number this model element represents in case of a multiframe DICOM object. Initially the first
      * frame is displayed (default). This is also the case if the DICOM object
@@ -126,8 +199,7 @@ public abstract class CachingDicomImageListViewModelElement extends AbstractImag
     }
     
     /**
-     * 
-     * @return the unique identifier of a DICOM object
+     * @return the unique identifier of the DICOM object that this model element's image comes from
      */
     protected abstract Object getDicomObjectKey();
 
@@ -162,7 +234,7 @@ public abstract class CachingDicomImageListViewModelElement extends AbstractImag
             dos.writeDataset(dcmObj, tsuid);
             dos.close();
 
-            Iterator it = ImageIO.getImageReadersByFormatName("RAWDICOM");
+            Iterator<?> it = ImageIO.getImageReadersByFormatName("RAWDICOM");
             if (!it.hasNext()) {
                 throw new IllegalStateException("The raw DICOM image I/O filter must be available to read images.");
             }
@@ -199,16 +271,15 @@ public abstract class CachingDicomImageListViewModelElement extends AbstractImag
         }
     }
 
-    // TODO: unify the two caches into one
 
-    private static LRUMemoryCache<Object, DicomObject> dcmObjectCache
-        = new LRUMemoryCache<Object, DicomObject>(Config.prop.getI("de.sofd.viskit.dcmObjectCacheSize"));
+    private static Map<Object, DicomObject> dcmObjectCache
+        = Collections.synchronizedMap(new LRUMemoryCache<Object, DicomObject>(Config.prop.getI("de.sofd.viskit.dcmObjectCacheSize")));
 
     private static LRUMemoryCache<Object, BufferedImage> imageCache
         = new LRUMemoryCache<Object, BufferedImage>(Config.prop.getI("de.sofd.viskit.imageCacheSize"));
 
-    private static LRUMemoryCache<Object, DicomObject> rawDicomImageMetadataCache
-        = new LRUMemoryCache<Object, DicomObject>(Config.prop.getI("de.sofd.viskit.rawDicomImageMetadataCacheSize"));
+    private static Map<Object, DicomObject> rawDicomImageMetadataCache
+        = Collections.synchronizedMap(new LRUMemoryCache<Object, DicomObject>(Config.prop.getI("de.sofd.viskit.rawDicomImageMetadataCacheSize")));
 
     private static LRUMemoryCache<Object, Integer> frameCountByDcmObjectIdCache
         = new LRUMemoryCache<Object, Integer>(Config.prop.getI("de.sofd.viskit.frameCountByDcmObjectIdCacheSize"));
@@ -217,6 +288,9 @@ public abstract class CachingDicomImageListViewModelElement extends AbstractImag
     public DicomObject getDicomObject() {
         DicomObject result = dcmObjectCache.get(getDicomObjectKey());
         if (result == null) {
+            if (asyncMode) {
+                throw new NotInitializedException();
+            }
             result = getBackendDicomObject();
             dcmObjectCache.put(getDicomObjectKey(), result);
         }
@@ -240,6 +314,9 @@ public abstract class CachingDicomImageListViewModelElement extends AbstractImag
         DicomObject result = rawDicomImageMetadataCache.get(getDicomObjectKey());
         
         if (result == null) {
+            if (asyncMode) {
+                throw new NotInitializedException();
+            }
             result = getBackendDicomImageMetaData();
             rawDicomImageMetadataCache.put(getDicomObjectKey(), result);
         }
@@ -271,6 +348,9 @@ public abstract class CachingDicomImageListViewModelElement extends AbstractImag
     public BufferedImage getImage() {
         BufferedImage result = imageCache.get(getImageKey());
         if (result == null) {
+            if (asyncMode) {
+                throw new NotInitializedException();
+            }
             result = getBackendImage();
             imageCache.put(getImageKey(), result);
         }
@@ -475,6 +555,12 @@ public abstract class CachingDicomImageListViewModelElement extends AbstractImag
         }
 
         return pixelType;
+    }
+    
+    
+    @Override
+    public String toString() {
+        return super.toString() + ": " + getImageKey();
     }
 
 }

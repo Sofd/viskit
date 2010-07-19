@@ -66,7 +66,7 @@ public class LookupTableTextureManager {
         TextureRef texRef = texRefStore.getTexRef(lut);
         
         if (null == texRef) {
-            logger.info("need to create LUT texture for: " + lut);
+            logger.debug("need to create LUT texture for: " + lut);
             int[] texId = new int[1];
             gl.glGenTextures(1, texId, 0);
             gl.glEnable(GL2.GL_TEXTURE_1D);

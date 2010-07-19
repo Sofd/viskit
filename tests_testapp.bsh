@@ -1,0 +1,15 @@
+// -*- java -*-
+
+source("tests.bsh");
+
+
+JListImageListTestApp.main(null);
+
+//Thread.sleep(3000); //race...
+
+lv = JListImageListTestApp.debugObjects.get("lv1");
+m = lv.getModel();
+elt1 = m.get(1);
+
+
+// SwingUtilities.invokeAndWait(new Runnable() { run() { elt1.setInitializationState(ImageListViewModelElement.InitializationState.UNINITIALIZED); } });

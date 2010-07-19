@@ -49,9 +49,10 @@ import de.sofd.util.Misc;
 import de.sofd.viskit.draw2d.gc.ViskitGC;
 import de.sofd.viskit.model.DicomImageListViewModelElement;
 import de.sofd.viskit.model.ImageListViewModelElement;
+import de.sofd.viskit.model.NotInitializedException;
+import de.sofd.viskit.model.ImageListViewModelElement.InitializationState;
 import de.sofd.viskit.ui.imagelist.ImageListViewCell;
 import de.sofd.viskit.ui.imagelist.JImageListView;
-import de.sofd.viskit.ui.imagelist.cellviewers.jogl.SharedContextData;
 import de.sofd.viskit.ui.imagelist.event.cellpaint.ImageListViewCellPaintEvent;
 import de.sofd.viskit.ui.imagelist.event.cellpaint.ImageListViewCellPaintListener;
 
@@ -288,11 +289,15 @@ public class JGLImageListView extends JImageListView {
                     cell.setCenterOffset(0, 0);
                 }
                 if (resetImageSizes) {
-                    Dimension cz = getUnscaledPreferredCellSize(cell);
-                    double scalex = ((double) cellImgDisplaySize.width) / (cz.width - 2 * CELL_BORDER_WIDTH);
-                    double scaley = ((double) cellImgDisplaySize.height) / (cz.height - 2 * CELL_BORDER_WIDTH);
-                    double scale = Math.min(scalex, scaley);
-                    cell.setScale(scale);
+                    try {
+                        Dimension cz = getUnscaledPreferredCellSize(cell);
+                        double scalex = ((double) cellImgDisplaySize.width) / (cz.width - 2 * CELL_BORDER_WIDTH);
+                        double scaley = ((double) cellImgDisplaySize.height) / (cz.height - 2 * CELL_BORDER_WIDTH);
+                        double scale = Math.min(scalex, scaley);
+                        cell.setScale(scale);
+                    } catch (NotInitializedException e) {
+                        cell.getDisplayedModelElement().setInitializationState(InitializationState.UNINITIALIZED);
+                    }
                 }
             }
         }
@@ -476,8 +481,16 @@ public class JGLImageListView extends JImageListView {
                         ViskitGC gc = new ViskitGC(gl);
                         
                         // call all CellPaintListeners in the z-order
-                        fireCellPaintEvent(new ImageListViewCellPaintEvent(cell, gc, null, sharedContextData.getAttributes()),
-                                Integer.MIN_VALUE, Integer.MAX_VALUE);
+                        try {
+                            fireCellPaintEvent(new ImageListViewCellPaintEvent(cell, gc, null, sharedContextData.getAttributes()));
+                        } catch (NotInitializedException e) {
+                            // a paint listener indicated that the cell's model element is uninitialized.
+                            // set the element's initializationState accordingly, repaint everything to let paint listeners to draw the right thing
+                            // TODO: clear out the cell before?
+                            logger.debug("NotInitializedException drawing " + cell.getDisplayedModelElement(), e);
+                            cell.getDisplayedModelElement().setInitializationState(InitializationState.UNINITIALIZED);
+                            fireCellPaintEvent(new ImageListViewCellPaintEvent(cell, gc, null, sharedContextData.getAttributes()));
+                        }
                     } catch (Exception e) {
                         logger.error("error displaying " + cell.getDisplayedModelElement(), e);
                     } finally {
@@ -490,32 +503,6 @@ public class JGLImageListView extends JImageListView {
             }
             
             //gl.glPopMatrix();
-        }
-
-        /**
-         * ROI painting. TODO: Move this into a paint listener, just like the
-         * other painting jobs (image, overlay texts).
-         * 
-         * @param cell
-         * @param gc
-         */
-        private void paintRois(ImageListViewCell cell, ViskitGC gc) {
-            GL2 gl = gc.getGl().getGL2();
-            gl.glPushMatrix();
-            try {
-                Point2D centerOffset = cell.getCenterOffset();
-                float scale = (float) cell.getScale();
-                float w2 = (float) getOriginalImageWidth(cell) * scale / 2;
-                float h2 = (float) getOriginalImageHeight(cell) * scale / 2;
-                Dimension cellSize = cell.getLatestSize();
-                gl.glTranslated(cellSize.getWidth() / 2, cellSize.getHeight() / 2, 0);
-                gl.glTranslated(centerOffset.getX(), centerOffset.getY(), 0);
-                gl.glTranslated(-w2, -h2, 0);
-    
-                cell.getRoiDrawingViewer().paint(gc);
-            } finally {
-                gl.glPopMatrix();
-            }
         }
 
         int lastX=-1, lastY=-1, lastW=-1, lastH=-1;
@@ -795,34 +782,40 @@ public class JGLImageListView extends JImageListView {
     }
 
     protected void dispatchEventToCell(MouseEvent evt) {
-        Point mousePosInCell = new Point();
-        int modelIdx = findModelIndexAt(evt.getPoint(), mousePosInCell);
-        if (modelIdx != -1) {
-            ImageListViewCell sourceCell = getCell(modelIdx);
-            MouseEvent ce = Misc.deepCopy(evt);
-            ce.setSource(sourceCell);
-            accountForMouseDragSourceCell(ce);
-            ImageListViewCell correctedSourceCell = (ImageListViewCell) ce.getSource();
-            if (!(correctedSourceCell.equals(sourceCell))) {
-                int correctedIndex = getIndexOf(correctedSourceCell);
-                if (correctedIndex == -1) {
-                    forgetCurrentDragStartCell();
-                } else {
-                    Point correctedMousePosInCell = convertToCellRelative(ce.getPoint(), correctedIndex);
-                    if (null != correctedMousePosInCell) {
-                        mousePosInCell = correctedMousePosInCell;
-                        sourceCell = correctedSourceCell;
+        ImageListViewCell sourceCell = null;
+        try {
+            Point mousePosInCell = new Point();
+            int modelIdx = findModelIndexAt(evt.getPoint(), mousePosInCell);
+            if (modelIdx != -1) {
+                sourceCell = getCell(modelIdx);
+                MouseEvent ce = Misc.deepCopy(evt);
+                ce.setSource(sourceCell);
+                accountForMouseDragSourceCell(ce);
+                ImageListViewCell correctedSourceCell = (ImageListViewCell) ce.getSource();
+                if (!(correctedSourceCell.equals(sourceCell))) {
+                    int correctedIndex = getIndexOf(correctedSourceCell);
+                    if (correctedIndex == -1) {
+                        forgetCurrentDragStartCell();
+                    } else {
+                        Point correctedMousePosInCell = convertToCellRelative(ce.getPoint(), correctedIndex);
+                        if (null != correctedMousePosInCell) {
+                            mousePosInCell = correctedMousePosInCell;
+                            sourceCell = correctedSourceCell;
+                        }
                     }
+                    // TODO: the mouse drag source cell correction stops working when the mouse is
+                    //       too far outside the whole list, or inside the list but not over any cell
                 }
-                // TODO: the mouse drag source cell correction stops working when the mouse is
-                //       too far outside the whole list, or inside the list but not over any cell
+                ce.translatePoint(mousePosInCell.x - ce.getX(), mousePosInCell.y - ce.getY());
+                if (ce instanceof MouseWheelEvent) {
+                    fireCellMouseWheelEvent((MouseWheelEvent) ce);
+                } else {
+                    fireCellMouseEvent(ce);
+                }
             }
-            ce.translatePoint(mousePosInCell.x - ce.getX(), mousePosInCell.y - ce.getY());
-            if (ce instanceof MouseWheelEvent) {
-                fireCellMouseWheelEvent((MouseWheelEvent) ce);
-            } else {
-                fireCellMouseEvent(ce);
-            }
+        } catch (NotInitializedException e) {
+            logger.debug("NotInitializedException during firing of MouseEvent " + evt + ". Reinitializing.");
+            sourceCell.getDisplayedModelElement().setInitializationState(InitializationState.UNINITIALIZED);
         }
     }
 
