@@ -1,0 +1,33 @@
+TODOs:
+
+- Priority-Queue für die Initialization-Jobs, sichtbare Zellen sollten
+  bevorzugt initialisiert werden
+
+- möglichst verhindern, dass sichtbare Zellen uninitialized werden?
+  (müsste z.Zt. von allein nach dem Start passieren, wenn nacheinander
+  alle Zellen initialisiert werden und dabei irgendwann die aktuell
+  angezeigten evicted werden (Bedingung: nicht alle Bilder des Models
+  passen in den Cache -- TODO: mit einer solchen Konstellation
+  testen))
+
+
+Bugs:
+
+- nach dem Start wird offenbar immer nur für sichtbar werdende Zellen
+  die Initialisierung angestossen, obwohl offenbar alle Zellen in den
+  DicomObjectCache passen (richtig? oder vielleicht nur in den
+  metadata-Cache?) (wenn man die ganze Liste langsam durchscrollt und
+  immer wartet, bis alle Bilder sichtbar werden, kann man hinterher
+  durchscrollen, ohne dass noch jemals eine Zelle "..."
+  (uninitialized) anzeigt)
+
+- Szenario: Start, [x] wnd all, Fenstern, schnell weit
+  runterscrollen. Wieso behalten neu initialisierte Zellen den vorher
+  beim Fenstern eingestellten Wert? Sollte nicht der
+  ImageListViewInitialWindowingController das überschreiben? (das
+  beobachtete Verhalten ist das gewünschte, aber ich verstehe nicht,
+  wieso es passiert)
+
+- setScaleMode-induzierte Zoom-Aenderungen wirken nicht auf
+  uninitialisierte Zellen
+
