@@ -9,9 +9,7 @@ import java.util.List;
 
 import javax.swing.JComponent;
 
-import org.jdesktop.swingx.JXMultiThumbSlider;
 import org.jdesktop.swingx.multislider.Thumb;
-import org.jdesktop.swingx.multislider.TrackRenderer;
 
 import de.sofd.viskit.model.LookupTable;
 
@@ -41,26 +39,13 @@ public class LutTrackRenderer extends JComponent implements TrackRenderer {
         if (lut != null) {
             FloatBuffer buffer = lut.getRGBAValues();
             Graphics2D g2d = (Graphics2D) gfx;
-            List<Thumb> thumbs = slider.getModel().getSortedThumbs();
-            float[] thumbPositions = new float[thumbs.size()];
-            for (int i = 0; i < thumbs.size(); i++) {
-                thumbPositions[i] = thumbs.get(i).getPosition();
-            }
-            float max = slider.getMaximumValue();
-            float min = slider.getMinimumValue();
-            
-            float range = Math.abs(max-min);
-
-            // calculate relative border
-            float lowerLutBorder = thumbPositions[0] / range;
-            float upperLutBorder = thumbPositions[2] / range;
-
             Dimension sz = slider.getSize();
-            float sliderWidth = (float) sz.getWidth();
+            
+            int[] thumbPos = slider.getThumbRange();
 
             // calculate border absolute border positions 
-            int startPos = (int) (lowerLutBorder * sliderWidth);
-            int endPos = (int) (upperLutBorder * sliderWidth);
+            int startPos = thumbPos[0]; // position of lower thumb
+            int endPos = thumbPos[1]; // position of upper thumb
 
             int nColors = buffer.capacity() / 4;
             // draw lower part of lookup table

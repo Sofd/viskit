@@ -16,6 +16,8 @@ import java.beans.PropertyChangeListener;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
@@ -68,13 +70,16 @@ import de.sofd.viskit.controllers.cellpaint.ImageListViewImagePaintController;
 import de.sofd.viskit.controllers.cellpaint.ImageListViewPrintLUTController;
 import de.sofd.viskit.controllers.cellpaint.ImageListViewPrintTextToCellsController;
 import de.sofd.viskit.controllers.cellpaint.ImageListViewRoiPaintController;
+import de.sofd.viskit.controllers.cellpaint.ImageListViewPrintLUTController.ScaleType;
 import de.sofd.viskit.model.DicomImageListViewModelElement;
+import de.sofd.viskit.model.DicomModelElementFactory;
 import de.sofd.viskit.model.DicomModelFactory;
 import de.sofd.viskit.model.FileBasedDicomImageListViewModelElement;
 import de.sofd.viskit.model.ImageListViewModelElement;
 import de.sofd.viskit.model.IntuitiveFileNameComparator;
 import de.sofd.viskit.model.LookupTable;
 import de.sofd.viskit.model.LookupTables;
+import de.sofd.viskit.model.ModelElementFactory;
 import de.sofd.viskit.model.ModelFactory;
 import de.sofd.viskit.ui.JLutWindowingSlider;
 import de.sofd.viskit.ui.LookupTableCellRenderer;
@@ -96,6 +101,15 @@ import de.sofd.viskit.util.DicomUtil;
  * @author olaf
  */
 public class JListImageListTestApp {
+    
+    private static ModelElementFactory factory;
+    private static ModelFactory modelFactory;
+    
+    static {
+        factory = new DicomModelElementFactory(new IntuitiveFileNameComparator());
+        modelFactory = new DicomModelFactory(factory, null);
+    }
+    
 
     public JListImageListTestApp() throws Exception {
         GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
@@ -112,7 +126,7 @@ public class JListImageListTestApp {
     }
     
     public JFrame newSingleListFrame(String frameTitle, GraphicsConfiguration graphicsConfig) throws Exception {
-        ModelFactory factory = new DicomModelFactory(new IntuitiveFileNameComparator());
+        ModelElementFactory factory = new DicomModelElementFactory(new IntuitiveFileNameComparator());
         //ModelFactory factory = new DicomModelFactory(new IntuitiveFileNameComparator(), false);  //use this if you know (e.g. in a reading) that there are no multi-frame DICOMs in the set (much speedier)
 
         //final DefaultListModel model = getTestImageViewerListModel();
@@ -393,15 +407,22 @@ public class JListImageListTestApp {
         JToolBar toolbar = new JToolBar("toolbar");
         toolbar.setFloatable(false);
         
-        ModelFactory factory = new DicomModelFactory(new IntuitiveFileNameComparator());
-        //ModelFactory factory = new DicomModelFactory(new IntuitiveFileNameComparator(), false);  //use this if you know (e.g. in a reading) that there are no multi-frame DICOMs in the set (much speedier)
+        Collection<File> fileCollection = new LinkedList<File>();
+        fileCollection.add(new File("/home/honglinh/Desktop/multiframedicoms/multiframedicom.dcm"));
+        fileCollection.add(new File("/home/honglinh/Desktop/multiframedicoms/multiframedicom2.dcm"));
+
+        // a unique key should be used instead of 1 and 2, f.e. PatientID+StudyInstanceUID+SeriesInstanceUID to identify the series
+        modelFactory.addModel("1", fileCollection);
+        modelFactory.addModel("2", new File("/home/honglinh/Desktop/cd800__center4001"));
         
         List<ListModel> listModels = new ArrayList<ListModel>();
         //listModels.add(getViewerListModelForDirectory(new File("/home/olaf/headvolume")));
         //listModels.add(getViewerListModelForDirectory(new File("/home/olaf/oliverdicom/series1")));
         //listModels.add(getViewerListModelForDirectory(new File("/home/olaf/oliverdicom/INCISIX")));
-        listModels.add(factory.createModelFromDir(new File("/home/honglinh/Desktop/multiframedicoms")));
-        listModels.add(factory.createModelFromDir(new File("/home/honglinh/Desktop/dicomfiles1")));
+//        listModels.add(factory.createModelFromDir(new File("/home/honglinh/Desktop/multiframedicoms")));
+        listModels.add(modelFactory.getModel("1"));
+        listModels.add(modelFactory.getModel("2"));
+//        listModels.add(factory.createModelFromDir(new File("/home/honglinh/Desktop/dicomfiles1")));
         
 //        listModels.add(getViewerListModelForDirectory(new File("/home/honglinh/Desktop/dicomfiles1")));
 //        listModels.add(getViewerListModelForDirectory(new File("/home/honglinh/Desktop/dicomfiles1")));
@@ -453,6 +474,7 @@ public class JListImageListTestApp {
             lnum++;
             final long t0 = System.currentTimeMillis();
             final ListViewPanel lvp = new ListViewPanel();
+            lvp.setPixelValueRange(modelFactory.getPixelRange(lnum+""));
             // initialization performance measurement: add a cell paint listener
             // to take the time when a cell in the list is first drawn,
             // which happens when the list has been completely initialized and the list's UI is coming up
@@ -536,6 +558,8 @@ public class JListImageListTestApp {
     private class ListViewPanel extends JPanel {
         private JToolBar toolbar;
         private JImageListView listView;
+        private float[] pixelValueRange;
+        private JLutWindowingSlider slider;
         
         public ListViewPanel() {
             this.setLayout(new BorderLayout());
@@ -565,7 +589,7 @@ public class JListImageListTestApp {
             new ImageListViewMouseZoomPanController(listView);
             new ImageListViewRoiInputEventController(listView);
             new ImageListViewImagePaintController(listView).setEnabled(true);
-            final JLutWindowingSlider slider = new JLutWindowingSlider(0.0f,16000.0f);
+            slider = new JLutWindowingSlider();
             new ImageListViewSliderWindowingController(listView,slider);
             
             ImageListViewSelectionScrollSyncController sssc = new ImageListViewSelectionScrollSyncController(listView);
@@ -592,7 +616,7 @@ public class JListImageListTestApp {
             };
             ptc.setEnabled(true);
             
-            final ImageListViewPrintLUTController plutc = new ImageListViewPrintLUTController(listView);
+            final ImageListViewPrintLUTController plutc = new ImageListViewPrintLUTController(listView,4,ScaleType.PERCENTAGE);
             plutc.setEnabled(true);
             
             new ImageListViewRoiPaintController(listView).setEnabled(true);
@@ -604,28 +628,6 @@ public class JListImageListTestApp {
             
             this.add(toolbar, BorderLayout.PAGE_START);
 
-
-//            slider.addMultiThumbListener(new ThumbListener() {
-//
-//                @Override
-//                public void mousePressed(MouseEvent evt) {
-//                }
-//
-//                @Override
-//                public void thumbMoved(int thumb, float pos) {
-//                    float wl = slider.getWindowLocation();
-//                    float ww = slider.getWindowWidth();
-//                    for (int i = 0; i < listView.getLength(); i++) {
-//                        listView.getCell(i).setWindowLocation((int)wl);
-//                        listView.getCell(i).setWindowWidth((int)ww);
-//                    }
-//                }
-//
-//                @Override
-//                public void thumbSelected(int thumb) {
-//                }
-//                
-//            });
             toolbar.add(slider);
             
             toolbar.add(new JLabel("ScaleMode:"));
@@ -767,6 +769,12 @@ public class JListImageListTestApp {
                     }
                 }
             });
+        }
+        
+        public void setPixelValueRange(float[] range) {
+            this.pixelValueRange = range;
+            slider.setMinimumValue(range[0]);
+            slider.setMaximumValue(range[1]);
         }
 
         public JImageListView getListView() {

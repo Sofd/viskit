@@ -7,9 +7,6 @@ import java.awt.Polygon;
 
 import javax.swing.JComponent;
 
-import org.jdesktop.swingx.JXMultiThumbSlider;
-import org.jdesktop.swingx.multislider.ThumbRenderer;
-
 
 /**
  * Renderer for drawing the thumbs

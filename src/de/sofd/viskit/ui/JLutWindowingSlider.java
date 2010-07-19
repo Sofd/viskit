@@ -1,26 +1,30 @@
 package de.sofd.viskit.ui;
 
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
+import java.awt.event.MouseMotionListener;
 import java.nio.FloatBuffer;
 
-import org.jdesktop.swingx.JXMultiThumbSlider;
 import org.jdesktop.swingx.multislider.MultiThumbModel;
 import org.jdesktop.swingx.multislider.Thumb;
 import org.jdesktop.swingx.multislider.ThumbDataEvent;
 import org.jdesktop.swingx.multislider.ThumbDataListener;
+import org.jdesktop.swingx.multislider.ThumbListener;
+
 
 import de.sofd.viskit.model.LookupTable;
 import de.sofd.viskit.model.LookupTableImpl;
 
 
-@SuppressWarnings("unchecked")
-public class JLutWindowingSlider extends JXMultiThumbSlider implements ThumbDataListener {
+public class JLutWindowingSlider extends JXMultiThumbSlider<String> implements ThumbDataListener {
 
     private static final long serialVersionUID = 3825020006866482666L;
-    private final Thumb lowerThumb;
-    private final Thumb midThumb;
-    private final Thumb upperThumb;
+    private final Thumb<String> lowerThumb;
+    private final Thumb<String> midThumb;
+    private final Thumb<String> upperThumb;
     private LookupTable lut;
     private float offset = 0;
+    private int minDistance = 0;
 
     public JLutWindowingSlider() {
         this(0.0f, 1000.0f);
@@ -31,26 +35,98 @@ public class JLutWindowingSlider extends JXMultiThumbSlider implements ThumbData
         if (max <= min) {
             throw new IllegalArgumentException("min must be smaller than max!");
         }
+
         setThumbRenderer(new LutThumbRenderer());
         setTrackRenderer(new LutTrackRenderer());
-
-        // JXMultiThumbSlider does not display negative thumb positions, so use an offset
+        // JXMultiThumbSlider does not display negative thumb positions, so use
+        // an offset
         if (min < 0) {
             offset = -min;
         }
-
-        this.getModel().setMaximumValue(max + offset);
-        this.getModel().setMinimumValue(min + offset);
-
-        MultiThumbModel model = this.getModel();
-
-        lowerThumb = model.getThumbAt(model.addThumb(min + offset, null));
-        midThumb = model.getThumbAt(model.addThumb(min + (max - min) / 2.0f + offset, null));
-        upperThumb = model.getThumbAt(model.addThumb(max + offset, null));
-
-        model.addThumbDataListener(this);
         
+        MouseListener mouseL = this.getMouseListeners()[0];
+        MouseMotionListener motionL = this.getMouseMotionListeners()[0];
+        
+        this.removeMouseListener(mouseL);
+        this.removeMouseMotionListener(motionL);
+        
+        MouseRangeListener rangeL = new MouseRangeListener();
+
+        this.addMouseListener(rangeL);
+        this.addMouseMotionListener(rangeL);
+        
+        // create LUT slider model
+        MultiThumbModel<String> model = this.getModel();
+        model.addThumbDataListener(this);
+
+        model.setMaximumValue(max + offset);
+        model.setMinimumValue(min + offset);
+
+        lowerThumb = model.getThumbAt(model.addThumb(min + offset, "lowerThumb"));
+        midThumb = model.getThumbAt(model.addThumb(min + (max - min) / 2.0f + offset, "midThumb"));
+        upperThumb = model.getThumbAt(model.addThumb(max + offset, "upperThumb"));
+
         initializeLut();
+    }
+    
+    public int[] getThumbRange() {
+        int[] thumbPos = new int[2];
+        thumbPos[0] = thumbs.get(0).getX();
+        thumbPos[1] = thumbs.get(2).getX()+(int)thumbs.get(2).getSize().getWidth();
+        return thumbPos;
+    }
+    
+    protected class MouseRangeListener extends MultiThumbMouseListener {
+
+//        @Override
+//        public void mousePressed(MouseEvent evt) {
+//            super.mousePressed(evt);
+//            selected.getParent().setComponentZOrder(selected, 0);
+//            selected.getParent().setComponentZOrder(thumbs.get(0),1);
+//            selected.getParent().setComponentZOrder(thumbs.get(1),1);
+//        }
+        
+        @Override
+        public void mouseDragged(MouseEvent evt) {
+            if (selected != null) {
+                int nx = (int) evt.getPoint().getX() - selected.getWidth() / 2;
+                int thumb_index = getThumbIndex(selected);
+                Thumb<String> currentThumb = getModel().getThumbAt(thumb_index);
+
+                ThumbComp comp;
+                if (currentThumb.getObject().equals("midThumb")) {
+                    if (thumbs.get(0).getX() <= 0 && nx < thumbs.get(0).getX() + minDistance / 2) {
+                        nx = thumbs.get(0).getX() + minDistance / 2;
+                    } else if (thumbs.get(2).getX() >= getWidth() - selected.getWidth()
+                            && nx > thumbs.get(2).getX() - minDistance / 2) {
+                        nx = thumbs.get(2).getX() - minDistance / 2;
+                    }
+                } else if (currentThumb.getObject().equals("upperThumb")) {
+                    comp = thumbs.get(0);
+                    if (nx < comp.getX() + minDistance) {
+                        nx = comp.getX() + minDistance;
+                    }
+                    if (nx > getWidth() - selected.getWidth()) {
+                        nx = getWidth() - selected.getWidth();
+                    }
+                } else if (currentThumb.getObject().equals("lowerThumb")) {
+                    comp = thumbs.get(2);
+                    if (nx + minDistance > comp.getX()) {
+                        nx = comp.getX() - minDistance;
+                    }
+                    if (nx < 0) {
+                        nx = 0;
+                    }
+                }
+                selected.setLocation(nx, (int) selected.getLocation().getY());
+                setThumbPositionByX(selected);
+
+                for (ThumbListener mtl : listeners) {
+                    mtl.thumbMoved(thumb_index, currentThumb.getPosition());
+                }
+                repaint();
+            }
+        }
     }
 
     /**
@@ -58,21 +134,21 @@ public class JLutWindowingSlider extends JXMultiThumbSlider implements ThumbData
      */
     private void initializeLut() {
         int numColors = 256;
-        FloatBuffer rgbaBuffer = FloatBuffer.allocate(numColors*4);
-        for(int i = 0; i< numColors;i++) {
-            float alpha = i/255.0f; 
-            float red   = 1; 
-            float green = 1; 
-            float blue  = 1;
-            
-            rgbaBuffer.put(red*alpha);
-            rgbaBuffer.put(green*alpha);
-            rgbaBuffer.put(blue*alpha);
-            rgbaBuffer.put(alpha*alpha);
+        FloatBuffer rgbaBuffer = FloatBuffer.allocate(numColors * 4);
+        for (int i = 0; i < numColors; i++) {
+            float alpha = i / 255.0f;
+            float red = 1;
+            float green = 1;
+            float blue = 1;
+
+            rgbaBuffer.put(red * alpha);
+            rgbaBuffer.put(green * alpha);
+            rgbaBuffer.put(blue * alpha);
+            rgbaBuffer.put(alpha * alpha);
         }
         rgbaBuffer.rewind();
 
-        this.setLut(new LookupTableImpl("gray", rgbaBuffer));
+        this.setLut(new LookupTableImpl("default", rgbaBuffer));
     }
 
     public float getUpperValue() {
@@ -120,7 +196,6 @@ public class JLutWindowingSlider extends JXMultiThumbSlider implements ThumbData
         upperThumb.setPosition(range * upperRelPos);
 
         repaint();
-        // TODO fire event?
     }
 
     @Override
@@ -157,7 +232,6 @@ public class JLutWindowingSlider extends JXMultiThumbSlider implements ThumbData
         upperThumb.setPosition(range * upperRelPos);
 
         repaint();
-        // TODO fire event?
     }
 
     public void setLut(LookupTable lut) {
@@ -182,8 +256,6 @@ public class JLutWindowingSlider extends JXMultiThumbSlider implements ThumbData
         Thumb movedThumb = e.getThumb();
         int selectedThumbIdx = getSelectedIndex();
 
-        // TODO position of upperThumb must be lower than position of lowerThumb
-
         // mid thumb moved, so recalculate position of lower and upper thumb
         if (movedThumb.equals(midThumb) && selectedThumbIdx == 1) {
             float midPosition = midThumb.getPosition();
@@ -194,11 +266,7 @@ public class JLutWindowingSlider extends JXMultiThumbSlider implements ThumbData
         // upper or lower thumb moved, so recalculate position of mid thumb
         else if (movedThumb.equals(upperThumb) && selectedThumbIdx == 2 || selectedThumbIdx == 0
                 && movedThumb.equals(lowerThumb)) {
-            float range = (upperThumb.getPosition() + lowerThumb.getPosition());
-            midThumb.setPosition(range / 2.0f);
-            if (range < 1) {
-
-            }
+            midThumb.setPosition((upperThumb.getPosition() + lowerThumb.getPosition()) / 2.0f);
         }
     }
 
