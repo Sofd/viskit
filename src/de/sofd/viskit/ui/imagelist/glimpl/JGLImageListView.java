@@ -487,6 +487,7 @@ public class JGLImageListView extends JImageListView {
                             // a paint listener indicated that the cell's model element is uninitialized.
                             // set the element's initializationState accordingly, repaint everything to let paint listeners to draw the right thing
                             // TODO: clear out the cell before?
+                            logger.debug("NotInitializedException drawing " + cell.getDisplayedModelElement(), e);
                             cell.getDisplayedModelElement().setInitializationState(InitializationState.UNINITIALIZED);
                             fireCellPaintEvent(new ImageListViewCellPaintEvent(cell, gc, null, sharedContextData.getAttributes()));
                         }

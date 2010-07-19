@@ -10,6 +10,20 @@ TODOs:
   passen in den Cache -- TODO: mit einer solchen Konstellation
   testen))
 
+- JListImageListView nachziehen
+
+- SwingUtilities.invokeLater raus aus CachingModel (wg. späterer
+  TWL-Portierung)
+
+- Behandlung von InitializationState.ERROR (wann setzen? Wenn
+  #getRawImage() etc. eine Exception !=NotInitializedException werfen?)
+
+- per Default sollten Modellelemente im synchronen Modus arbeiten
+  (asyncMode==false), d.h. so wie bisher. InitializationState.ERROR
+  sollte dann aber immer noch unterstützt werden. Essentiell sollten
+  im synchronen Modus nur InitializationState.INITIALIZED und
+  InitializationState.ERROR erlaubt sein.
+
 
 Bugs:
 
@@ -20,6 +34,24 @@ Bugs:
   immer wartet, bis alle Bilder sichtbar werden, kann man hinterher
   durchscrollen, ohne dass noch jemals eine Zelle "..."
   (uninitialized) anzeigt)
+
+  Analyse: Bei JGLImageListView: Die Bilder (ca. 790 Stück) passten
+  alle in den ImageTextureManager-Cache und in den
+  rawDicomImageMetadataCache, nicht aber in den dcmObjectCache (in den
+  passen nur 100 Stück rein). Wenn ein Bild das erste Mal gemalt
+  werden muss, muss das DICOM aus dem dcmObjectCache geholt
+  werden. Bei weiteren Malen muss nur noch die Textur aus dem
+  ImageTextureManager-Cache geholt werden (wenn sie da noch drin ist);
+  der dcmObjectCache wird nicht mehr benötigt und es fällt nicht auf,
+  wenn das Bild da nicht mehr drin ist. Wenn also ein Bild vor langer
+  Zeit asynchron geladen wurde und erst viel später das erste mal
+  gemalt wird, ist es wahrscheinlich wieder aus dem dcmObjectCache
+  draußen => NotInitializedException. Wenn man wie beschrieben die
+  ganze Liste langsam durchgescrollt hat, sind alle Bilder im
+  Texturcache und das Fehlen der meisten Bilder im dcmObjectCache
+  fällt nicht mehr auf.
+
+  Also kein Bug.
 
 - Szenario: Start, [x] wnd all, Fenstern, schnell weit
   runterscrollen. Wieso behalten neu initialisierte Zellen den vorher

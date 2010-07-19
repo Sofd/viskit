@@ -72,6 +72,10 @@ public abstract class CachingDicomImageListViewModelElement extends AbstractImag
 
     private static ExecutorService imageFetchingJobsExecutor = Executors.newFixedThreadPool(3, ourThreadFactory);
 
+    /**
+     * Caller must ensure to setInitializationState(UNINITIALIZED) only after getDicomObjectKey() et al. return
+     * correct, final values.
+     */
     @Override
     public void setInitializationState(InitializationState initializationState) {
         if (initializationState == getInitializationState()) {
@@ -85,7 +89,7 @@ public abstract class CachingDicomImageListViewModelElement extends AbstractImag
             imageFetchingJobsExecutor.submit(new Runnable() {
                 @Override
                 public void run() {
-                    logger.info("background-loading: " + getDicomObjectKey());  //TODO: too early. getDicomObjectKey() may throw ISE b/c the url isn't initialized yet
+                    logger.debug("background-loading: " + getDicomObjectKey());
                     DicomObject dcmObj;
                     //synchronized (dcmObjectCache) {  // not doing this b/c getBackendDicomObject() may block for a long time...so maybe two threads fetch the same dicom -- not a problem, right?
                     dcmObj = dcmObjectCache.get(getDicomObjectKey());
@@ -551,6 +555,12 @@ public abstract class CachingDicomImageListViewModelElement extends AbstractImag
         }
 
         return pixelType;
+    }
+    
+    
+    @Override
+    public String toString() {
+        return super.toString() + ": " + getImageKey();
     }
 
 }
