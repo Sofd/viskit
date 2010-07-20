@@ -10,7 +10,6 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
-import java.awt.event.MouseEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.File;
@@ -44,7 +43,6 @@ import org.dcm4che2.data.Tag;
 import org.jdesktop.beansbinding.BeanProperty;
 import org.jdesktop.beansbinding.Bindings;
 import org.jdesktop.beansbinding.AutoBinding.UpdateStrategy;
-import org.jdesktop.swingx.multislider.ThumbListener;
 
 import de.sofd.draw2d.Drawing;
 import de.sofd.draw2d.DrawingObject;
@@ -72,14 +70,12 @@ import de.sofd.viskit.controllers.cellpaint.ImageListViewPrintTextToCellsControl
 import de.sofd.viskit.controllers.cellpaint.ImageListViewRoiPaintController;
 import de.sofd.viskit.controllers.cellpaint.ImageListViewPrintLUTController.ScaleType;
 import de.sofd.viskit.model.DicomImageListViewModelElement;
-import de.sofd.viskit.model.DicomModelElementFactory;
 import de.sofd.viskit.model.DicomModelFactory;
 import de.sofd.viskit.model.FileBasedDicomImageListViewModelElement;
 import de.sofd.viskit.model.ImageListViewModelElement;
 import de.sofd.viskit.model.IntuitiveFileNameComparator;
 import de.sofd.viskit.model.LookupTable;
 import de.sofd.viskit.model.LookupTables;
-import de.sofd.viskit.model.ModelElementFactory;
 import de.sofd.viskit.model.ModelFactory;
 import de.sofd.viskit.ui.JLutWindowingSlider;
 import de.sofd.viskit.ui.LookupTableCellRenderer;
@@ -102,12 +98,10 @@ import de.sofd.viskit.util.DicomUtil;
  */
 public class JListImageListTestApp {
     
-    private static ModelElementFactory factory;
-    private static ModelFactory modelFactory;
+    private static ModelFactory factory;
     
     static {
-        factory = new DicomModelElementFactory(new IntuitiveFileNameComparator());
-        modelFactory = new DicomModelFactory(factory, null);
+        factory = new DicomModelFactory(new IntuitiveFileNameComparator());
     }
     
 
@@ -121,19 +115,19 @@ public class JListImageListTestApp {
 
         //// creating them like this apparently works better
         //JFrame f1 = newSingleListFrame("Viskit ImageList test app window 1", null);
-//        JFrame f2 = newSingleListFrame("Viskit ImageList test app window 2", null);
-        JFrame f2 = newMultiListFrame("Multi-List frame", null);
+        JFrame f2 = newSingleListFrame("Viskit ImageList test app window 2", null);
+//        JFrame f2 = newMultiListFrame("Multi-List frame", null);
     }
     
     public JFrame newSingleListFrame(String frameTitle, GraphicsConfiguration graphicsConfig) throws Exception {
-        ModelElementFactory factory = new DicomModelElementFactory(new IntuitiveFileNameComparator());
         //ModelFactory factory = new DicomModelFactory(new IntuitiveFileNameComparator(), false);  //use this if you know (e.g. in a reading) that there are no multi-frame DICOMs in the set (much speedier)
 
         //final DefaultListModel model = getTestImageViewerListModel();
         //final DefaultListModel model = getViewerListModelForDirectory(new File("/home/olaf/gi/resources/DICOM-Testbilder/1578"));
         //final DefaultListModel model = getViewerListModelForDirectory(new File("/home/olaf/gi/Images/cd00900__center10102"));
 //        final DefaultListModel model = StaticModelFactory.createModelFromDir(new File("/home/honglinh/Desktop/dicomfiles1"));
-        final DefaultListModel model = factory.createModelFromDir(new File("/home/honglinh/Desktop/multiframedicoms"));
+        factory.addModel("1", new File("/home/honglinh/Desktop/multiframedicoms"));
+        final DefaultListModel model = (DefaultListModel)factory.getModel("1");
 //        StaticModelFactory.createModelFromDir(new File("/home/honglinh/Desktop/multiframedicoms"));
 
         //final DefaultListModel model = getViewerListModelForDirectory(new File("/home/olaf/gi/pet-studie/cd855__center4001"));
@@ -412,16 +406,16 @@ public class JListImageListTestApp {
         fileCollection.add(new File("/home/honglinh/Desktop/multiframedicoms/multiframedicom2.dcm"));
 
         // a unique key should be used instead of 1 and 2, f.e. PatientID+StudyInstanceUID+SeriesInstanceUID to identify the series
-        modelFactory.addModel("1", fileCollection);
-        modelFactory.addModel("2", new File("/home/honglinh/Desktop/cd800__center4001"));
+        factory.addModel("1", fileCollection);
+        factory.addModel("2", new File("/home/honglinh/Desktop/cd800__center4001"));
         
         List<ListModel> listModels = new ArrayList<ListModel>();
         //listModels.add(getViewerListModelForDirectory(new File("/home/olaf/headvolume")));
         //listModels.add(getViewerListModelForDirectory(new File("/home/olaf/oliverdicom/series1")));
         //listModels.add(getViewerListModelForDirectory(new File("/home/olaf/oliverdicom/INCISIX")));
 //        listModels.add(factory.createModelFromDir(new File("/home/honglinh/Desktop/multiframedicoms")));
-        listModels.add(modelFactory.getModel("1"));
-        listModels.add(modelFactory.getModel("2"));
+        listModels.add(factory.getModel("1"));
+        listModels.add(factory.getModel("2"));
 //        listModels.add(factory.createModelFromDir(new File("/home/honglinh/Desktop/dicomfiles1")));
         
 //        listModels.add(getViewerListModelForDirectory(new File("/home/honglinh/Desktop/dicomfiles1")));
@@ -474,7 +468,7 @@ public class JListImageListTestApp {
             lnum++;
             final long t0 = System.currentTimeMillis();
             final ListViewPanel lvp = new ListViewPanel();
-            lvp.setPixelValueRange(modelFactory.getPixelRange(lnum+""));
+            lvp.setPixelValueRange(factory.getPixelRange(lnum+""));
             // initialization performance measurement: add a cell paint listener
             // to take the time when a cell in the list is first drawn,
             // which happens when the list has been completely initialized and the list's UI is coming up
