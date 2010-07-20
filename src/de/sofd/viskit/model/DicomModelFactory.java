@@ -30,25 +30,36 @@ public class DicomModelFactory extends ModelFactory {
     private boolean supportMultiframes = true;
 
     public DicomModelFactory() {
+        super(null, null);
     }
 
     public DicomModelFactory(boolean supportMultiframes) {
+        super(null, null);
         this.supportMultiframes = supportMultiframes;
     }
-
-    public DicomModelFactory(Comparator<File> c) {
-        this(c, true, null);
-    }
-
-    public DicomModelFactory(Comparator<File> c, boolean supportMultiframes, String cachePath) {
-        this.supportMultiframes = supportMultiframes;
-        this.comparator = c;
-        this.cachePath = cachePath;
-    }
-
+    
+    /**
+     * Constructor
+     * 
+     * 
+     * @param supportMultiframes
+     * @param cachePath if cachePath is null, caching is deactivated
+     */
     public DicomModelFactory(boolean supportMultiframes, String cachePath) {
+        super(cachePath, null);
         this.supportMultiframes = supportMultiframes;
-        this.cachePath = cachePath;
+    }
+
+    /**
+     * Constructor
+     * 
+     * @param c
+     * @param supportMultiframes
+     * @param cachePath if cachePath is null, caching is deactivated
+     */
+    public DicomModelFactory(Comparator<File> c, boolean supportMultiframes, String cachePath) {
+        super(cachePath, c);
+        this.supportMultiframes = supportMultiframes;
     }
 
     @Override
@@ -74,7 +85,7 @@ public class DicomModelFactory extends ModelFactory {
                         .debug("Pixel value range in Series not found, iterate through all model elements to calculate pixel value range for series");
 
                 long startTime = System.currentTimeMillis();
-                for (int i = 0; i < model.getSize() - 1; i++) {
+                for (int i = 0; i < model.getSize(); i++) {
                     // TODO if this model element is a frame calculation just
                     // for the first frame
                     element = (CachingDicomImageListViewModelElement) model.getElementAt(i);
@@ -89,7 +100,7 @@ public class DicomModelFactory extends ModelFactory {
                         max = (int) currentMax;
                     }
                 }
-                logger.debug("Calculation finished! Processing time: " + (System.currentTimeMillis() - startTime)
+                logger.debug("[Min,Max] Range Calculation finished! Processing time: " + (System.currentTimeMillis() - startTime)
                         + " ms");
             }
             minMaxRange[0] = min;

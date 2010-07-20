@@ -101,7 +101,7 @@ public class JListImageListTestApp {
     private static ModelFactory factory;
     
     static {
-        factory = new DicomModelFactory(new IntuitiveFileNameComparator());
+        factory = new DicomModelFactory(new IntuitiveFileNameComparator(),true,"/home/honglinh/Desktop/cache.txt");
     }
     
 
@@ -115,8 +115,8 @@ public class JListImageListTestApp {
 
         //// creating them like this apparently works better
         //JFrame f1 = newSingleListFrame("Viskit ImageList test app window 1", null);
-        JFrame f2 = newSingleListFrame("Viskit ImageList test app window 2", null);
-//        JFrame f2 = newMultiListFrame("Multi-List frame", null);
+//        JFrame f2 = newSingleListFrame("Viskit ImageList test app window 2", null);
+        JFrame f2 = newMultiListFrame("Multi-List frame", null);
     }
     
     public JFrame newSingleListFrame(String frameTitle, GraphicsConfiguration graphicsConfig) throws Exception {
