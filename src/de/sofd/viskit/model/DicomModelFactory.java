@@ -112,23 +112,31 @@ public class DicomModelFactory extends ModelFactory {
     }
 
     @Override
-    protected void addElementToModel(DefaultListModel model, File file) {
-        if (!file.getName().toLowerCase().endsWith(".dcm")) {
-            return;
-        }
-        logger.debug(file.getName());
-        FileBasedDicomImageListViewModelElement element = new FileBasedDicomImageListViewModelElement(file);
+    protected void addElementToModel(DefaultListModel model, Object obj) {
+        //if (!file.getName().toLowerCase().endsWith(".dcm")) {
+        //    return;
+        //}
+
+        //logger.debug(file.getName());
+        DicomImageListViewModelElement element = createDicomImageListViewModelElement(obj, 0);
         model.addElement(element);
         if (supportMultiframes) {
             int numFrames = element.getTotalFrameNumber();
-            logger.info("DICOM object " + file.getName() + " has " + numFrames + " frames...");
+            logger.info("DICOM object " + obj + " has " + numFrames + " frames...");
             if (numFrames > 1) {
                 for (int i = 1; i < numFrames; i++) {
-                    FileBasedDicomImageListViewModelElement felt = new FileBasedDicomImageListViewModelElement(file);
-                    felt.setFrameNumber(i);
+                    DicomImageListViewModelElement felt = createDicomImageListViewModelElement(obj, numFrames);
                     model.addElement(felt);
                 }
             }
         }
     }
+
+
+        protected DicomImageListViewModelElement createDicomImageListViewModelElement(Object f, int frameNumber) {
+            FileBasedDicomImageListViewModelElement felt = new FileBasedDicomImageListViewModelElement((File)f);
+            felt.setFrameNumber(frameNumber);
+            return felt;
+        }
+
 }

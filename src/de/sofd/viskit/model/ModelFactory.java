@@ -129,7 +129,7 @@ public abstract class ModelFactory {
      * @param model
      * @param file
      */
-    protected abstract void addElementToModel(DefaultListModel model, File file);
+    protected abstract void addElementToModel(DefaultListModel model, Object file);
     
 
     /**
@@ -172,7 +172,7 @@ public abstract class ModelFactory {
      * @param key
      * @param paths
      */
-    public void addModel(String key, Collection<File> paths) {
+    public void addModel(String key, Collection<?> paths) {
         ListModel model = createModelFromFileCollection(paths);
         keyModelMap.put(key,model);
     }
@@ -186,9 +186,9 @@ public abstract class ModelFactory {
         return result;
     }
 
-    protected DefaultListModel createModelFromFileCollection(Collection<File> fileCollection) {
+    protected DefaultListModel createModelFromFileCollection(Collection<?> fileCollection) {
         DefaultListModel result = new DefaultListModel();
-        for (File f : fileCollection) {
+        for (Object f : fileCollection) {
             addElementToModel(result, f);
         }
         return result;
