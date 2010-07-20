@@ -603,6 +603,8 @@ public class JListImageListTestApp {
                             "PN: " + dicomImageMetaData.getString(Tag.PatientName),
                             "SL: " + dicomImageMetaData.getString(Tag.SliceLocation),
                             "wl/ww: " + cell.getWindowLocation() + "/" + cell.getWindowWidth(),
+                            "lower/upper: " + (cell.getWindowLocation() - cell.getWindowWidth()/2) + "/" + (cell.getWindowLocation() + cell.getWindowWidth()/2),
+                            "pxValuesRange: " + elt.getUsedPixelValuesRange(),
                             "Zoom: " + cell.getScale(),
                             "Slice orientation: " + DicomUtil.getSliceOrientation(dicomImageMetaData)
                     };
