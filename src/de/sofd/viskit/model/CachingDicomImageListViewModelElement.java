@@ -424,6 +424,13 @@ public abstract class CachingDicomImageListViewModelElement extends AbstractImag
             max = 800;
         }
 
+        if (metadata.contains(Tag.RescaleSlope) && metadata.contains(Tag.RescaleIntercept)) {
+            float rscSlope = metadata.getFloat(Tag.RescaleSlope);
+            float rscIntercept = metadata.getFloat(Tag.RescaleIntercept);
+            min = (int) (rscSlope * min + rscIntercept);
+            max = (int) (rscSlope * max + rscIntercept);
+        }
+        
         usedPixelValuesRange = new FloatRange(min, max);
     }
 
