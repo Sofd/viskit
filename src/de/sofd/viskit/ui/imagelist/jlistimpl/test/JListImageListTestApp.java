@@ -739,8 +739,9 @@ public class JListImageListTestApp {
                     if (null != elt) {
                         ImageListViewCell cell = listView.getCellForElement(elt);
                         FloatRange usedRange = cell.getDisplayedModelElement().getUsedPixelValuesRange();
-                        cell.setWindowWidth((int) usedRange.getDelta());
-                        cell.setWindowLocation((int) (usedRange.getMin() + usedRange.getMax()) / 2);
+//                        cell.setWindowWidth((int) usedRange.getDelta());
+//                        cell.setWindowLocation((int) (usedRange.getMin() + usedRange.getMax()) / 2);
+                        slider.setSliderValues(usedRange.getMin(), usedRange.getMax());
                     }
                 }
             });
