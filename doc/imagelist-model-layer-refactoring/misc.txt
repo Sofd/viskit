@@ -1,0 +1,36 @@
+Viskit Model-Layer Refactoring für Multiframes etc.
+
+Brainstorming:
+
+- DicomImageModelElement#setFrameNumber() können wir z.Zt. nicht
+  unterstützen, da es den #getImageKey() verändert. (JImageListViews
+  und diverse Controller verlassen sich darauf, dass #getImageKey()
+  konstant bleibt und das Modellelement eindeutig identifiziert) Siehe
+  folgende Punkte für mögliche Refactoring
+
+- getTotalFrameNumber() passt nicht nach DicomImageModelElement (ist
+  eine Eigenschaft des DICOMs, nicht des einzelnen Frames)
+
+- dito für getDicomObjectKey() etc.
+
+- => separate Modellklasse, die ein ganzes DICOM repräsentiert,
+  einführen. Würde ein ganzes dcm4che-DicomObject wrappen, mit eigenem
+  getDicomObjectKey() plus Cache etc.
+
+- zusätzlich zum jetzigen "ein Modellelement pro Frame" sollte es
+  Modellelemente geben, die ein ganzes Multiframe-DICOM kapseln. Die
+  sollten in einer einzigen Zelle gemalt werden wobei immer nur ein
+  Frame sichtbar ist und vor/zurück-Buttons zum Durchnavigieren
+  eingeblendet werden ("aktuelle Framenummer" wäre dann wohl eine
+  Eigenschaft der Zelle)
+
+  - Motivation: z.B. Drag&Drop in HieronymusQ (man will sicher nicht
+    einzelne Frames draggen können, oder?) => Rücksprache mit Fokko.
+
+- => getImageKey() wäre dann nicht mehr zeitkonstant; separater,
+  zeitkonstanter Key für das Modellelement erforderlich
+
+- => der getImageKey() würde das Frame identifizieren (und z.B. im
+  ImagePaintListener etc. als Key für Texturcache etc. benutzt werden)
+
+- => separate Modellklasse für "Image"?
