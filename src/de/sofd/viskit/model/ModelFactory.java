@@ -90,7 +90,9 @@ public abstract class ModelFactory {
             enableRangeCaching = false;
         }
         finally {
-            scanner.close();
+            if (scanner != null) {
+                scanner.close();
+            }
         }
     }
     
