@@ -56,7 +56,7 @@ public abstract class CachingDicomImageListViewModelElement extends AbstractImag
     public void setFrameNumber(int frame) {
          int numFrames = getTotalFrameNumber(); 
          if(frame < 0 || frame >= numFrames) {
-             throw new IllegalArgumentException("the frame number must be at least 0 and must exceed "+(numFrames-1) + " (# frames in this DICOM object)");
+             throw new IllegalArgumentException("the frame number must be at least 0 and must not exceed "+(numFrames-1) + " (# frames in this DICOM object)");
          }
          this.frameNumber = frame;
     }

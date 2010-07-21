@@ -80,7 +80,7 @@ public abstract class ModelFactory {
 
                         keyMinMaxMap.put(keyValue, range);
                         logger.info("Pixel Range Caching Entry found in Cache file: Key=" + keyValue + ", Min="
-                                + range[0] + ",Max= " + range[1]);
+                                + range[0] + ", Max= " + range[1]);
                     }
                     lineScanner.close();
                 }
@@ -105,7 +105,7 @@ public abstract class ModelFactory {
         try {
             output = new BufferedWriter(new FileWriter(cacheFile,true));
             output.write(key + "," + range[0] + "," + range[1]+System.getProperty("line.separator"));
-            logger.info("Pixel Range Caching Entry added in Cache file: Key="+key+", Min="+range[0]+",Max= "+range[1]);
+            logger.info("Pixel Range Caching Entry added in Cache file: Key="+key+", Min="+range[0]+", Max= "+range[1]);
         } catch (IOException e) {
             e.printStackTrace();
         } finally {
@@ -169,13 +169,13 @@ public abstract class ModelFactory {
     }
     
     /**
-     * create a model from a collection of files. The model is identified by a unique key
+     * create a model from a collection. The model is identified by a unique key
      * 
      * @param key
      * @param paths
      */
     public void addModel(String key, Collection<?> paths) {
-        ListModel model = createModelFromFileCollection(paths);
+        ListModel model = createModelFromCreationContextCollection(paths);
         keyModelMap.put(key,model);
     }
     
@@ -188,9 +188,9 @@ public abstract class ModelFactory {
         return result;
     }
 
-    protected DefaultListModel createModelFromFileCollection(Collection<?> fileCollection) {
+    protected DefaultListModel createModelFromCreationContextCollection(Collection<?> collection) {
         DefaultListModel result = new DefaultListModel();
-        for (Object f : fileCollection) {
+        for (Object f : collection) {
             addElementToModel(result, f);
         }
         return result;
@@ -233,6 +233,8 @@ public abstract class ModelFactory {
         if(cachePath == null) {
             logger.warn("Cache path is null! Could not enable caching");
         }
-        this.enableRangeCaching = enableRangeCaching;
+        else {
+            this.enableRangeCaching = enableRangeCaching;
+        }
     }
 }

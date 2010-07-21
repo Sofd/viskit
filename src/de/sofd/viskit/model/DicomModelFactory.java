@@ -13,12 +13,12 @@ import org.dcm4che2.data.Tag;
 import de.sofd.util.FloatRange;
 
 /**
- * Concrete class that creates a model from a directory containing DICOM files.
- * If a file is a singleframe DICOM a model element
- * {@link ImageListViewModelElement} will be created. If a file is a multiframe
- * DICOM for each frame a model element {@link ImageListViewModelElement} will
- * be created. The unique key that is used shall identify a DICOM series. A
- * pattern may be PatientId + StudyInstanceUID + SeriesInstanceUID.
+ * Concrete class that creates a model based on DICOM objects.If the object is a
+ * singleframe DICOM a model element {@link ImageListViewModelElement} will be
+ * created. If the object is a multiframe DICOM for each frame a model element
+ * {@link ImageListViewModelElement} will be created. The unique key that is
+ * used shall identify a DICOM series. A pattern may be PatientId +
+ * StudyInstanceUID + SeriesInstanceUID.
  * 
  * @author honglinh
  * 
@@ -37,13 +37,14 @@ public class DicomModelFactory extends ModelFactory {
         super(null, null);
         this.supportMultiframes = supportMultiframes;
     }
-    
+
     /**
      * Constructor
      * 
      * 
      * @param supportMultiframes
-     * @param cachePath if cachePath is null, caching is deactivated
+     * @param cachePath
+     *            if cachePath is null, caching is deactivated
      */
     public DicomModelFactory(boolean supportMultiframes, String cachePath) {
         super(cachePath, null);
@@ -55,7 +56,8 @@ public class DicomModelFactory extends ModelFactory {
      * 
      * @param c
      * @param supportMultiframes
-     * @param cachePath if cachePath is null, caching is deactivated
+     * @param cachePath
+     *            if cachePath is null, caching is deactivated
      */
     public DicomModelFactory(Comparator<File> c, boolean supportMultiframes, String cachePath) {
         super(cachePath, c);
@@ -100,8 +102,8 @@ public class DicomModelFactory extends ModelFactory {
                         max = (int) currentMax;
                     }
                 }
-                logger.debug("[Min,Max] Range Calculation finished! Processing time: " + (System.currentTimeMillis() - startTime)
-                        + " ms");
+                logger.debug("[Min,Max] Range Calculation finished! Processing time: "
+                        + (System.currentTimeMillis() - startTime) + " ms");
             }
             minMaxRange[0] = min;
             minMaxRange[1] = max;
@@ -113,11 +115,6 @@ public class DicomModelFactory extends ModelFactory {
 
     @Override
     protected void addElementToModel(DefaultListModel model, Object obj) {
-        //if (!file.getName().toLowerCase().endsWith(".dcm")) {
-        //    return;
-        //}
-
-        //logger.debug(file.getName());
         DicomImageListViewModelElement element = createDicomImageListViewModelElement(obj, 0);
         model.addElement(element);
         if (supportMultiframes) {
@@ -125,18 +122,17 @@ public class DicomModelFactory extends ModelFactory {
             logger.info("DICOM object " + obj + " has " + numFrames + " frames...");
             if (numFrames > 1) {
                 for (int i = 1; i < numFrames; i++) {
-                    DicomImageListViewModelElement felt = createDicomImageListViewModelElement(obj, numFrames);
+                    DicomImageListViewModelElement felt = createDicomImageListViewModelElement(obj, i);
                     model.addElement(felt);
                 }
             }
         }
     }
 
-
-        protected DicomImageListViewModelElement createDicomImageListViewModelElement(Object f, int frameNumber) {
-            FileBasedDicomImageListViewModelElement felt = new FileBasedDicomImageListViewModelElement((File)f);
-            felt.setFrameNumber(frameNumber);
-            return felt;
-        }
+    protected DicomImageListViewModelElement createDicomImageListViewModelElement(Object f, int frameNumber) {
+        FileBasedDicomImageListViewModelElement felt = new FileBasedDicomImageListViewModelElement((File) f);
+        felt.setFrameNumber(frameNumber);
+        return felt;
+    }
 
 }
