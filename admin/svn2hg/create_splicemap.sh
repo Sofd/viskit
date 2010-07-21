@@ -54,6 +54,16 @@ add_sm_entry \
     'viskit: HieronymusR312043 branch started' \
     'viskit: outputGrayscaleRGBs flag parameter removed from texture manager again'
 
+add_sm_entry \
+    'viskit: HieronymusR312046 changes 740:742 merged into main trunk' \
+    'JGLImageListView: bugfix: more checks for non-null cellsViewer at appropriate places' \
+    'viskit: bugfix: dispose all sharedContextData attributes when the last GLCanvas that shares the data is disposed'
+
+add_sm_entry \
+    'viskit: latest HieronymusR312046 changes merged into main trunk' \
+    'viskit: HieronymusR312046 changes 740:742 merged into main trunk' \
+    'typo fix: sagital -> sagittal'
+
 
 #####  HieronymusDent branch
 ## TODO: no changes in that branch in svn, thus the branch is not present in hg after this merge (no no-delta branches in hg)
@@ -103,3 +113,22 @@ add_sm_entry \
     'viskit: merged latest changes from trunk (LinAlg move to utils) into StudyBrowser branch' \
     'viskit: merged latest changes from trunk (starting after StudyBrowser branch creation) into StudyBrowser branch' \
     'viskit: LinAlg moved to de.sofd.util (package de.sofd.math)'
+
+
+##### async_model_elt_init branch
+
+add_sm_entry \
+    'viskit: async_model_elt_init branch created' \
+    'viskit: frameCountByDcmObjectIdCacheSize enlarged much'
+
+add_sm_entry \
+    'viskit: merged latest changes from trunk into async_model_elt_init branch' \
+    'viskit: asynchronous model element initialization: more logging, TODOs, documentation' \
+    'viskit: JLutSliderWindowingSlider code changes, ModelFactory calculates pixel data ranges'
+
+
+##### HieronymusR312043S1 branch
+
+add_sm_entry \
+    'branch for HieronymusR312043S1' \
+    'build mgmt.'
