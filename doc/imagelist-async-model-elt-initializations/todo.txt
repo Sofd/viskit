@@ -24,6 +24,13 @@ TODOs:
   im synchronen Modus nur InitializationState.INITIALIZED und
   InitializationState.ERROR erlaubt sein.
 
+- im Moment werden immer zu Anfang alle Elemente
+  initialisiert. Dadurch werden u.U. ein großer Teil der Bilder vom
+  Backend geladen, in den Cache geschrieben und wieder evicted, ohne
+  jemals angezeigt worden zu sein -- wenn sie irgendwann tatsächlich
+  angezeigt werden müssen, dann werden sie erneut vom Backend geladen
+  werden
+
 
 Bugs:
 
