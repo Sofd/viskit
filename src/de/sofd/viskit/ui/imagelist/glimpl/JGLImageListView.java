@@ -56,7 +56,7 @@ import de.sofd.viskit.ui.imagelist.event.cellpaint.ImageListViewCellPaintEvent;
 import de.sofd.viskit.ui.imagelist.event.cellpaint.ImageListViewCellPaintListener;
 
 /**
- * JImageListView implementation that paints all cells onto a single aggreagated
+ * JImageListView implementation that paints all cells onto a single aggregated
  * {@link GLCanvas}.
  *
  * @author Sofd GmbH
@@ -475,17 +475,9 @@ public class JGLImageListView extends JImageListView {
                         // draw cell
                         ViskitGC gc = new ViskitGC(gl);
                         
-                        // call paint listeners for stuff below the ROIs in ascending z order
-                        // At the moment we still paint the ROIs in here, and everything else in PaintListeners.
-                        // Eventually all painting, including the ROIs, should happen in PaintListeners
+                        // call all CellPaintListeners in the z-order
                         fireCellPaintEvent(new ImageListViewCellPaintEvent(cell, gc, null, sharedContextData.getAttributes()),
-                                           Integer.MIN_VALUE, JImageListView.PAINT_ZORDER_ROI);
-    
-                        paintRois(cell, gc);
-                        
-                        // stuff above the ROIs in ascending z order
-                        fireCellPaintEvent(new ImageListViewCellPaintEvent(cell, gc, null, sharedContextData.getAttributes()),
-                                           JImageListView.PAINT_ZORDER_ROI, Integer.MAX_VALUE);
+                                Integer.MIN_VALUE, Integer.MAX_VALUE);
                     } catch (Exception e) {
                         logger.error("error displaying " + cell.getDisplayedModelElement(), e);
                     } finally {
@@ -526,8 +518,15 @@ public class JGLImageListView extends JImageListView {
             }
         }
 
+        int lastX=-1, lastY=-1, lastW=-1, lastH=-1;
+
         @Override
         public void reshape(GLAutoDrawable glAutoDrawable, int x, int y, int width, int height) {
+            if (x==lastX && y==lastY && width==lastW && height==lastH) {
+                //sometimes OSX issues spurious reshape() calls when the size hasn't changed at all
+                return;
+            }
+            lastX = x; lastY = y; lastW = width; lastH = height;
             GL2 gl = (GL2) glAutoDrawable.getGL();
             setupEye2ViewportTransformation(gl);
             Runnable r = new Runnable() {

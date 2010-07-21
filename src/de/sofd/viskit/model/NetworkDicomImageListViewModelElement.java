@@ -142,12 +142,6 @@ public class NetworkDicomImageListViewModelElement extends CachingDicomImageList
     }
 
     @Override
-    public Object getImageKey() {
-        checkInitialized();
-        return url;
-    }
-
-    @Override
     protected DicomObject getBackendDicomObject() {
         checkInitialized();
         try {
@@ -170,6 +164,11 @@ public class NetworkDicomImageListViewModelElement extends CachingDicomImageList
             // TODO return error object instead?
             throw new IllegalStateException("error reading DICOM object from " + url, e);
         }
+    }
+    
+    @Override
+    public Object getDicomObjectKey() {
+        return url;
     }
 
     @Override

@@ -28,6 +28,22 @@ public interface DicomImageListViewModelElement extends ImageListViewModelElemen
 
     /**
      * 
+     * @return the frame number of the DICOM Object. The index begins with 0. If
+     *         this model element represents a singleframe DICOM this method
+     *         always returns 0.
+     */
+    int getFrameNumber();
+
+    /**
+     * 
+     * @return the total number of frames the associated DICOM object contains.
+     *         If this model element represents a singleframe DICOM this method
+     *         always returns 1.
+     */
+    public int getTotalFrameNumber();
+
+    /**
+     * 
      * @return histogram of image
      */
     Histogram getHistogram();

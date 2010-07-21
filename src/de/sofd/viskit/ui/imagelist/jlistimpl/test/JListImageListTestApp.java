@@ -13,9 +13,10 @@ import java.awt.event.ItemListener;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.File;
-import java.net.MalformedURLException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
@@ -36,6 +37,7 @@ import javax.swing.SwingUtilities;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 
+import org.apache.log4j.BasicConfigurator;
 import org.dcm4che2.data.DicomObject;
 import org.dcm4che2.data.Tag;
 import org.jdesktop.beansbinding.BeanProperty;
@@ -57,22 +59,29 @@ import de.sofd.viskit.controllers.ImageListViewRoiInputEventController;
 import de.sofd.viskit.controllers.ImageListViewRoiToolApplicationController;
 import de.sofd.viskit.controllers.ImageListViewSelectionScrollSyncController;
 import de.sofd.viskit.controllers.ImageListViewSelectionSynchronizationController;
+import de.sofd.viskit.controllers.ImageListViewSliderWindowingController;
 import de.sofd.viskit.controllers.ImageListViewWindowingApplyToAllController;
 import de.sofd.viskit.controllers.ImageListViewZoomPanApplyToAllController;
 import de.sofd.viskit.controllers.MultiILVSyncSetController;
 import de.sofd.viskit.controllers.MultiImageListViewController;
 import de.sofd.viskit.controllers.cellpaint.ImageListViewImagePaintController;
+import de.sofd.viskit.controllers.cellpaint.ImageListViewPrintLUTController;
 import de.sofd.viskit.controllers.cellpaint.ImageListViewPrintTextToCellsController;
+import de.sofd.viskit.controllers.cellpaint.ImageListViewRoiPaintController;
+import de.sofd.viskit.controllers.cellpaint.ImageListViewPrintLUTController.ScaleType;
 import de.sofd.viskit.model.DicomImageListViewModelElement;
+import de.sofd.viskit.model.DicomModelFactory;
 import de.sofd.viskit.model.FileBasedDicomImageListViewModelElement;
 import de.sofd.viskit.model.ImageListViewModelElement;
+import de.sofd.viskit.model.IntuitiveFileNameComparator;
 import de.sofd.viskit.model.LookupTable;
 import de.sofd.viskit.model.LookupTables;
+import de.sofd.viskit.model.ModelFactory;
+import de.sofd.viskit.ui.JLutWindowingSlider;
 import de.sofd.viskit.ui.LookupTableCellRenderer;
 import de.sofd.viskit.ui.RoiToolPanel;
 import de.sofd.viskit.ui.imagelist.ImageListViewCell;
 import de.sofd.viskit.ui.imagelist.JImageListView;
-import de.sofd.viskit.ui.imagelist.ImageListViewCell.CompositingMode;
 import de.sofd.viskit.ui.imagelist.event.ImageListViewCellAddEvent;
 import de.sofd.viskit.ui.imagelist.event.ImageListViewEvent;
 import de.sofd.viskit.ui.imagelist.event.ImageListViewListener;
@@ -88,6 +97,13 @@ import de.sofd.viskit.util.DicomUtil;
  * @author olaf
  */
 public class JListImageListTestApp {
+    
+    private static ModelFactory factory;
+    
+    static {
+        factory = new DicomModelFactory(new IntuitiveFileNameComparator(),true,"/home/honglinh/Desktop/cache.txt");
+    }
+    
 
     public JListImageListTestApp() throws Exception {
         GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
@@ -99,15 +115,21 @@ public class JListImageListTestApp {
 
         //// creating them like this apparently works better
         //JFrame f1 = newSingleListFrame("Viskit ImageList test app window 1", null);
-        //JFrame f2 = newSingleListFrame("Viskit ImageList test app window 2", null);
+//        JFrame f2 = newSingleListFrame("Viskit ImageList test app window 2", null);
         JFrame f2 = newMultiListFrame("Multi-List frame", null);
     }
     
     public JFrame newSingleListFrame(String frameTitle, GraphicsConfiguration graphicsConfig) throws Exception {
+        //ModelFactory factory = new DicomModelFactory(new IntuitiveFileNameComparator(), false);  //use this if you know (e.g. in a reading) that there are no multi-frame DICOMs in the set (much speedier)
+
         //final DefaultListModel model = getTestImageViewerListModel();
         //final DefaultListModel model = getViewerListModelForDirectory(new File("/home/olaf/gi/resources/DICOM-Testbilder/1578"));
         //final DefaultListModel model = getViewerListModelForDirectory(new File("/home/olaf/gi/Images/cd00900__center10102"));
-        final DefaultListModel model = getViewerListModelForDirectory(new File("D:\\dicom\\serie1"));
+//        final DefaultListModel model = StaticModelFactory.createModelFromDir(new File("/home/honglinh/Desktop/dicomfiles1"));
+        factory.addModel("1", new File("/home/honglinh/Desktop/multiframedicoms"));
+        final DefaultListModel model = (DefaultListModel)factory.getModel("1");
+//        StaticModelFactory.createModelFromDir(new File("/home/honglinh/Desktop/multiframedicoms"));
+
         //final DefaultListModel model = getViewerListModelForDirectory(new File("/home/olaf/gi/pet-studie/cd855__center4001"));
         //final DefaultListModel model = getViewerListModelForDirectory(new File("/shares/shared/projekts/disk312043/Images/cd822__center4001"));
         //final DefaultListModel model = getViewerListModelForDirectory(new File("/shares/shared/projekts/disk312043/Images/cd836__center4001"));
@@ -120,8 +142,8 @@ public class JListImageListTestApp {
         final JImageListView viewer;
         //viewer = newJListImageListView();
         //viewer = newJGridImageListView(true);
-        viewer = newJGridImageListView(false);
-        //viewer = newJGLImageListView();
+//        viewer = newJGridImageListView(false);
+        viewer = newJGLImageListView();
         
         new ImageListViewInitialWindowingController(viewer).setEnabled(true);
         viewer.setModel(model);
@@ -296,6 +318,8 @@ public class JListImageListTestApp {
 
         new ImageListViewImagePaintController(viewer).setEnabled(true);
         
+        new ImageListViewRoiPaintController(viewer).setEnabled(true);
+        
         ImageListViewSelectionScrollSyncController sssc = new ImageListViewSelectionScrollSyncController(viewer);
         sssc.setScrollPositionTracksSelection(true);
         sssc.setSelectionTracksScrollPosition(true);
@@ -308,6 +332,7 @@ public class JListImageListTestApp {
                 DicomImageListViewModelElement elt = (DicomImageListViewModelElement) cell.getDisplayedModelElement();
                 DicomObject dicomImageMetaData = elt.getDicomImageMetaData();
                 return new String[] {
+                        "Frame: " + elt.getFrameNumber()+"/"+(elt.getTotalFrameNumber()-1),
                         "PN: " + dicomImageMetaData.getString(Tag.PatientName),
                         "SL: " + dicomImageMetaData.getString(Tag.SliceLocation),
                         "wl/ww: " + cell.getWindowLocation() + "/" + cell.getWindowWidth(),
@@ -370,26 +395,34 @@ public class JListImageListTestApp {
     }
     
     public JFrame newMultiListFrame(String frameTitle, GraphicsConfiguration graphicsConfig) throws Exception {
+        final long t00 = System.currentTimeMillis();
+
         final JFrame theFrame = (graphicsConfig == null ? new JFrame(frameTitle) : new JFrame(frameTitle, graphicsConfig));
         JToolBar toolbar = new JToolBar("toolbar");
         toolbar.setFloatable(false);
+        
+        Collection<File> fileCollection = new LinkedList<File>();
+        fileCollection.add(new File("/home/honglinh/Desktop/multiframedicoms/multiframedicom.dcm"));
+        fileCollection.add(new File("/home/honglinh/Desktop/multiframedicoms/multiframedicom2.dcm"));
+
+        // a unique key should be used instead of 1 and 2, f.e. PatientID+StudyInstanceUID+SeriesInstanceUID to identify the series
+        factory.addModel("1", fileCollection);
+        factory.addModel("2", new File("/home/honglinh/Desktop/cd800__center4001"));
         
         List<ListModel> listModels = new ArrayList<ListModel>();
         //listModels.add(getViewerListModelForDirectory(new File("/home/olaf/headvolume")));
         //listModels.add(getViewerListModelForDirectory(new File("/home/olaf/oliverdicom/series1")));
         //listModels.add(getViewerListModelForDirectory(new File("/home/olaf/oliverdicom/INCISIX")));
-        //listModels.add(getViewerListModelForDirectory(new File("/shares/projects/StudyBrowser/data/disk312043/Images/cd810__center4001")));
-        //listModels.add(getViewerListModelForDirectory(new File("/shares/projects/StudyBrowser/data/disk312043/Images/cd833__center4001")));
-
-        //listModels.add(getViewerListModelForDirectory(new File("/shares/projects/StudyBrowser/data/disk312043/Images/cd810__center4001")));
-        //listModels.add(getViewerListModelForDirectory(new File("/tmp/540010014")));
-        //listModels.add(getViewerListModelForDirectory(new File("/shares/projects/StudyBrowser/data/disk312043/Images/cd810__center4001")));
-        //listModels.add(getViewerListModelForDirectory(new File("/shares/projects/StudyBrowser/data/disk312043/Images/cd810__center4001")));
-        //listModels.add(getViewerListModelForDirectory(new File("/shares/projects/StudyBrowser/data/disk312043/Images/cd810__center4001")));
-
-        //listModels.add(getViewerListModelForDirectory(new File("/shares/projects/StudyBrowser/data/disk312043/Images/cd865__center4001")));
-        //listModels.add(getViewerListModelForDirectory(new File("/home/olaf/gi/pet-studie/cd855__center4001")));
+//        listModels.add(factory.createModelFromDir(new File("/home/honglinh/Desktop/multiframedicoms")));
+        listModels.add(factory.getModel("1"));
+        listModels.add(factory.getModel("2"));
+//        listModels.add(factory.createModelFromDir(new File("/home/honglinh/Desktop/dicomfiles1")));
         
+//        listModels.add(getViewerListModelForDirectory(new File("/home/honglinh/Desktop/dicomfiles1")));
+//        listModels.add(getViewerListModelForDirectory(new File("/home/honglinh/Desktop/dicomfiles1")));
+
+        //listModels.add(getViewerListModelForDirectory(new File("/shares/projects/StudyBrowser/data/disk312043/Images/cd833__center4001")));
+//        listModels.add(getViewerListModelForDirectory(new File("/shares/projects/StudyBrowser/data/disk312043/Images/cd865__center4001")));
         //listModels.add(getViewerListModelForDirectory(new File("/home/olaf/oliverdicom/ARTIFIX")));
         //listModels.add(getViewerListModelForDirectory(new File("/home/olaf/oliverdicom/BRAINIX")));
         //listModels.add(getViewerListModelForDirectory(new File("/tmp/cd00926__center10101")));
@@ -419,8 +452,12 @@ public class JListImageListTestApp {
         //listModels.add(getViewerListModelForDirectory(new File("/home/olaf/hieronymusr/br312046/images/cd00907__center10102")));
         //listModels.add(getViewerListModelForDirectory(new File("/shares/shared/olaf/cd823__center4001")));
         
-        listModels.add(getViewerListModelForDirectory(new File("/home/olaf/hieronymusr/br312043/images/cd800__center4001")));
-        listModels.add(getViewerListModelForDirectory(new File("/home/olaf/hieronymusr/br312043/images/cd801__center4001")));
+//        listModels.add(getViewerListModelForDirectory(new File("/home/olaf/hieronymusr/br312043/images/cd800__center4001")));
+//        listModels.add(getViewerListModelForDirectory(new File("/home/olaf/hieronymusr/br312043/images/cd801__center4001")));
+        
+        final long t01 = System.currentTimeMillis();
+
+        System.out.println("model creation took " + (t01-t00) + " ms.");
 
         List<JImageListView> lists = new ArrayList<JImageListView>();
         
@@ -431,6 +468,7 @@ public class JListImageListTestApp {
             lnum++;
             final long t0 = System.currentTimeMillis();
             final ListViewPanel lvp = new ListViewPanel();
+            lvp.setPixelValueRange(factory.getPixelRange(lnum+""));
             // initialization performance measurement: add a cell paint listener
             // to take the time when a cell in the list is first drawn,
             // which happens when the list has been completely initialized and the list's UI is coming up
@@ -478,6 +516,10 @@ public class JListImageListTestApp {
             }
         }
 
+        RoiToolPanel roiToolPanel = new RoiToolPanel();
+        toolbar.add(roiToolPanel);
+        new ImageListViewRoiToolApplicationController(lists.toArray(new JImageListView[0])).setRoiToolPanel(roiToolPanel);
+        
         toolbar.add(new JLabel("Sync: "));
         for (Color c : syncColors) {
             final MultiILVSyncSetController.SyncSet syncSet = multiSyncSetController.getSyncSet(c);
@@ -510,11 +552,13 @@ public class JListImageListTestApp {
     private class ListViewPanel extends JPanel {
         private JToolBar toolbar;
         private JImageListView listView;
+        private float[] pixelValueRange;
+        private JLutWindowingSlider slider;
         
         public ListViewPanel() {
             this.setLayout(new BorderLayout());
-            listView = newJGLImageListView();
-            //listView = newJGridImageListView(false);
+//            listView = newJGLImageListView();
+            listView = newJGridImageListView(false);
             this.add(listView, BorderLayout.CENTER);
             new ImageListViewInitialWindowingController(listView) {
                 @Override
@@ -539,6 +583,8 @@ public class JListImageListTestApp {
             new ImageListViewMouseZoomPanController(listView);
             new ImageListViewRoiInputEventController(listView);
             new ImageListViewImagePaintController(listView).setEnabled(true);
+            slider = new JLutWindowingSlider();
+            new ImageListViewSliderWindowingController(listView,slider);
             
             ImageListViewSelectionScrollSyncController sssc = new ImageListViewSelectionScrollSyncController(listView);
             sssc.setScrollPositionTracksSelection(true);
@@ -553,9 +599,12 @@ public class JListImageListTestApp {
                     DicomObject dicomImageMetaData = elt.getDicomImageMetaData();
                     return new String[] {
                             "" + elt.getImageKey(),
+                            "Frame: " + elt.getFrameNumber()+"/"+(elt.getTotalFrameNumber()-1),
                             "PN: " + dicomImageMetaData.getString(Tag.PatientName),
                             "SL: " + dicomImageMetaData.getString(Tag.SliceLocation),
                             "wl/ww: " + cell.getWindowLocation() + "/" + cell.getWindowWidth(),
+                            "lower/upper: " + (cell.getWindowLocation() - cell.getWindowWidth()/2) + "/" + (cell.getWindowLocation() + cell.getWindowWidth()/2),
+                            "pxValuesRange: " + elt.getUsedPixelValuesRange(),
                             "Zoom: " + cell.getScale(),
                             "Slice orientation: " + DicomUtil.getSliceOrientation(dicomImageMetaData)
                     };
@@ -563,12 +612,20 @@ public class JListImageListTestApp {
             };
             ptc.setEnabled(true);
             
+            final ImageListViewPrintLUTController plutc = new ImageListViewPrintLUTController(listView,4,ScaleType.PERCENTAGE);
+            plutc.setEnabled(true);
+            
+            new ImageListViewRoiPaintController(listView).setEnabled(true);
+
             new ImageListViewMouseMeasurementController(listView).setEnabled(true);
 
             toolbar = new JToolBar();
             toolbar.setFloatable(false);
+            
             this.add(toolbar, BorderLayout.PAGE_START);
 
+            toolbar.add(slider);
+            
             toolbar.add(new JLabel("ScaleMode:"));
             final JComboBox scaleModeCombo = new JComboBox();
             for (JImageListView.ScaleMode sm : listView.getSupportedScaleModes()) {
@@ -601,15 +658,22 @@ public class JListImageListTestApp {
             
             toolbar.add(new JLabel("lut:"));
             final JComboBox lutCombo = new JComboBox();
+            lutCombo.addItem("[none]");
             for (LookupTable lut : LookupTables.getAllKnownLuts()) {
                 lutCombo.addItem(lut);
             }
+            
             lutCombo.setRenderer(new LookupTableCellRenderer(70));
             lutCombo.addItemListener(new ItemListener() {
                 @Override
                 public void itemStateChanged(ItemEvent e) {
                     if (e.getStateChange() == ItemEvent.SELECTED) {
-                        LookupTable lut = (LookupTable) lutCombo.getSelectedItem();
+                        LookupTable lut = null;
+                        if (lutCombo.getSelectedItem() instanceof LookupTable) {
+                            lut = (LookupTable) lutCombo.getSelectedItem();
+                            slider.setLut(lut);
+
+                        }
                         System.out.println("activating lut: " + lut);
                         for (int i = 0; i < listView.getLength(); i++) {
                             listView.getCell(i).setLookupTable(lut);
@@ -656,6 +720,18 @@ public class JListImageListTestApp {
             Bindings.createAutoBinding(UpdateStrategy.READ_WRITE,
                     zpAllController, BeanProperty.create("enabled"),
                     zpAllCheckbox, BeanProperty.create("selected")).bind();
+            
+            toolbar.add(new AbstractAction("wS") {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    ImageListViewModelElement elt = listView.getSelectedValue();
+                    if (null != elt) {
+                        ImageListViewCell cell = listView.getCellForElement(elt);
+                        cell.setWindowLocation((int)slider.getWindowLocation());
+                        cell.setWindowWidth((int)slider.getWindowWidth());
+                    }
+                }
+            });
             toolbar.add(new AbstractAction("wO") {
                 @Override
                 public void actionPerformed(ActionEvent e) {
@@ -663,8 +739,9 @@ public class JListImageListTestApp {
                     if (null != elt) {
                         ImageListViewCell cell = listView.getCellForElement(elt);
                         FloatRange usedRange = cell.getDisplayedModelElement().getUsedPixelValuesRange();
-                        cell.setWindowWidth((int) usedRange.getDelta());
-                        cell.setWindowLocation((int) (usedRange.getMin() + usedRange.getMax()) / 2);
+//                        cell.setWindowWidth((int) usedRange.getDelta());
+//                        cell.setWindowLocation((int) (usedRange.getMin() + usedRange.getMax()) / 2);
+                        slider.setSliderValues(usedRange.getMin(), usedRange.getMax());
                     }
                 }
             });
@@ -690,6 +767,12 @@ public class JListImageListTestApp {
                 }
             });
         }
+        
+        public void setPixelValueRange(float[] range) {
+            this.pixelValueRange = range;
+            slider.setMinimumValue(range[0]);
+            slider.setMaximumValue(range[1]);
+        }
 
         public JImageListView getListView() {
             return listView;
@@ -700,9 +783,6 @@ public class JListImageListTestApp {
         }
 
     }
-    
-    
-    
     
     protected JListImageListView newJListImageListView() {
         JListImageListView viewer = new JListImageListView();
@@ -743,6 +823,7 @@ public class JListImageListTestApp {
         return result;
     }
     
+    
     protected static DefaultListModel getTestImageViewerListModel() {
         final DefaultListModel result = new DefaultListModel();
         for (int i = 10; i < 90; i++) {
@@ -755,6 +836,7 @@ public class JListImageListTestApp {
     public static void main(String[] args) throws Exception {
         //System.out.println("press enter..."); System.in.read();   // use when profiling startup performance
         System.out.println("go");
+        BasicConfigurator.configure();
         SwingUtilities.invokeLater(new Runnable() {
 
             @Override

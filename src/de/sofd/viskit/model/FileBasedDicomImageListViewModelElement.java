@@ -7,11 +7,14 @@ import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Iterator;
+
 import javax.imageio.ImageIO;
 import javax.imageio.ImageReader;
 import javax.imageio.stream.ImageInputStream;
+
 import org.dcm4che2.data.DicomObject;
 import org.dcm4che2.imageio.plugins.dcm.DicomStreamMetaData;
+import org.dcm4che2.imageioimpl.plugins.dcm.DicomImageReaderSpi;
 import org.dcm4che2.io.DicomInputStream;
 
 /**
@@ -23,8 +26,8 @@ import org.dcm4che2.io.DicomInputStream;
  */
 public class FileBasedDicomImageListViewModelElement extends CachingDicomImageListViewModelElement {
 
-    private /*final*/ URL url;
-    private File urlAsFile; // url as a file again (if it represents one), for user convenience
+    protected /*final*/ URL url;
+    protected File urlAsFile; // url as a file again (if it represents one), for user convenience
 
     protected FileBasedDicomImageListViewModelElement() {
     }
@@ -74,36 +77,18 @@ public class FileBasedDicomImageListViewModelElement extends CachingDicomImageLi
         }
         this.url = url;
     }
-
-    /**
-     * 
-     * @return the URL the model element wraps
-     */
-    public URL getUrl() {
-        return url;
-    }
-
-    /**
-     * Convenience method that returns {@link #getUrl()} as a file object, if
-     * this model element was constructed as wrapping a file.
-     * 
-     * @return the file represented by {@link #getUrl()}, if any. null
-     *         otherwise.
-     */
-    public File getFile() {
-        return urlAsFile;
-    }
-
+    
+    
     protected void checkInitialized() {
         if (this.url == null) {
-            throw new IllegalStateException("FileBasedDicomImageListViewModelElement: URL not initialized");
+            throw new IllegalStateException("NetworkDicomImageListViewModelElement: URL not initialized");
         }
     }
 
     public void checkReadable() {
         checkReadable(this.url);
     }
-
+    
     protected static void checkReadable(URL url) {
         try {
             InputStream in = null;
@@ -118,7 +103,7 @@ public class FileBasedDicomImageListViewModelElement extends CachingDicomImageLi
             throw new IllegalStateException("DICOM object not accessible: " + url, e);
         }
     }
-
+    
     public boolean isReadable() {
         try {
             checkReadable(this.url);
@@ -127,13 +112,58 @@ public class FileBasedDicomImageListViewModelElement extends CachingDicomImageLi
             return false;
         }
     }
+    
 
-    @Override
-    public Object getImageKey() {
-        checkInitialized();
+    /**
+     *
+     * @return the URL the model element wraps
+     */
+    public URL getUrl() {
         return url;
     }
 
+    /**
+     * Convenience method that returns {@link #getUrl()} as a file object, if
+     * this model element was constructed as wrapping a file.
+     *
+     * @return the file represented by {@link #getUrl()}, if any. null
+     *         otherwise.
+     */
+    public File getFile() {
+        return urlAsFile;
+    }
+
+    @Override
+    protected int doGetTotalFrameNumber() {
+        // optimized implementation which reads the number directly from the file,
+        // rather than the superclass implementation, which would extract it from
+        // #getDicomObject() and thus incur a temporary in-memory DicomObject.
+        ImageReader reader;
+        int numFrames;
+        ImageInputStream in;
+        InputStream urlIn;
+        try {
+            reader = new DicomImageReaderSpi().createReaderInstance();
+            urlIn = url.openStream();
+            in = ImageIO.createImageInputStream(urlIn);
+            if (null == in) {
+                throw new IllegalStateException(
+                        "The DICOM image I/O filter (from dcm4che1) must be available to read images.");
+            }
+            try {
+                reader.setInput(in);
+                numFrames = reader.getNumImages(true);
+            } finally {
+                in.close();
+                urlIn.close();
+            }
+        }
+        catch (IOException e) {
+            throw new IllegalStateException("error reading DICOM object from " + url, e);
+        }
+        return numFrames;
+    }
+    
     @Override
     protected DicomObject getBackendDicomObject() {
         checkInitialized();
@@ -149,20 +179,25 @@ public class FileBasedDicomImageListViewModelElement extends CachingDicomImageLi
             throw new IllegalStateException("error reading DICOM object from " + url, e);
         }
     }
-
+    
+    @Override
+    public Object getDicomObjectKey() {
+        checkInitialized();
+        return url;
+    }
+    
     @Override
     protected BufferedImage getBackendImage() {
         // optimized implementation which extracts the image directly from the file,
         // rather than the superclass implementation, which would extract it from
         // #getBackendDicomObject() and thus incur a temporary in-memory DicomObject.
         checkInitialized();
-        Iterator it = ImageIO.getImageReadersByFormatName("RAWDICOM");
-        if (!it.hasNext()) {
-            throw new IllegalStateException("The DICOM image I/O filter (from dcm4che1) must be available to read images.");
-        }
-        ImageReader reader = (ImageReader) it.next();
+
+        ImageReader reader;
 
         try {
+            reader = new DicomImageReaderSpi().createReaderInstance();
+            
             // the ImageInputStream below does NOT close the wrapped URL input stream on close(). Thus
             // we have to keep a reference to the URL input stream and close it ourselves.
             InputStream urlIn = url.openStream();
@@ -173,7 +208,7 @@ public class FileBasedDicomImageListViewModelElement extends CachingDicomImageLi
                 }
                 try {
                     reader.setInput(in);
-                    return reader.read(0);
+                    return reader.read(frameNumber);
                 } finally {
                     in.close();
                 }

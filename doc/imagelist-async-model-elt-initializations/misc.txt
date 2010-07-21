@@ -1,0 +1,167 @@
+Anforderungen:
+
+- ImageListViewModelElements sollen sich im Hintergrund initialisieren
+  (insbesondere: das Bild laden) können, ohne dass das GUI solange
+  hängt.
+
+- Zellen mit einem noch nicht initialisierten Modellelement sollten
+  visuell als "nicht initialisiert" gezeichnet werden (Sanduhrsymbol
+  o.ä.), ohne den GUI-Thread zu blockieren. Auf diese Weise sollte die
+  UI-Blockierung beim erstmaligen Anzeigen großer Listen verschwinden,
+  und es sollte dem Anwender möglich sein, sofort in ScaleModes mit
+  sehr vielen gleichzeitig sichtbaren Zellen umzuschalten, ohne dass
+  es zu langen Blockaden kommt.
+
+- Setzen von Cellproperties auf Zellen mit nicht initialisierten
+  Modellelementen sollte funktionieren (z.B.: (windowAll
+  (ILVWindowingApplyToAllController) aktiv, eine Zelle wird
+  gefenstert, bevor alle Bilder geladen sind => Fensterung sollte auch
+  in Zellen mit noch nicht geladenen Bildern übernommen werden und das
+  entspr. Bild mit der Fensterung angezeigt werden, sobald es geladen
+  ist)
+
+- idealerweise sollte auch ein zwischenzeitliches Neuinitialisieren
+  eines Modellelements möglich sein, d.h. ein schon initialisiertes
+  Element sollte wieder in den Zustand "nicht initialisiert" springen
+  können (nötig z.B. dann, wenn man in Zukunft mal das Bild eine
+  Modellelements neu laden oder mehrere Bilder pro Modellelement
+  (nach)laden kann)
+
+
+- die Listenklassen (JGLImageListView etc.) sollten weiterhin
+  single-threaded (UI-Thread) bleiben (sonst wird die Komplexität zu
+  hoch); somit wird auch das von den Listen aufgerufene API der
+  Modellelemente von der Liste ausschließlich im UI-Thread aufgerufen.
+
+  Multithreading sollte ausschließlich in der Implementation der
+  Modellelemente verwendet werden (ggf. in passende Basis- oder
+  Aggregationsklasse rausziehen). Vermutlich sollten hier
+  konfigurierbare Threadpools benutzt werden, um eine bestimmte
+  Maximalzahl Modellelemente parallel zu initialisieren.
+
+- mögliche Sonderfälle:
+
+  - Multiframe-DICOMs (sobald die in Viskit unterstützt werden):
+
+    - wenn man ein Modellelement pro Frame hat, sollte das DICOM
+      trotzdem nur einmal geladen werden
+
+    - mglw. (oder immer?) sind die Pixeldaten aller Frames in
+      demselben einzigen PixelData-Tag drin. => auch dieses sollte
+      ggf. nur einmal gelesen und dann zwischen den Modellelementen
+      geshared werden
+
+  - mehrere Bilder pro Modellelement/Zelle, z.B. ROI-Layer oder
+    Messergebnistabellen wie bei den Forschern (sobald die in Viskit
+    unterstützt werden):
+
+    - (Anzeige in der Zelle müsste über separaten Cellpaint-Controller
+      erfolgen, evtl. auch über entspr. parametrisierbar gemachten
+      ILVImagePaintController)
+
+    - Problem: wenn mehrere Bilder pro ModelElement: Jedes Bild kann
+      u.U. separat geladen werden etc. => man bräuchte eigentlich
+      einen initializationState (s.u.) pro Bild, bzw. als
+      Verallgemeinerung allgemein mehrere initializationStates. Das
+      wird aber echt kompliziert => machen wir erstmal nicht?
+
+        
+
+
+- property initializationState {UNINITIALIZED, INITIALIZED, ERROR}
+
+- property String errorMessage  ?
+
+- Visualisierung des UNINITIALIZED - State (Sanduhr etc.) auch in
+  einem PaintListener?  => PaintListener (oder PaintController)
+  sollten sagen können, in welchen initializationStates sie aufgerufen
+  werden sollen
+
+
+
+
+
+
+
+Entwurf:
+
+interface ImageListViewModelElement {
+
+    //.....
+
+    //additional stuff:
+
+    enum InitializationState {UNINITIALIZED, INITIALIZED, ERROR};
+
+    /**
+     * property => getter/setter method (setter protected),
+     * PropChangeEvent firing (=> add/removeProChListener methods,
+     * like in ImageListViewCell)
+     *
+     * May be in any of the 3 states immediately after construction,
+     * can transform from any of the 3 states to other any other one
+     * at any time. The model element may update its state at any time
+     * to mark things like e.g. "my image has finished loading" (state
+     * is set to INITIALIZED), "there was an error" (state is set to
+     * ERROR) etc. The list listens for initializationState changes in
+     * any of its model elements and reacts (updates model element's
+     * display accordingly, e.g. with an hourglass or an error
+     * display).
+     */
+    property InitializationState initializationState;
+
+    //Die Zelle bzw. das Modellelement könnte zu beliebigen
+    //Zeitpunkten dieses Property ändern und dadurch eine Änderung des
+    //initializationState nach außen anzeigen (z.B. wenn intern das
+    //Laden des Bildes abgeschlossen ist)
+
+    //die Liste würde Änderungen dieses Properties auf allem Zellen
+    //überwachen und entspr. reagieren. (Sanduhranzeige etc.)
+
+    //die eigentliche Visualisierung des UNINITIALIZED- oder
+    //ERROR-States (Sanduhr etc.) erfolgt nicht durch die Liste
+    //selber, sondern wie alle anderen Zell-Maloperationen in
+    //PaintListenern
+
+    //=> PaintListener (oder PaintController?)  sollten sagen können,
+    //in welchen initializationStates sie aufgerufen werden sollen
+
+
+    //TODO: "startInitialization"-Nachricht von Liste an
+    //Modellelement, z.B. wenn es erstmals sichtbar wird?
+
+    property String errorMessage; //? (defined if initializationState==ERROR)
+
+
+}
+
+- offene Punkte:
+
+  - wie erwähnt sollte alle Kommunikation Liste<->Modellelemente
+    single-threaded im UI-Thread erfolgen. Evtl. könnte die Liste
+    aktiv checken, dass die Modellelemente z.B. PropChangeEvents für
+    das initializationState-Property in diesem Thread feuern
+    (Exception werfen falls nicht => fail-fast-Verhalten)
+
+  - das Laden von Bilden in Texturen kann u.U. länger dauern, erfolgt
+    im Moment aber notwendigerweise wie alle OpenGL-Operationen fest
+    im UI-Thread. PBOs könnten helfen -- siehe
+    opengl-pbos-discussion.txt (IRC-Diskussion mit MatthiasM
+    u.a.). Vorher checken, ob es hilft, die Größe der Textur
+    (Länge/Breite) auf das nächsthöhere Vielfache von 32 (oder die
+    nächsthöhere Zweierpotenz?) anzupassen und das beim Rendern über
+    die Texturkoordinaten auszugleichen
+    (s.a. ../textureCreationSpeed/results.txt -- demnach scheint da
+    einiges zu gehen)
+
+  - was machen, wenn so viele Bilder/Texturen gleichzeitig angezeigt
+    werden sollen, dass sie nicht alle in den Cache von
+    ImageTextureManager passen? Im Moment würde cache-Thrashing
+    auftreten, da bei jedem Renderdurchlauf (display()-Methode)
+    Texturen gelöscht und andere erzeugt werden müssten -- d.h. das
+    Rendering würde schlagartig sehr viel langsamer werden, sobald der
+    Anwender in einen scaleMode schaltet, der mehr Texturen
+    gleichzeitig sichtbar macht als in den Cache-Speicher passen
+
+
+TODO: weiter...

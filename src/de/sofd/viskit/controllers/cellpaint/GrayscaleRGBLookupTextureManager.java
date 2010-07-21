@@ -73,19 +73,20 @@ public class GrayscaleRGBLookupTextureManager {
                 bitCount = 12;
             }
         }
+
+        int usedBitCount = Math.min(12, (bitCount == 0 ? 8 : bitCount));  // assume the GL only supports max. 2**12 1D RGB texture width => TODO: use a texture proxy to determine this at runtime
         
-        TextureRef texRef = texRefStore.getTexRef(bitCount);
+        TextureRef texRef = texRefStore.getTexRef(usedBitCount);
         
         if (null == texRef) {
-            logger.info("need to create grayscale texture: " + bitCount + "-bit");
+            logger.info("need to create grayscale texture: " + usedBitCount + "-bit");
             int[] texId = new int[1];
             gl.glGenTextures(1, texId, 0);
             gl.glEnable(GL2.GL_TEXTURE_1D);
             gl.glActiveTexture(texUnit);
             gl.glBindTexture(gl.GL_TEXTURE_1D, texId[0]);
-            int usedBitCount = (bitCount == 0 ? 8 : bitCount);
-            //int searchWindowWidth = (usedBitCount == 16 ? 14 : (usedBitCount == 12 ? 7 : 0));  // use this for production (maybe)
-            int searchWindowWidth = (usedBitCount == 16 ? 50 : (usedBitCount == 12 ? 40 : 0));  // use this for testing (much higher computation time, more coloured image on color screen, theoretically better grayscale reproduction on grayscale screen)
+            int searchWindowWidth = (usedBitCount == 16 ? 14 : (usedBitCount == 12 ? 9 : 0));  // use this for production (maybe)
+            //int searchWindowWidth = (usedBitCount == 16 ? 50 : (usedBitCount == 12 ? 40 : 0));  // use this for testing (much higher computation time, more coloured image on color screen, theoretically better grayscale reproduction on grayscale screen)
             ByteBuffer texData = GrayscaleUtil.computeGrayTo8bitRGBMappingTable(usedBitCount, searchWindowWidth);
             gl.glTexImage1D(
                     gl.GL_TEXTURE_1D,   // target
@@ -101,7 +102,7 @@ public class GrayscaleRGBLookupTextureManager {
             gl.glTexParameteri(GL_TEXTURE_1D, GL.GL_TEXTURE_MIN_FILTER, GL.GL_NEAREST);  // nearest neighbor filtering is important -- we don't 
             gl.glTexParameteri(GL_TEXTURE_1D, GL.GL_TEXTURE_MAG_FILTER, GL.GL_NEAREST);  // want the GL to interpolate between two grayscale RGBs at any time
             texRef = new TextureRef(texId[0]);
-            texRefStore.putTexRef(bitCount, texRef, gl);
+            texRefStore.putTexRef(usedBitCount, texRef, gl);
         }
         gl.glEnable(GL2.GL_TEXTURE_1D);
         gl.glActiveTexture(texUnit);

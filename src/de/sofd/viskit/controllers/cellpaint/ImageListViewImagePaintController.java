@@ -315,8 +315,20 @@ public class ImageListViewImagePaintController extends CellPaintControllerBase {
         float offset = (ww/2-wl)*scale;
         LinAlg.matrMult1D(new float[]{scale, offset}, pixelTransform, pixelTransform);
 
-        // transformation to output grayscale range ( [0,256) )
-        LinAlg.matrMult1D(new float[]{256, 0}, pixelTransform, pixelTransform);
+
+        LookupTable lut = displayedCell.getLookupTable();
+        int lutLength = -1, lutLengthMinus1 = -1;
+        /*if (displayedCell.isOutputGrayscaleRGBs()) {
+            //TODO: perform 12-bit grayscale output in J2D as well
+        } else */if (lut != null) {
+            // transformation to output LUT index
+            lutLength = lut.getRGBAValues().limit() / 4;
+            lutLengthMinus1 = lutLength - 1;
+            LinAlg.matrMult1D(new float[]{lutLength, 0}, pixelTransform, pixelTransform);
+        } else {
+            // transformation to output grayscale range ( [0,256) )
+            LinAlg.matrMult1D(new float[]{256, 0}, pixelTransform, pixelTransform);
+        }
         
         RawImage rimg = elt.getRawImage();
         if (rimg.getPixelFormat() != RawImage.PIXEL_FORMAT_LUMINANCE) {
@@ -339,18 +351,41 @@ public class ImageListViewImagePaintController extends CellPaintControllerBase {
                 int index = 0;
                 BufferedImage result = new BufferedImage(w, h, BufferedImage.TYPE_INT_RGB);
                 WritableRaster resultRaster = result.getRaster();
-                for (int y = 0; y < h; y++) {
-                    for (int x = 0; x < w; x++) {
-                        float destGrayValue = txscale * srcBuffer.get(index++) + txoffset;
-                        //clamp
-                        if (destGrayValue < 0) {
-                            destGrayValue = 0;
-                        } else if (destGrayValue >= 256) {
-                            destGrayValue = 255;
+                if (lut != null) {
+                    //separate loop for LUTs to spare one if-then-else in the innermost loop body (the difference is probably neglectible though..)
+                    for (int y = 0; y < h; y++) {
+                        for (int x = 0; x < w; x++) {
+                            int destLutIndex = (int)(txscale * srcBuffer.get(index++) + txoffset);
+                            //clamp
+                            if (destLutIndex < 0) {
+                                destLutIndex = 0;
+                            } else if (destLutIndex >= lutLength) {
+                                destLutIndex = lutLengthMinus1;
+                            }
+                            destLutIndex *= 4; //=> index into the buffer. May have done this with the pixelTransform,
+                            //but would have to convert the result to a multiple of 4 afterwards then, which make it slower
+
+                            // TODO: for better performance, maybe set the whole pixel at once from
+                            //       a pre-computed IntBuffer version of the LUT containing each RGBA quadruple in one int
+                            resultRaster.setSample(x, y, 0, 255 * lut.getRGBAValues().get(destLutIndex));
+                            resultRaster.setSample(x, y, 1, 255 * lut.getRGBAValues().get(destLutIndex + 1));
+                            resultRaster.setSample(x, y, 2, 255 * lut.getRGBAValues().get(destLutIndex + 2));
                         }
-                        resultRaster.setSample(x, y, 0, destGrayValue);
-                        resultRaster.setSample(x, y, 1, destGrayValue);
-                        resultRaster.setSample(x, y, 2, destGrayValue);
+                    }
+                } else {
+                    for (int y = 0; y < h; y++) {
+                        for (int x = 0; x < w; x++) {
+                            float destGrayValue = txscale * srcBuffer.get(index++) + txoffset;
+                            //clamp
+                            if (destGrayValue < 0) {
+                                destGrayValue = 0;
+                            } else if (destGrayValue >= 256) {
+                                destGrayValue = 255;
+                            }
+                            resultRaster.setSample(x, y, 0, destGrayValue);
+                            resultRaster.setSample(x, y, 1, destGrayValue);
+                            resultRaster.setSample(x, y, 2, destGrayValue);
+                        }
                     }
                 }
                 return result;
@@ -367,18 +402,41 @@ public class ImageListViewImagePaintController extends CellPaintControllerBase {
                 int index = 0;
                 BufferedImage result = new BufferedImage(w, h, BufferedImage.TYPE_INT_RGB);
                 WritableRaster resultRaster = result.getRaster();
-                for (int y = 0; y < h; y++) {
-                    for (int x = 0; x < w; x++) {
-                        float destGrayValue = txscale * srcBuffer.get(index++) + txoffset;
-                        //clamp
-                        if (destGrayValue < 0) {
-                            destGrayValue = 0;
-                        } else if (destGrayValue >= 256) {
-                            destGrayValue = 255;
+                if (lut != null) {
+                    //separate loop for LUTs to spare one if-then-else in the innermost loop body (the difference is probably neglectible though..)
+                    for (int y = 0; y < h; y++) {
+                        for (int x = 0; x < w; x++) {
+                            int destLutIndex = (int)(txscale * srcBuffer.get(index++) + txoffset);
+                            //clamp
+                            if (destLutIndex < 0) {
+                                destLutIndex = 0;
+                            } else if (destLutIndex >= lutLength) {
+                                destLutIndex = lutLengthMinus1;
+                            }
+                            destLutIndex *= 4; //=> index into the buffer. May have done this with the pixelTransform,
+                            //but would have to convert the result to a multiple of 4 afterwards then, which make it slower
+
+                            // TODO: for better performance, maybe set the whole pixel at once from
+                            //       a pre-computed IntBuffer version of the LUT containing each RGBA quadruple in one int
+                            resultRaster.setSample(x, y, 0, 256 * lut.getRGBAValues().get(destLutIndex));
+                            resultRaster.setSample(x, y, 1, 256 * lut.getRGBAValues().get(destLutIndex + 1));
+                            resultRaster.setSample(x, y, 2, 256 * lut.getRGBAValues().get(destLutIndex + 2));
                         }
-                        resultRaster.setSample(x, y, 0, destGrayValue);
-                        resultRaster.setSample(x, y, 1, destGrayValue);
-                        resultRaster.setSample(x, y, 2, destGrayValue);
+                    }
+                } else {
+                    for (int y = 0; y < h; y++) {
+                        for (int x = 0; x < w; x++) {
+                            float destGrayValue = txscale * srcBuffer.get(index++) + txoffset;
+                            //clamp
+                            if (destGrayValue < 0) {
+                                destGrayValue = 0;
+                            } else if (destGrayValue >= 256) {
+                                destGrayValue = 255;
+                            }
+                            resultRaster.setSample(x, y, 0, destGrayValue);
+                            resultRaster.setSample(x, y, 1, destGrayValue);
+                            resultRaster.setSample(x, y, 2, destGrayValue);
+                        }
                     }
                 }
                 return result;

@@ -1,0 +1,33 @@
+17:58 < multi_io> is it normal that hgsubversion leaves behind several "unconnected" histories (one for each branch that existed in the source svn repo), as in http://user.cs.tu-berlin.de/~klischat/hgk.png ?
+18:00 < durin42> multi_io: depends on the repository history
+18:01 < durin42> multi_io: if the repo branches only part of trunk, then yeah, that's expected (poor) behavior that we're not really sure how to fix
+18:01 < tonfa> dfjoerg: that's a possible optimization
+18:02 < durin42> tonfa: have you heard from in3xes much today about parentdeltas?
+18:02 < tonfa> but we must first have a way to get the size back  into dirstate
+18:02 < tonfa> durin42: nope
+18:02 < multi_io> durin42: the svn trunk is in http://..../svn/project/trunk/project, the branches are in http://..../svn/project/<branchname>/project
+18:03 < durin42> multi_io: that's the problem, we don't support that layout
+18:03 < durin42> It's theoretically possible to fix
+18:03 < durin42> but nobody has been interested enough to spend the time on it
+18:05 < multi_io> I forgot "branches" above .. it should read: the svn trunk is in http://..../svn/project/trunk/project, the branches are in http://..../svn/project/branches/<branchname>/project
+18:05 < durin42> Right, still won't work
+18:05 < durin42> because you're operating on trunk/project
+18:05 < durin42> and branching only the project subdir
+18:05 < multi_io> durin42: so you only support   http://..../svn/project/trunk/<project files> etc.
+18:05 < multi_io> ?
+18:05 < durin42> For proper history extraction? Yes.
+18:05 < durin42> Note that the unrelated bits of history will *work*
+18:05 < durin42> just be kind of ugly
+18:06 < durin42> and merging will probably do bad things
+18:06 < durin42> This isn't a terribly common way of using Subversion, so nobody has yet contributed support
+18:06 < multi_io> would it be possible to somehow fix this in hg immediately after converting (before doing anything else like pushing etc.)?
+18:07 < durin42> Are you doing a one-time conversion or trying to interact with svn on an ongoing basis?
+18:07 < multi_io> one-time
+18:07 < durin42> You can probably do what you want with the convert extension
+
+
+18:47 < multi_io> durin42: would you say that it's better in my case to use convert from the start rather than hgsubversion?
+18:48 < durin42> Perhaps.
+18:49 < durin42> If it supports your use case it's probably better.
+18:58 < multi_io> it doesn't directly support the trunk/project layout eiher, but one can probably remedy that with a filemap. The created hg commits look somewhat mangled up though, with commits from different svn branches and dates mixed up in one hg history
+18:58 < multi_io> I'll have to do some experiments I guess

@@ -43,14 +43,16 @@ public class LookupTableCellRenderer implements ListCellRenderer {
         @Override
         protected void paintComponent(java.awt.Graphics g) {
             Graphics2D g2d = (Graphics2D) g;
-            Dimension sz = getSize();
-            FloatBuffer floats = lut.getRGBAValues();
-            int nColors = floats.capacity() / 4;
-            for (int x = 0; x < sz.width; x++) {
-                int idx = 4 * (x * nColors / sz.width);
-                Color c = new Color(floats.get(idx), floats.get(idx+1), floats.get(idx+2));
-                g2d.setColor(c);
-                g2d.drawLine(x, 0, x, getSize().height);
+            if (lut != null) {
+                Dimension sz = getSize();
+                FloatBuffer floats = lut.getRGBAValues();
+                int nColors = floats.capacity() / 4;
+                for (int x = 0; x < sz.width; x++) {
+                    int idx = 4 * (x * nColors / sz.width);
+                    Color c = new Color(floats.get(idx), floats.get(idx+1), floats.get(idx+2));
+                    g2d.setColor(c);
+                    g2d.drawLine(x, 0, x, getSize().height);
+                }
             }
             super.paintComponent(g);
         }
@@ -65,7 +67,8 @@ public class LookupTableCellRenderer implements ListCellRenderer {
             resultLabel.setText(lut.getName());
             resultLabel.setForeground(Color.lightGray);
         } else {
-            resultLabel.setText(value.toString());
+            resultLabel.setLut(null);
+            resultLabel.setText("" + value);
         }
         return resultLabel;
     }

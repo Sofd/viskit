@@ -4,22 +4,32 @@ import de.sofd.util.FloatRange;
 import de.sofd.util.Histogram;
 import de.sofd.util.IntRange;
 import de.sofd.viskit.test.windowing.RawDicomImageReader;
+
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.nio.IntBuffer;
 import java.nio.ShortBuffer;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Map.Entry;
+
 import javax.imageio.ImageIO;
 import javax.imageio.ImageReader;
 import javax.imageio.stream.ImageInputStream;
+
+import org.apache.log4j.Logger;
 import org.dcm4che2.data.BasicDicomObject;
 import org.dcm4che2.data.DicomObject;
 import org.dcm4che2.data.Tag;
 import org.dcm4che2.data.UID;
+import org.dcm4che2.imageioimpl.plugins.dcm.DicomImageReaderSpi;
 import org.dcm4che2.io.DicomOutputStream;
 import org.dcm4che2.media.FileMetaInformation;
+
+import de.sofd.util.FloatRange;
+import de.sofd.viskit.test.windowing.RawDicomImageReader;
 
 import com.sun.opengl.util.BufferUtil;
 import java.awt.color.ColorSpace;
@@ -37,12 +47,100 @@ import org.apache.log4j.Logger;
  */
 public abstract class CachingDicomImageListViewModelElement extends AbstractImageListViewModelElement implements DicomImageListViewModelElement {
 
+    protected int frameNumber = 0;
+    protected int totalFrameNumber = -1;
+    
     private static final Logger logger = Logger.getLogger(CachingDicomImageListViewModelElement.class);
 
     static {
         RawDicomImageReader.registerWithImageIO();
     }
+
+    /**
+     * set the frame number this model element represents in case of a multiframe DICOM object. Initially the first
+     * frame is displayed (default). This is also the case if the DICOM object
+     * is a singleframe DICOM object
+     * 
+     * @param frame
+     */
+    public void setFrameNumber(int frame) {
+         int numFrames = getTotalFrameNumber(); 
+         if(frame < 0 || frame >= numFrames) {
+             throw new IllegalArgumentException("the frame number must be at least 0 and must not exceed "+(numFrames-1) + " (# frames in this DICOM object)");
+         }
+         this.frameNumber = frame;
+    }
+   
+    @Override
+    public int getFrameNumber() {
+        return this.frameNumber;
+    }
+   
+    @Override
+    public int getTotalFrameNumber() {
+        Object dcmKey = getDicomObjectKey();
+        Integer cached = frameCountByDcmObjectIdCache.get(dcmKey);
+        if (cached == null) {
+            if (totalFrameNumber == -1) {
+                cached = doGetTotalFrameNumber();
+                totalFrameNumber = cached;
+            } else {
+                cached = totalFrameNumber;
+            }
+            frameCountByDcmObjectIdCache.put(dcmKey, cached);
+        }
+        return cached;
+    }
     
+    protected int doGetTotalFrameNumber() {
+        // extract the frame count from the getDicomObject() by default.
+        ImageReader reader;
+        int numFrames;
+        ImageInputStream in;
+        try {
+            DicomObject dcmObj = getDicomObject();
+            ByteArrayOutputStream bos = new ByteArrayOutputStream(200000);
+            DicomOutputStream dos = new DicomOutputStream(bos);
+            String tsuid = dcmObj.getString(Tag.TransferSyntaxUID);
+            if (null == tsuid) {
+                tsuid = UID.ImplicitVRLittleEndian;
+            }
+            FileMetaInformation fmi = new FileMetaInformation(dcmObj);
+            fmi = new FileMetaInformation(fmi.getMediaStorageSOPClassUID(), fmi.getMediaStorageSOPInstanceUID(), tsuid);
+            dos.writeFileMetaInformation(fmi.getDicomObject());
+            dos.writeDataset(dcmObj, tsuid);
+            dos.close();
+            
+            reader = new DicomImageReaderSpi().createReaderInstance();
+            in = ImageIO.createImageInputStream(new ByteArrayInputStream(bos.toByteArray()));
+            if (null == in) {
+                throw new IllegalStateException(
+                        "The DICOM image I/O filter (from dcm4che1) must be available to read images.");
+            }
+            try {
+                reader.setInput(in);
+                numFrames = reader.getNumImages(true);
+            } finally {
+                in.close();
+            }
+        }
+        catch (IOException e) {
+            throw new IllegalStateException("error reading DICOM object from " + getDicomObjectKey(), e);
+        }
+        return numFrames;
+    }
+
+    @Override
+    public Object getImageKey() {
+        return getDicomObjectKey() + "#" + frameNumber;
+    }
+    
+    /**
+     * 
+     * @return the unique identifier of a DICOM object
+     */
+    protected abstract Object getDicomObjectKey();
+
     /**
      * Extract from the backend and return the DicomObject. This method should not cache the
      * results or anything like that (this base class will do that), so it may be time-consuming.
@@ -176,23 +274,25 @@ public abstract class CachingDicomImageListViewModelElement extends AbstractImag
     private static LRUMemoryCache<Object, DicomObject> rawDicomImageMetadataCache
         = new LRUMemoryCache<Object, DicomObject>(Config.prop.getI("de.sofd.viskit.rawDicomImageMetadataCacheSize"));
 
+    private static LRUMemoryCache<Object, Integer> frameCountByDcmObjectIdCache
+        = new LRUMemoryCache<Object, Integer>(Config.prop.getI("de.sofd.viskit.frameCountByDcmObjectIdCacheSize"));
 
     @Override
     public DicomObject getDicomObject() {
-        DicomObject result = dcmObjectCache.get(getImageKey());
+        DicomObject result = dcmObjectCache.get(getDicomObjectKey());
         if (result == null) {
             result = getBackendDicomObject();
-            dcmObjectCache.put(getImageKey(), result);
+            dcmObjectCache.put(getDicomObjectKey(), result);
         }
         return result;
     }
 
     public boolean isDicomMetadataCached() {
-        return rawDicomImageMetadataCache.containsKey(getImageKey());
+        return rawDicomImageMetadataCache.containsKey(getDicomObjectKey());
     }
 
     public boolean isDicomObjectCached() {
-        return dcmObjectCache.containsKey(getImageKey());
+        return dcmObjectCache.containsKey(getDicomObjectKey());
     }
 
     public boolean isImageCached() {
@@ -201,11 +301,11 @@ public abstract class CachingDicomImageListViewModelElement extends AbstractImag
 
     @Override
     public DicomObject getDicomImageMetaData() {
-        DicomObject result = rawDicomImageMetadataCache.get(getImageKey());
+        DicomObject result = rawDicomImageMetadataCache.get(getDicomObjectKey());
         
         if (result == null) {
             result = getBackendDicomImageMetaData();
-            rawDicomImageMetadataCache.put(getImageKey(), result);
+            rawDicomImageMetadataCache.put(getDicomObjectKey(), result);
         }
         return result;
     }
@@ -280,23 +380,32 @@ public abstract class CachingDicomImageListViewModelElement extends AbstractImag
     public boolean isRawImagePreferable() {
         return hasRawImage();
     }
-
+    
     @Override
     public RawImage getRawImage() {
         RawImageImpl result = (RawImageImpl) getProxyRawImage();
 
         DicomObject dicomObject = getDicomObject();
+        int height = dicomObject.getInt(Tag.Columns);
+        int width = dicomObject.getInt(Tag.Rows);
 
         if (result.getPixelType() != RawImage.PIXEL_TYPE_UNSIGNED_16BIT) {
             //signed
-            result.setPixelData(BufferUtil.newShortBuffer(dicomObject.getShorts(Tag.PixelData))); // type of buffer may later depend on image metadata
+            short[] shorts = dicomObject.getShorts(Tag.PixelData);
+            
+            ShortBuffer tmp = ShortBuffer.wrap(shorts);
+            tmp.position(height*width*frameNumber);
+            result.setPixelData(tmp.slice());
         } else {
             //unsigned int
-            result.setPixelData(BufferUtil.newIntBuffer(dicomObject.getInts(Tag.PixelData))); // type of buffer may later depend on image metadata
+            int[] ints = dicomObject.getInts(Tag.PixelData);
+            IntBuffer tmp = IntBuffer.wrap(ints);
+            tmp.position(height*width*frameNumber);
+            result.setPixelData(tmp.slice());
         }
-        
         return result;
     }
+    
 
     @Override
     public RawImage getProxyRawImage() {
@@ -311,6 +420,8 @@ public abstract class CachingDicomImageListViewModelElement extends AbstractImag
         DicomObject imgMetadata = getDicomImageMetaData();
         
         String transferSyntaxUID = imgMetadata.getString(Tag.TransferSyntaxUID);
+        logger.debug(getImageKey());
+        logger.debug("transferSyntaxUID : " + transferSyntaxUID);
         //System.out.println(getImageKey());
         //System.out.println("transferSyntaxUID : " + transferSyntaxUID);
         
@@ -395,7 +506,6 @@ public abstract class CachingDicomImageListViewModelElement extends AbstractImag
                 }
             }
         } else {
-
             BufferedImage bimg = getImage();
 
             if (bimg.getColorModel().getColorSpace().getType() == ColorSpace.TYPE_GRAY) {
@@ -410,6 +520,13 @@ public abstract class CachingDicomImageListViewModelElement extends AbstractImag
             max = 800;*/
         }
 
+        if (metadata.contains(Tag.RescaleSlope) && metadata.contains(Tag.RescaleIntercept)) {
+            float rscSlope = metadata.getFloat(Tag.RescaleSlope);
+            float rscIntercept = metadata.getFloat(Tag.RescaleIntercept);
+            min = (int) (rscSlope * min + rscIntercept);
+            max = (int) (rscSlope * max + rscIntercept);
+        }
+        
         usedPixelValuesRange = new FloatRange(min, max);
     }
 
