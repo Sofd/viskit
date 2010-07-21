@@ -32,6 +32,9 @@ rm -f splicemap.txt
 touch splicemap.txt
 
 
+####### create the lines in the splicemap file
+##### for add_sm_entry calls with date/time values instead of commit comments for id'ing a commit,
+##### the corresponding commit comments are appended in a comment for reference (no comments possible inside multi-line commands)
 
 #####  HieronymusR312046 branch
 
@@ -80,9 +83,12 @@ add_sm_entry \
     'viskit: outputGrayscaleRGBs flag parameter removed from texture manager again'
 
 add_sm_entry \
-    'merged latest changes from StudyBrowser branch into trunk' \
+    '2010-06-14 19:49' \
     'progress bar observer' \
     'ladeoptimierung'
+#    'merged latest changes from StudyBrowser branch into trunk'
+#    'progress bar observer' \
+#    'ladeoptimierung'
 
 add_sm_entry \
     'viskit: merged latest changes from StudyBrowser branch (svn:eol-style prop settings) into trunk' \
@@ -113,6 +119,11 @@ add_sm_entry \
     'viskit: merged latest changes from trunk (LinAlg move to utils) into StudyBrowser branch' \
     'viskit: merged latest changes from trunk (starting after StudyBrowser branch creation) into StudyBrowser branch' \
     'viskit: LinAlg moved to de.sofd.util (package de.sofd.math)'
+
+add_sm_entry \
+    'viskit: merged latest changes from StudyBrowser branch into trunk' \
+    'viskit: svn2hg splicemap update (async_model_elt_init branch, HieronymusR312043S' \
+    'WindowingUtil, verbesserung beim laden von komprimierten bildern, initiales windowing bei komprimierten bildern'
 
 
 ##### async_model_elt_init branch
