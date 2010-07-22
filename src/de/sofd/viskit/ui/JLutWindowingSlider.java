@@ -7,6 +7,7 @@ import java.awt.event.MouseMotionListener;
 import java.nio.FloatBuffer;
 
 import javax.swing.BorderFactory;
+import javax.swing.UIManager;
 
 import org.jdesktop.swingx.multislider.MultiThumbModel;
 import org.jdesktop.swingx.multislider.Thumb;
@@ -36,7 +37,7 @@ public class JLutWindowingSlider extends JXMultiThumbSlider<String> implements T
 
     public JLutWindowingSlider(float min, float max) {
         super();
-        this.setBorder(BorderFactory.createLineBorder(Color.GRAY, 1));
+//        this.setBorder(BorderFactory.createLineBorder(Color.GRAY, 1));
         if (max <= min) {
             throw new IllegalArgumentException("min must be smaller than max!");
         }
