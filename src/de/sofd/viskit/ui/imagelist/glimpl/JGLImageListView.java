@@ -619,7 +619,10 @@ public class JGLImageListView extends JImageListView {
         if (null == scrollBar) {
             return;
         }
-        if (null == getModel()) {
+        if (null == getModel() || getModel().getSize() == 0) {
+            internalScrollbarValueIsAdjusting = true;
+            scrollBar.getModel().setRangeProperties(0, 0, 0, 0, false);
+            internalScrollbarValueIsAdjusting = false;
             scrollBar.setEnabled(false);
             return;
         }

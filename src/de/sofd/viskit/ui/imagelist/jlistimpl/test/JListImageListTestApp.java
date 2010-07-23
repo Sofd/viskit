@@ -534,14 +534,19 @@ public class JListImageListTestApp {
                 }
             });
             toolbar.add(lutCombo);
-            /*
-            toolbar.add(new AbstractAction("setEmptyModel") {
+            
+            final ListModel[] lastModel = new ListModel[]{null};
+            toolbar.add(new AbstractAction("tgglEmpty") {
                 @Override
                 public void actionPerformed(ActionEvent e) {
-                    listView.setModel(new DefaultListModel());
+                    if (lastModel[0] == null) {
+                        lastModel[0] = new DefaultListModel();
+                    }
+                    ListModel currModel = listView.getModel();
+                    listView.setModel(lastModel[0]);
+                    lastModel[0] = currModel;
                 }
             });
-            */
             
             ImageListViewWindowingApplyToAllController wndAllController = new ImageListViewWindowingApplyToAllController(listView);
             JCheckBox wndAllCheckbox = new JCheckBox("wnd.all");
