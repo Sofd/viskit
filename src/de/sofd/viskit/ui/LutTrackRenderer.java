@@ -22,7 +22,8 @@ public class LutTrackRenderer extends JComponent implements TrackRenderer {
 
     private static final long serialVersionUID = 5852805442531084052L;
     private JLutWindowingSlider slider;
-    private int offset = 7;
+    private int offset = 6;
+    private int leftRightOffset = 5;
 
     @Override
     public void paint(Graphics g) {
@@ -43,18 +44,19 @@ public class LutTrackRenderer extends JComponent implements TrackRenderer {
 
             Color background = UIManager.getColor("ToolBar.background");
 
+            
             // calculate border absolute border positions
-            int startPos = thumbPos[0]; // position of lower thumb
-            int endPos = thumbPos[1]; // position of upper thumb
+            int startPos = thumbPos[0]+leftRightOffset; // position of lower thumb
+            int endPos = thumbPos[1]-leftRightOffset; // position of upper thumb
 
             int nColors = buffer.capacity() / 4;
 
             // upper space
             g2d.setColor(background);
-            g2d.fillRect(0, 0, sz.width, offset);
+            g2d.fillRect(0, 0, sz.width, sz.height);
 
             // draw lower part of lookup table
-            for (int x = 0; x < startPos; x++) {
+            for (int x = leftRightOffset; x < startPos; x++) {
                 // get the first color pixel
                 Color c = new Color(buffer.get(0), buffer.get(1), buffer.get(2));
                 g2d.setColor(c);
@@ -70,7 +72,7 @@ public class LutTrackRenderer extends JComponent implements TrackRenderer {
             }
             g2d.translate(-startPos, 0);
             // draw upper part of lookup table
-            for (int x = endPos; x < sz.width-1; x++) {
+            for (int x = endPos; x < sz.width-1-leftRightOffset; x++) {
                 // get the last color pixel
                 Color c = new Color(buffer.get(buffer.capacity() - 4), buffer.get(buffer.capacity() - 3), buffer
                         .get(buffer.capacity() - 2));
@@ -79,7 +81,7 @@ public class LutTrackRenderer extends JComponent implements TrackRenderer {
             }
             // draw a border around the lookup table
             g2d.setColor(Color.GRAY);
-            g2d.drawRect(0, offset, sz.width-1, sz.height-offset-1);
+            g2d.drawRect(leftRightOffset, offset, sz.width-1-2*leftRightOffset, sz.height-offset-1);
 
         }
     }

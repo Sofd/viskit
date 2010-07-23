@@ -98,11 +98,7 @@ import de.sofd.viskit.util.DicomUtil;
  */
 public class JListImageListTestApp {
     
-    private static ModelFactory factory;
-    
-    static {
-        factory = new DicomModelFactory(new IntuitiveFileNameComparator(),true,"/home/honglinh/Desktop/cache.txt");
-    }
+    private ModelFactory factory = new DicomModelFactory(new IntuitiveFileNameComparator(),true,"/home/honglinh/Desktop/cache.txt");;
     
 
     public JListImageListTestApp() throws Exception {

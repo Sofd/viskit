@@ -235,6 +235,14 @@ public class JXMultiThumbSlider<E> extends JComponent {
     public void addMultiThumbListener(ThumbListener listener) {
         listeners.add(listener);
     }
+    
+    public void removeMultiThumbListener(ThumbListener listener) {
+        listeners.remove(listener);
+    }
+    
+    public List<ThumbListener> getMultiThumbListener() {
+        return listeners;
+    }
 
     protected class MultiThumbMouseListener extends MouseInputAdapter {
         @Override
@@ -289,8 +297,7 @@ public class JXMultiThumbSlider<E> extends JComponent {
             }
         }
 
-        
-        private ThumbComp findHandle(MouseEvent evt) {
+        protected ThumbComp findHandle(MouseEvent evt) {
             for(ThumbComp hand : thumbs) {
                 Point p2 = new Point();
                 p2.setLocation(evt.getPoint().getX() - hand.getX(),

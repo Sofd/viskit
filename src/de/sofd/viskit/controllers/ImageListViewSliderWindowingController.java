@@ -4,6 +4,9 @@ import java.awt.event.MouseEvent;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
+
 import org.jdesktop.swingx.multislider.ThumbListener;
 
 import de.sofd.viskit.model.ImageListViewModelElement;
@@ -14,10 +17,10 @@ import de.sofd.viskit.ui.imagelist.JImageListView;
 /**
  * 
  * @author honglinh
- *
+ * 
  */
 public class ImageListViewSliderWindowingController {
-    
+
     private JImageListView controlledImageListView;
     private JLutWindowingSlider slider;
     private PropertyChangeSupport propertyChangeSupport = new PropertyChangeSupport(this);
@@ -25,44 +28,58 @@ public class ImageListViewSliderWindowingController {
     public static final String PROP_LUTWINDOWINGSLIDER = "lutWindowingSlider";
 
     public ImageListViewSliderWindowingController() {
-        
     }
-    
+
     public ImageListViewSliderWindowingController(JImageListView controlledImageListView, JLutWindowingSlider slider) {
-        if (controlledImageListView != null && slider != null) {
-            this.slider = slider;
-            slider.addMultiThumbListener(listener);
-            setControlledImageListView(controlledImageListView);
-        }
-        else {
-            throw new NullPointerException("JImageListView or JLUTWindowingSlider is null!");
-        }
-    }
-    
-    /**
-     * Set the value of controlledImageListView
-     *
-     * @param controlledImageListView new value of controlledImageListView
-     */
-    public void setControlledImageListView(JImageListView controlledImageListView) {
-        if(controlledImageListView == null) {
-            throw new NullPointerException("controlledImageListView is null");
-        }
         JImageListView oldControlledImageListView = this.controlledImageListView;
         this.controlledImageListView = controlledImageListView;
-        propertyChangeSupport.firePropertyChange(PROP_CONTROLLEDIMAGELISTVIEW, oldControlledImageListView, controlledImageListView);
+        JLutWindowingSlider oldSlider = this.slider;
+        this.slider = slider;
+        if (null != oldControlledImageListView) {
+            oldControlledImageListView.removeListSelectionListener(listListener);
+        }
+        if (null != oldSlider) {
+            oldSlider.removeMultiThumbListener(thumbListener);
+        }
+        if (controlledImageListView != null) {
+            this.controlledImageListView.addListSelectionListener(listListener);
+        }
+        if (slider != null) {
+            this.slider.addMultiThumbListener(thumbListener);
+        }
+        propertyChangeSupport.firePropertyChange(PROP_CONTROLLEDIMAGELISTVIEW, oldControlledImageListView,
+                controlledImageListView);
+        propertyChangeSupport.firePropertyChange(PROP_LUTWINDOWINGSLIDER, oldSlider, slider);
     }
-    
+
+    /**
+     * Set the value of controlledImageListView
+     * 
+     * @param controlledImageListView
+     *            new value of controlledImageListView
+     */
+    public void setControlledImageListView(JImageListView controlledImageListView) {
+        JImageListView oldControlledImageListView = this.controlledImageListView;
+        this.controlledImageListView = controlledImageListView;
+        if (null != oldControlledImageListView) {
+            oldControlledImageListView.removeListSelectionListener(listListener);
+        }
+        if (controlledImageListView != null) {
+            this.controlledImageListView.addListSelectionListener(listListener);
+        }
+        propertyChangeSupport.firePropertyChange(PROP_CONTROLLEDIMAGELISTVIEW, oldControlledImageListView,
+                controlledImageListView);
+    }
+
     /**
      * Get the value of controlledImageListView
-     *
+     * 
      * @return the value of controlledImageListView
      */
     public JImageListView getControlledImageListView() {
         return controlledImageListView;
     }
-    
-    
+
     public JLutWindowingSlider getSlider() {
         return slider;
     }
@@ -70,17 +87,45 @@ public class ImageListViewSliderWindowingController {
     public void setSlider(JLutWindowingSlider slider) {
         JLutWindowingSlider oldSlider = this.slider;
         this.slider = slider;
-        if(oldSlider != null) {
-            // TODO remove thumb listener, class does not contain remove listener
-            throw new IllegalStateException("Current thumb listener could not be removed from the slider!");
+        if (oldSlider != null) {
+            oldSlider.removeMultiThumbListener(thumbListener);
         }
-        if(slider != null) {
-            slider.addMultiThumbListener(listener);
+        if (slider != null) {
+            this.slider.addMultiThumbListener(thumbListener);
         }
         propertyChangeSupport.firePropertyChange(PROP_LUTWINDOWINGSLIDER, oldSlider, this.slider);
     }
-    
-    private ThumbListener listener = new ThumbListener() {
+
+    private ListSelectionListener listListener = new ListSelectionListener() {
+
+        @Override
+        public void valueChanged(ListSelectionEvent e) {
+            // initialization phase -> return
+            //TODO cells sometimes give lower value 0 and upper value 600 back -> to check
+//            if (e.getFirstIndex() == 0 && e.getLastIndex() == 0) {
+//                return;
+//            }
+//            ImageListViewModelElement elt = controlledImageListView.getSelectedValue();
+//            if (elt != null) {
+//                final ImageListViewCell cell = controlledImageListView.getCellForElement(elt);
+//                int wl = cell.getWindowLocation();
+//                int ww = cell.getWindowWidth();
+//                float lowerValue = wl - ww / 2.0f;
+//                float upperValue = wl + ww / 2.0f;
+//
+//                // TODO ensure range integrity in JLUTWindowingSlider, rounding errors may happen here
+//                if (lowerValue < slider.getMinimumValue()) {
+//                    lowerValue = slider.getMinimumValue();
+//                }
+//                if (upperValue > slider.getMaximumValue()) {
+//                    upperValue = slider.getMaximumValue();
+//                }
+//                slider.setSliderValues(lowerValue, upperValue);
+//            }
+        }
+    };
+
+    private ThumbListener thumbListener = new ThumbListener() {
 
         @Override
         public void mousePressed(MouseEvent evt) {
@@ -94,27 +139,27 @@ public class ImageListViewSliderWindowingController {
                 cell.runWithPropChangingInteractively(ImageListViewCell.PROP_WINDOWLOCATION, new Runnable() {
                     @Override
                     public void run() {
-                        cell.setWindowLocation((int)slider.getWindowLocation());
+                        cell.setWindowLocation((int) slider.getWindowLocation());
                     }
                 });
 
                 cell.runWithPropChangingInteractively(ImageListViewCell.PROP_WINDOWWIDTH, new Runnable() {
                     @Override
                     public void run() {
-                        cell.setWindowWidth((int)slider.getWindowWidth());
+                        cell.setWindowWidth((int) slider.getWindowWidth());
                     }
                 });
             }
         }
 
         @Override
-        public void thumbSelected(int thumb) {    
-        }    
+        public void thumbSelected(int thumb) {
+        }
     };
-    
+
     /**
      * Add PropertyChangeListener.
-     *
+     * 
      * @param listener
      */
     public void addPropertyChangeListener(PropertyChangeListener listener) {
@@ -123,7 +168,7 @@ public class ImageListViewSliderWindowingController {
 
     /**
      * Remove PropertyChangeListener.
-     *
+     * 
      * @param listener
      */
     public void removePropertyChangeListener(PropertyChangeListener listener) {
