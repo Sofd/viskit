@@ -42,6 +42,21 @@ add_sm_entry \
     'viskit: HieronymusR312046 branch creation' \
     'JGLImageListView: bugfix: more checks for non-null cellsViewer at appropriate places'
 
+add_sm_entry \
+    'viskit: HieronymusR312046 changes 740:742 merged into main trunk' \
+    'JGLImageListView: bugfix: more checks for non-null cellsViewer at appropriate places' \
+    'viskit: bugfix: dispose all sharedContextData attributes when the last GLCanvas that shares the data is disposed'
+
+add_sm_entry \
+    'viskit: latest HieronymusR312046 changes merged into main trunk' \
+    'viskit: HieronymusR312046 changes 740:742 merged into main trunk' \
+    'typo fix: sagital -> sagittal'
+
+add_sm_entry \
+    'viskit: merged latest changes from HieronymusR312046 branch (scrollbar fix) into trunk' \
+    'viskit: improved visualization of windowing slider #2; start synchronisation of' \
+    'viskit: JGLImageListView: fix scrollbar behaviour for empty ListModel'
+
 
 ##### zoompan_transform_refactoring branch
 
@@ -57,15 +72,6 @@ add_sm_entry \
     'viskit: HieronymusR312043 branch started' \
     'viskit: outputGrayscaleRGBs flag parameter removed from texture manager again'
 
-add_sm_entry \
-    'viskit: HieronymusR312046 changes 740:742 merged into main trunk' \
-    'JGLImageListView: bugfix: more checks for non-null cellsViewer at appropriate places' \
-    'viskit: bugfix: dispose all sharedContextData attributes when the last GLCanvas that shares the data is disposed'
-
-add_sm_entry \
-    'viskit: latest HieronymusR312046 changes merged into main trunk' \
-    'viskit: HieronymusR312046 changes 740:742 merged into main trunk' \
-    'typo fix: sagital -> sagittal'
 
 
 #####  HieronymusDent branch
