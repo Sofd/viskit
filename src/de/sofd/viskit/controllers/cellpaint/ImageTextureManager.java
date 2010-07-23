@@ -114,7 +114,7 @@ public class ImageTextureManager {
 
     private static final String TEX_STORE = "texturesStore";
 
-    public static TextureRef bindImageTexture(GL2 gl, Map<String, Object> sharedContextData, ImageListViewModelElement elt) {
+    public static TextureRef bindImageTexture(GL2 gl, int texUnit, Map<String, Object> sharedContextData, ImageListViewModelElement elt/*, boolean outputGrayscaleRGBs*/) {
         TextureRefStore texRefStore = (TextureRefStore) sharedContextData.get(TEX_STORE);
         if (null == texRefStore) {
             System.out.println("CREATING NEW TextureRefStore");
@@ -139,6 +139,13 @@ public class ImageTextureManager {
         
         if (null == texRef) {
             logger.info("need to create texture for: " + elt.getImageKey());
+            // TODO: maybe strive to allocate textures with non-normalized, integer-valued texel values, which
+            // is recommended by nVidia for 12-bit grayscale displays to preserve image fidelity (but it really
+            // shouldn't make a difference in my opinion -- single precision floats normalized to [0,1] texel
+            // values range should provide more than enough precision). See the
+            // integer texture extension (http://www.opengl.org/registry/specs/EXT/texture_integer.txt) and
+            // the nvidia document for grayscale displays (http://www.nvidia.com/docs/IO/40049/TB-04631-001_v02.pdf)
+            // for details
             Texture imageTexture = null;
             float preScale = 1.0F, preOffset = 0.0F;
             if (elt.hasRawImage() && elt.isRawImagePreferable()) {
@@ -161,7 +168,7 @@ public class ImageTextureManager {
                                           null // Flusher flusher);
                                           );
                     imageTextureData.flush();
-                    gl.glActiveTexture(GL2.GL_TEXTURE1);
+                    gl.glActiveTexture(texUnit);
                     imageTexture = new Texture(imageTextureData);
                     preScale = 0.5F;
                     preOffset = 0.5F;
@@ -183,7 +190,7 @@ public class ImageTextureManager {
                                           null // Flusher flusher);
                                           );
                     imageTextureData.flush();
-                    gl.glActiveTexture(GL2.GL_TEXTURE1);
+                    gl.glActiveTexture(texUnit);
                     imageTexture = new Texture(imageTextureData);
                     preScale = 1.0F;
                     preOffset = 0.0F;
@@ -205,9 +212,9 @@ public class ImageTextureManager {
                                           null // Flusher flusher);
                                           );
                     imageTextureData.flush();
-                    gl.glActiveTexture(GL2.GL_TEXTURE1);
+                    gl.glActiveTexture(texUnit);
                     imageTexture = new Texture(imageTextureData);
-                    preScale = (float) (1<<16) / (1<<12);
+                    preScale = (float) (1<<16) / (1<<12); // see doc/opengl/texture-coords-and-filtering.txt on why this is right and not (1<<16-1)/(1<<12-1)
                     preOffset = 0.0F;
                 }
                 
@@ -217,7 +224,7 @@ public class ImageTextureManager {
                 //TextureData imageTextureData = AWTTextureIO.newTextureData(elt.getImage(), true);  // with mipmapping
                 TextureData imageTextureData = AWTTextureIO.newTextureData(elt.getImage(), false);   // w/o mipmapping
                 imageTextureData.flush();
-                gl.glActiveTexture(GL2.GL_TEXTURE1);
+                gl.glActiveTexture(texUnit);
                 imageTexture = new Texture(imageTextureData);
             }
             texRef = new TextureRef(imageTexture.getTextureObject(),
@@ -229,7 +236,9 @@ public class ImageTextureManager {
             logger.info("GL texture memory consumption now (est.): " + (texRefStore.getTotalMemConsumption()/1024/1024) + " MB");
         }
         gl.glEnable(GL.GL_TEXTURE_2D);
-        gl.glActiveTexture(GL2.GL_TEXTURE1);
+        gl.glActiveTexture(texUnit);
+        gl.glTexParameteri(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_MIN_FILTER, GL.GL_LINEAR);
+        gl.glTexParameteri(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_MAG_FILTER, GL.GL_LINEAR);
         gl.glBindTexture(GL.GL_TEXTURE_2D, texRef.getTexId());
         return texRef;
     }

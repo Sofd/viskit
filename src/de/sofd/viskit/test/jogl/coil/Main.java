@@ -1,8 +1,9 @@
 package de.sofd.viskit.test.jogl.coil;
 
-import de.sofd.viskit.image3D.jogl.util.LinAlg;
 import com.sun.opengl.util.Animator;
 import de.sofd.lang.Runnable1;
+import de.sofd.math.LinAlg;
+
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.event.ActionEvent;
@@ -102,9 +103,10 @@ public class Main {
             }
         });
         // some initial viewers...
-        for (int i = 0; i < 2; i++) {
-            addViewer();
-        }
+        JFrame f1 = addViewer();
+        JFrame f2 = addViewer();
+        f1.setBounds(0, 0, 1680, 1000);
+        f2.setBounds(1680, 0, 1680, 1000);
         // dont start() anim; run its display() method directly instead from
         // our own internal timer so we can intersperse other work into it
         // without having to have additional threads
@@ -137,7 +139,7 @@ public class Main {
         }, 0, 1000/FPS);
     }
 
-    private void addViewer() {
+    private JFrame addViewer() {
         JFrame frame = new JFrame("Viewer");
         //Frame frame = new Frame("Viewer");
         frame.setBackground(Color.black);
@@ -168,6 +170,7 @@ public class Main {
                 }
             }
         });
+        return frame;
     }
 
     /**

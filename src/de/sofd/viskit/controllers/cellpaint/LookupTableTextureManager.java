@@ -1,10 +1,5 @@
 package de.sofd.viskit.controllers.cellpaint;
 
-import static javax.media.opengl.GL.GL_LINEAR;
-import static javax.media.opengl.GL.GL_TEXTURE_MAG_FILTER;
-import static javax.media.opengl.GL.GL_TEXTURE_MIN_FILTER;
-import static javax.media.opengl.GL.GL_TEXTURE_WRAP_S;
-import static javax.media.opengl.GL2.GL_CLAMP;
 import static javax.media.opengl.GL2GL3.GL_TEXTURE_1D;
 
 import java.nio.FloatBuffer;
@@ -57,7 +52,7 @@ public class LookupTableTextureManager {
 
     private static final String TEX_STORE = "lutTexturesStore";
 
-    public static TextureRef bindLutTexture(GL2 gl, Map<String, Object> sharedContextData, LookupTable lut) {
+    public static TextureRef bindLutTexture(GL2 gl, int texUnit, Map<String, Object> sharedContextData, LookupTable lut) {
         if (lut == null) {
             return null;
         }
@@ -75,7 +70,7 @@ public class LookupTableTextureManager {
             int[] texId = new int[1];
             gl.glGenTextures(1, texId, 0);
             gl.glEnable(GL2.GL_TEXTURE_1D);
-            gl.glActiveTexture(GL2.GL_TEXTURE2);
+            gl.glActiveTexture(texUnit);
             gl.glBindTexture(gl.GL_TEXTURE_1D, texId[0]);
             FloatBuffer lutToUse = lut.getRGBAValues();
             gl.glTexImage1D(
@@ -88,19 +83,19 @@ public class LookupTableTextureManager {
                     gl.GL_FLOAT,        // type
                     lutToUse            // data
                     );
-            gl.glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_WRAP_S, GL_CLAMP);
-            gl.glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-            gl.glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+            gl.glTexParameteri(GL_TEXTURE_1D, GL.GL_TEXTURE_WRAP_S, GL2.GL_CLAMP);
+            gl.glTexParameteri(GL_TEXTURE_1D, GL.GL_TEXTURE_MIN_FILTER, GL.GL_NEAREST);
+            gl.glTexParameteri(GL_TEXTURE_1D, GL.GL_TEXTURE_MAG_FILTER, GL.GL_NEAREST);
             texRef = new TextureRef(texId[0]);
             texRefStore.putTexRef(lut, texRef, gl);
         }
         gl.glEnable(GL2.GL_TEXTURE_1D);
-        gl.glActiveTexture(GL2.GL_TEXTURE2);
+        gl.glActiveTexture(texUnit);
         gl.glBindTexture(GL2.GL_TEXTURE_1D, texRef.getTexId());
         return texRef;
     }
 
     public static void unbindCurrentLutTexture(GL2 gl) {
-        gl.glBindTexture(GL.GL_TEXTURE_2D, 0);
+        gl.glBindTexture(GL2.GL_TEXTURE_1D, 0);
     }
 }

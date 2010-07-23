@@ -1,10 +1,8 @@
 package de.sofd.viskit.ui.imagelist.gridlistimpl;
 
-import de.sofd.lang.Runnable1;
 import de.sofd.swing.AbstractFramedSelectionGridListComponentFactory;
 import de.sofd.swing.JGridList;
 import de.sofd.util.DynScope;
-import de.sofd.util.IdentityHashSet;
 import de.sofd.util.Misc;
 import de.sofd.viskit.model.DicomImageListViewModelElement;
 import de.sofd.viskit.ui.imagelist.ImageListViewCell;
@@ -12,7 +10,6 @@ import de.sofd.viskit.model.ImageListViewModelElement;
 import de.sofd.viskit.ui.imagelist.JImageListView;
 import de.sofd.viskit.ui.imagelist.cellviewers.jogl.GLImageListViewCellViewer;
 import de.sofd.viskit.ui.imagelist.cellviewers.java2d.ImageListViewCellViewer;
-import de.sofd.viskit.ui.imagelist.event.cellpaint.ImageListViewCellPaintListener;
 
 import java.awt.Color;
 import java.awt.Component;
@@ -31,8 +28,6 @@ import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 import java.util.Collection;
 
-import javax.media.opengl.GL;
-import javax.media.opengl.GLAutoDrawable;
 import javax.swing.AbstractAction;
 import javax.swing.Action;
 import javax.swing.ActionMap;
@@ -300,7 +295,7 @@ public class JGridImageListView extends JImageListView {
     @Override
     protected void doSetScaleMode(ScaleMode oldScaleMode, ScaleMode newScaleMode) {
         MyScaleMode sm = (MyScaleMode) newScaleMode;
-        wrappedGridList.setGridSizes(sm.getCellColumnCount(), sm.getCellRowCount());
+        wrappedGridList.setGridSizes(sm.getCellRowCount(), sm.getCellColumnCount());
         updateCellSizes(true, true);
     }
 
@@ -312,6 +307,7 @@ public class JGridImageListView extends JImageListView {
             }
             Dimension cellImgDisplaySize = new Dimension(wrappedGridList.getSize().width / getScaleMode().getCellColumnCount() - 2 * WrappedGridListComponentFactory.BORDER_WIDTH,
                                                          wrappedGridList.getSize().height / getScaleMode().getCellRowCount()- 2 * WrappedGridListComponentFactory.BORDER_WIDTH);
+            
             int count = getModel().getSize();
             for (int i = 0; i < count; i++) {
                 ImageListViewCell cell = getCell(i);

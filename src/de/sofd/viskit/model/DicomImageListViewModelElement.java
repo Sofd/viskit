@@ -2,6 +2,8 @@ package de.sofd.viskit.model;
 
 import org.dcm4che2.data.DicomObject;
 
+import de.sofd.util.Histogram;
+
 /**
  * Base interface for ImageListViewModelElements that wrap a DicomObject containing
  * the image represented by the model element.
@@ -23,4 +25,26 @@ public interface DicomImageListViewModelElement extends ImageListViewModelElemen
      *         everything except the actual pixel data -- if that's faster to acquire.
      */
     DicomObject getDicomImageMetaData();
+
+    /**
+     * 
+     * @return the frame number of the DICOM Object. The index begins with 0. If
+     *         this model element represents a singleframe DICOM this method
+     *         always returns 0.
+     */
+    int getFrameNumber();
+
+    /**
+     * 
+     * @return the total number of frames the associated DICOM object contains.
+     *         If this model element represents a singleframe DICOM this method
+     *         always returns 1.
+     */
+    public int getTotalFrameNumber();
+
+    /**
+     * 
+     * @return histogram of image
+     */
+    Histogram getHistogram();
 }

@@ -12,9 +12,7 @@ import java.beans.Introspector;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.beans.PropertyDescriptor;
-import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Set;
 
 /**
@@ -30,6 +28,8 @@ public class ImageListViewCellBase implements ImageListViewCell {
     private int windowLocation;
     private int windowWidth;
     private LookupTable lookupTable;
+    private CompositingMode compositingMode = CompositingMode.CM_REPLACE;
+    private boolean outputGrayscaleRGBs = false;
     private double scale;
     private Dimension latestSize; // = new Dimension(0, 0);
     private Point2D centerOffset;
@@ -137,6 +137,33 @@ public class ImageListViewCellBase implements ImageListViewCell {
         propertyChangeSupport.firePropertyChange(PROP_LOOKUPTABLE, oldValue, lookupTable);
         refresh();
     }
+
+    @Override
+    public CompositingMode getCompositingMode() {
+        return compositingMode;
+    }
+    
+    @Override
+    public void setCompositingMode(CompositingMode cm) {
+        CompositingMode oldValue = this.compositingMode;
+        this.compositingMode = cm;
+        propertyChangeSupport.firePropertyChange(PROP_COMPOSITINGMODE, oldValue, compositingMode);
+        refresh();
+    }
+    
+    @Override
+    public boolean isOutputGrayscaleRGBs() {
+        return outputGrayscaleRGBs;
+    }
+    
+    @Override
+    public void setOutputGrayscaleRGBs(boolean outputGrayscaleRGBs) {
+        boolean oldValue = this.outputGrayscaleRGBs;
+        this.outputGrayscaleRGBs = outputGrayscaleRGBs;
+        propertyChangeSupport.firePropertyChange(PROP_OUTPUTGRAYSCALERGBS, oldValue, outputGrayscaleRGBs);
+        refresh();
+    }
+    
     
     /**
      * Get the value of scale

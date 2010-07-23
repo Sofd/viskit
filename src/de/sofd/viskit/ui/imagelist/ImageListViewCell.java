@@ -34,7 +34,11 @@ public interface ImageListViewCell {
     public static final String PROP_SCALE = "scale";
     public static final String PROP_WINDOWWIDTH = "windowWidth";
     public static final String PROP_LOOKUPTABLE = "lookupTable";
+    public static final String PROP_COMPOSITINGMODE = "compositingMode";
+    public static final String PROP_OUTPUTGRAYSCALERGBS = "outputGrayscaleRGBs";
 
+    public static enum CompositingMode {CM_REPLACE, CM_BLEND};
+    
     JImageListView getOwner();
 
     ImageListViewModelElement getDisplayedModelElement();
@@ -96,6 +100,11 @@ public interface ImageListViewCell {
 
     LookupTable getLookupTable();
     
+    CompositingMode getCompositingMode();
+    
+    boolean isOutputGrayscaleRGBs();
+
+
     /**
      * Set the value of centerOffset
      *
@@ -136,6 +145,10 @@ public interface ImageListViewCell {
     void setWindowWidth(int windowWidth);
 
     void setLookupTable(LookupTable lut);
+    
+    void setCompositingMode(CompositingMode cm);
+    
+    void setOutputGrayscaleRGBs(boolean outputGrayscaleRGBs);
     
     /**
      * The properties of this cell

@@ -14,20 +14,17 @@ import java.awt.image.WritableRaster;
 import java.nio.ShortBuffer;
 import java.util.Map;
 
-import javax.media.opengl.GL;
 import javax.media.opengl.GL2;
 import javax.media.opengl.GLAutoDrawable;
 
 import org.dcm4che2.data.DicomObject;
 import org.dcm4che2.data.Tag;
 
-import com.sun.opengl.util.texture.Texture;
 import com.sun.opengl.util.texture.TextureCoords;
-import com.sun.opengl.util.texture.TextureData;
 
+import de.sofd.math.LinAlg;
 import de.sofd.util.FloatRange;
 import de.sofd.viskit.image3D.jogl.util.GLShader;
-import de.sofd.viskit.image3D.jogl.util.LinAlg;
 import de.sofd.viskit.image3D.jogl.util.ShaderManager;
 import de.sofd.viskit.model.DicomImageListViewModelElement;
 import de.sofd.viskit.model.ImageListViewModelElement;
@@ -35,6 +32,7 @@ import de.sofd.viskit.model.LookupTable;
 import de.sofd.viskit.model.RawImage;
 import de.sofd.viskit.ui.imagelist.ImageListViewCell;
 import de.sofd.viskit.ui.imagelist.JImageListView;
+import java.nio.IntBuffer;
 import javax.media.opengl.GLException;
 import org.apache.log4j.Logger;
 
@@ -110,6 +108,9 @@ public class ImageListViewImagePaintController extends CellPaintControllerBase {
             rescaleShader.addProgramUniform("tex");
             rescaleShader.addProgramUniform("lutTex");
             rescaleShader.addProgramUniform("useLut");
+            rescaleShader.addProgramUniform("useLutAlphaBlending");
+            rescaleShader.addProgramUniform("useGrayscaleRGBOutput");
+            rescaleShader.addProgramUniform("grayscaleRgbTex");
         } catch (Exception e) {
             throw new RuntimeException("couldn't initialize GL shader: " + e.getLocalizedMessage(), e);
         }
@@ -124,7 +125,7 @@ public class ImageListViewImagePaintController extends CellPaintControllerBase {
             gl.glTranslated(cellSize.getWidth() / 2, cellSize.getHeight() / 2, 0);
             gl.glTranslated(cell.getCenterOffset().getX(), cell.getCenterOffset().getY(), 0);
             gl.glScaled(cell.getScale(), cell.getScale(), 1);
-            ImageTextureManager.TextureRef texRef = ImageTextureManager.bindImageTexture(gl, sharedContextData, cell.getDisplayedModelElement());
+            ImageTextureManager.TextureRef texRef = ImageTextureManager.bindImageTexture(gl, GL2.GL_TEXTURE1, sharedContextData, cell.getDisplayedModelElement()/*, cell.isOutputGrayscaleRGBs()*/);
             LookupTable lut = cell.getLookupTable();
             try {
                 rescaleShader.bind();  // TODO: rescaleShader's internal gl may be outdated here...? (but shaders are shared betw. contexts, so if it's outdated, we'll have other problems as well...)
@@ -135,12 +136,28 @@ public class ImageListViewImagePaintController extends CellPaintControllerBase {
                 initializeGLShader(gl);
             }
             rescaleShader.bindUniform("tex", 1);
-            if (lut != null) {
-                LookupTableTextureManager.bindLutTexture(gl, sharedContextData, cell.getLookupTable());
+            if (cell.isOutputGrayscaleRGBs()) {
+                GrayscaleRGBLookupTextureManager.bindGrayscaleRGBLutTexture(gl, GL2.GL_TEXTURE3, sharedContextData, cell.getDisplayedModelElement());
+                rescaleShader.bindUniform("grayscaleRgbTex", 3);
+                rescaleShader.bindUniform("useGrayscaleRGBOutput", true);
+                rescaleShader.bindUniform("useLut", false);
+                rescaleShader.bindUniform("useLutAlphaBlending", false);
+            } else if (lut != null) {
+                LookupTableTextureManager.bindLutTexture(gl, GL2.GL_TEXTURE2, sharedContextData, cell.getLookupTable());
                 rescaleShader.bindUniform("lutTex", 2);
                 rescaleShader.bindUniform("useLut", true);
+                switch (cell.getCompositingMode()) {
+                case CM_BLEND:
+                    rescaleShader.bindUniform("useLutAlphaBlending", true);
+                    break;
+                default:
+                    rescaleShader.bindUniform("useLutAlphaBlending", false);
+                }
+                rescaleShader.bindUniform("useGrayscaleRGBOutput", false);
             } else {
                 rescaleShader.bindUniform("useLut", false);
+                rescaleShader.bindUniform("useLutAlphaBlending", false);
+                rescaleShader.bindUniform("useGrayscaleRGBOutput", false);
             }
             rescaleShader.bindUniform("preScale", texRef.getPreScale());
             rescaleShader.bindUniform("preOffset", texRef.getPreOffset());
@@ -153,6 +170,8 @@ public class ImageListViewImagePaintController extends CellPaintControllerBase {
                 float scale = 1F/ww;
                 float offset = (ww/2-wl)*scale;
                 // HACK HACK: Apply DICOM rescale slope/intercept values if present. TODO: DICOM-specific code doesn't belong here?
+                // TODO: this will cause the "optimal windowing" parameters as calculated by e.g. ImageListViewInitialWindowingController
+                // to produce wrongly windowed images. Happens e.g. with the Charite dental images.
                 ImageListViewModelElement elt = cell.getDisplayedModelElement();
                 if (elt instanceof DicomImageListViewModelElement) {
                     try {
@@ -287,17 +306,29 @@ public class ImageListViewImagePaintController extends CellPaintControllerBase {
         FloatRange pxValuesRange = elt.getPixelValuesRange();
         float minGrayvalue = pxValuesRange.getMin();
         float nGrayvalues = pxValuesRange.getDelta();
-        LinAlg.matrMult1D(new float[]{1.0F/nGrayvalues, minGrayvalue/nGrayvalues}, pixelTransform, pixelTransform);
-        
+        LinAlg.matrMult1D(new float[]{1.0F/nGrayvalues, -minGrayvalue/nGrayvalues}, pixelTransform, pixelTransform);
+
         // window level/width
         float wl = (displayedCell.getWindowLocation() - minGrayvalue) / nGrayvalues;
         float ww = displayedCell.getWindowWidth() / nGrayvalues;
         float scale = 1F/ww;
         float offset = (ww/2-wl)*scale;
         LinAlg.matrMult1D(new float[]{scale, offset}, pixelTransform, pixelTransform);
-        
-        // transformation to output grayscale range ( [0,256) )
-        LinAlg.matrMult1D(new float[]{256, 0}, pixelTransform, pixelTransform);
+
+
+        LookupTable lut = displayedCell.getLookupTable();
+        int lutLength = -1, lutLengthMinus1 = -1;
+        /*if (displayedCell.isOutputGrayscaleRGBs()) {
+            //TODO: perform 12-bit grayscale output in J2D as well
+        } else */if (lut != null) {
+            // transformation to output LUT index
+            lutLength = lut.getRGBAValues().limit() / 4;
+            lutLengthMinus1 = lutLength - 1;
+            LinAlg.matrMult1D(new float[]{lutLength, 0}, pixelTransform, pixelTransform);
+        } else {
+            // transformation to output grayscale range ( [0,256) )
+            LinAlg.matrMult1D(new float[]{256, 0}, pixelTransform, pixelTransform);
+        }
         
         RawImage rimg = elt.getRawImage();
         if (rimg.getPixelFormat() != RawImage.PIXEL_FORMAT_LUMINANCE) {
@@ -305,35 +336,111 @@ public class ImageListViewImagePaintController extends CellPaintControllerBase {
         } else {
             switch (rimg.getPixelType()) {
             // will only window RawImages whose pixelData buffer is a ShortBuffer for now
+            case RawImage.PIXEL_TYPE_UNSIGNED_BYTE:
             case RawImage.PIXEL_TYPE_SIGNED_12BIT:
             case RawImage.PIXEL_TYPE_SIGNED_16BIT:
-            case RawImage.PIXEL_TYPE_UNSIGNED_12BIT:
-            case RawImage.PIXEL_TYPE_UNSIGNED_16BIT:
+            case RawImage.PIXEL_TYPE_UNSIGNED_12BIT: {
                 //TODO: maybe reuse BufferedImages of the same size to relieve the GC
                 float txscale = pixelTransform[0];
                 float txoffset = pixelTransform[1];
+                
                 ShortBuffer srcBuffer = (ShortBuffer) rimg.getPixelData();
+                
                 int w = rimg.getWidth();
                 int h = rimg.getHeight();
                 int index = 0;
                 BufferedImage result = new BufferedImage(w, h, BufferedImage.TYPE_INT_RGB);
                 WritableRaster resultRaster = result.getRaster();
-                for (int y = 0; y < h; y++) {
-                    for (int x = 0; x < w; x++) {
-                        float destGrayValue = txscale * srcBuffer.get(index++) + txoffset;
-                        //clamp
-                        if (destGrayValue < 0) {
-                            destGrayValue = 0;
-                        } else if (destGrayValue >= 256) {
-                            destGrayValue = 255;
+                if (lut != null) {
+                    //separate loop for LUTs to spare one if-then-else in the innermost loop body (the difference is probably neglectible though..)
+                    for (int y = 0; y < h; y++) {
+                        for (int x = 0; x < w; x++) {
+                            int destLutIndex = (int)(txscale * srcBuffer.get(index++) + txoffset);
+                            //clamp
+                            if (destLutIndex < 0) {
+                                destLutIndex = 0;
+                            } else if (destLutIndex >= lutLength) {
+                                destLutIndex = lutLengthMinus1;
+                            }
+                            destLutIndex *= 4; //=> index into the buffer. May have done this with the pixelTransform,
+                            //but would have to convert the result to a multiple of 4 afterwards then, which make it slower
+
+                            // TODO: for better performance, maybe set the whole pixel at once from
+                            //       a pre-computed IntBuffer version of the LUT containing each RGBA quadruple in one int
+                            resultRaster.setSample(x, y, 0, 255 * lut.getRGBAValues().get(destLutIndex));
+                            resultRaster.setSample(x, y, 1, 255 * lut.getRGBAValues().get(destLutIndex + 1));
+                            resultRaster.setSample(x, y, 2, 255 * lut.getRGBAValues().get(destLutIndex + 2));
                         }
-                        resultRaster.setSample(x, y, 0, destGrayValue);
-                        resultRaster.setSample(x, y, 1, destGrayValue);
-                        resultRaster.setSample(x, y, 2, destGrayValue);
+                    }
+                } else {
+                    for (int y = 0; y < h; y++) {
+                        for (int x = 0; x < w; x++) {
+                            float destGrayValue = txscale * srcBuffer.get(index++) + txoffset;
+                            //clamp
+                            if (destGrayValue < 0) {
+                                destGrayValue = 0;
+                            } else if (destGrayValue >= 256) {
+                                destGrayValue = 255;
+                            }
+                            resultRaster.setSample(x, y, 0, destGrayValue);
+                            resultRaster.setSample(x, y, 1, destGrayValue);
+                            resultRaster.setSample(x, y, 2, destGrayValue);
+                        }
                     }
                 }
                 return result;
-                
+            }
+            //...and IntBuffer
+            case RawImage.PIXEL_TYPE_UNSIGNED_16BIT: {
+                //TODO: maybe reuse BufferedImages of the same size to relieve the GC
+                float txscale = pixelTransform[0];
+                float txoffset = pixelTransform[1];
+
+                IntBuffer srcBuffer = (IntBuffer) rimg.getPixelData();
+                int w = rimg.getWidth();
+                int h = rimg.getHeight();
+                int index = 0;
+                BufferedImage result = new BufferedImage(w, h, BufferedImage.TYPE_INT_RGB);
+                WritableRaster resultRaster = result.getRaster();
+                if (lut != null) {
+                    //separate loop for LUTs to spare one if-then-else in the innermost loop body (the difference is probably neglectible though..)
+                    for (int y = 0; y < h; y++) {
+                        for (int x = 0; x < w; x++) {
+                            int destLutIndex = (int)(txscale * srcBuffer.get(index++) + txoffset);
+                            //clamp
+                            if (destLutIndex < 0) {
+                                destLutIndex = 0;
+                            } else if (destLutIndex >= lutLength) {
+                                destLutIndex = lutLengthMinus1;
+                            }
+                            destLutIndex *= 4; //=> index into the buffer. May have done this with the pixelTransform,
+                            //but would have to convert the result to a multiple of 4 afterwards then, which make it slower
+
+                            // TODO: for better performance, maybe set the whole pixel at once from
+                            //       a pre-computed IntBuffer version of the LUT containing each RGBA quadruple in one int
+                            resultRaster.setSample(x, y, 0, 256 * lut.getRGBAValues().get(destLutIndex));
+                            resultRaster.setSample(x, y, 1, 256 * lut.getRGBAValues().get(destLutIndex + 1));
+                            resultRaster.setSample(x, y, 2, 256 * lut.getRGBAValues().get(destLutIndex + 2));
+                        }
+                    }
+                } else {
+                    for (int y = 0; y < h; y++) {
+                        for (int x = 0; x < w; x++) {
+                            float destGrayValue = txscale * srcBuffer.get(index++) + txoffset;
+                            //clamp
+                            if (destGrayValue < 0) {
+                                destGrayValue = 0;
+                            } else if (destGrayValue >= 256) {
+                                destGrayValue = 255;
+                            }
+                            resultRaster.setSample(x, y, 0, destGrayValue);
+                            resultRaster.setSample(x, y, 1, destGrayValue);
+                            resultRaster.setSample(x, y, 2, destGrayValue);
+                        }
+                    }
+                }
+                return result;
+            }
             default:
                 return null;
             }

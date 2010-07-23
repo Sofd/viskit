@@ -1,0 +1,73 @@
+- Refactoring: Vorl. Entwurf neue Klassenhierarchie
+
+interface ImageListView {
+
+    [alle öffentlichen, backend-unabh. Methoden der jetzigen JImageListView]
+
+    [die benutzten Event-Klassen etc. können wohl weiterhin die
+    Swing/AWT-basierten (MouseEvent etc.) sein, da sie auch ohne
+    Swing/AWT funktionieren sollten]
+
+}
+
+
+class ImageListViewImpl implements ImageListView {
+    [möglichst viele Methoden backend-unabhängig impl., Fassaden für
+    backend-abh. Funktionalität bereitstellen]
+}
+
+
+class JGridImageListView extends JPanel implements ImageListView {
+
+    private ImageListViewImpl ilvDelegate = new ImageListViewImpl();
+
+    [AWT/Swing-spezifische Funktionalität hier, für alles andere an
+    ilvDelegate delegieren oder von ilvDelegate aufgerufen werden]
+
+}
+
+class JGLImageListView extends JPanel implements ImageListView {
+
+    (brauchen wir die noch?)
+
+    private ImageListViewImpl ilvDelegate = new ImageListViewImpl();
+
+    [OpenGL/JOGL-spezifische Funktionalität hier, für alles andere an
+    ilvDelegate delegieren oder von ilvDelegate aufgerufen werden]
+
+}
+
+class TWLImageListView extends de.matthiasmann.twl.Widget implements ImageListView {
+
+    private ImageListViewImpl ilvDelegate = new ImageListViewImpl();
+
+    [TWL/LWJGL-spezifische Funktionalität hier, für alles andere an
+    ilvDelegate delegieren oder von ilvDelegate aufgerufen werden]
+
+}
+
+
+- Um LWJGL-Rendering zu unterstützen, müssen
+  ImageListViewCellPaintEvent, ViskitGC etc. um passende
+  LWJGL-Methoden und -Artefakte erweitert werden,
+  z.B. ViskitGC#isLwjglAvailable(),
+  ImageListViewCellPaintListener#lwjglDrawableInitialized() etc.
+
+
+- Blick auf evtl. spätere Portierung auf WebGL: kann man es schaffen,
+  möglichst viel Funktionalität unabhängig von UI-Toolkits zu
+  implementieren und in separate Klassen (ImageListViewImpl,
+  mglw. auch andere) auszulagern, die man später z.B. mit GWT nach
+  Javascript übersetzen kann?
+
+- GL-Funktionalität raus aus JGridImageListView (wird nicht mehr
+  benutzt, seit es JGLImageListView gibt)
+
+- Ggf. auch Dinge wie Grid- und List-View-Präsentation
+  (Layoutberechnungen) backend-unabhängig implementieren (=>
+  mglw. keine Benutzung von JGridList in JGridImageListView mehr,
+  statt dessen alles selber malen, ähnlich wie in
+  JGLImageListView. JGridImageListView sollte auch umbenannt werden,
+  sobald es nicht mehr nur Grid-Präsentation unterstützt)
+
+- JListImageListView kann dann wahrscheinlich raus

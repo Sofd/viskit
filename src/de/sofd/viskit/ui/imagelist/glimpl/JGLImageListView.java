@@ -56,7 +56,7 @@ import de.sofd.viskit.ui.imagelist.event.cellpaint.ImageListViewCellPaintEvent;
 import de.sofd.viskit.ui.imagelist.event.cellpaint.ImageListViewCellPaintListener;
 
 /**
- * JImageListView implementation that paints all cells onto a single aggreagated
+ * JImageListView implementation that paints all cells onto a single aggregated
  * {@link GLCanvas}.
  *
  * @author Sofd GmbH
@@ -85,12 +85,15 @@ public class JGLImageListView extends JImageListView {
         if (instances.isEmpty() || sharedContextData.getGlContext() != null) {
             createGlCanvas();
         }
+
         instances.add(this);
         setScaleMode(new MyScaleMode(2, 2));
         scrollBar = new JScrollBar(JScrollBar.VERTICAL);
         this.add(scrollBar, BorderLayout.EAST);
         scrollBar.getModel().addChangeListener(scrollbarChangeListener);
+
         setSelectionModel(new DefaultListSelectionModel());
+
     }
 
     private void createGlCanvas() {
@@ -472,18 +475,9 @@ public class JGLImageListView extends JImageListView {
                         // draw cell
                         ViskitGC gc = new ViskitGC(gl);
                         
-                        // call paint listeners for stuff below the image in the z order
-                        // Eventually all painting, including the image and ROIs, should happen in PaintListeners
+                        // call all CellPaintListeners in the z-order
                         fireCellPaintEvent(new ImageListViewCellPaintEvent(cell, gc, null, sharedContextData.getAttributes()),
-                                           Integer.MIN_VALUE, JImageListView.PAINT_ZORDER_IMAGE + 1);
-    
-                        //paintImage(cell, gc);
-                        
-                        paintRois(cell, gc);
-                        
-                        // stuff above the ROIs in the z order
-                        fireCellPaintEvent(new ImageListViewCellPaintEvent(cell, gc, null, sharedContextData.getAttributes()),
-                                           JImageListView.PAINT_ZORDER_ROI + 1, Integer.MAX_VALUE);
+                                Integer.MIN_VALUE, Integer.MAX_VALUE);
                     } catch (Exception e) {
                         logger.error("error displaying " + cell.getDisplayedModelElement(), e);
                     } finally {
@@ -498,7 +492,13 @@ public class JGLImageListView extends JImageListView {
             //gl.glPopMatrix();
         }
 
-        
+        /**
+         * ROI painting. TODO: Move this into a paint listener, just like the
+         * other painting jobs (image, overlay texts).
+         * 
+         * @param cell
+         * @param gc
+         */
         private void paintRois(ImageListViewCell cell, ViskitGC gc) {
             GL2 gl = gc.getGl().getGL2();
             gl.glPushMatrix();
@@ -518,8 +518,15 @@ public class JGLImageListView extends JImageListView {
             }
         }
 
+        int lastX=-1, lastY=-1, lastW=-1, lastH=-1;
+
         @Override
         public void reshape(GLAutoDrawable glAutoDrawable, int x, int y, int width, int height) {
+            if (x==lastX && y==lastY && width==lastW && height==lastH) {
+                //sometimes OSX issues spurious reshape() calls when the size hasn't changed at all
+                return;
+            }
+            lastX = x; lastY = y; lastW = width; lastH = height;
             GL2 gl = (GL2) glAutoDrawable.getGL();
             setupEye2ViewportTransformation(gl);
             Runnable r = new Runnable() {

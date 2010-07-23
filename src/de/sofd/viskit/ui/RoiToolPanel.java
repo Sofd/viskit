@@ -139,4 +139,32 @@ public class RoiToolPanel extends javax.swing.JPanel {
     // End of variables declaration//GEN-END:variables
 
     static final Logger log4jLogger = Logger.getLogger(RoiToolPanel.class);
+
+    /**
+     * @return the ellipseToggleButton
+     */
+    public javax.swing.JToggleButton getEllipseToggleButton() {
+        return ellipseToggleButton;
+    }
+
+    /**
+     * @return the polygonToggleButton
+     */
+    public javax.swing.JToggleButton getPolygonToggleButton() {
+        return polygonToggleButton;
+    }
+
+    /**
+     * @return the rectangleToggleButton
+     */
+    public javax.swing.JToggleButton getRectangleToggleButton() {
+        return rectangleToggleButton;
+    }
+
+    /**
+     * @return the selectorToggleButton
+     */
+    public javax.swing.JToggleButton getSelectorToggleButton() {
+        return selectorToggleButton;
+    }
 }

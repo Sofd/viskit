@@ -16,26 +16,6 @@ public class ImageUtil {
         return (float) Math.min(Math.max(value, min), max);
     }
 
-    public static Histogram getHistogram(ShortBuffer buffer, ShortRange range, int size) {
-        int[] freqs = new int[size];
-
-        for (int i = 0; i < size; ++i)
-            freqs[i] = 0;
-
-        short rangeMin = range.getMin();
-        int rangeDelta = range.getDelta();
-        int bufferSize = buffer.capacity();
-
-        for (int i = 0; i < bufferSize; ++i) {
-            short value = buffer.get(i);
-            int freqIndex = ((value - rangeMin) * (size - 1)) / rangeDelta;
-
-            freqs[freqIndex]++;
-        }
-
-        return new Histogram(freqs, range);
-    }
-
     public static IntBuffer getIntegralTable(FloatBuffer tfRGBABuffer) {
         long time1 = System.currentTimeMillis();
 

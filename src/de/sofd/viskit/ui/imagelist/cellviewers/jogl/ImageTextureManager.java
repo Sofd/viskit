@@ -136,6 +136,8 @@ public class ImageTextureManager {
         TextureRefStore texRefStore = (TextureRefStore) cd.getAttribute(TEX_STORE);
         TextureRef texRef = texRefStore.getTexRef(elt);
         
+        //TODO unsigned 16 bit?
+
         if (null == texRef) {
             logger.info("need to create texture for: " + elt.getImageKey());
             Texture imageTexture = null;

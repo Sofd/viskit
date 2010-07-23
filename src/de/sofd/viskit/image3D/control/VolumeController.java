@@ -11,11 +11,12 @@ import de.sofd.viskit.image3D.jogl.view.*;
 public class VolumeController implements ChangeListener, ActionListener {
     protected GPUVolumeView volumeView;
 
-    protected VolumeObject volumeObject;
-
-    public VolumeController(GPUVolumeView volumeView, VolumeObject volumeObject) {
+    public VolumeController(GPUVolumeView volumeView) {
         this.volumeView = volumeView;
-        this.volumeObject = volumeObject;
+    }
+    
+    protected VolumeObject getVolumeObject() {
+        return volumeView.getVolumeObject();
     }
 
     @Override
@@ -23,30 +24,30 @@ public class VolumeController implements ChangeListener, ActionListener {
         final JSlider slider = (JSlider) event.getSource();
 
         if ("Slices :".equals(slider.getName()) ) {
-            volumeObject.getVolumeConfig().getRenderConfig().setSlices(slider.getValue());
+            getVolumeObject().getVolumeConfig().getRenderConfig().setSlices(slider.getValue());
         } else if ("Alpha :".equals(slider.getName()) ) {
-            volumeObject.getVolumeConfig().getRenderConfig().setAlpha(slider.getValue() / 1000.0f);
+            getVolumeObject().getVolumeConfig().getRenderConfig().setAlpha(slider.getValue() / 1000.0f);
         } else if ("Ambient :".equals(slider.getName())) {
-            volumeObject.getVolumeConfig().getLightingConfig().setAmbient(slider.getValue() / 1000.0f);
+            getVolumeObject().getVolumeConfig().getLightingConfig().setAmbient(slider.getValue() / 1000.0f);
         } else if ("Diffuse :".equals(slider.getName())) {
-            volumeObject.getVolumeConfig().getLightingConfig().setDiffuse(slider.getValue() / 1000.0f);
+            getVolumeObject().getVolumeConfig().getLightingConfig().setDiffuse(slider.getValue() / 1000.0f);
         } else if ("Specular exponent :".equals(slider.getName())) {
-            volumeObject.getVolumeConfig().getLightingConfig().setSpecularExponent(slider.getValue());
+            getVolumeObject().getVolumeConfig().getLightingConfig().setSpecularExponent(slider.getValue());
         } else if ("Gradient length :".equals(slider.getName())) {
-            volumeObject.getVolumeConfig().getLightingConfig().setGradientLength(slider.getValue() / 1000.0f);
+            getVolumeObject().getVolumeConfig().getLightingConfig().setGradientLength(slider.getValue() / 1000.0f);
 
             if (!slider.getValueIsAdjusting())
-                volumeObject.setUpdateGradientTexture(true);
+                getVolumeObject().setUpdateGradientTexture(true);
         } else if ("Gradient limit :".equals(slider.getName())) {
-            volumeObject.getVolumeConfig().getLightingConfig().setGradientLimit(slider.getValue() / 10000.0f);
+            getVolumeObject().getVolumeConfig().getLightingConfig().setGradientLimit(slider.getValue() / 10000.0f);
         } else if ("Normal diff :".equals(slider.getName())) {
-            volumeObject.getVolumeConfig().getLightingConfig().setnDiff(slider.getValue() / 100.0f);
+            getVolumeObject().getVolumeConfig().getLightingConfig().setnDiff(slider.getValue() / 100.0f);
         } else if ("Light Pos :".equals(slider.getName())) {
-            volumeObject.getVolumeConfig().getLightingConfig().setLightPos(slider.getValue() / 100.0f);
+            getVolumeObject().getVolumeConfig().getLightingConfig().setLightPos(slider.getValue() / 100.0f);
         } else if ("Interactive Quality :".equals(slider.getName())) {
-            volumeObject.getVolumeConfig().getRenderConfig().setInteractiveQuality(slider.getValue() / 1000.0f);
+            getVolumeObject().getVolumeConfig().getRenderConfig().setInteractiveQuality(slider.getValue() / 1000.0f);
         } else if ("Final Quality :".equals(slider.getName())) {
-            volumeObject.getVolumeConfig().getRenderConfig().setFinalQuality(slider.getValue() / 1000.0f);
+            getVolumeObject().getVolumeConfig().getRenderConfig().setFinalQuality(slider.getValue() / 1000.0f);
         }
         
         if ( ! slider.getValueIsAdjusting() )
@@ -62,11 +63,11 @@ public class VolumeController implements ChangeListener, ActionListener {
         String cmd = e.getActionCommand();
 
         if ("Smooth filtering :".equals(cmd)) {
-            volumeObject.getVolumeConfig().getSmoothingConfig().setEnabled(((JCheckBox) e.getSource()).isSelected());
+            getVolumeObject().getVolumeConfig().getSmoothingConfig().setEnabled(((JCheckBox) e.getSource()).isSelected());
 
             volumeView.display(true);
         } else if ("Lighting :".equals(cmd)) {
-            volumeObject.getVolumeConfig().getLightingConfig().setEnabled(((JCheckBox) e.getSource()).isSelected());
+            getVolumeObject().getVolumeConfig().getLightingConfig().setEnabled(((JCheckBox) e.getSource()).isSelected());
 
             volumeView.display(true);
         }

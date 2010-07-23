@@ -1,18 +1,24 @@
 package de.sofd.viskit.image;
 
-import java.io.*;
+import java.io.File;
+import java.io.IOException;
 import java.net.URL;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.TreeMap;
 
 import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
-import org.dcm4che2.data.*;
+import org.dcm4che2.data.BasicDicomObject;
+import org.dcm4che2.data.DicomObject;
+import org.dcm4che2.data.Tag;
 import org.dcm4che2.io.DicomInputStream;
 import org.dcm4che2.io.StopTagInputHandler;
 
-import de.sofd.util.*;
-import de.sofd.util.properties.*;
-import de.sofd.viskit.image3D.model.*;
+import de.sofd.util.DoubleDimension3D;
+import de.sofd.util.ProgressReportage;
+import de.sofd.util.properties.ExtendedProperties;
+import de.sofd.viskit.image3D.model.VolumeBasicConfig;
+import de.sofd.viskit.image3D.model.VolumeConfig;
 
 /**
  * 
@@ -85,16 +91,32 @@ public class DicomInputOutput {
 
     public static ArrayList<DicomObject> readDir(String dirPath,
             String seriesInstanceUID) throws Exception {
-        return readDir(dirPath, seriesInstanceUID, 1);
+        return readDir(dirPath, seriesInstanceUID, 1, null);
+    }
+
+    public static ArrayList<DicomObject> readDir(String dirPath,
+            String seriesInstanceUID, ProgressReportage progressReport) throws Exception {
+        return readDir(dirPath, seriesInstanceUID, 1, progressReport);
     }
 
     public static ArrayList<DicomObject> readDir(String dirPath,
             String seriesInstanceUID, int stride) throws Exception {
-        return readDir(dirPath, seriesInstanceUID, 0, Integer.MAX_VALUE, stride);
+        return readDir(dirPath, seriesInstanceUID, 0, Integer.MAX_VALUE, stride, null);
+    }
+
+    public static ArrayList<DicomObject> readDir(String dirPath,
+            String seriesInstanceUID, int stride, ProgressReportage progressReport) throws Exception {
+        return readDir(dirPath, seriesInstanceUID, 0, Integer.MAX_VALUE, stride, progressReport);
     }
 
     public static ArrayList<DicomObject> readDir(String dirPath,
             String seriesInstanceUID, int firstSlice, int lastSlice, int stride)
+            throws Exception {
+        return readDir(dirPath, seriesInstanceUID, firstSlice, lastSlice, stride, null);
+    }
+    
+    public static ArrayList<DicomObject> readDir(String dirPath,
+            String seriesInstanceUID, int firstSlice, int lastSlice, int stride, ProgressReportage progressReport)
             throws Exception {
         if (stride <= 0)
             throw new Exception("stride have to be a positive number!");
@@ -106,11 +128,18 @@ public class DicomInputOutput {
         if (!dir.isDirectory())
             throw new IOException("no directory : " + dirPath);
 
-        System.out.println("files : " + dir.listFiles().length);
+        int count = dir.listFiles().length;
+        System.out.println("files : " + count);
+        int iFile = 0;
         for (File file : dir.listFiles()) {
             if (file.isDirectory() || !file.getPath().toLowerCase().endsWith(".dcm"))
                 continue;
 
+            if (null != progressReport) {
+                progressReport.setProgress(100*iFile/count);
+            }
+            ++iFile;
+            
             DicomInputStream dis = new DicomInputStream(file);
 
             dis.setHandler(new StopTagInputHandler(Tag.PixelData));
@@ -147,8 +176,7 @@ public class DicomInputOutput {
                 dicomSeries.values());
 
         if (dicomList.isEmpty()) {
-            System.out.println("no dicom images");
-            System.exit(-1);
+            throw new IOException("no dicom images");
         }
         
         System.out.println("files read : " + dicomList.size());

@@ -40,6 +40,11 @@ public interface RawImage {
     public Buffer getPixelData();
 
     /**
+     * Unsupported pixel format
+     */
+    public static final int PIXEL_FORMAT_NOT_SUPPORTED = -1;
+
+    /**
      * Each pixel in getPixelData() consists of one
      * element of type getPixelType(), containing the luminance value
      */
@@ -50,6 +55,11 @@ public interface RawImage {
      * elements of type getPixelType(), containing the R, G and B values
      */
     public static final int PIXEL_FORMAT_RGB = 2;
+
+    /**
+     * Unsupported pixel type
+     */
+    public static final int PIXEL_TYPE_NOT_SUPPORTED = -1;
 
     /**
      * stored in bytes. getPixelData() instanceof ByteBuffer
@@ -72,7 +82,7 @@ public interface RawImage {
     public static final int PIXEL_TYPE_SIGNED_16BIT = 4;
 
     /**
-     * stored in shorts. getPixelData() instanceof ShortBuffer
+     * stored in ints. getPixelData() instanceof IntBuffer
      */
     public static final int PIXEL_TYPE_UNSIGNED_16BIT = 5;
 }
