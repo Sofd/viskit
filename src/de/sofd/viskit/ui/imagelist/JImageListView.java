@@ -145,6 +145,7 @@ public abstract class JImageListView extends JPanel {
             for (int i = e.getIndex0(); i <= e.getIndex1(); i++) {
                 ImageListViewModelElement elt = (ImageListViewModelElement) getModel().getElementAt(i);
                 if (! cellsByElementMap.containsKey(elt)) {
+                    elt.addPropertyChangeListener(modelElementPropertyChangeEventForwarder);
                     ImageListViewCell cell = createCell(elt);
                     cellsByElementMap.put(elt, cell);
                     newElements = true;
@@ -162,6 +163,7 @@ public abstract class JImageListView extends JPanel {
                 if (cellsByElementMap.containsKey(elt)) {
                     throw new IllegalStateException("JImageListView doesn't support adding the same model element (" + elt + ") more than once");
                 }
+                elt.addPropertyChangeListener(modelElementPropertyChangeEventForwarder);
                 ImageListViewCell cell = createCell(elt);
                 cellsByElementMap.put(elt, cell);
             }
@@ -217,6 +219,7 @@ public abstract class JImageListView extends JPanel {
             beforeCellRemoval(cell, elt);
             cellsByElementMap.remove(elt);
             cellToIndexMap.remove(cell);
+            elt.removePropertyChangeListener(modelElementPropertyChangeEventForwarder);
         }
     }
 
@@ -401,6 +404,16 @@ public abstract class JImageListView extends JPanel {
         }
     };
 
+    private PropertyChangeListener modelElementPropertyChangeEventForwarder = new PropertyChangeListener() {
+        @Override
+        public void propertyChange(PropertyChangeEvent evt) {
+            if (ImageListViewModelElement.PROP_INITIALIZATIONSTATE.equals(evt.getPropertyName())) {
+                refreshCellForElement((ImageListViewModelElement)evt.getSource());
+            }
+            JImageListView.this.fireModelElementPropertyChangeEvent(evt);
+        }
+    };
+
     public ImageListViewCell getCellFor(ImageListViewModelElement modelElement) {
         return cellsByElementMap.get(modelElement);
     }
@@ -410,6 +423,7 @@ public abstract class JImageListView extends JPanel {
             ImageListViewCell cell = cellsByElementMap.get(elt);
             fireImageListViewEvent(new ImageListViewCellRemoveEvent(this, cell));
             beforeCellRemoval(cell, elt);
+            elt.removePropertyChangeListener(modelElementPropertyChangeEventForwarder);
         }
         cellsByElementMap.clear();
     }
@@ -417,6 +431,7 @@ public abstract class JImageListView extends JPanel {
     private void fillCellsByElementMap() {
         for (int i = 0; i < getModel().getSize(); i++) {
             ImageListViewModelElement elt = (ImageListViewModelElement) getModel().getElementAt(i);
+            elt.addPropertyChangeListener(modelElementPropertyChangeEventForwarder);
             ImageListViewCell cell = createCell(elt);
             cellsByElementMap.put(elt, cell);
         }
@@ -901,6 +916,32 @@ public abstract class JImageListView extends JPanel {
     }
 
 
+    private Collection<PropertyChangeListener> modelElementPropertyChangeListeners =
+        new ArrayList<PropertyChangeListener>();
+
+    /**
+     * Add a PropertyChangeListener that receives property change events for all
+     * properties of all model elements of this list. This is a convenient way
+     * to be informed of all such property changes without having to manually
+     * add listeners to all model elements (and track elements being
+     * added/removed to the list, and correctly add/remove the listeners to
+     * them). This method takes care of all that internally.
+     * 
+     * @param listener
+     */
+    public void addModelElementPropertyChangeListener(PropertyChangeListener listener) {
+        modelElementPropertyChangeListeners.add(listener);
+    }
+    
+    public void removeModelElementPropertyChangeListener(PropertyChangeListener listener) {
+        modelElementPropertyChangeListeners.remove(listener);
+    }
+    
+    protected void fireModelElementPropertyChangeEvent(PropertyChangeEvent e) {
+        for (PropertyChangeListener l : modelElementPropertyChangeListeners) {
+            l.propertyChange(e);
+        }
+    }
 
     /**
      * Add a MouseListener that receives mouse events for all cells of this list.
@@ -1103,8 +1144,6 @@ public abstract class JImageListView extends JPanel {
      * Paint z-order at which the image is normally drawn. Numerical value is 10, which
      * is the lowest of all the PAINT_ZORDER_* constants, so the image will normally be drawn
      * at the bottom of anything else (i.e., everything else will be drawn on top).
-     * 
-     * (TODO: not implemented)
      */
     public static final int PAINT_ZORDER_IMAGE = 10;
 

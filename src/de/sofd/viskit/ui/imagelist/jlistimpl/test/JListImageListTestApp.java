@@ -15,6 +15,7 @@ import java.beans.PropertyChangeListener;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
@@ -65,6 +66,7 @@ import de.sofd.viskit.controllers.ImageListViewZoomPanApplyToAllController;
 import de.sofd.viskit.controllers.MultiILVSyncSetController;
 import de.sofd.viskit.controllers.MultiImageListViewController;
 import de.sofd.viskit.controllers.cellpaint.ImageListViewImagePaintController;
+import de.sofd.viskit.controllers.cellpaint.ImageListViewInitStateIndicationPaintController;
 import de.sofd.viskit.controllers.cellpaint.ImageListViewPrintLUTController;
 import de.sofd.viskit.controllers.cellpaint.ImageListViewPrintTextToCellsController;
 import de.sofd.viskit.controllers.cellpaint.ImageListViewRoiPaintController;
@@ -101,6 +103,11 @@ public class JListImageListTestApp {
     private ModelFactory factory = new DicomModelFactory(new IntuitiveFileNameComparator(),true,"/home/honglinh/Desktop/cache.txt");;
     
 
+    /**
+     * for accessing objects and data of this app from Beanshell or other debugging environments
+     */
+    public static Map<String, Object> debugObjects = new HashMap<String, Object>();
+    
     public JListImageListTestApp() throws Exception {
         GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
         GraphicsDevice[] gs = ge.getScreenDevices();
@@ -112,7 +119,11 @@ public class JListImageListTestApp {
         //// creating them like this apparently works better
         //JFrame f1 = newSingleListFrame("Viskit ImageList test app window 1", null);
 //        JFrame f2 = newSingleListFrame("Viskit ImageList test app window 2", null);
+        //debugObjects.put("slfs", new JFrame[]{f1,f2});
         JFrame f2 = newMultiListFrame("Multi-List frame", null);
+        debugObjects.put("mlf", f2);
+
+        debugObjects.put("f", f2);
     }
     
     public JFrame newSingleListFrame(String frameTitle, GraphicsConfiguration graphicsConfig) throws Exception {
@@ -137,8 +148,7 @@ public class JListImageListTestApp {
 
         final JImageListView viewer;
         //viewer = newJListImageListView();
-        //viewer = newJGridImageListView(true);
-//        viewer = newJGridImageListView(false);
+        //viewer = newJGridImageListView();
         viewer = newJGLImageListView();
         
         new ImageListViewInitialWindowingController(viewer).setEnabled(true);
@@ -316,6 +326,8 @@ public class JListImageListTestApp {
         
         new ImageListViewRoiPaintController(viewer).setEnabled(true);
         
+        new ImageListViewInitStateIndicationPaintController(viewer);
+
         ImageListViewSelectionScrollSyncController sssc = new ImageListViewSelectionScrollSyncController(viewer);
         sssc.setScrollPositionTracksSelection(true);
         sssc.setSelectionTracksScrollPosition(true);
@@ -406,6 +418,8 @@ public class JListImageListTestApp {
         factory.addModel("2", new File("/home/honglinh/Desktop/cd800__center4001"));
         
         List<ListModel> listModels = new ArrayList<ListModel>();
+        debugObjects.put("listModels", listModels);
+        
         //listModels.add(getViewerListModelForDirectory(new File("/home/olaf/headvolume")));
         //listModels.add(getViewerListModelForDirectory(new File("/home/olaf/oliverdicom/series1")));
         //listModels.add(getViewerListModelForDirectory(new File("/home/olaf/oliverdicom/INCISIX")));
@@ -451,9 +465,15 @@ public class JListImageListTestApp {
 //        listModels.add(getViewerListModelForDirectory(new File("/home/olaf/hieronymusr/br312043/images/cd800__center4001")));
 //        listModels.add(getViewerListModelForDirectory(new File("/home/olaf/hieronymusr/br312043/images/cd801__center4001")));
         
+
+        //listModels.add(StaticModelFactory.createModelFromDir(new File("/home/olaf/hieronymusr/br312043/images/cd801__center4001")));
+        //listModels.add(StaticModelFactory.createModelFromDir(new File("/home/olaf/hieronymusr/br312046/images/cd00908__center10101")));
+        //listModels.add(factory.createModelFromDir(new File("/home/olaf/hieronymusr/br312046/images/cd00907__center10102")));
+        //listModels.add(factory.createModelFromDir(new File("/shares/projects/schering/312043/Florbetaben Training Images/S7/IMAGE")));
+        
         final long t01 = System.currentTimeMillis();
 
-        System.out.println("model creation took " + (t01-t00) + " ms.");
+        System.out.println("creation of all models took " + (t01-t00) + " ms.");
 
         List<JImageListView> lists = new ArrayList<JImageListView>();
         
@@ -464,6 +484,8 @@ public class JListImageListTestApp {
             lnum++;
             final long t0 = System.currentTimeMillis();
             final ListViewPanel lvp = new ListViewPanel();
+            debugObjects.put("lvp" + lnum, lvp);
+            debugObjects.put("lv" + lnum, lvp.getListView());
             lvp.setPixelValueRange(factory.getPixelRange(lnum+""));
             // initialization performance measurement: add a cell paint listener
             // to take the time when a cell in the list is first drawn,
@@ -475,7 +497,7 @@ public class JListImageListTestApp {
                 public void onCellPaint(ImageListViewCellPaintEvent e) {
                     if (t1 == -1) {
                         t1 = System.currentTimeMillis();
-                        System.out.println("list " + lnumCaptured[0] + " UI coming up after " + (t1-t0) + " ms.");
+                        System.out.println("list " + lnumCaptured[0] + " UI coming up after " + (t1-t0) + " ms (" + (t1-t01) + " ms after creation of all models, " + (t1-t00) + " ms after startup)");
                     }
                 }
                 @Override
@@ -491,7 +513,7 @@ public class JListImageListTestApp {
             });
             lvp.getListView().setModel(lm);
             long t1 = System.currentTimeMillis();
-            System.out.println("list " + lnum + ": list.setModell() took " + (t1-t0) + " ms.");
+            System.out.println("list " + lnum + ": list.setModel() took " + (t1-t0) + " ms.");
             listsPanel.add(lvp);
             lists.add(lvp.getListView());
             for (final Color c : syncColors) {
@@ -554,7 +576,7 @@ public class JListImageListTestApp {
         public ListViewPanel() {
             this.setLayout(new BorderLayout());
 //            listView = newJGLImageListView();
-            listView = newJGridImageListView(false);
+            listView = newJGridImageListView();
             this.add(listView, BorderLayout.CENTER);
             new ImageListViewInitialWindowingController(listView) {
                 @Override
@@ -612,6 +634,8 @@ public class JListImageListTestApp {
             plutc.setEnabled(true);
             
             new ImageListViewRoiPaintController(listView).setEnabled(true);
+            
+            new ImageListViewInitStateIndicationPaintController(listView);
 
             new ImageListViewMouseMeasurementController(listView).setEnabled(true);
 
@@ -792,12 +816,9 @@ public class JListImageListTestApp {
         return viewer;
     }
     
-    protected JGridImageListView newJGridImageListView(boolean useOpenglRenderer) {
+    protected JGridImageListView newJGridImageListView() {
         final JGridImageListView viewer = new JGridImageListView();
         viewer.setScaleMode(JGridImageListView.MyScaleMode.newCellGridMode(2, 2));
-        if (useOpenglRenderer) {
-            ((JGridImageListView) viewer).setRendererType(JGridImageListView.RendererType.OPENGL);
-        }
         viewer.setSelectionModel(new DefaultBoundedListSelectionModel());
         return viewer;
     }
@@ -839,7 +860,7 @@ public class JListImageListTestApp {
         //System.out.println("press enter..."); System.in.read();   // use when profiling startup performance
         System.out.println("go");
         BasicConfigurator.configure();
-        SwingUtilities.invokeLater(new Runnable() {
+        SwingUtilities.invokeAndWait(new Runnable() {  //invokeAndWait so a beanshell script etc. that calls us doesn't have a race
 
             @Override
             public void run() {
