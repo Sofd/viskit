@@ -115,7 +115,7 @@ public class DicomModelFactory extends ModelFactory {
 
     @Override
     protected void addElementToModel(DefaultListModel model, Object obj) {
-        DicomImageListViewModelElement element = createDicomImageListViewModelElement(obj, 0);
+        DicomImageListViewModelElement element = createDicomImageListViewModelElement(obj);
         model.addElement(element);
         if (supportMultiframes) {
             int numFrames = element.getTotalFrameNumber();
@@ -127,6 +127,10 @@ public class DicomModelFactory extends ModelFactory {
                 }
             }
         }
+    }
+
+    protected DicomImageListViewModelElement createDicomImageListViewModelElement(Object f) {
+        return new FileBasedDicomImageListViewModelElement((File) f);  //variant without frameNumber avoids reading the DICOM, which can increase model creation speed 10x
     }
 
     protected DicomImageListViewModelElement createDicomImageListViewModelElement(Object f, int frameNumber) {
