@@ -98,48 +98,103 @@ import de.sofd.viskit.util.DicomUtil;
  */
 public class JListImageListTestApp {
     
-    private ModelFactory factory = new DicomModelFactory(new IntuitiveFileNameComparator(),true,"/home/honglinh/Desktop/cache.txt");;
+    public static boolean isUser(String userName) {
+        return userName.equals(System.getProperty("user.name"));
+    }
     
+    public static boolean isUserFokko() {
+        return isUser("fokko");
+    }
 
+    public static boolean isUserHonglinh() {
+        return isUser("honglinh");
+    }
+
+    public static boolean isUserOlaf() {
+        return isUser("olaf");
+    }
+    
+    private ModelFactory factory;
+    
     public JListImageListTestApp() throws Exception {
-        GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
-        GraphicsDevice[] gs = ge.getScreenDevices();
-        
-        //// creating the frames as follows reproduces OpenGL event handling bugs under Linux/nVidia
-        //JFrame f1 = newFrame("Viskit ImageList test app window 1", gs[0].getDefaultConfiguration());
-        //JFrame f2 = newFrame("Viskit ImageList test app window 2", (gs.length > 1 ? gs[1].getDefaultConfiguration() : null));
+        if (isUserHonglinh()) {
+            factory = new DicomModelFactory(new IntuitiveFileNameComparator(),true,"/home/honglinh/Desktop/cache.txt");;
+            //JFrame f1 = newSingleListFrame("Viskit ImageList test app window 1", null);
+            //JFrame f2 = newSingleListFrame("Viskit ImageList test app window 2", null);
+            JFrame f2 = newMultiListFrame("Multi-List frame", null);
+        } else if (isUserFokko()) {
+            factory = new DicomModelFactory(new IntuitiveFileNameComparator(), true, System.getProperty("user.home") + File.separator + "viskit-model-cache.txt");
+            //JFrame f1 = newSingleListFrame("Viskit ImageList test app window 1", null);
+            //JFrame f2 = newSingleListFrame("Viskit ImageList test app window 2", null);
+            JFrame f2 = newMultiListFrame("Multi-List frame", null);
+        } else if (isUserOlaf()) {
+            factory = new DicomModelFactory(new IntuitiveFileNameComparator(), false, System.getProperty("user.home") + File.separator + "viskit-model-cache.txt");
+            GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
+            GraphicsDevice[] gs = ge.getScreenDevices();
+            
+            //// creating the frames as follows reproduces OpenGL event handling bugs under Linux/nVidia
+            //JFrame f1 = newFrame("Viskit ImageList test app window 1", gs[0].getDefaultConfiguration());
+            //JFrame f2 = newFrame("Viskit ImageList test app window 2", (gs.length > 1 ? gs[1].getDefaultConfiguration() : null));
 
-        //// creating them like this apparently works better
-        //JFrame f1 = newSingleListFrame("Viskit ImageList test app window 1", null);
-//        JFrame f2 = newSingleListFrame("Viskit ImageList test app window 2", null);
-        JFrame f2 = newMultiListFrame("Multi-List frame", null);
+            //// creating them like this apparently works better
+            //JFrame f1 = newSingleListFrame("Viskit ImageList test app window 1", null);
+            //JFrame f2 = newSingleListFrame("Viskit ImageList test app window 2", null);
+            JFrame f2 = newMultiListFrame("Multi-List frame", null);
+        } else {
+            factory = new DicomModelFactory(new IntuitiveFileNameComparator(), true, System.getProperty("user.home") + File.separator + "viskit-model-cache.txt");
+            //JFrame f1 = newSingleListFrame("Viskit ImageList test app window 1", null);
+            //JFrame f2 = newSingleListFrame("Viskit ImageList test app window 2", null);
+            JFrame f2 = newMultiListFrame("Multi-List frame", null);
+        }
+        
     }
     
     public JFrame newSingleListFrame(String frameTitle, GraphicsConfiguration graphicsConfig) throws Exception {
-        //ModelFactory factory = new DicomModelFactory(new IntuitiveFileNameComparator(), false);  //use this if you know (e.g. in a reading) that there are no multi-frame DICOMs in the set (much speedier)
+        if (isUserHonglinh()) {
+//            final DefaultListModel model = StaticModelFactory.createModelFromDir(new File("/home/honglinh/Desktop/dicomfiles1"));
+            factory.addModel("1", new File("/home/honglinh/Desktop/multiframedicoms"));
+        } else if (isUserFokko()) {
+        } else if (isUserOlaf()) {
+            //final DefaultListModel model = getTestImageViewerListModel();
+            //final DefaultListModel model = getViewerListModelForDirectory(new File("/home/olaf/gi/resources/DICOM-Testbilder/1578"));
+            factory.addModel("1", new File("/home/olaf/gi/Images/cd00900__center10102"));
+            //final DefaultListModel model = getViewerListModelForDirectory(new File("/home/olaf/gi/Images/cd00900__center10102"));
 
-        //final DefaultListModel model = getTestImageViewerListModel();
-        //final DefaultListModel model = getViewerListModelForDirectory(new File("/home/olaf/gi/resources/DICOM-Testbilder/1578"));
-        //final DefaultListModel model = getViewerListModelForDirectory(new File("/home/olaf/gi/Images/cd00900__center10102"));
-//        final DefaultListModel model = StaticModelFactory.createModelFromDir(new File("/home/honglinh/Desktop/dicomfiles1"));
-        factory.addModel("1", new File("/home/honglinh/Desktop/multiframedicoms"));
+            //final DefaultListModel model = getViewerListModelForDirectory(new File("/home/olaf/gi/pet-studie/cd855__center4001"));
+            //final DefaultListModel model = getViewerListModelForDirectory(new File("/shares/shared/projekts/disk312043/Images/cd822__center4001"));
+            //final DefaultListModel model = getViewerListModelForDirectory(new File("/shares/shared/projekts/disk312043/Images/cd836__center4001"));
+
+            //model.addElement(new FileBasedDicomImageListViewModelElement(this.getClass().getResource("/de/sofd/viskit/test/resources/cd846__center4001__39.dcm")));
+            //model.addElement(new FileBasedDicomImageListViewModelElement(this.getClass().getResource("/de/sofd/viskit/test/resources/series/series1/cd014__center001__0.dcm")));
+            //model.addElement(new FileBasedDicomImageListViewModelElement(this.getClass().getResource("/de/sofd/viskit/test/resources/series/series2/cd014__center001__25.dcm")));
+            //model.addElement(new FileBasedDicomImageListViewModelElement("/home/olaf/gi/resources/DICOM-Testbilder/24-bit Uncompressed Color.dcm"));
+        } else {
+        }
+
         final DefaultListModel model = (DefaultListModel)factory.getModel("1");
-//        StaticModelFactory.createModelFromDir(new File("/home/honglinh/Desktop/multiframedicoms"));
-
-        //final DefaultListModel model = getViewerListModelForDirectory(new File("/home/olaf/gi/pet-studie/cd855__center4001"));
-        //final DefaultListModel model = getViewerListModelForDirectory(new File("/shares/shared/projekts/disk312043/Images/cd822__center4001"));
-        //final DefaultListModel model = getViewerListModelForDirectory(new File("/shares/shared/projekts/disk312043/Images/cd836__center4001"));
-
-        //model.addElement(new FileBasedDicomImageListViewModelElement(this.getClass().getResource("/de/sofd/viskit/test/resources/cd846__center4001__39.dcm")));
-        //model.addElement(new FileBasedDicomImageListViewModelElement(this.getClass().getResource("/de/sofd/viskit/test/resources/series/series1/cd014__center001__0.dcm")));
-        //model.addElement(new FileBasedDicomImageListViewModelElement(this.getClass().getResource("/de/sofd/viskit/test/resources/series/series2/cd014__center001__25.dcm")));
-        //model.addElement(new FileBasedDicomImageListViewModelElement("/home/olaf/gi/resources/DICOM-Testbilder/24-bit Uncompressed Color.dcm"));
 
         final JImageListView viewer;
-        //viewer = newJListImageListView();
-        //viewer = newJGridImageListView(true);
-//        viewer = newJGridImageListView(false);
-        viewer = newJGLImageListView();
+        if (isUserHonglinh()) {
+            //viewer = newJListImageListView();
+            //viewer = newJGridImageListView(true);
+//            viewer = newJGridImageListView(false);
+            viewer = newJGLImageListView();
+        } else if (isUserFokko()) {
+            //viewer = newJListImageListView();
+            //viewer = newJGridImageListView(true);
+//            viewer = newJGridImageListView(false);
+            viewer = newJGLImageListView();
+        } else if (isUserOlaf()) {
+            //viewer = newJListImageListView();
+            //viewer = newJGridImageListView(true);
+//            viewer = newJGridImageListView(false);
+            viewer = newJGLImageListView();
+        } else {
+            //viewer = newJListImageListView();
+            //viewer = newJGridImageListView(true);
+//            viewer = newJGridImageListView(false);
+            viewer = newJGLImageListView();
+        }
         
         new ImageListViewInitialWindowingController(viewer).setEnabled(true);
         viewer.setModel(model);
@@ -397,60 +452,87 @@ public class JListImageListTestApp {
         JToolBar toolbar = new JToolBar("toolbar");
         toolbar.setFloatable(false);
         
-        Collection<File> fileCollection = new LinkedList<File>();
-        fileCollection.add(new File("/home/honglinh/Desktop/multiframedicoms/multiframedicom.dcm"));
-        fileCollection.add(new File("/home/honglinh/Desktop/multiframedicoms/multiframedicom2.dcm"));
-
-        // a unique key should be used instead of 1 and 2, f.e. PatientID+StudyInstanceUID+SeriesInstanceUID to identify the series
-        factory.addModel("1", fileCollection);
-        factory.addModel("2", new File("/home/honglinh/Desktop/cd800__center4001"));
-        
         List<ListModel> listModels = new ArrayList<ListModel>();
-        //listModels.add(getViewerListModelForDirectory(new File("/home/olaf/headvolume")));
-        //listModels.add(getViewerListModelForDirectory(new File("/home/olaf/oliverdicom/series1")));
-        //listModels.add(getViewerListModelForDirectory(new File("/home/olaf/oliverdicom/INCISIX")));
-//        listModels.add(factory.createModelFromDir(new File("/home/honglinh/Desktop/multiframedicoms")));
-        listModels.add(factory.getModel("1"));
-        listModels.add(factory.getModel("2"));
-//        listModels.add(factory.createModelFromDir(new File("/home/honglinh/Desktop/dicomfiles1")));
-        
-//        listModels.add(getViewerListModelForDirectory(new File("/home/honglinh/Desktop/dicomfiles1")));
-//        listModels.add(getViewerListModelForDirectory(new File("/home/honglinh/Desktop/dicomfiles1")));
 
-        //listModels.add(getViewerListModelForDirectory(new File("/shares/projects/StudyBrowser/data/disk312043/Images/cd833__center4001")));
-//        listModels.add(getViewerListModelForDirectory(new File("/shares/projects/StudyBrowser/data/disk312043/Images/cd865__center4001")));
-        //listModels.add(getViewerListModelForDirectory(new File("/home/olaf/oliverdicom/ARTIFIX")));
-        //listModels.add(getViewerListModelForDirectory(new File("/home/olaf/oliverdicom/BRAINIX")));
-        //listModels.add(getViewerListModelForDirectory(new File("/tmp/cd00926__center10101")));
-        //listModels.add(getViewerListModelForDirectory(new File("/tmp/cd00927__center10103")));
-        //listModels.add(getViewerListModelForDirectory(new File("/home/olaf/gi/Images/cd00900__center10102")));
-        //listModels.add(getViewerListModelForDirectory(new File("/home/olaf/gi/Images/cd00901__center14146")));
-        
-        //listModels.add(getViewerListModelForDirectory(new File("/home/sofd/disk88888/Images/cd88888010__center100")));
-        //listModels.add(getViewerListModelForDirectory(new File("/home/olaf/hieronymusr/br312046/images/cd00900__center10102")));
-        ///*
-        //listModels.add(getViewerListModelForDirectory(new File("/Users/fokko/disk312046/Images/cd00903__center10101")));
-        //listModels.add(getViewerListModelForDirectory(new File("/Users/fokko/disk312046/Images/cd00904__center10101")));
-        //listModels.add(getViewerListModelForDirectory(new File("/home/olaf/hieronymusr/disk312046/Images/cd00917__center10102")));
-        ///listModels.add(getViewerListModelForDirectory(new File("/home/olaf/hieronymusr/br312046/images/cd00903__center10101")));
-        //listModels.add(getViewerListModelForDirectory(new File("/home/olaf/hieronymusr/br312046/images/cd00904__center10101")));
-        //listModels.add(getViewerListModelForDirectory(new File("/home/olaf/hieronymusr/br312046/images/cd00905__center10101")));
-        //listModels.add(getViewerListModelForDirectory(new File("/home/olaf/hieronymusr/br312046/images/cd00906__center10102")));
-        ///listModels.add(getViewerListModelForDirectory(new File("/home/olaf/hieronymusr/br312046/images/cd00907__center10102")));
-        //listModels.add(getViewerListModelForDirectory(new File("/home/olaf/gi/resources/DICOM-Testbilder/1578")));
-        //*/
-        //listModels.add(getViewerListModelForDirectory(new File("/home/olaf/hieronymusr/br312046/images/cd00908__center10101")));
-        //listModels.add(getViewerListModelForDirectory(new File("/home/olaf/hieronymusr/br312046/images/cd00909__center10101")));
-        //*/
-        //listModels.add(getViewerListModelForDirectory(new File("/home/olaf/hieronymusr/br312046/images/cd00907__center10102")));
-        //listModels.add(getViewerListModelForDirectory(new File("/shares/shared/olaf/cd823__center4001")));
+        if (isUserHonglinh()) {
+            Collection<File> fileCollection = new LinkedList<File>();
+            fileCollection.add(new File("/home/honglinh/Desktop/multiframedicoms/multiframedicom.dcm"));
+            fileCollection.add(new File("/home/honglinh/Desktop/multiframedicoms/multiframedicom2.dcm"));
 
-        //listModels.add(getViewerListModelForDirectory(new File("/home/olaf/hieronymusr/br312046/images/cd00907__center10102")));
-        //listModels.add(getViewerListModelForDirectory(new File("/shares/shared/olaf/cd823__center4001")));
-        
-//        listModels.add(getViewerListModelForDirectory(new File("/home/olaf/hieronymusr/br312043/images/cd800__center4001")));
-//        listModels.add(getViewerListModelForDirectory(new File("/home/olaf/hieronymusr/br312043/images/cd801__center4001")));
-        
+            // a unique key should be used instead of 1 and 2, f.e. PatientID+StudyInstanceUID+SeriesInstanceUID to identify the series
+            factory.addModel("1", fileCollection);
+            factory.addModel("2", new File("/home/honglinh/Desktop/cd800__center4001"));
+            
+//          listModels.add(factory.createModelFromDir(new File("/home/honglinh/Desktop/dicomfiles1")));
+            
+//          listModels.add(getViewerListModelForDirectory(new File("/home/honglinh/Desktop/dicomfiles1")));
+//          listModels.add(getViewerListModelForDirectory(new File("/home/honglinh/Desktop/dicomfiles1")));
+//          listModels.add(factory.createModelFromDir(new File("/home/honglinh/Desktop/multiframedicoms")));
+            listModels.add(factory.getModel("1"));
+            listModels.add(factory.getModel("2"));
+        } else if (isUserOlaf()) {
+            ///*
+            // a unique key should be used instead of 1 and 2, f.e. PatientID+StudyInstanceUID+SeriesInstanceUID to identify the series
+            factory.addModel("1", new File("/home/olaf/hieronymusr/br312046/images/cd00906__center10102"));
+            factory.addModel("2", new File("/home/olaf/hieronymusr/br312046/images/cd00908__center10101"));
+            listModels.add(factory.getModel("1"));
+            listModels.add(factory.getModel("2"));
+            //*/
+            
+            //listModels.add(getViewerListModelForDirectory(new File("/home/olaf/headvolume")));
+            //listModels.add(getViewerListModelForDirectory(new File("/home/olaf/oliverdicom/series1")));
+            //listModels.add(getViewerListModelForDirectory(new File("/home/olaf/oliverdicom/INCISIX")));
+
+            //listModels.add(getViewerListModelForDirectory(new File("/shares/projects/StudyBrowser/data/disk312043/Images/cd833__center4001")));
+//          listModels.add(getViewerListModelForDirectory(new File("/shares/projects/StudyBrowser/data/disk312043/Images/cd865__center4001")));
+          //listModels.add(getViewerListModelForDirectory(new File("/home/olaf/oliverdicom/ARTIFIX")));
+          //listModels.add(getViewerListModelForDirectory(new File("/home/olaf/oliverdicom/BRAINIX")));
+          //listModels.add(getViewerListModelForDirectory(new File("/tmp/cd00926__center10101")));
+          //listModels.add(getViewerListModelForDirectory(new File("/tmp/cd00927__center10103")));
+          //listModels.add(getViewerListModelForDirectory(new File("/home/olaf/gi/Images/cd00900__center10102")));
+          //listModels.add(getViewerListModelForDirectory(new File("/home/olaf/gi/Images/cd00901__center14146")));
+          
+          //listModels.add(getViewerListModelForDirectory(new File("/home/sofd/disk88888/Images/cd88888010__center100")));
+          //listModels.add(getViewerListModelForDirectory(new File("/home/olaf/hieronymusr/br312046/images/cd00900__center10102")));
+          ///*
+          //listModels.add(getViewerListModelForDirectory(new File("/home/olaf/hieronymusr/disk312046/Images/cd00917__center10102")));
+          ///listModels.add(getViewerListModelForDirectory(new File("/home/olaf/hieronymusr/br312046/images/cd00903__center10101")));
+          //listModels.add(getViewerListModelForDirectory(new File("/home/olaf/hieronymusr/br312046/images/cd00904__center10101")));
+          //listModels.add(getViewerListModelForDirectory(new File("/home/olaf/hieronymusr/br312046/images/cd00905__center10101")));
+          ///listModels.add(getViewerListModelForDirectory(new File("/home/olaf/hieronymusr/br312046/images/cd00907__center10102")));
+          //listModels.add(getViewerListModelForDirectory(new File("/home/olaf/gi/resources/DICOM-Testbilder/1578")));
+          //*/
+          
+            //listModels.add(getViewerListModelForDirectory(new File("/home/olaf/hieronymusr/br312046/images/cd00906__center10102")));
+            //listModels.add(getViewerListModelForDirectory(new File("/home/olaf/hieronymusr/br312046/images/cd00908__center10101")));
+
+          //listModels.add(getViewerListModelForDirectory(new File("/home/olaf/hieronymusr/br312046/images/cd00909__center10101")));
+          //*/
+          //listModels.add(getViewerListModelForDirectory(new File("/home/olaf/hieronymusr/br312046/images/cd00907__center10102")));
+          //listModels.add(getViewerListModelForDirectory(new File("/shares/shared/olaf/cd823__center4001")));
+
+          //listModels.add(getViewerListModelForDirectory(new File("/home/olaf/hieronymusr/br312046/images/cd00907__center10102")));
+          //listModels.add(getViewerListModelForDirectory(new File("/shares/shared/olaf/cd823__center4001")));
+          
+//          listModels.add(getViewerListModelForDirectory(new File("/home/olaf/hieronymusr/br312043/images/cd800__center4001")));
+//          listModels.add(getViewerListModelForDirectory(new File("/home/olaf/hieronymusr/br312043/images/cd801__center4001")));
+
+        } else if (isUserFokko()) {
+            // a unique key should be used instead of 1 and 2, f.e. PatientID+StudyInstanceUID+SeriesInstanceUID to identify the series
+            factory.addModel("1", new File("/Users/fokko/disk312046/Images/cd00903__center10101"));
+            factory.addModel("2", new File("/Users/fokko/disk312046/Images/cd00904__center10101"));
+
+            listModels.add(factory.getModel("1"));
+            listModels.add(factory.getModel("2"));
+        } else {
+            // a unique key should be used instead of 1 and 2, f.e. PatientID+StudyInstanceUID+SeriesInstanceUID to identify the series
+            factory.addModel("1", new File("/path/to/dcm/dir/1"));
+            factory.addModel("2", new File("/path/to/dcm/dir/2"));
+
+            listModels.add(factory.getModel("1"));
+            listModels.add(factory.getModel("2"));
+        }
+
         final long t01 = System.currentTimeMillis();
 
         System.out.println("model creation took " + (t01-t00) + " ms.");
@@ -553,8 +635,19 @@ public class JListImageListTestApp {
         
         public ListViewPanel() {
             this.setLayout(new BorderLayout());
-//            listView = newJGLImageListView();
-            listView = newJGridImageListView(false);
+            if (isUserHonglinh()) {
+                //listView = newJGLImageListView();
+                listView = newJGridImageListView(false);
+            } else if (isUserFokko()) {
+                //listView = newJGLImageListView();
+                listView = newJGridImageListView(false);
+            } else if (isUserOlaf()) {
+                //listView = newJGLImageListView();
+                listView = newJGridImageListView(false);
+            } else {
+                //listView = newJGLImageListView();
+                listView = newJGridImageListView(false);
+            }
             this.add(listView, BorderLayout.CENTER);
             new ImageListViewInitialWindowingController(listView) {
                 @Override
