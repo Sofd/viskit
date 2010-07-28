@@ -386,6 +386,8 @@ public class JListImageListView extends JImageListView {
         }
     }
 
+    //TODO: get rid of this method, move cell size calculations into the overridden getCurrentCellDisplaySize()
+    
     protected void updateCellSizes(boolean resetImageSizes, boolean resetImageTranslations) {
         if (getModel() == null || getModel().getSize() == 0) {
             return;
@@ -410,7 +412,7 @@ public class JListImageListView extends JImageListView {
                 }
             }
         }
-        wrappedList.setFixedCellWidth(cellDimension.width);
+        wrappedList.setFixedCellWidth(cellDimension.width);  //this will probably have to happen in setScaleMode after this method is gone?
         wrappedList.setFixedCellHeight(cellDimension.height);
         if (resetImageSizes || resetImageTranslations) {
             for (int i = 0; i < count; i++) {
@@ -453,6 +455,7 @@ public class JListImageListView extends JImageListView {
     
     @Override
     public Dimension getCurrentCellDisplayAreaSize(ImageListViewCell cell) {
+        
         throw new UnsupportedOperationException("TODO: implement me");
     }
 

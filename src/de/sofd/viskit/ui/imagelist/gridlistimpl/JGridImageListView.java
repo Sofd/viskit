@@ -104,17 +104,6 @@ public class JGridImageListView extends JImageListView {
         wrappedGridList.addMouseListener(wholeGridTestMouseHandler);
         wrappedGridList.addMouseMotionListener(wholeGridTestMouseHandler);
         wrappedGridList.addMouseWheelListener(wholeGridTestMouseHandler);
-        wrappedGridList.addComponentListener(new ComponentAdapter() {
-            @Override
-            public void componentResized(ComponentEvent e) {
-                updateCellSizes(true, false);
-                // TODO: what you may rather want is to reset scale and translation,
-                //   but only if they weren't changed manually before? But when would
-                //   you reset the scale/translation at all then? By manual user
-                //   request? Shouldn't all this logic be externalized into controllers
-                //   as well?
-            }
-        });
     }
     
     @Override
@@ -127,7 +116,6 @@ public class JGridImageListView extends JImageListView {
         wrappedGridList.setModel(null);
         super.setModel(model);
         wrappedGridList.setModel(wrappedGridListModel = copyModel(model));
-        updateCellSizes(true, true);
     }
 
     private static DefaultListModel copyModel(ListModel m) {
@@ -298,7 +286,6 @@ public class JGridImageListView extends JImageListView {
     protected void doSetScaleMode(ScaleMode oldScaleMode, ScaleMode newScaleMode) {
         MyScaleMode sm = (MyScaleMode) newScaleMode;
         wrappedGridList.setGridSizes(sm.getCellRowCount(), sm.getCellColumnCount());
-        updateCellSizes(true, true);
     }
 
     @Override

@@ -1219,29 +1219,6 @@ public abstract class JImageListView extends JPanel {
         }
     }
 
-    protected void updateCellSizes(boolean resetImageSizes, boolean resetImageTranslations) {
-        if (resetImageSizes || resetImageTranslations) {
-            if (getModel() == null || getModel().getSize() == 0 || !isUiInitialized()) {
-                return;
-            }
-            int count = getModel().getSize();
-            for (int i = 0; i < count; i++) {
-                ImageListViewCell cell = getCell(i);
-                Dimension cellImgDisplaySize = getCurrentCellDisplayAreaSize(cell);
-                if (resetImageTranslations) {
-                    cell.setCenterOffset(0, 0);
-                }
-                if (resetImageSizes) {
-                    Dimension cz = getUnscaledPreferredCellDisplayAreaSize(cell);
-                    double scalex = ((double) cellImgDisplaySize.width) / cz.width;
-                    double scaley = ((double) cellImgDisplaySize.height) / cz.height;
-                    double scale = Math.min(scalex, scaley);
-                    cell.setScale(scale);
-                }
-            }
-        }
-    }
-
     public int getCellBorderWidth() {
         return 2;
     }

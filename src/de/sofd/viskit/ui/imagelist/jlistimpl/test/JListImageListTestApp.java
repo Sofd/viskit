@@ -52,6 +52,7 @@ import de.sofd.swing.DefaultBoundedListSelectionModel;
 import de.sofd.util.FloatRange;
 import de.sofd.viskit.controllers.GenericILVCellPropertySyncController;
 import de.sofd.viskit.controllers.ImageListViewInitialWindowingController;
+import de.sofd.viskit.controllers.ImageListViewInitialZoomPanController;
 import de.sofd.viskit.controllers.ImageListViewMouseMeasurementController;
 import de.sofd.viskit.controllers.ImageListViewMouseWindowingController;
 import de.sofd.viskit.controllers.ImageListViewMouseZoomPanController;
@@ -679,6 +680,7 @@ public class JListImageListTestApp {
             };
             
             initWindowingController.setEnabled(true);
+            new ImageListViewInitialZoomPanController(listView).setEnabled(true);
             new ImageListViewMouseWindowingController(listView);
             new ImageListViewMouseZoomPanController(listView);
             new ImageListViewRoiInputEventController(listView);

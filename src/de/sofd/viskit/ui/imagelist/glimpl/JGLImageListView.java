@@ -5,8 +5,6 @@ import java.awt.Dimension;
 import java.awt.EventQueue;
 import java.awt.Point;
 import java.awt.event.ActionEvent;
-import java.awt.event.ComponentAdapter;
-import java.awt.event.ComponentEvent;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
@@ -110,17 +108,6 @@ public class JGLImageListView extends JImageListView {
         cellsViewer.addMouseMotionListener(cellMouseEventDispatcher);
         cellsViewer.addMouseWheelListener(cellMouseEventDispatcher);
         //cellsViewer.addKeyListener(cellsViewerMouseAndKeyHandler);
-        cellsViewer.addComponentListener(new ComponentAdapter() {
-            @Override
-            public void componentResized(ComponentEvent e) {
-                updateCellSizes(true, false);
-                // TODO: what you may rather want is to reset scale and translation,
-                //   but only if they weren't changed manually before? But when would
-                //   you reset the scale/translation at all then? By manual user
-                //   request? Shouldn't all this logic be externalized into controllers
-                //   as well?
-            }
-        });
     }
 
     @Override
@@ -157,7 +144,6 @@ public class JGLImageListView extends JImageListView {
     @Override
     public void setModel(ListModel model) {
         super.setModel(model);
-        updateCellSizes(true, true);
         updateScrollbar();
     }
 
@@ -286,7 +272,6 @@ public class JGLImageListView extends JImageListView {
 
     @Override
     protected void doSetScaleMode(ScaleMode oldScaleMode, ScaleMode newScaleMode) {
-        updateCellSizes(true, true);
         updateScrollbar();
     }
 
@@ -536,14 +521,15 @@ public class JGLImageListView extends JImageListView {
             Runnable r = new Runnable() {
                 @Override
                 public void run() {
-                    updateCellSizes(true, false);
+                    //may indicate a resize from here through a self-defined event if relying on the ComponentEvent is problematic
+                    // (see e.g. ILVInitialZoomPanController)
                 }
             };
             if (EventQueue.isDispatchThread()) {
-                //r.run();
+                r.run();
             } else {
                 try {
-                    //EventQueue.invokeAndWait(r);
+                    EventQueue.invokeAndWait(r);
                 } catch (Exception e) {
                     throw new RuntimeException("CAN'T HAPPEN");
                 }
