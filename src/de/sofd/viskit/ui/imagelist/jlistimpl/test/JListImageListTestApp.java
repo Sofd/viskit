@@ -649,7 +649,7 @@ public class JListImageListTestApp {
                 listView = newJGridImageListView(false);
             }
             this.add(listView, BorderLayout.CENTER);
-            new ImageListViewInitialWindowingController(listView) {
+            ImageListViewInitialWindowingController initWindowingController = new ImageListViewInitialWindowingController(listView) {
                 @Override
                 protected void initializeCell(final ImageListViewCell cell) {
                     try {
@@ -657,8 +657,17 @@ public class JListImageListTestApp {
                         ImageListViewWindowingApplyToAllController.runWithAllControllersInhibited(new Runnable() {
                             @Override
                             public void run() {
-                                double wl = delt.getDicomImageMetaData().getDouble(Tag.WindowCenter);
-                                double ww = delt.getDicomImageMetaData().getDouble(Tag.WindowWidth);
+                                double wl;
+                                double ww;
+                                if(delt.getDicomImageMetaData().contains(Tag.WindowCenter) && delt.getDicomImageMetaData().contains(Tag.WindowWidth)) {
+                                    wl = delt.getDicomImageMetaData().getDouble(Tag.WindowCenter);
+                                    ww = delt.getDicomImageMetaData().getDouble(Tag.WindowWidth);    
+                                }
+                                else {
+                                    FloatRange pixelValueRange = delt.getUsedPixelValuesRange();
+                                    wl = pixelValueRange.getMin()+pixelValueRange.getDelta()/2;
+                                    ww = pixelValueRange.getDelta();
+                                }
                                 cell.setWindowWidth((int)ww);
                                 cell.setWindowLocation((int)wl);
                             }
@@ -667,13 +676,15 @@ public class JListImageListTestApp {
                         super.initializeCell(cell);
                     }
                 }
-            }.setEnabled(true);
+            };
+            
+            initWindowingController.setEnabled(true);
             new ImageListViewMouseWindowingController(listView);
             new ImageListViewMouseZoomPanController(listView);
             new ImageListViewRoiInputEventController(listView);
             new ImageListViewImagePaintController(listView).setEnabled(true);
             slider = new JLutWindowingSlider();
-            new ImageListViewSliderWindowingController(listView,slider);
+            new ImageListViewSliderWindowingController(listView,initWindowingController,slider);
             
             ImageListViewSelectionScrollSyncController sssc = new ImageListViewSelectionScrollSyncController(listView);
             sssc.setScrollPositionTracksSelection(true);

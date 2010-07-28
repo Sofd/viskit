@@ -172,21 +172,27 @@ public class JLutWindowingSlider extends JXMultiThumbSlider<String> implements T
     }
 
     /**
-     * sets the lower and upper slider values
+     * This method sets the lower and upper slider values. The range integrity
+     * must be ensured: minimum <= lower value <= upper value <= maximum value.
+     * If the lower / upper value is smaller / bigger than the minimum / maximum
+     * value of the slider, the lower / upper value is set to the minimum /
+     * maximum value
      * 
      * @param lower
+     *            value of the slider thumb
      * @param upper
+     *            value of the slider thumb
      */
     public void setSliderValues(float lower, float upper) {
-        if (lower > upper || lower < getMinimumValue() || upper > getMaximumValue()) {
+        if (lower > upper) {
             throw new IllegalArgumentException(
-                    "upper value must be between lower value and maximum value and lower < upper: min="
-                            + getMinimumValue() + ", max=" + getMaximumValue() + ", to set: lowerValue=" + lower
+                    "lower must be smaller than upper value: lowerValue=" + lower
                             + ", upperValue=" + upper);
         } else {
-            upperThumb.setPosition(upper + offset);
-            lowerThumb.setPosition(lower + offset);
-            midThumb.setPosition(lower + Math.abs((upper - lower)) / 2.0f + offset);
+            float[] sliderValues = ensureRangeIntegrity(lower,upper);
+            upperThumb.setPosition(sliderValues[1]+ offset);
+            lowerThumb.setPosition(sliderValues[0] + offset);
+            midThumb.setPosition(sliderValues[0] + Math.abs((sliderValues[1] - sliderValues[0])) / 2.0f + offset);
             for (ThumbListener mtl : listeners) {
                 mtl.thumbMoved(0, lower);
                 mtl.thumbMoved(1, lower + Math.abs((upper - lower)) / 2.0f);
@@ -336,8 +342,15 @@ public class JLutWindowingSlider extends JXMultiThumbSlider<String> implements T
         }
     }
 
-    private void ensureRangeIntegrity(float lowerValue, float uppervalue) {
-        // TODO implementation
+    private float[] ensureRangeIntegrity(float lowerValue, float upperValue) {
+        float[] sliderValues = {lowerValue,upperValue};
+        if(lowerValue < getMinimumValue()) {
+            sliderValues[0] = getMinimumValue();
+        }
+        if(upperValue > getMaximumValue()) {
+            sliderValues[1] = getMaximumValue();
+        }
+        return sliderValues;
     }
 
     @Override

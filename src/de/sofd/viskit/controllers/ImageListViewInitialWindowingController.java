@@ -125,6 +125,10 @@ public class ImageListViewInitialWindowingController {
             controlledImageListView.refreshCells();
         }
     }
+    
+    public boolean isCellInitialized(ImageListViewCell cell) {
+        return alreadyInitializedImagesKeys.contains(cell.getDisplayedModelElement().getImageKey());
+    }
 
     /**
      * Initialize a cell immediately (non-lazily).

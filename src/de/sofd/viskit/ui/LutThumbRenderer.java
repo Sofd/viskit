@@ -17,15 +17,19 @@ import javax.swing.JComponent;
 public class LutThumbRenderer extends JComponent implements ThumbRenderer {
     
     private static final long serialVersionUID = 6249464151087768974L;
-    JLutWindowingSlider slider;
+    private JLutWindowingSlider slider;
+    private Color thumbColor = Color.DARK_GRAY;
 
     public LutThumbRenderer() {
-        setPreferredSize(new Dimension(18,18));
+    }
+    
+    public LutThumbRenderer(Color thumbColor) {
+        this.thumbColor = thumbColor;
     }
 
     @Override
     protected void paintComponent(Graphics g) {
-        g.setColor(Color.DARK_GRAY);
+        g.setColor(thumbColor);
         Polygon poly = new Polygon();
         JComponent thumb = this;
         poly.addPoint(0,0);
