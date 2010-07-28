@@ -5,6 +5,8 @@ import java.awt.Dimension;
 import java.awt.EventQueue;
 import java.awt.Point;
 import java.awt.event.ActionEvent;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
@@ -93,7 +95,6 @@ public class JGLImageListView extends JImageListView {
         scrollBar.getModel().addChangeListener(scrollbarChangeListener);
 
         setSelectionModel(new DefaultListSelectionModel());
-
     }
 
     private void createGlCanvas() {
@@ -109,8 +110,24 @@ public class JGLImageListView extends JImageListView {
         cellsViewer.addMouseMotionListener(cellMouseEventDispatcher);
         cellsViewer.addMouseWheelListener(cellMouseEventDispatcher);
         //cellsViewer.addKeyListener(cellsViewerMouseAndKeyHandler);
+        cellsViewer.addComponentListener(new ComponentAdapter() {
+            @Override
+            public void componentResized(ComponentEvent e) {
+                updateCellSizes(true, false);
+                // TODO: what you may rather want is to reset scale and translation,
+                //   but only if they weren't changed manually before? But when would
+                //   you reset the scale/translation at all then? By manual user
+                //   request? Shouldn't all this logic be externalized into controllers
+                //   as well?
+            }
+        });
     }
 
+    @Override
+    public boolean isUiInitialized() {
+        return cellsViewer != null;
+    }
+    
     @Override
     public void addCellPaintListener(int zOrder,
             ImageListViewCellPaintListener listener) {
@@ -274,31 +291,19 @@ public class JGLImageListView extends JImageListView {
     }
 
 
-    protected void updateCellSizes(boolean resetImageSizes, boolean resetImageTranslations) {
-        if (resetImageSizes || resetImageTranslations) {
-            if (getModel() == null || getModel().getSize() == 0 || cellsViewer == null) {
-                return;
-            }
-            Dimension cellImgDisplaySize = new Dimension(cellsViewer.getSize().width / getScaleMode().getCellColumnCount() - 2 * CELL_BORDER_WIDTH,
-                                                         cellsViewer.getSize().height / getScaleMode().getCellRowCount()- 2 * CELL_BORDER_WIDTH);
-            int count = getModel().getSize();
-            for (int i = 0; i < count; i++) {
-                ImageListViewCell cell = getCell(i);
-                if (resetImageTranslations) {
-                    cell.setCenterOffset(0, 0);
-                }
-                if (resetImageSizes) {
-                    Dimension cz = getUnscaledPreferredCellSize(cell);
-                    double scalex = ((double) cellImgDisplaySize.width) / (cz.width - 2 * CELL_BORDER_WIDTH);
-                    double scaley = ((double) cellImgDisplaySize.height) / (cz.height - 2 * CELL_BORDER_WIDTH);
-                    double scale = Math.min(scalex, scaley);
-                    cell.setScale(scale);
-                }
-            }
-        }
+    @Override
+    public int getCellBorderWidth() {
+        return CELL_BORDER_WIDTH;
+    }
+    
+    @Override
+    public Dimension getCurrentCellSize(ImageListViewCell cell) {
+        return new Dimension(cellsViewer.getSize().width / getScaleMode().getCellColumnCount(),
+                             cellsViewer.getSize().height / getScaleMode().getCellRowCount());
     }
 
-    protected Dimension getUnscaledPreferredCellSize(ImageListViewCell cell) {
+    @Override
+    public Dimension getUnscaledPreferredCellDisplayAreaSize(ImageListViewCell cell) {
         int w, h;
         ImageListViewModelElement elt = cell.getDisplayedModelElement();
         if (elt instanceof DicomImageListViewModelElement) {
@@ -311,8 +316,7 @@ public class JGLImageListView extends JImageListView {
             w = img.getWidth();
             h = img.getHeight();
         }
-        return new Dimension(w + 2 * CELL_BORDER_WIDTH,
-                             h + 2 * CELL_BORDER_WIDTH);
+        return new Dimension(w, h);
     }
 
     @Override
@@ -536,10 +540,10 @@ public class JGLImageListView extends JImageListView {
                 }
             };
             if (EventQueue.isDispatchThread()) {
-                r.run();
+                //r.run();
             } else {
                 try {
-                    EventQueue.invokeAndWait(r);
+                    //EventQueue.invokeAndWait(r);
                 } catch (Exception e) {
                     throw new RuntimeException("CAN'T HAPPEN");
                 }

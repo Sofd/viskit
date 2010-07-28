@@ -557,7 +557,7 @@ public class JListImageListTestApp {
                 public void onCellPaint(ImageListViewCellPaintEvent e) {
                     if (t1 == -1) {
                         t1 = System.currentTimeMillis();
-                        System.out.println("list " + lnumCaptured[0] + " UI coming up after " + (t1-t0) + " ms.");
+                        System.out.println("list " + lnumCaptured[0] + " UI coming up after " + (t1-t0) + " ms (" + (t1-t01) + " ms after creation of all models, " + (t1-t00) + " ms after startup)");
                     }
                 }
                 @Override

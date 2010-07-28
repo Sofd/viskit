@@ -2,6 +2,7 @@ package de.sofd.viskit.ui.imagelist;
 
 import java.awt.Color;
 import java.awt.Component;
+import java.awt.Dimension;
 import java.awt.event.ContainerAdapter;
 import java.awt.event.ContainerEvent;
 import java.awt.event.MouseEvent;
@@ -103,6 +104,9 @@ public abstract class JImageListView extends JPanel {
         ensureUiStateIsCopiedForAddedComponents();
     }
 
+    public boolean isUiInitialized() {
+        return isDisplayable();
+    }
 
     /**
      * Get the value of model
@@ -1214,5 +1218,104 @@ public abstract class JImageListView extends JPanel {
             }
         }
     }
-    
+
+    protected void updateCellSizes(boolean resetImageSizes, boolean resetImageTranslations) {
+        if (resetImageSizes || resetImageTranslations) {
+            if (getModel() == null || getModel().getSize() == 0 || !isUiInitialized()) {
+                return;
+            }
+            int count = getModel().getSize();
+            for (int i = 0; i < count; i++) {
+                ImageListViewCell cell = getCell(i);
+                Dimension cellImgDisplaySize = getCurrentCellDisplayAreaSize(cell);
+                if (resetImageTranslations) {
+                    cell.setCenterOffset(0, 0);
+                }
+                if (resetImageSizes) {
+                    Dimension cz = getUnscaledPreferredCellDisplayAreaSize(cell);
+                    double scalex = ((double) cellImgDisplaySize.width) / cz.width;
+                    double scaley = ((double) cellImgDisplaySize.height) / cz.height;
+                    double scale = Math.min(scalex, scaley);
+                    cell.setScale(scale);
+                }
+            }
+        }
+    }
+
+    public int getCellBorderWidth() {
+        return 2;
+    }
+
+    /**
+     * Gives the current size of a cell in this list, including the border (
+     * {@link #getCellBorderWidth()}). In this base class, this method and
+     * {@link #getCurrentCellDisplayAreaSize(ImageListViewCell)} are implemented in
+     * terms of each other, so subclasses MUST override one of them or an
+     * infinite recursion will occur.
+     * 
+     * @param cell
+     * @return
+     */
+    public Dimension getCurrentCellSize(ImageListViewCell cell) {
+        Dimension result = getCurrentCellDisplayAreaSize(cell);
+        result.width += 2 * getCellBorderWidth();
+        result.height += 2 * getCellBorderWidth();
+        return result;
+    }
+
+    /**
+     * Gives the current size of the display area of a cell in this list, i.e.
+     * the {@link #getCurrentCellSize(ImageListViewCell)} minus the
+     * {@link #getCellBorderWidth()}. In this base class, this method and
+     * {@link #getCurrentCellSize(ImageListViewCell)} are implemented in terms
+     * of each other, so subclasses MUST override one of them or an infinite
+     * recursion will occur.
+     * 
+     * @param cell
+     * @return
+     */
+    public Dimension getCurrentCellDisplayAreaSize(ImageListViewCell cell) {
+        Dimension result = getCurrentCellSize(cell);
+        result.width -= 2 * getCellBorderWidth();
+        result.height -= 2 * getCellBorderWidth();
+        return result;
+    }
+
+    /**
+     * Gives the current size that a cell in this list would preferably attain
+     * (i.e. image scaled to 1.0 etc.), including the border (
+     * {@link #getCellBorderWidth()}). In this base class, this method and
+     * {@link #getUnscaledPreferredCellDisplayAreaSize(ImageListViewCell)} are
+     * implemented in terms of each other, so subclasses MUST override one of
+     * them or an infinite recursion will occur.
+     * 
+     * @param cell
+     * @return
+     */
+    public Dimension getUnscaledPreferredCellSize(ImageListViewCell cell) {
+        Dimension result = getUnscaledPreferredCellDisplayAreaSize(cell);
+        result.width += 2 * getCellBorderWidth();
+        result.height += 2 * getCellBorderWidth();
+        return result;
+    }
+
+    /**
+     * Gives the current size that a cell's display area would preferably attain
+     * (i.e. image scaled to 1.0 etc.), excluding the border (that is, the
+     * {@link #getUnscaledPreferredCellSize(ImageListViewCell)} minus the
+     * {@link #getCellBorderWidth()}). In this base class, this method and
+     * {@link #getUnscaledPreferredCellSize(ImageListViewCell)} are implemented
+     * in terms of each other, so subclasses MUST override one of them or an
+     * infinite recursion will occur.
+     * 
+     * @param cell
+     * @return
+     */
+    public Dimension getUnscaledPreferredCellDisplayAreaSize(ImageListViewCell cell) {
+        Dimension result = getUnscaledPreferredCellSize(cell);
+        result.width -= 2 * getCellBorderWidth();
+        result.height -= 2 * getCellBorderWidth();
+        return result;
+    }
+
 }

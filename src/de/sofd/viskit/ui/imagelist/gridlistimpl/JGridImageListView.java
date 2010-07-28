@@ -27,6 +27,8 @@ import java.awt.event.MouseWheelEvent;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
+import java.util.Set;
 
 import javax.swing.AbstractAction;
 import javax.swing.Action;
@@ -299,33 +301,19 @@ public class JGridImageListView extends JImageListView {
         updateCellSizes(true, true);
     }
 
-
-    protected void updateCellSizes(boolean resetImageSizes, boolean resetImageTranslations) {
-        if (resetImageSizes || resetImageTranslations) {
-            if (getModel() == null || getModel().getSize() == 0) {
-                return;
-            }
-            Dimension cellImgDisplaySize = new Dimension(wrappedGridList.getSize().width / getScaleMode().getCellColumnCount() - 2 * WrappedGridListComponentFactory.BORDER_WIDTH,
-                                                         wrappedGridList.getSize().height / getScaleMode().getCellRowCount()- 2 * WrappedGridListComponentFactory.BORDER_WIDTH);
-            
-            int count = getModel().getSize();
-            for (int i = 0; i < count; i++) {
-                ImageListViewCell cell = getCell(i);
-                if (resetImageTranslations) {
-                    cell.setCenterOffset(0, 0);
-                }
-                if (resetImageSizes) {
-                    Dimension cz = getUnscaledPreferredCellSize(cell);
-                    double scalex = ((double) cellImgDisplaySize.width) / (cz.width - 2 * WrappedGridListComponentFactory.BORDER_WIDTH);
-                    double scaley = ((double) cellImgDisplaySize.height) / (cz.height - 2 * WrappedGridListComponentFactory.BORDER_WIDTH);
-                    double scale = Math.min(scalex, scaley);
-                    cell.setScale(scale);
-                }
-            }
-        }
+    @Override
+    public int getCellBorderWidth() {
+        return WrappedGridListComponentFactory.BORDER_WIDTH;
     }
-
-    protected Dimension getUnscaledPreferredCellSize(ImageListViewCell cell) {
+    
+    @Override
+    public Dimension getCurrentCellSize(ImageListViewCell cell) {
+        return new Dimension(wrappedGridList.getSize().width / getScaleMode().getCellColumnCount(),
+                             wrappedGridList.getSize().height / getScaleMode().getCellRowCount());
+    }
+    
+    @Override
+    public Dimension getUnscaledPreferredCellDisplayAreaSize(ImageListViewCell cell) {
         int w, h;
         ImageListViewModelElement elt = cell.getDisplayedModelElement();
         if (elt instanceof DicomImageListViewModelElement) {
@@ -338,9 +326,7 @@ public class JGridImageListView extends JImageListView {
             w = img.getWidth();
             h = img.getHeight();
         }
-        final int borderWidth = 2;   // border width of the cells -- TODO: get from WrappedGridListComponentFactory
-        return new Dimension(w + 2 * borderWidth,
-                             h + 2 * borderWidth);
+        return new Dimension(w, h);
     }
 
     @Override

@@ -1,12 +1,5 @@
 package de.sofd.viskit.ui.imagelist.jlistimpl;
 
-import de.sofd.viskit.ui.imagelist.cellviewers.java2d.ImageListViewCellViewer;
-import de.sofd.util.Misc;
-import de.sofd.viskit.model.DicomImageListViewModelElement;
-import de.sofd.viskit.ui.imagelist.DefaultImageListViewCell;
-import de.sofd.viskit.ui.imagelist.ImageListViewCell;
-import de.sofd.viskit.model.ImageListViewModelElement;
-import de.sofd.viskit.ui.imagelist.JImageListView;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
@@ -23,6 +16,7 @@ import java.awt.event.MouseWheelListener;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 import java.util.Collection;
+
 import javax.swing.BorderFactory;
 import javax.swing.DefaultListModel;
 import javax.swing.JList;
@@ -35,11 +29,23 @@ import javax.swing.border.Border;
 import javax.swing.event.ListDataEvent;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
+
 import org.dcm4che2.data.Tag;
+
+import de.sofd.util.Misc;
+import de.sofd.viskit.controllers.ImageListViewInitialZoomPanController;
+import de.sofd.viskit.model.DicomImageListViewModelElement;
+import de.sofd.viskit.model.ImageListViewModelElement;
+import de.sofd.viskit.ui.imagelist.ImageListViewCell;
+import de.sofd.viskit.ui.imagelist.JImageListView;
+import de.sofd.viskit.ui.imagelist.cellviewers.java2d.ImageListViewCellViewer;
 
 /**
  * JImageListView implementation that uses an aggreagated {@link JList}.
- *
+ * <p>
+ * TODO: not well tested currently;
+ * {@link ImageListViewInitialZoomPanController} won't work with this right now.
+ * 
  * @author Sofd GmbH
  */
 public class JListImageListView extends JImageListView {
@@ -158,50 +164,6 @@ public class JListImageListView extends JImageListView {
         }
     }
 
-
-    public static class MyImageListViewCell extends DefaultImageListViewCell {
-        public MyImageListViewCell(JImageListView owner, ImageListViewModelElement displayedModelElement) {
-            super(owner, displayedModelElement);
-        }
-        // TODO: possibly pull this up into the superclass and get rid of MyImageListViewCell
-        public Dimension getUnscaledPreferredSize() {
-            int w, h;
-            ImageListViewModelElement elt = getDisplayedModelElement();
-            if (elt instanceof DicomImageListViewModelElement) {
-                // performance optimization for this case -- read the values from DICOM metadata instead of getting the image
-                DicomImageListViewModelElement dicomElt = (DicomImageListViewModelElement) elt;
-                w = dicomElt.getDicomImageMetaData().getInt(Tag.Columns);
-                h = dicomElt.getDicomImageMetaData().getInt(Tag.Rows);
-            } else {
-                BufferedImage img = elt.getImage();
-                w = img.getWidth();
-                h = img.getHeight();
-            }
-            return new Dimension(w + 2 * WrappedListCellRenderer.BORDER_WIDTH,
-                                 h + 2 * WrappedListCellRenderer.BORDER_WIDTH);
-        }
-    }
-
-    @Override
-    public MyImageListViewCell getCell(int index) {
-        return (MyImageListViewCell) super.getCell(index);
-    }
-
-    @Override
-    public MyImageListViewCell getCellFor(ImageListViewModelElement modelElement) {
-        return (MyImageListViewCell) super.getCellFor(modelElement);
-    }
-
-    @Override
-    public MyImageListViewCell getCellForElement(ImageListViewModelElement elt) {
-        return (MyImageListViewCell) super.getCellForElement(elt);
-    }
-
-    @Override
-    protected ImageListViewCell doCreateCell(ImageListViewModelElement modelElement) {
-        return new MyImageListViewCell(this, modelElement);
-    }
-
     class WrappedListCellRenderer implements ListCellRenderer {
 
         public static final int BORDER_WIDTH = 2;
@@ -215,7 +177,7 @@ public class JListImageListView extends JImageListView {
                 boolean cellHasFocus) {
 
             ImageListViewModelElement elt = (ImageListViewModelElement) value;
-            MyImageListViewCell cell = getCellForElement(elt);
+            ImageListViewCell cell = getCellForElement(elt);
             ImageListViewCellViewer resultComponent = new ImageListViewCellViewer(cell);
 
             resultComponent.setComponentOrientation(list.getComponentOrientation());
@@ -438,8 +400,8 @@ public class JListImageListView extends JImageListView {
             // scale all cells to the maximum original image size
             cellDimension = new Dimension(0, 0);
             for (int i = 0; i < count; i++) {
-                MyImageListViewCell cell = getCell(i);
-                Dimension cz = cell.getUnscaledPreferredSize();
+                ImageListViewCell cell = getCell(i);
+                Dimension cz = getUnscaledPreferredCellSize(cell);
                 if (cz.getWidth() > cellDimension.getWidth()) {
                     cellDimension.setSize(cz.getWidth(), cellDimension.getHeight());
                 }
@@ -452,19 +414,46 @@ public class JListImageListView extends JImageListView {
         wrappedList.setFixedCellHeight(cellDimension.height);
         if (resetImageSizes || resetImageTranslations) {
             for (int i = 0; i < count; i++) {
-                MyImageListViewCell cell = getCell(i);
+                ImageListViewCell cell = getCell(i);
                 if (resetImageTranslations) {
                     cell.setCenterOffset(0, 0);
                 }
                 if (resetImageSizes) {
-                    Dimension cz = cell.getUnscaledPreferredSize();
-                    double scalex = ((double) wrappedList.getFixedCellWidth() - 2 * WrappedListCellRenderer.BORDER_WIDTH) / cz.width;
-                    double scaley = ((double) wrappedList.getFixedCellHeight() - 2 * WrappedListCellRenderer.BORDER_WIDTH) / cz.height;
+                    Dimension cz = getUnscaledPreferredCellDisplayAreaSize(cell);
+                    double scalex = ((double) wrappedList.getFixedCellWidth() - 2 * getCellBorderWidth()) / cz.width;
+                    double scaley = ((double) wrappedList.getFixedCellHeight() - 2 * getCellBorderWidth()) / cz.height;
                     double scale = Math.min(scalex, scaley);
                     cell.setScale(scale);
                 }
             }
         }
+    }
+    
+    @Override
+    public int getCellBorderWidth() {
+        return WrappedListCellRenderer.BORDER_WIDTH;
+    }
+    
+    @Override
+    public Dimension getUnscaledPreferredCellDisplayAreaSize(ImageListViewCell cell) {
+        int w, h;
+        ImageListViewModelElement elt = cell.getDisplayedModelElement();
+        if (elt instanceof DicomImageListViewModelElement) {
+            // performance optimization for this case -- read the values from DICOM metadata instead of getting the image
+            DicomImageListViewModelElement dicomElt = (DicomImageListViewModelElement) elt;
+            w = dicomElt.getDicomImageMetaData().getInt(Tag.Columns);
+            h = dicomElt.getDicomImageMetaData().getInt(Tag.Rows);
+        } else {
+            BufferedImage img = elt.getImage();
+            w = img.getWidth();
+            h = img.getHeight();
+        }
+        return new Dimension(w, h);
+    }
+    
+    @Override
+    public Dimension getCurrentCellDisplayAreaSize(ImageListViewCell cell) {
+        throw new UnsupportedOperationException("TODO: implement me");
     }
 
     class WrappedListMouseAdapter extends MouseAdapter {
