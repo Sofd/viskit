@@ -11,7 +11,17 @@ import javax.swing.JToggleButton;
 import org.apache.log4j.Logger;
 
 /**
- *
+ * UI component that allows the user to interactively select a ROI drawing tool
+ * (subclass of {@link DrawingViewerTool}, e.g. {@link EllipseTool},
+ * {@link RectangleTool} or {@link SelectorTool}) in the UI. The selection is
+ * represented as the corresponding {@link DrawingViewerTool} subclass, which is
+ * exposed in the {@link #getToolClass()} property of the component. It may also
+ * be set programmatically ({@link #setToolClass(Class)}).
+ * <p>
+ * In the UI, this class exposes the selection as a number of toggle buttons
+ * corresponding to the tool classes, where the button that corresponds to the
+ * selected tool class will be selected. These UI aspects aren't exposed through
+ * the public API though, and may be changed by a subclass of this class.
  */
 public class RoiToolPanel extends javax.swing.JPanel {
 
