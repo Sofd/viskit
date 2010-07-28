@@ -4,6 +4,8 @@ import java.awt.event.MouseEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
+import java.util.HashSet;
+import java.util.Set;
 
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
@@ -27,8 +29,8 @@ import de.sofd.viskit.ui.imagelist.JImageListView;
  * elements to indicate if the cell is already initialized. If the selection
  * listeners receives an event and the cell is not initialized yet, the cell is
  * not needed to be initialized now, because a property change event of the
- * ImageListViewInitialWindowingController is fired later after setting the windowing
- * values which results in adjusting the LUT Windowing Slider
+ * ImageListViewInitialWindowingController is fired later after setting the
+ * windowing values which results in adjusting the LUT Windowing Slider
  * 
  * @author honglinh
  * 
@@ -45,7 +47,8 @@ public class ImageListViewSliderWindowingController {
     public ImageListViewSliderWindowingController() {
     }
 
-    public ImageListViewSliderWindowingController(JImageListView controlledImageListView, ImageListViewInitialWindowingController initialWindowingController, JLutWindowingSlider slider) {
+    public ImageListViewSliderWindowingController(JImageListView controlledImageListView,
+            ImageListViewInitialWindowingController initialWindowingController, JLutWindowingSlider slider) {
         setControlledImageListView(controlledImageListView);
         setSlider(slider);
         setInitialWindowingController(initialWindowingController);
@@ -107,10 +110,17 @@ public class ImageListViewSliderWindowingController {
      */
     private PropertyChangeListener propertyChangeListener = new PropertyChangeListener() {
 
+        // because of race conditions in ImageListViewInitialWindowingController
+        // ensure that two events (window location / window width) must have
+        // occurred before adjusting the slider
+        private Set<ImageListViewCell> windowLocationSet = new HashSet<ImageListViewCell>();
+        private Set<ImageListViewCell> windowWidthSet = new HashSet<ImageListViewCell>();
+
         @Override
         public void propertyChange(PropertyChangeEvent evt) {
-            if (!evt.getPropertyName().equals(ImageListViewCell.PROP_WINDOWLOCATION)
-                    && !evt.getPropertyName().equals(ImageListViewCell.PROP_WINDOWWIDTH)) {
+            String propertyName = evt.getPropertyName();
+            if (!propertyName.equals(ImageListViewCell.PROP_WINDOWLOCATION)
+                    && !propertyName.equals(ImageListViewCell.PROP_WINDOWWIDTH)) {
                 return;
             }
             // get only the windowing values for the selected model element
@@ -122,12 +132,23 @@ public class ImageListViewSliderWindowingController {
                 if (controlledImageListView.getCellForElement(elt).equals(cell)) {
                     // during initialization phase default windowing values are
                     // assigned to the cells, skip those events
-                    if (initialWindowingController.isCellInitialized(cell)) {
-                        int wl = cell.getWindowLocation();
-                        int ww = cell.getWindowWidth();
-                        float lowerValue = wl - ww / 2.0f;
-                        float upperValue = wl + ww / 2.0f;
-                        slider.setSliderValues(lowerValue, upperValue);
+                    if (initialWindowingController.isCellInitialized(cell)) { // IMPORTANT: cell may be marked as initialized, but windowing values may not have been set yet (race conditions) @see ImageListViewInitialWindowingController -> initializeCell(final ImageListViewCell cell), so collect the two windowing change events
+                        if (propertyName.equals(ImageListViewCell.PROP_WINDOWLOCATION)) {
+                            windowLocationSet.add(cell);
+                        } else if (propertyName.equals(ImageListViewCell.PROP_WINDOWWIDTH)) {
+                            windowWidthSet.add(cell);
+                        }
+                        // only perform set slider values when window location
+                        // change event AND window width event occurred
+                        if (windowLocationSet.contains(cell) && windowWidthSet.contains(cell)) {
+                            int wl = cell.getWindowLocation();
+                            int ww = cell.getWindowWidth();
+                            float lowerValue = wl - ww / 2.0f;
+                            float upperValue = wl + ww / 2.0f;
+                            slider.setSliderValues(lowerValue, upperValue);
+                            windowLocationSet.remove(cell);
+                            windowWidthSet.remove(cell);
+                        }
                     }
                 }
             }
@@ -154,8 +175,8 @@ public class ImageListViewSliderWindowingController {
                 // ImageListViewCellPaintEvent in the
                 // ImageListViewInitialWindowingController
                 if (!initialWindowingController.isCellInitialized(cell)) {
-                    // // initialize the cell immediately
-                     initialWindowingController.initializeCellImmediately(cell,true);
+                    // initialize the cell immediately
+                    initialWindowingController.initializeCellImmediately(cell, true);
                 }
                 int wl = cell.getWindowLocation();
                 int ww = cell.getWindowWidth();
