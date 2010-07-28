@@ -12,9 +12,9 @@ import org.apache.log4j.Logger;
 
 /**
  * UI component that allows the user to interactively select a ROI drawing tool
- * (subclass of {@link DrawingViewerTool}, e.g. {@link EllipseTool},
- * {@link RectangleTool} or {@link SelectorTool}) in the UI. The selection is
- * represented as the corresponding {@link DrawingViewerTool} subclass, which is
+ * (e.g. ellipse tool, rectangle tool, selector tool) in the UI. The selection
+ * is represented as the corresponding {@link DrawingViewerTool} subclass, e.g.
+ * {@link EllipseTool}, {@link RectangleTool} or {@link SelectorTool}, which is
  * exposed in the {@link #getToolClass()} property of the component. It may also
  * be set programmatically ({@link #setToolClass(Class)}).
  * <p>
