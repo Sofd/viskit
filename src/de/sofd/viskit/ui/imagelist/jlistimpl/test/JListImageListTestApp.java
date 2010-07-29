@@ -684,7 +684,8 @@ public class JListImageListTestApp {
             };
             
             initWindowingController.setEnabled(true);
-            new ImageListViewInitialZoomPanController(listView).setEnabled(true);
+            final ImageListViewInitialZoomPanController initZoomPanController = new ImageListViewInitialZoomPanController(listView);
+            initZoomPanController.setEnabled(true);
             new ImageListViewMouseWindowingController(listView);
             new ImageListViewMouseZoomPanController(listView);
             new ImageListViewRoiInputEventController(listView);
@@ -855,6 +856,12 @@ public class JListImageListTestApp {
 //                        cell.setWindowLocation((int) (usedRange.getMin() + usedRange.getMax()) / 2);
                         slider.setSliderValues(usedRange.getMin(), usedRange.getMax());
                     }
+                }
+            });
+            toolbar.add(new AbstractAction("zRST") {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    initZoomPanController.reset();
                 }
             });
             toolbar.add(new AbstractAction("wA") {
