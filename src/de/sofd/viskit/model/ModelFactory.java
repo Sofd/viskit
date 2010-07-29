@@ -9,6 +9,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Scanner;
 
@@ -35,7 +36,7 @@ public abstract class ModelFactory {
     protected boolean enableRangeCaching = true;
     protected Comparator<File> comparator;
     protected String cacheFile;
-    protected Map<String,ListModel> keyModelMap = new HashMap<String,ListModel>();
+    protected Map<String,ListModel> keyModelMap = new LinkedHashMap<String,ListModel>();
     protected Map<String,float[]> keyMinMaxMap = new HashMap<String,float[]>();
     
     protected static final Logger logger = Logger.getLogger(ModelFactory.class);
@@ -223,6 +224,18 @@ public abstract class ModelFactory {
      */
     public ListModel getModel(String key) {
         return keyModelMap.get(key);
+    }
+
+    /**
+     * Get the keys of all models known to this factory, in the order of their creation
+     * @return
+     */
+    public Collection<String> getAllModelKeys() {
+        return keyModelMap.keySet();
+    }
+    
+    public int getModelsCount() {
+        return keyModelMap.size();
     }
     
     public boolean isEnableRangeCaching() {

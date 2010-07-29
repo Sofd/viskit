@@ -13,6 +13,7 @@ import java.awt.event.ItemListener;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -150,15 +151,20 @@ public class JListImageListTestApp {
         
     }
     
+    //TODO: move this helper method into ModelFactory?
+    protected static void addModelForDir(ModelFactory factory, File dir) throws IOException {
+        factory.addModel(dir.getCanonicalPath(), dir);
+    }
+    
     public JFrame newSingleListFrame(String frameTitle, GraphicsConfiguration graphicsConfig) throws Exception {
         if (isUserHonglinh()) {
 //            final DefaultListModel model = StaticModelFactory.createModelFromDir(new File("/home/honglinh/Desktop/dicomfiles1"));
-            factory.addModel("1", new File("/home/honglinh/Desktop/multiframedicoms"));
+            addModelForDir(factory, new File("/home/honglinh/Desktop/multiframedicoms"));
         } else if (isUserFokko()) {
         } else if (isUserOlaf()) {
             //final DefaultListModel model = getTestImageViewerListModel();
             //final DefaultListModel model = getViewerListModelForDirectory(new File("/home/olaf/gi/resources/DICOM-Testbilder/1578"));
-            factory.addModel("1", new File("/home/olaf/gi/Images/cd00900__center10102"));
+            addModelForDir(factory, new File("/home/olaf/gi/Images/cd00900__center10102"));
             //final DefaultListModel model = getViewerListModelForDirectory(new File("/home/olaf/gi/Images/cd00900__center10102"));
 
             //final DefaultListModel model = getViewerListModelForDirectory(new File("/home/olaf/gi/pet-studie/cd855__center4001"));
@@ -172,7 +178,7 @@ public class JListImageListTestApp {
         } else {
         }
 
-        final DefaultListModel model = (DefaultListModel)factory.getModel("1");
+        final DefaultListModel model = (DefaultListModel)factory.getModel(factory.getAllModelKeys().iterator().next());
 
         final JImageListView viewer;
         if (isUserHonglinh()) {
@@ -453,8 +459,6 @@ public class JListImageListTestApp {
         JToolBar toolbar = new JToolBar("toolbar");
         toolbar.setFloatable(false);
         
-        List<ListModel> listModels = new ArrayList<ListModel>();
-
         if (isUserHonglinh()) {
             Collection<File> fileCollection = new LinkedList<File>();
             fileCollection.add(new File("/home/honglinh/Desktop/multiframedicoms/multiframedicom.dcm"));
@@ -469,15 +473,14 @@ public class JListImageListTestApp {
 //          listModels.add(getViewerListModelForDirectory(new File("/home/honglinh/Desktop/dicomfiles1")));
 //          listModels.add(getViewerListModelForDirectory(new File("/home/honglinh/Desktop/dicomfiles1")));
 //          listModels.add(factory.createModelFromDir(new File("/home/honglinh/Desktop/multiframedicoms")));
-            listModels.add(factory.getModel("1"));
-            listModels.add(factory.getModel("2"));
+            //listModels.add(factory.getModel("1"));
+            //listModels.add(factory.getModel("2"));
         } else if (isUserOlaf()) {
             ///*
-            // a unique key should be used instead of 1 and 2, f.e. PatientID+StudyInstanceUID+SeriesInstanceUID to identify the series
-            factory.addModel("1", new File("/home/olaf/hieronymusr/br312046/images/cd00906__center10102"));
-            factory.addModel("2", new File("/home/olaf/hieronymusr/br312046/images/cd00908__center10101"));
-            listModels.add(factory.getModel("1"));
-            listModels.add(factory.getModel("2"));
+            addModelForDir(factory, new File("/home/olaf/hieronymusr/br312046/images/cd00906__center10102"));
+            addModelForDir(factory, new File("/home/olaf/hieronymusr/br312046/images/cd00908__center10101"));
+            //listModels.add(factory.getModel("1"));
+            //listModels.add(factory.getModel("2"));
             //*/
             
             //listModels.add(getViewerListModelForDirectory(new File("/home/olaf/headvolume")));
@@ -523,15 +526,15 @@ public class JListImageListTestApp {
             factory.addModel("1", new File("/Users/fokko/disk312046/Images/cd00903__center10101"));
             factory.addModel("2", new File("/Users/fokko/disk312046/Images/cd00904__center10101"));
 
-            listModels.add(factory.getModel("1"));
-            listModels.add(factory.getModel("2"));
+            //listModels.add(factory.getModel("1"));
+            //listModels.add(factory.getModel("2"));
         } else {
             // a unique key should be used instead of 1 and 2, f.e. PatientID+StudyInstanceUID+SeriesInstanceUID to identify the series
             factory.addModel("1", new File("/path/to/dcm/dir/1"));
             factory.addModel("2", new File("/path/to/dcm/dir/2"));
 
-            listModels.add(factory.getModel("1"));
-            listModels.add(factory.getModel("2"));
+            //listModels.add(factory.getModel("1"));
+            //listModels.add(factory.getModel("2"));
         }
 
         final long t01 = System.currentTimeMillis();
@@ -541,13 +544,14 @@ public class JListImageListTestApp {
         List<JImageListView> lists = new ArrayList<JImageListView>();
         
         JPanel listsPanel = new JPanel();
-        listsPanel.setLayout(new GridLayout((listModels.size() - 1) / 3 + 1, Math.min(listModels.size(), 3), 10, 10));
+        listsPanel.setLayout(new GridLayout((factory.getModelsCount() - 1) / 3 + 1, Math.min(factory.getModelsCount(), 3), 10, 10));
         int lnum = 0;
-        for (ListModel lm : listModels) {
+        for (String modelKey : factory.getAllModelKeys()) {
+            ListModel lm = factory.getModel(modelKey);
             lnum++;
             final long t0 = System.currentTimeMillis();
             final ListViewPanel lvp = new ListViewPanel();
-            lvp.setPixelValueRange(factory.getPixelRange(lnum+""));
+            lvp.setPixelValueRange(factory.getPixelRange(modelKey));
             // initialization performance measurement: add a cell paint listener
             // to take the time when a cell in the list is first drawn,
             // which happens when the list has been completely initialized and the list's UI is coming up
@@ -574,7 +578,7 @@ public class JListImageListTestApp {
             });
             lvp.getListView().setModel(lm);
             long t1 = System.currentTimeMillis();
-            System.out.println("list " + lnum + ": list.setModell() took " + (t1-t0) + " ms.");
+            System.out.println("list " + lnum + ": list.setModel() took " + (t1-t0) + " ms.");
             listsPanel.add(lvp);
             lists.add(lvp.getListView());
             for (final Color c : syncColors) {
