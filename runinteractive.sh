@@ -2,7 +2,7 @@
 
 . "`dirname $0`/init_runinteractive.sh"
 
-java -cp "$BSH_CP" bsh.Interpreter "$@"
+java -Djava.library.path=lib/jogl/linux64 -Xmx1024m -Xms256m -cp "$BSH_CP" bsh.Interpreter "$@"
 
 # TODO: it would be preferable to define an Ant task for this in
 # build.xml (thereby inheriting NB's project classpath settings), but

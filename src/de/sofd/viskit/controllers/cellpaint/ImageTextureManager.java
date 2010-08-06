@@ -98,7 +98,7 @@ public class ImageTextureManager {
                 // ^^^ ensure size >= 1 to always keep at least the latest texture in, even if it alone exceeds maxMemConsumption
                 //   (if that one wasn't loaded, we couldn't render it)
                 Map.Entry<Object, TextureRef> oldestEntry = texRefsByImageKey.entrySet().iterator().next();
-                logger.info("deleting texture to free up memory: " + oldestEntry.getKey());
+                logger.debug("deleting texture to free up memory: " + oldestEntry.getKey());
                 TextureRef oldestTexRef = oldestEntry.getValue();
                 gl.glDeleteTextures(1, new int[]{oldestTexRef.getTexId()}, 0);
                 totalMemConsumption -= oldestTexRef.getMemorySize();
@@ -138,7 +138,7 @@ public class ImageTextureManager {
         TextureRef texRef = texRefStore.getTexRef(elt);
         
         if (null == texRef) {
-            logger.info("need to create texture for: " + elt.getImageKey());
+            logger.debug("need to create texture for: " + elt.getImageKey());
             // TODO: maybe strive to allocate textures with non-normalized, integer-valued texel values, which
             // is recommended by nVidia for 12-bit grayscale displays to preserve image fidelity (but it really
             // shouldn't make a difference in my opinion -- single precision floats normalized to [0,1] texel
@@ -152,7 +152,7 @@ public class ImageTextureManager {
                 RawImage rawImgProxy = elt.getProxyRawImage();
                 if (rawImgProxy.getPixelFormat() == RawImage.PIXEL_FORMAT_LUMINANCE &&
                         rawImgProxy.getPixelType() == RawImage.PIXEL_TYPE_SIGNED_16BIT) {
-                    logger.info("(creating texture from raw 16-bit signed image pixel data)");
+                    logger.debug("(creating texture from raw 16-bit signed image pixel data)");
                     RawImage rawImg = elt.getRawImage();
                     TextureData imageTextureData =
                         new TextureData(  GL2.GL_LUMINANCE16F, // int internalFormat,  // GL_*_SNORM result in GL_INVALID_ENUM and all-white texels on tack (GeForce 8600 GT/nvidia 190.42)
@@ -174,7 +174,7 @@ public class ImageTextureManager {
                     preOffset = 0.5F;
                 } else if (rawImgProxy.getPixelFormat() == RawImage.PIXEL_FORMAT_LUMINANCE &&
                            rawImgProxy.getPixelType() == RawImage.PIXEL_TYPE_UNSIGNED_16BIT) {
-                    logger.info("(creating texture from raw 16-bit unsigned image pixel data)");
+                    logger.debug("(creating texture from raw 16-bit unsigned image pixel data)");
                     RawImage rawImg = elt.getRawImage();
                     TextureData imageTextureData =
                         new TextureData(  GL2.GL_LUMINANCE16F, // int internalFormat,  // GL_*_SNORM result in GL_INVALID_ENUM and all-white texels on tack (GeForce 8600 GT/nvidia 190.42)
@@ -196,7 +196,7 @@ public class ImageTextureManager {
                     preOffset = 0.0F;
                 } else if (rawImgProxy.getPixelFormat() == RawImage.PIXEL_FORMAT_LUMINANCE &&
                            rawImgProxy.getPixelType() == RawImage.PIXEL_TYPE_UNSIGNED_12BIT) {
-                    logger.info("(creating texture from raw 12-bit unsigned image pixel data)");
+                    logger.debug("(creating texture from raw 12-bit unsigned image pixel data)");
                     RawImage rawImg = elt.getRawImage();
                     TextureData imageTextureData =
                         new TextureData(  GL2.GL_LUMINANCE16, // NOT GL_LUMINANCE12 b/c pixelType is 16-bit and we'd thus lose precision
@@ -220,7 +220,7 @@ public class ImageTextureManager {
                 
             }
             if (null == imageTexture) {
-                logger.info("(creating texture from AWT image (fallback -- inefficient))");
+                logger.debug("(creating texture from AWT image (fallback -- inefficient))");
                 //TextureData imageTextureData = AWTTextureIO.newTextureData(elt.getImage(), true);  // with mipmapping
                 TextureData imageTextureData = AWTTextureIO.newTextureData(elt.getImage(), false);   // w/o mipmapping
                 imageTextureData.flush();
@@ -233,7 +233,7 @@ public class ImageTextureManager {
                                     preScale,
                                     preOffset);
             texRefStore.putTexRef(elt, texRef, gl);
-            logger.info("GL texture memory consumption now (est.): " + (texRefStore.getTotalMemConsumption()/1024/1024) + " MB");
+            logger.debug("GL texture memory consumption now (est.): " + (texRefStore.getTotalMemConsumption()/1024/1024) + " MB");
         }
         gl.glEnable(GL.GL_TEXTURE_2D);
         gl.glActiveTexture(texUnit);

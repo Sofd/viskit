@@ -1,15 +1,24 @@
 // -*- java -*-
 
-import de.sofd.iseer.server.modelimpl.NaviRootNodeProvider;
-import de.sofd.iseer.model.*;
-import de.sofd.iseer.ui.scripting.*;
 import java.util.*;
 import java.io.*;
+import java.beans.*;
 import org.dcm4che2.data.*;
 import org.dcm4che2.io.*;
 import org.dcm4che2.net.*;
 import org.dcm4che2.util.*;
-
+import de.sofd.viskit.*;
+import de.sofd.viskit.model.*;
+import de.sofd.viskit.ui.*;
+import de.sofd.viskit.ui.imagelist.*;
+import de.sofd.viskit.ui.imagelist.jlistimpl.*;
+import de.sofd.viskit.ui.imagelist.jlistimpl.test.*;
+import de.sofd.viskit.ui.imagelist.gridlistimpl.*;
+import de.sofd.viskit.ui.imagelist.glimpl.*;
+import de.sofd.viskit.ui.imagelist.event.*;
+import de.sofd.viskit.ui.imagelist.event.cellpaint.*;
+import de.sofd.viskit.controllers.*;
+import de.sofd.viskit.controllers.cellpaint.*;
 
 
 

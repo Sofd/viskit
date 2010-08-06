@@ -204,12 +204,15 @@ public class ImageListViewInitialZoomPanController {
             if (!isEnabled()) {
                 return;
             }
+            final ImageListViewCell cell = e.getSource();
+            if (! cell.getDisplayedModelElement().getInitializationState().equals(ImageListViewModelElement.InitializationState.INITIALIZED)) {
+                return;
+            }
             if (inProgrammedChange) {
                 return;
             }
             inProgrammedChange = true;
             try {
-                final ImageListViewCell cell = e.getSource();
                 ImageListViewModelElement elt = cell.getDisplayedModelElement();
                 Object imageKey = elt.getImageKey();
                 if (alreadyInitializedImagesKeys.contains(imageKey)) {

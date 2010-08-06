@@ -1,26 +1,39 @@
-package de.sofd.viskit.ui.imagelist.cellviewers.jogl;
+package de.sofd.viskit.ui.imagelist.glimpl;
 
-import de.sofd.lang.Runnable2;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Map;
+
 import javax.media.opengl.GL;
 import javax.media.opengl.GLContext;
+
 import org.apache.log4j.Logger;
 
+import de.sofd.lang.Runnable2;
+import de.sofd.viskit.ui.imagelist.event.cellpaint.ImageListViewCellPaintEvent;
+
 /**
- * {@link GLImageListViewCellViewer} uses this class to inform outside parties
- * that the (shared) OpenGL context that all the cell viewers use was created
- * (see {@link #registerContextInitCallback(de.sofd.lang.Runnable2) }).
- * An instance of SharedContextData represents (is associated 1:1 with) a shared
- * context. Said outside components may associate arbitrary data (display list IDs,
- * texture IDs etc.) with the context ({@link #setAttribute(java.lang.String, java.lang.Object) })
- * and retrieve it later.
- *
+ * Internal helper class used by {@link JGLImageListView} for implementing
+ * "shared context data", i.e. a feature that allows multiple instances of
+ * {@link JGLImageListView} as well as components like cell paint listeners to
+ * share OpenGL-managed data like textures, shader programs or display lists.
+ * {@link JGLImageListView} uses this to implement e.g. the
+ * {@link ImageListViewCellPaintEvent#getSharedContextData()} attribute hash.
+ * <p>
+ * Internal information: This class is usedto inform outside parties (for
+ * example that the (shared) OpenGL context that all JGLImageListView instances
+ * use was created (see
+ * {@link #registerContextInitCallback(de.sofd.lang.Runnable2) }). An instance of
+ * SharedContextData represents (is associated 1:1 with) a shared context. Said
+ * outside components may associate arbitrary data (display list IDs, texture
+ * IDs etc.) with the context (
+ * {@link #setAttribute(java.lang.String, java.lang.Object) }) and retrieve it
+ * later.
+ * 
  * @author olaf
  */
-public class SharedContextData {
+class SharedContextData {
 
     static final Logger logger = Logger.getLogger(SharedContextData.class);
 
@@ -61,7 +74,7 @@ public class SharedContextData {
     }
 
     /**
-     * Used by GLContext creators (e.g. {@link GLImageListViewCellViewer}) only (when initializing a new context).
+     * Used by GLContext creators (e.g. {@link JGLImageListView}) only (when initializing a new context).
      */
     public void unref() {
         if (refCount == 0) {
@@ -108,7 +121,7 @@ public class SharedContextData {
     }
 
     /**
-     * Used by GLContext creators (e.g. {@link GLImageListViewCellViewer}) only (when initializing a new context).
+     * Used by GLContext creators (e.g. {@link JGLImageListView}) only (when initializing a new context).
      */
     public static void callContextInitCallbacks(SharedContextData cd, GL gl) {
         for (Runnable2<SharedContextData, GL> callback : contextInitCallbacks) {
