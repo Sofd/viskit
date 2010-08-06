@@ -104,6 +104,9 @@ public class ImageListViewRoiInputEventController {
 
         protected void dispatchEventToCell(MouseEvent evt, boolean refreshCell) {
             ImageListViewCell cell = (ImageListViewCell) evt.getSource();
+            if (! cell.getDisplayedModelElement().getInitializationState().equals(ImageListViewModelElement.InitializationState.INITIALIZED)) {
+                return;
+            }
             if (null != cell.getLatestSize()) {
                 // TODO: generalized cell -> image AffineTransformation instead of this zoom/pan vector hackery? But one
                 //       would have to update that whenever cell.getLatestSize() changes...
