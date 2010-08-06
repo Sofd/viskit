@@ -846,20 +846,23 @@ public class JGLImageListView extends JImageListView {
 
     @Override
     protected void fireCellMouseWheelEvent(MouseWheelEvent e) {
-        super.fireCellMouseWheelEvent(e);
-        // internal mouse wheel handling: scroll the list (unless the event was consumed by an external listener)
-        if (!e.isConsumed()) {
-            int fvi = getFirstVisibleIndex();
-            if (e.getWheelRotation() < 0) {
-                if (fvi > 0) {
-                    setFirstVisibleIndex(fvi - 1);
+        try {
+            super.fireCellMouseWheelEvent(e);
+        } finally {
+            // internal mouse wheel handling: scroll the list (unless the event was consumed by an external listener)
+            if (!e.isConsumed()) {
+                int fvi = getFirstVisibleIndex();
+                if (e.getWheelRotation() < 0) {
+                    if (fvi > 0) {
+                        setFirstVisibleIndex(fvi - 1);
+                    }
+                } else {
+                    if (getLastVisibleIndex() < getLength() - 1) {
+                        setFirstVisibleIndex(fvi + 1);
+                    }
                 }
-            } else {
-                if (getLastVisibleIndex() < getLength() - 1) {
-                    setFirstVisibleIndex(fvi + 1);
-                }
+                e.consume();
             }
-            e.consume();
         }
     }
 
