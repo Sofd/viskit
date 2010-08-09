@@ -3,6 +3,8 @@ package de.sofd.viskit.model;
 import de.sofd.draw2d.Drawing;
 import de.sofd.util.FloatRange;
 import java.awt.image.BufferedImage;
+import java.beans.PropertyChangeListener;
+import java.beans.PropertyChangeSupport;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
@@ -19,8 +21,10 @@ import java.util.Map;
  */
 public abstract class AbstractImageListViewModelElement implements ImageListViewModelElement {
 
+    protected InitializationState initializationState = InitializationState.INITIALIZED;
     protected Map<String, Object> attributes = new HashMap<String, Object>();
     protected final Drawing roiDrawing = new Drawing();
+    protected Object errorInfo;
 
     @Override
     public void setAttribute(String name, Object value) {
@@ -86,6 +90,50 @@ public abstract class AbstractImageListViewModelElement implements ImageListView
     @Override
     public Drawing getRoiDrawing() {
         return roiDrawing;
+    }
+    
+    @Override
+    public InitializationState getInitializationState() {
+        return initializationState;
+    }
+    
+    @Override
+    public Object getErrorInfo() {
+        return errorInfo;
+    }
+    
+    @Override
+    public void setErrorInfo(Object info) {
+        this.errorInfo = info;
+    }
+    
+    @Override
+    public void setInitializationState(InitializationState initializationState) {
+        InitializationState oldValue = getInitializationState();
+        this.initializationState = initializationState;
+        propertyChangeSupport.firePropertyChange(PROP_INITIALIZATIONSTATE, oldValue, this.initializationState);
+    }
+
+    private PropertyChangeSupport propertyChangeSupport = new PropertyChangeSupport(this);
+
+    /**
+     * Add PropertyChangeListener.
+     *
+     * @param listener
+     */
+    @Override
+    public void addPropertyChangeListener(PropertyChangeListener listener) {
+        propertyChangeSupport.addPropertyChangeListener(listener);
+    }
+
+    /**
+     * Remove PropertyChangeListener.
+     *
+     * @param listener
+     */
+    @Override
+    public void removePropertyChangeListener(PropertyChangeListener listener) {
+        propertyChangeSupport.removePropertyChangeListener(listener);
     }
 
 }

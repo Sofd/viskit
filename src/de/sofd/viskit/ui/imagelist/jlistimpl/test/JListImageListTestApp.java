@@ -16,6 +16,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
@@ -67,6 +68,7 @@ import de.sofd.viskit.controllers.ImageListViewZoomPanApplyToAllController;
 import de.sofd.viskit.controllers.MultiILVSyncSetController;
 import de.sofd.viskit.controllers.MultiImageListViewController;
 import de.sofd.viskit.controllers.cellpaint.ImageListViewImagePaintController;
+import de.sofd.viskit.controllers.cellpaint.ImageListViewInitStateIndicationPaintController;
 import de.sofd.viskit.controllers.cellpaint.ImageListViewPrintLUTController;
 import de.sofd.viskit.controllers.cellpaint.ImageListViewPrintTextToCellsController;
 import de.sofd.viskit.controllers.cellpaint.ImageListViewRoiPaintController;
@@ -108,6 +110,11 @@ public class JListImageListTestApp {
         return isUser("fokko");
     }
 
+    /**
+     * for accessing objects and data of this app from Beanshell or other debugging environments
+     */
+    public static Map<String, Object> debugObjects = new HashMap<String, Object>();
+    
     public static boolean isUserHonglinh() {
         return isUser("honglinh");
     }
@@ -149,11 +156,19 @@ public class JListImageListTestApp {
             JFrame f2 = newMultiListFrame("Multi-List frame", null);
         }
         
+        //debugObjects.put("mlf", f2);
+
+        //debugObjects.put("f", f2);
     }
     
     //TODO: move this helper method into ModelFactory?
     protected static void addModelForDir(ModelFactory factory, File dir) throws IOException {
         factory.addModel(dir.getCanonicalPath(), dir);
+        if (isUserOlaf()) {
+            //test error states (file-not-found in this case)
+            DefaultListModel dlm = (DefaultListModel) factory.getModel(dir.getCanonicalPath());
+            dlm.insertElementAt(new FileBasedDicomImageListViewModelElement(new File("/foo/bar/baz"), false), 1);
+        }
     }
     
     public JFrame newSingleListFrame(String frameTitle, GraphicsConfiguration graphicsConfig) throws Exception {
@@ -378,6 +393,8 @@ public class JListImageListTestApp {
         
         new ImageListViewRoiPaintController(viewer).setEnabled(true);
         
+        new ImageListViewInitStateIndicationPaintController(viewer);
+
         ImageListViewSelectionScrollSyncController sssc = new ImageListViewSelectionScrollSyncController(viewer);
         sssc.setScrollPositionTracksSelection(true);
         sssc.setSelectionTracksScrollPosition(true);
@@ -537,9 +554,15 @@ public class JListImageListTestApp {
             //listModels.add(factory.getModel("2"));
         }
 
+
+        //listModels.add(StaticModelFactory.createModelFromDir(new File("/home/olaf/hieronymusr/br312043/images/cd801__center4001")));
+        //listModels.add(StaticModelFactory.createModelFromDir(new File("/home/olaf/hieronymusr/br312046/images/cd00908__center10101")));
+        //listModels.add(factory.createModelFromDir(new File("/home/olaf/hieronymusr/br312046/images/cd00907__center10102")));
+        //listModels.add(factory.createModelFromDir(new File("/shares/projects/schering/312043/Florbetaben Training Images/S7/IMAGE")));
+        
         final long t01 = System.currentTimeMillis();
 
-        System.out.println("model creation took " + (t01-t00) + " ms.");
+        System.out.println("creation of all models took " + (t01-t00) + " ms.");
 
         List<JImageListView> lists = new ArrayList<JImageListView>();
         
@@ -551,7 +574,11 @@ public class JListImageListTestApp {
             lnum++;
             final long t0 = System.currentTimeMillis();
             final ListViewPanel lvp = new ListViewPanel();
-            lvp.setPixelValueRange(factory.getPixelRange(modelKey));
+            debugObjects.put("lvp" + lnum, lvp);
+            debugObjects.put("lv" + lnum, lvp.getListView());
+            if (!isUserOlaf()) {
+                lvp.setPixelValueRange(factory.getPixelRange(modelKey));
+            }
             // initialization performance measurement: add a cell paint listener
             // to take the time when a cell in the list is first drawn,
             // which happens when the list has been completely initialized and the list's UI is coming up
@@ -642,16 +669,16 @@ public class JListImageListTestApp {
             this.setLayout(new BorderLayout());
             if (isUserHonglinh()) {
                 //listView = newJGLImageListView();
-                listView = newJGridImageListView(false);
+                listView = newJGridImageListView();
             } else if (isUserFokko()) {
                 //listView = newJGLImageListView();
-                listView = newJGridImageListView(false);
+                listView = newJGridImageListView();
             } else if (isUserOlaf()) {
                 //listView = newJGLImageListView();
-                listView = newJGridImageListView(false);
+                listView = newJGridImageListView();
             } else {
                 //listView = newJGLImageListView();
-                listView = newJGridImageListView(false);
+                listView = newJGridImageListView();
             }
             this.add(listView, BorderLayout.CENTER);
             ImageListViewInitialWindowingController initWindowingController = new ImageListViewInitialWindowingController(listView) {
@@ -691,7 +718,9 @@ public class JListImageListTestApp {
             new ImageListViewRoiInputEventController(listView);
             new ImageListViewImagePaintController(listView).setEnabled(true);
             slider = new JLutWindowingSlider();
-            new ImageListViewSliderWindowingController(listView,initWindowingController,slider);
+            if (! isUserOlaf()) {
+                new ImageListViewSliderWindowingController(listView,initWindowingController,slider);
+            }
             
             ImageListViewSelectionScrollSyncController sssc = new ImageListViewSelectionScrollSyncController(listView);
             sssc.setScrollPositionTracksSelection(true);
@@ -723,6 +752,8 @@ public class JListImageListTestApp {
             plutc.setEnabled(true);
             
             new ImageListViewRoiPaintController(listView).setEnabled(true);
+            
+            new ImageListViewInitStateIndicationPaintController(listView);
 
             new ImageListViewMouseMeasurementController(listView).setEnabled(true);
 
@@ -909,12 +940,9 @@ public class JListImageListTestApp {
         return viewer;
     }
     
-    protected JGridImageListView newJGridImageListView(boolean useOpenglRenderer) {
+    protected JGridImageListView newJGridImageListView() {
         final JGridImageListView viewer = new JGridImageListView();
         viewer.setScaleMode(JGridImageListView.MyScaleMode.newCellGridMode(2, 2));
-        if (useOpenglRenderer) {
-            ((JGridImageListView) viewer).setRendererType(JGridImageListView.RendererType.OPENGL);
-        }
         viewer.setSelectionModel(new DefaultBoundedListSelectionModel());
         return viewer;
     }
@@ -956,7 +984,7 @@ public class JListImageListTestApp {
         //System.out.println("press enter..."); System.in.read();   // use when profiling startup performance
         System.out.println("go");
         BasicConfigurator.configure();
-        SwingUtilities.invokeLater(new Runnable() {
+        SwingUtilities.invokeAndWait(new Runnable() {  //invokeAndWait so a beanshell script etc. that calls us doesn't have a race
 
             @Override
             public void run() {

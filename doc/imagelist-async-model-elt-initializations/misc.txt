@@ -123,9 +123,12 @@ interface ImageListViewModelElement {
     //selber, sondern wie alle anderen Zell-Maloperationen in
     //PaintListenern
 
-    //=> PaintListener (oder PaintController?)  sollten sagen können,
+    //=> PaintController sollten sagen können,
     //in welchen initializationStates sie aufgerufen werden sollen
 
+    //per Vereinbarung würden die Daten-getter-Methoden des Modellelements
+    //(z.B. getImage, getRoiDrawing) nur dann garantiert schnell
+    //sein, wenn initializationState==INITIALIZED
 
     //TODO: "startInitialization"-Nachricht von Liste an
     //Modellelement, z.B. wenn es erstmals sichtbar wird?
@@ -162,6 +165,34 @@ interface ImageListViewModelElement {
     Rendering würde schlagartig sehr viel langsamer werden, sobald der
     Anwender in einen scaleMode schaltet, der mehr Texturen
     gleichzeitig sichtbar macht als in den Cache-Speicher passen
+
+  - manchmal würde z.B. getRawImage() erst beim Aufruf (auf einem
+    Element im State INITIALIZED) feststellen, dass das Element wieder
+    UNINITIALIZED sein sollte (z.B. weil es aus dem Cache entfernt
+    wurde). Wie lösen wir das? Spezielle Exception? Oder der
+    getRawImage()-Methode erlauben,
+    setInitializationState(UNINITIALIZED) aufzurufen (und das extern
+    abfangen) und schnell zurückzukehren?
+
+  - lazy-Initialisierung von Multiframe-DICOMs...
+
+
+Modellschicht
+-------------
+
+Alles Thread-Handling etc. passiert in der Modellschicht, nicht in der
+Liste
+
+// TODO: turn into a class that spawns/manages the threads etc?
+interface AsyncInitImageListViewModelElement extends ImageListViewModelElement {
+
+    /**
+     * Perform asynchronous initialization of this model element. This
+     * method may be run in a worker thread spawned by the caller.
+     */
+    void initialize();
+}
+
 
 
 TODO: weiter...

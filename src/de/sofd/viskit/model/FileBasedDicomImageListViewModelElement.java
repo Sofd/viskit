@@ -32,12 +32,20 @@ public class FileBasedDicomImageListViewModelElement extends CachingDicomImageLi
     protected FileBasedDicomImageListViewModelElement() {
     }
 
+    // TODO: frameNumber as additional c'tor parameter (we can't support later setFrameNumber() calls anyway b/c the keys would change)
+    
     public FileBasedDicomImageListViewModelElement(URL url) {
         setUrl(url, true);
+        if (asyncMode) {
+            setInitializationState(InitializationState.UNINITIALIZED);
+        }
     }
 
     public FileBasedDicomImageListViewModelElement(URL url, boolean checkReadability) {
         setUrl(url, checkReadability);
+        if (asyncMode) {
+            setInitializationState(InitializationState.UNINITIALIZED);
+        }
     }
 
     public FileBasedDicomImageListViewModelElement(String fileName) {
@@ -56,6 +64,9 @@ public class FileBasedDicomImageListViewModelElement extends CachingDicomImageLi
         try {
             setUrl(file.toURI().toURL(), checkReadability);
             urlAsFile = file.getAbsoluteFile();
+            if (asyncMode) {
+                setInitializationState(InitializationState.UNINITIALIZED);
+            }
         } catch (MalformedURLException e) {
             throw new RuntimeException(e);
         }
