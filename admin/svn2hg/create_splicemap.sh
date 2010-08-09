@@ -131,6 +131,11 @@ add_sm_entry \
     'viskit: svn2hg splicemap update (async_model_elt_init branch, HieronymusR312043S' \
     'WindowingUtil, verbesserung beim laden von komprimierten bildern, initiales windowing bei komprimierten bildern'
 
+add_sm_entry \
+    'merged 864:963' \
+    'berlange Toolbars.' \
+    'viskit: ModelFactory extensions'
+
 
 ##### async_model_elt_init branch
 
@@ -143,9 +148,21 @@ add_sm_entry \
     'viskit: asynchronous model element initialization: more logging, TODOs, documentation' \
     'viskit: JLutSliderWindowingSlider code changes, ModelFactory calculates pixel data ranges'
 
+add_sm_entry \
+    'viskit: latest trunk changes (ILVInitialZoomPanCtrler and others) merged into as' \
+    'viskit: latest trunk changes merged into async_model_elt_init branch' \
+    'viskit: test app: + zRST button'
 
 ##### HieronymusR312043S1 branch
 
 add_sm_entry \
     'branch for HieronymusR312043S1' \
     'build mgmt.'
+
+add_sm_entry \
+    '2010-07-26 08:10' \
+    '2010-07-26 08:08' \
+    '2010-07-23 18:06'
+# merged with trunk
+# merged with trunk
+# viskit: svn2hg splicemap update
