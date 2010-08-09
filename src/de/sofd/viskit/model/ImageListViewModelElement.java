@@ -112,17 +112,43 @@ public interface ImageListViewModelElement {
      * <p>
      * The general contract here is that if the initialization state is set to
      * INITIALIZED, a {@link JImageListView} that contains this model element
-     * may call all the data getter methods of the model elements (e.g.
-     * {@link #getImage()}, {@link #getRawImage()}, {@link #getRoiDrawing()} at
+     * may call all the data getter methods of the model elements (
+     * {@link #getImage()}, {@link #getRawImage()}, {@link #getRoiDrawing()}) at
      * any time, so they should operate quickly (if they don't, the UI will
-     * block). As long as the state is UNINITIALIZED, the list won't call those
-     * methods. In this case the model element may want to run some kind of
-     * background processing/thread (e.g. load the image from the backing
-     * store/network) to bring itself into a state where the data getter methods
-     * can operate quickly. When it has finished this task, it would set its
-     * initializationState property to INITIALIZED (firing the corresponding
-     * property change event) to indicate this state transition to the outside
-     * (especially to any JImageLists that contain the model element).
+     * block). Generally this means that in INITIALIZED state, all the data
+     * that's returned by data getter methods is readily available for the
+     * element without having to obtain it from a backing store like the
+     * filesystem or the network. As long as the state is UNINITIALIZED, the
+     * list won't call those methods. In this case the model element may want to
+     * run some kind of background processing/thread (e.g. load the image from
+     * the backing store/network) to bring itself into a state where the data
+     * getter methods can operate quickly. When it has finished this task, it
+     * would set its initializationState property to INITIALIZED (firing the
+     * corresponding property change event) to indicate this state transition to
+     * the outside (especially to any JImageLists that contain the model
+     * element).
+     * <p>
+     * Additionally, even if a model element is in INITIALIZED state, its data
+     * getter methods may notice that the data isn't available quickly anymore
+     * (e.g. it may have been evicted from a internal cache) and the model
+     * element's initialization state should really be UNINITIALIZED. In such a
+     * case, the data getter method should throw the special
+     * {@link NotInitializedException} to indicate this (it should NOT set the
+     * initialization state to UNINITIALIZED by itself). The exception will be
+     * caught by the caller (normally the list view itself, directly, or
+     * indirectly via a controller), which will then set the initialization
+     * state to UNINITIALIZED. Controllers or other parties that call the data
+     * getter methods on model elements and that want to support asynchronous
+     * behavior should be aware that {@link NotInitializedException} may be
+     * thrown by the data getter methods.
+     * <p>
+     * The model element may not support asynchronous operation, in which case
+     * its initializationState would never be UNINITIALIZED (i.e. it would only
+     * ever be INITIALIZED or ERROR). In this case, the data getter methods can
+     * always be called and will never throw {@link NotInitializedException}
+     * (they may take much longer to execute though, because they may have to
+     * read the data synchronously from the backing store before returning --
+     * during this time, the UI will be blocked)
      * <p>
      * The getter and setter method of this property, just like all other
      * methods declared in this base interface, will always be called by the

@@ -711,7 +711,7 @@ public class JListImageListTestApp {
             new ImageListViewRoiInputEventController(listView);
             new ImageListViewImagePaintController(listView).setEnabled(true);
             slider = new JLutWindowingSlider();
-            //new ImageListViewSliderWindowingController(listView,initWindowingController,slider);
+            new ImageListViewSliderWindowingController(listView,initWindowingController,slider);
             
             ImageListViewSelectionScrollSyncController sssc = new ImageListViewSelectionScrollSyncController(listView);
             sssc.setScrollPositionTracksSelection(true);

@@ -1,11 +1,8 @@
 package de.sofd.viskit.model;
 
-import de.sofd.util.FloatRange;
-import de.sofd.util.Histogram;
-import de.sofd.util.IntRange;
-import de.sofd.viskit.test.windowing.RawDicomImageReader;
-
+import java.awt.color.ColorSpace;
 import java.awt.image.BufferedImage;
+import java.awt.image.Raster;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -35,13 +32,9 @@ import org.dcm4che2.io.DicomOutputStream;
 import org.dcm4che2.media.FileMetaInformation;
 
 import de.sofd.util.FloatRange;
+import de.sofd.util.Histogram;
+import de.sofd.util.IntRange;
 import de.sofd.viskit.test.windowing.RawDicomImageReader;
-
-import com.sun.opengl.util.BufferUtil;
-import java.awt.color.ColorSpace;
-import java.awt.image.Raster;
-import java.nio.IntBuffer;
-import org.apache.log4j.Logger;
 
 /**
  * Implements getDicomObject(), getImage() as caching delegators to the (subclass-provided)
@@ -55,14 +48,24 @@ public abstract class CachingDicomImageListViewModelElement extends AbstractImag
 
     protected int frameNumber = 0;
     protected int totalFrameNumber = -1;
-    
-    protected boolean asyncMode = true;
+
+    /**
+     * Asynchronous mode. When enabled, the initalizationState property may
+     * attain the UNINITIALIZED value as long as the image is not cached, and
+     * background threads will be pooled to load the images of uninitialized
+     * elements. This isn't fully implemented yet (especially for situations
+     * where the cache is smaller than the number of existing model elements),
+     * which is why this flag is set to false and can only be changed in the
+     * source code for now.
+     */
+    protected boolean asyncMode = false;
     
     private static final Logger logger = Logger.getLogger(CachingDicomImageListViewModelElement.class);
 
     static {
         RawDicomImageReader.registerWithImageIO();
     }
+
     /**
      * use our own thread factory for the imageFetchingJobsExecutor because the
      * default one creates non-daemon threads, which may prevent JVM shutdowns
