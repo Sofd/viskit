@@ -2,6 +2,7 @@ package de.sofd.viskit.model;
 
 import de.sofd.draw2d.Drawing;
 import de.sofd.util.FloatRange;
+import de.sofd.viskit.controllers.cellpaint.ImageListViewInitStateIndicationPaintController;
 import de.sofd.viskit.ui.imagelist.JImageListView;
 import java.awt.image.BufferedImage;
 import java.beans.PropertyChangeListener;
@@ -9,50 +10,55 @@ import java.util.Collection;
 
 /**
  * Base interface for elements of the ListModel of a {@link JImageListView}.
- *
+ * 
  * @author olaf
  */
 public interface ImageListViewModelElement {
 
     public static final String PROP_INITIALIZATIONSTATE = "initializationState";
-    //TODO: make the other properties bean properties as well
-    
+
+    // TODO: make the other properties bean properties as well
+
     /**
-     *
+     * 
      * @return does {@link #getRawImage() } work?
      */
     boolean hasRawImage();
 
     /**
-     *
+     * 
      * @return does {@link #getImage() } work?
      */
     boolean hasBufferedImage();
 
     /**
-     *
-     * @return is hasRawImage(), is getRawImage() more efficient the getImage() too?
+     * 
+     * @return is hasRawImage(), is getRawImage() more efficient the getImage()
+     *         too?
      */
     boolean isRawImagePreferable();
 
     /**
-     * If this.hasRawImage(), return the image of the model element, as a {@link RawImage} object.
-     * This may be (see {@link #isRawImagePreferable() }) a more efficient representation than
-     * {@link #getImage() } to process as well as to acquire from the backing store, so,
-     * if this.hasRawImage() and isRawImagePreferable() this.users should
-     * try to use this in preference to {@link #getImage() }, falling back on the latter only if needed.
+     * If this.hasRawImage(), return the image of the model element, as a
+     * {@link RawImage} object. This may be (see {@link #isRawImagePreferable() }
+     * ) a more efficient representation than {@link #getImage() } to process as
+     * well as to acquire from the backing store, so, if this.hasRawImage() and
+     * isRawImagePreferable() this.users should try to use this in preference to
+     * {@link #getImage() }, falling back on the latter only if needed.
      * <p>
      * Throws an exception if !this.hasRawImage().
      */
     RawImage getRawImage();
 
     /**
-     * Return a RawImage object that's identical to #getRadImage() except for the pixel data,
-     * which may be null. This may be much more efficient to acquire than the whole image, and
-     * it enables the caller to learn about the metadata (width, height, pixel type, format etc.)
-     * of the image without having to get the pixel data itself. This may be used e.g. if the caller first
-     * wants to decide whether it supports processing the pixels of this RawImage, and only
-     * if it does, actually get the pixels and process them.
+     * Return a RawImage object that's identical to #getRadImage() except for
+     * the pixel data, which may be null. This may be much more efficient to
+     * acquire than the whole image, and it enables the caller to learn about
+     * the metadata (width, height, pixel type, format etc.) of the image
+     * without having to get the pixel data itself. This may be used e.g. if the
+     * caller first wants to decide whether it supports processing the pixels of
+     * this RawImage, and only if it does, actually get the pixels and process
+     * them.
      */
     RawImage getProxyRawImage();
 
@@ -62,22 +68,24 @@ public interface ImageListViewModelElement {
      * <p>
      * Throws an exception if !this.hasBufferedImage().
      * <p>
-     * N.B. it should never happen that both hasRawImage() and hasBufferedImage() return false because
-     * in that case there would be no way to obtain the image data. The implementation must ensure
-     * that that never happens.
+     * N.B. it should never happen that both hasRawImage() and
+     * hasBufferedImage() return false because in that case there would be no
+     * way to obtain the image data. The implementation must ensure that that
+     * never happens.
      */
     BufferedImage getImage();
 
     /**
      * Returns a key that uniquely identifies the image.
      * <p>
-     * The key can be used by various front-end (view) and other components for caching data associated
-     * with the image.
+     * The key can be used by various front-end (view) and other components for
+     * caching data associated with the image.
      * <p>
-     * This key should be constant under equals()/hashCode() throughout the lifetime of <i>this</i>. This method will
-     * be called often, so it should operate quickly. It should not call getImage() or getRawImage() if those may take
-     * long to execute.
-     *
+     * This key should be constant under equals()/hashCode() throughout the
+     * lifetime of <i>this</i>. This method will be called often, so it should
+     * operate quickly. It should not call getImage() or getRawImage() if those
+     * may take long to execute.
+     * 
      * @return
      */
     Object getImageKey();
@@ -92,7 +100,9 @@ public interface ImageListViewModelElement {
      */
     Drawing getRoiDrawing();
 
-    enum InitializationState {UNINITIALIZED, INITIALIZED, ERROR};
+    enum InitializationState {
+        UNINITIALIZED, INITIALIZED, ERROR
+    };
 
     /**
      * The initialization state of this model element.
@@ -113,20 +123,24 @@ public interface ImageListViewModelElement {
      * The general contract here is that if the initialization state is set to
      * INITIALIZED, a {@link JImageListView} that contains this model element
      * may call all the data getter methods of the model elements (
-     * {@link #getImage()}, {@link #getRawImage()}, {@link #getRoiDrawing()}) at
-     * any time, so they should operate quickly (if they don't, the UI will
-     * block). Generally this means that in INITIALIZED state, all the data
-     * that's returned by data getter methods is readily available for the
-     * element without having to obtain it from a backing store like the
-     * filesystem or the network. As long as the state is UNINITIALIZED, the
-     * list won't call those methods. In this case the model element may want to
-     * run some kind of background processing/thread (e.g. load the image from
-     * the backing store/network) to bring itself into a state where the data
-     * getter methods can operate quickly. When it has finished this task, it
-     * would set its initializationState property to INITIALIZED (firing the
-     * corresponding property change event) to indicate this state transition to
-     * the outside (especially to any JImageLists that contain the model
-     * element).
+     * {@link #getImage()}, {@link #getRawImage()}, {@link #getRoiDrawing()},
+     * and DICOM data getter methods in subclasses) at any time, so they should
+     * operate quickly (the UI will block as long as they run). Generally this
+     * means that in INITIALIZED state, all the data that's returned by data
+     * getter methods is readily available for the element without having to
+     * obtain it from a slow backing store like the network or a slow filesystem
+     * (this may mean that the data is not available in an in-memory cache (this
+     * is what the {@link CachingDicomImageListViewModelElement} subclass does),
+     * but generally it is at the discretion of the model element what it
+     * considers "slow" and what not). As long as the state is not INITIALIZED
+     * (i.e., UNINITIALIZED or ERROR), the list won't call the data getter
+     * methods. In this case the model element may want to run some kind of
+     * background processing/thread (e.g. load the image from the backing
+     * store/network) to bring itself into a state where the data getter methods
+     * can operate quickly. When it has finished this task, it would set its
+     * initializationState property to INITIALIZED (firing the corresponding
+     * property change event) to indicate this state transition to the outside
+     * (especially to any JImageLists that contain the model element).
      * <p>
      * Additionally, even if a model element is in INITIALIZED state, its data
      * getter methods may notice that the data isn't available quickly anymore
@@ -150,6 +164,16 @@ public interface ImageListViewModelElement {
      * read the data synchronously from the backing store before returning --
      * during this time, the UI will be blocked)
      * <p>
+     * If a data getter method throws any exception other than
+     * {@link NotInitializedException}, the list will catch that and set the
+     * element's initializationState to ERROR. It will also store the exception
+     * in the {@link #getErrorInfo() errorInfo} property where it can be
+     * retrieved later by interested parties (e.g.
+     * {@link ImageListViewInitStateIndicationPaintController}) . The model
+     * element or some external party (e.g. a controller) will have correct the
+     * error condition and set the initializationState back to INITIALIZED (or
+     * UNINITIALIZED for asynchronous operation).
+     * <p>
      * The getter and setter method of this property, just like all other
      * methods declared in this base interface, will always be called by the
      * containing list in the UI thread only. Also, the model element must
@@ -160,7 +184,9 @@ public interface ImageListViewModelElement {
      * initializationState change (from UNINITIALIZED to INITIALIZED) must be
      * communicated back to the UI thread (TODO: to do this portably, a
      * toolkit-independent equivalent of Swing's SwingUtilities.invokeLater() et
-     * al. is probably needed)
+     * al. is probably needed -- or better yet, lift this restriction, allow the
+     * event to be fired in any thread and have the list perform the switch to
+     * the UI thread)
      */
     InitializationState getInitializationState();
 
@@ -172,18 +198,40 @@ public interface ImageListViewModelElement {
     void setInitializationState(InitializationState initializationState);
 
     /**
-     * Store arbitrary additional data in this model element. The data can be retrieved again using
-     * {@link #getAttribute(java.lang.String) }.
-     *
-     * @param name arbitrary name to store the data under. Should follow hiearchical naming conventions
-     *        ("de.sofd.foo.bar.someValue"} to avoid name clashes between multiple independent users.
-     * @param value value to store
+     * Additional information for the last error condition that caused this
+     * model element's {@link #getInitializationState() initialization state} to
+     * be set to ERROR. For the time being, the JImageListView will set this to
+     * the Exception that caused the condition (i.e. any exception thrown by
+     * data getter methods like {@link #getImage()}, getDicomObject etc.)
+     * 
+     * @return
+     */
+    Object getErrorInfo();
+
+    /**
+     * Setter for {@link #getErrorInfo()}.
+     * 
+     * @param info
+     */
+    void setErrorInfo(Object info);
+
+    /**
+     * Store arbitrary additional data in this model element. The data can be
+     * retrieved again using {@link #getAttribute(java.lang.String) }.
+     * 
+     * @param name
+     *            arbitrary name to store the data under. Should follow
+     *            hierarchical naming conventions ("de.sofd.foo.bar.someValue"}
+     *            to avoid name clashes between multiple independent users.
+     * @param value
+     *            value to store
      */
     void setAttribute(String name, Object value);
 
     /**
-     * Retrieve data previously store using {@link #setAttribute(java.lang.String, java.lang.Object) }.
-     *
+     * Retrieve data previously stored using
+     * {@link #setAttribute(java.lang.String, java.lang.Object) }.
+     * 
      * @param name
      * @return
      */
@@ -192,17 +240,17 @@ public interface ImageListViewModelElement {
     Collection<String> getAllAttributeNames();
 
     Object removeAttribute(String name);
-    
+
     /**
      * Add PropertyChangeListener.
-     *
+     * 
      * @param listener
      */
     void addPropertyChangeListener(PropertyChangeListener listener);
 
     /**
      * Remove PropertyChangeListener.
-     *
+     * 
      * @param listener
      */
     void removePropertyChangeListener(PropertyChangeListener listener);

@@ -50,22 +50,28 @@ public class ImageListViewInitStateIndicationPaintController extends CellPaintCo
         ImageListViewModelElement.InitializationState initState = cell.getDisplayedModelElement().getInitializationState();
         Color textColor;
         String text;
+        int textX, textY;
         switch (initState) {
         case UNINITIALIZED:
             textColor = Color.green;
-            text = "...";
+            text = getUninitializedString(cell);
+            Dimension sz = cell.getLatestSize();
+            textX = sz.width / 2;
+            textY = sz.height / 2;
             break;
         case ERROR:
             textColor = Color.red;
-            text = "ERROR";
+            text = getErrorString(cell);
+            textX = 0;
+            textY = cell.getLatestSize().height / 2;
             break;
         default:
-            throw new IllegalStateException("ShOULD NEVER HAPPEN");
+            throw new IllegalStateException("SHOULD NEVER HAPPEN");
         }
 
         g2d.setColor(textColor);
         Dimension sz = cell.getLatestSize();
-        g2d.drawString(text, sz.width / 2, sz.height / 2);
+        g2d.drawString(text, textX, textY);
     }
     
     @Override
@@ -74,17 +80,23 @@ public class ImageListViewInitStateIndicationPaintController extends CellPaintCo
         ImageListViewModelElement.InitializationState initState = cell.getDisplayedModelElement().getInitializationState();
         Color textColor;
         String text;
+        int textX, textY;
         switch (initState) {
         case UNINITIALIZED:
             textColor = Color.green;
-            text = "...";
+            text = getUninitializedString(cell);
+            Dimension sz = cell.getLatestSize();
+            textX = sz.width / 2;
+            textY = sz.height / 2;
             break;
         case ERROR:
             textColor = Color.red;
-            text = "ERROR";
+            text = getErrorString(cell);
+            textX = 0;
+            textY = cell.getLatestSize().height / 2;
             break;
         default:
-            throw new IllegalStateException("ShOULD NEVER HAPPEN");
+            throw new IllegalStateException("SHOULD NEVER HAPPEN");
         }
 
         GLUT glut = new GLUT();
@@ -95,12 +107,25 @@ public class ImageListViewInitStateIndicationPaintController extends CellPaintCo
             gl.glColor3f((float) textColor.getRed() / 255F,
                          (float) textColor.getGreen() / 255F,
                          (float) textColor.getBlue() / 255F);
-            Dimension sz = cell.getLatestSize();
-            gl.glRasterPos2i(sz.width / 2, sz.height / 2);
+            gl.glRasterPos2i(textX, textY);
             glut.glutBitmapString(BITMAP_8_BY_13, text);
         } finally {
             gl.glPopAttrib();
         }
     }
     
+    protected String getUninitializedString(ImageListViewCell cell) {
+        return "...";
+    }
+
+    protected String getErrorString(ImageListViewCell cell) {
+        ImageListViewModelElement elt = cell.getDisplayedModelElement();
+        Exception ei = (Exception) elt.getErrorInfo();
+        if (ei != null) {
+            return "Error: " + ei.getLocalizedMessage();
+        } else {
+            return "ERROR";
+        }
+    }
+
 }

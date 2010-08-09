@@ -164,6 +164,11 @@ public class JListImageListTestApp {
     //TODO: move this helper method into ModelFactory?
     protected static void addModelForDir(ModelFactory factory, File dir) throws IOException {
         factory.addModel(dir.getCanonicalPath(), dir);
+        if (isUserOlaf()) {
+            //test error states (file-not-found in this case)
+            DefaultListModel dlm = (DefaultListModel) factory.getModel(dir.getCanonicalPath());
+            dlm.insertElementAt(new FileBasedDicomImageListViewModelElement(new File("/foo/bar/baz"), false), 1);
+        }
     }
     
     public JFrame newSingleListFrame(String frameTitle, GraphicsConfiguration graphicsConfig) throws Exception {
@@ -711,7 +716,9 @@ public class JListImageListTestApp {
             new ImageListViewRoiInputEventController(listView);
             new ImageListViewImagePaintController(listView).setEnabled(true);
             slider = new JLutWindowingSlider();
-            new ImageListViewSliderWindowingController(listView,initWindowingController,slider);
+            if (! isUserOlaf()) {
+                new ImageListViewSliderWindowingController(listView,initWindowingController,slider);
+            }
             
             ImageListViewSelectionScrollSyncController sssc = new ImageListViewSelectionScrollSyncController(listView);
             sssc.setScrollPositionTracksSelection(true);

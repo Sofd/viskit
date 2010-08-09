@@ -24,6 +24,7 @@ public abstract class AbstractImageListViewModelElement implements ImageListView
     protected InitializationState initializationState = InitializationState.INITIALIZED;
     protected Map<String, Object> attributes = new HashMap<String, Object>();
     protected final Drawing roiDrawing = new Drawing();
+    protected Object errorInfo;
 
     @Override
     public void setAttribute(String name, Object value) {
@@ -94,6 +95,16 @@ public abstract class AbstractImageListViewModelElement implements ImageListView
     @Override
     public InitializationState getInitializationState() {
         return initializationState;
+    }
+    
+    @Override
+    public Object getErrorInfo() {
+        return errorInfo;
+    }
+    
+    @Override
+    public void setErrorInfo(Object info) {
+        this.errorInfo = info;
     }
     
     @Override

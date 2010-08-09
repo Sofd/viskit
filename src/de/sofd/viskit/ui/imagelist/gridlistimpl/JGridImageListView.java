@@ -517,6 +517,11 @@ public class JGridImageListView extends JImageListView {
         } catch (NotInitializedException e) {
             logger.debug("NotInitializedException during firing of MouseEvent " + evt + ". Reinitializing.");
             sourceCell.getDisplayedModelElement().setInitializationState(InitializationState.UNINITIALIZED);
+        } catch (Exception e) {
+            logger.error("Exception during firing of MouseEvent " + evt + ". Setting the model elt to permanent ERROR state.", e);
+            //TODO: support the notion of "temporary" errors, for which we would not change the initializationState?
+            sourceCell.getDisplayedModelElement().setInitializationState(InitializationState.ERROR);
+            sourceCell.getDisplayedModelElement().setErrorInfo(e);
         }
     }
 

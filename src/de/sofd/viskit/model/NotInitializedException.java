@@ -23,6 +23,8 @@ package de.sofd.viskit.model;
  */
 public class NotInitializedException extends RuntimeException {
 
+    private static final long serialVersionUID = -3424377023418474053L;
+
     public NotInitializedException() {
     }
 

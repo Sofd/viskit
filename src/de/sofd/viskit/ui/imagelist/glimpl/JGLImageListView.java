@@ -474,6 +474,11 @@ public class JGLImageListView extends JImageListView {
                             logger.debug("NotInitializedException drawing " + cell.getDisplayedModelElement(), e);
                             cell.getDisplayedModelElement().setInitializationState(InitializationState.UNINITIALIZED);
                             fireCellPaintEvent(new ImageListViewCellPaintEvent(cell, gc, null, sharedContextData.getAttributes()));
+                        } catch (Exception e) {
+                            logger.error("Exception drawing " + cell.getDisplayedModelElement() + ". Setting the model elt to permanent ERROR state.", e);
+                            //TODO: support the notion of "temporary" errors, for which we would not change the initializationState?
+                            cell.getDisplayedModelElement().setInitializationState(InitializationState.ERROR);
+                            cell.getDisplayedModelElement().setErrorInfo(e);
                         }
                     } catch (Exception e) {
                         logger.error("error displaying " + cell.getDisplayedModelElement(), e);
@@ -804,6 +809,11 @@ public class JGLImageListView extends JImageListView {
         } catch (NotInitializedException e) {
             logger.debug("NotInitializedException during firing of MouseEvent " + evt + ". Reinitializing.");
             sourceCell.getDisplayedModelElement().setInitializationState(InitializationState.UNINITIALIZED);
+        } catch (Exception e) {
+            logger.error("Exception during firing of MouseEvent " + evt + ". Setting the model elt to permanent ERROR state.", e);
+            //TODO: support the notion of "temporary" errors, for which we would not change the initializationState?
+            sourceCell.getDisplayedModelElement().setInitializationState(InitializationState.ERROR);
+            sourceCell.getDisplayedModelElement().setErrorInfo(e);
         }
     }
 
