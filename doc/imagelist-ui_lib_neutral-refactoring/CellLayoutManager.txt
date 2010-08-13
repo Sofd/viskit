@@ -1,0 +1,45 @@
+Brainstorming:
+
+- ein CellLayoutManager (CLM) weiß auf Anfrage, welche Zellen aktuell
+  im Viewport sichtbar sind und was ihre Positionen (Rectangles) auf
+  dem Viewport sind
+
+- Eingabe:
+
+  - Viewport-Größe
+
+  - ScaleMode
+
+  - Anzahl Zellen
+
+  - Scrollposition
+
+- Ausgabe:
+
+  - Nrn. der sichtbaren Zellen ( aus [0, Anzahl Zellen) )
+
+  - pro Zell-Nr.: Placement (Rectangle) der Zelle relativ zum Viewport
+
+  - evtl.: pro Zell-Nr.: Cell-DisplayArea relativ zum Rectangle?
+
+    - z.B. bei verschieden großen Bildern in der Liste?
+
+    - vielleicht bei JList nachschauen
+
+  - kompletter Scrollbar-Zustand (Länge, Intervall/-position) (kann
+    Korrektur der Eingabe-Scrollposition enthalten. Die Impl. muss
+    sicherstellen, dass der hier zurückgeg. Wert stabil ist, d.h. eine
+    nochmalige Berechnung mit der hier zurückgeg. Scrollpos. als
+    Eingabe muss wieder dasselbe zurückgeben)
+
+- Eingaben als Zustand des CLM? Oder zustandslos bzw. wieviel Zustand?
+  Muss z.B. die Zahl der Zellen zum Zustand gehören?
+
+- Scrollbar-Ausrichtung (horizontal/vertikal)?
+
+- CLM als einzelne Klasse? Oder als Interface, mit einer Impl. pro
+  ScaleMode-Typ?
+
+  - bei völliger Zustandslosigkeit könnte man mglw. die ganze Klasse
+    CLM einsparen und das ganze als Methode von ScaleMode
+    implementieren

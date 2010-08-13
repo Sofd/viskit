@@ -68,6 +68,8 @@ class TWLImageListView extends de.matthiasmann.twl.Widget implements ImageListVi
   mglw. keine Benutzung von JGridList in JGridImageListView mehr,
   statt dessen alles selber malen, ähnlich wie in
   JGLImageListView. JGridImageListView sollte auch umbenannt werden,
-  sobald es nicht mehr nur Grid-Präsentation unterstützt)
+  sobald es nicht mehr nur Grid-Präsentation unterstützt). Idee:
+  Backend-unabhängige Klasse CellLayoutManager. Siehe
+  CellLayoutManager.txt
 
 - JListImageListView kann dann wahrscheinlich raus
