@@ -147,6 +147,9 @@ public abstract class JImageListView extends JPanel {
         public void contentsChanged(ListDataEvent e) {
             boolean newElements = false;
             for (int i = e.getIndex0(); i <= e.getIndex1(); i++) {
+                if (i < 0 || i >= getModel().getSize()) {
+                    continue;
+                }
                 ImageListViewModelElement elt = (ImageListViewModelElement) getModel().getElementAt(i);
                 if (! cellsByElementMap.containsKey(elt)) {
                     elt.addPropertyChangeListener(modelElementPropertyChangeEventForwarder);
