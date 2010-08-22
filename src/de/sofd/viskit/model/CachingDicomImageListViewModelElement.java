@@ -58,7 +58,7 @@ public abstract class CachingDicomImageListViewModelElement extends AbstractImag
      * which is why this flag is set to false and can only be changed in the
      * source code for now.
      */
-    protected boolean asyncMode = false;
+    protected boolean asyncMode = true;
     
     private static final Logger logger = Logger.getLogger(CachingDicomImageListViewModelElement.class);
 
