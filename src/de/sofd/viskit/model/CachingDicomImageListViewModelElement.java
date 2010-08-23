@@ -677,6 +677,11 @@ public abstract class CachingDicomImageListViewModelElement extends AbstractImag
         return pixelType;
     }
     
+    @Override
+    public void setPriority(Object source, double value) {
+        super.setPriority(source, value);
+        //TODO
+    }
     
     @Override
     public String toString() {
