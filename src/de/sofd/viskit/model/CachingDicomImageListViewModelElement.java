@@ -34,6 +34,7 @@ import org.dcm4che2.media.FileMetaInformation;
 import de.sofd.util.FloatRange;
 import de.sofd.util.Histogram;
 import de.sofd.util.IntRange;
+import de.sofd.viskit.model.ImageListViewModelElement.InitializationState;
 import de.sofd.viskit.test.windowing.RawDicomImageReader;
 
 /**
@@ -103,28 +104,41 @@ public abstract class CachingDicomImageListViewModelElement extends AbstractImag
                 @Override
                 public void run() {
                     logger.debug("background-loading: " + getDicomObjectKey());
-                    DicomObject dcmObj;
-                    //synchronized (dcmObjectCache) {  // not doing this b/c getBackendDicomObject() may block for a long time...so maybe two threads fetch the same dicom -- not a problem, right?
-                    dcmObj = dcmObjectCache.get(getDicomObjectKey());
-                    if (dcmObj == null) {
-                        dcmObj = getBackendDicomObject();
-                        dcmObjectCache.put(getDicomObjectKey(), dcmObj);
-                    }
-                    //}
-    
-                    DicomObject dcmMetadata = rawDicomImageMetadataCache.get(getDicomObjectKey());
-                    if (null == dcmMetadata) {
-                        dcmMetadata = new BasicDicomObject();
-                        dcmObj.subSet(0, Tag.PixelData - 1).copyTo(dcmMetadata);
-                        rawDicomImageMetadataCache.put(getDicomObjectKey(), dcmMetadata);
-                    }
-                    
-                    SwingUtilities.invokeLater(new Runnable() {  //TODO: this may create 100s of Runnables in a short time. use our own queue instead?
-                        @Override
-                        public void run() {
-                            setInitializationState(InitializationState.INITIALIZED);
+                    try {
+                        DicomObject dcmObj;
+                        //synchronized (dcmObjectCache) {  // not doing this b/c getBackendDicomObject() may block for a long time...so maybe two threads fetch the same dicom -- not a problem, right?
+                        dcmObj = dcmObjectCache.get(getDicomObjectKey());
+                        if (dcmObj == null) {
+                            dcmObj = getBackendDicomObject();
+                            dcmObjectCache.put(getDicomObjectKey(), dcmObj);
                         }
-                    });
+                        //}
+        
+                        DicomObject dcmMetadata = rawDicomImageMetadataCache.get(getDicomObjectKey());
+                        if (null == dcmMetadata) {
+                            dcmMetadata = new BasicDicomObject();
+                            dcmObj.subSet(0, Tag.PixelData - 1).copyTo(dcmMetadata);
+                            rawDicomImageMetadataCache.put(getDicomObjectKey(), dcmMetadata);
+                        }
+                        
+                        SwingUtilities.invokeLater(new Runnable() {  //TODO: this may create 100s of Runnables in a short time. use our own queue instead?
+                            @Override
+                            public void run() {
+                                setInitializationState(InitializationState.INITIALIZED);
+                            }
+                        });
+                    } catch (final Exception e) {
+                        logger.error("Exception background-loading " + getDicomObjectKey() + ": " +
+                                     e.getLocalizedMessage() + ". Setting the model element to permanent error state.", e);
+                        //TODO: support the notion of "temporary" errors, for which we would not change the initializationState?
+                        SwingUtilities.invokeLater(new Runnable() {
+                            @Override
+                            public void run() {
+                                setInitializationState(InitializationState.ERROR);
+                                setErrorInfo(e);
+                            }
+                        });
+                    }
                 }
             });
         }
