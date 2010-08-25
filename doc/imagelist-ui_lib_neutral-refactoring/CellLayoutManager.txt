@@ -43,3 +43,28 @@ Brainstorming:
   - bei völliger Zustandslosigkeit könnte man mglw. die ganze Klasse
     CLM einsparen und das ganze als Methode von ScaleMode
     implementieren
+
+- bei einem JList-artigen ScaleMode:
+
+  - wie Zellengröße bestimmen? Explizit setzbar oder aus dem scale
+    (zoom) der Zellen?
+
+  - wenn Zellengröße eine Eigenschaft des ScaleMode ist:
+
+    - bei Änderungen will man wahrscheinlich die erste sichtbare Zelle
+      im Blick behalten => eigentlich müsste die Menge der (zuvor)
+      sichtbaren Zellen-Nrn. auch eine Eingabe sein
+
+
+
+
+=> Entscheidung:
+   
+   Der Nutzen einer eigenen Klasse CellLayoutManager ist
+   nicht absehbar. Bis auf weiteres deshalb einfachere Lösung:
+
+   Keine Klasse CellLayoutManager, statt dessen nur versuchen, die
+   ScaleModes übergreifender zu gestalten (z.B. nur noch eine
+   "GridScaleMode"-Klasse für alle ImageLists statt
+   "MyScaleMode"-Inner-Classes in den ImageLists) und sie mit
+   wiederverwendbarer Intelligenz für Layoutberechnungen ausstatten
