@@ -81,6 +81,17 @@ Caches konfigurieren, ohne an den Default-Cache-Properties drehen zu
 müssen.
 
 
+TODO: 
+
+- wg. Wiederverwendung im Prioritätsbasierten Job-Scheduler
+  (s. priority-based-job-scheduling.txt):
+
+  - Kostenbegrenzung optional machen
+
+  - PriorityCache umbenennen in NumericPriorityMap
+
+
+
 
 [1] hierbei vorher unerwünschte Effekte überlegen. Wenn ein Element
 erst sichtbar ist, dann "knapp" unsichtbar wird (=> Prio auf hohen

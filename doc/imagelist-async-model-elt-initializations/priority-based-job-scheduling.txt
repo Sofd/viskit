@@ -1,0 +1,132 @@
+CachingDicomImageListViewModelElement: Das an den
+imageFetchingJobsExecutor übergebene Runnable sollte mit höherer oder
+niedrigerer Priorität gescheduled werden, je nach
+getEffectivePriority(). => Schneller (möglichst O(1) für alle
+Operationen), prioritätsbasierter Threadpool erforderlich, der auch
+das Ändern der Priorität schon geschedulter (aber noch nicht
+ausgeführter) Jobs erlaubt.
+
+
+multi_io [~olaf@port-87-193-172-154.static.qsc.de] has joined ##java
+
+15:32 < multi_io> what's the best way to have an executor that runs Runnables in a thread pool and has a "priority" associated with 
+                  each Runnable (which decides about which Runnables are run first), AND which needs to provide the ability to modify 
+                  the priority of runnables that are already in the executor (but haven't run yet)?
+15:32 < multi_io> only way I found is to use a ThreadPoolExecutor with a PriorityBlockingQueue
+15:34 < multi_io> ...but PriorityBlockingQueue determines priorities via the natural ordering of the elements (i.e. Comparable), which 
+                  is quite awkward if you want to modify the priority of a job that's already in the queue
+
+16:27 < multi_io> do I really have to roll my own thread pool executor to adequately support running jobs (Runnables) with different 
+                  priorities?
+16:27 < psst> multi_io: there must be an existing framework out there somewhere
+16:29 < psst> multi_io: no, apparently there isn't. Roll on.
+
+
+http://forums.sun.com/thread.jspa?threadID=5409759
+
+(then there's also the problem that we want this to be really fast
+(O(1)), but PriorityBlockingQueue is only O(log n))
+
+http://binkley.blogspot.com/2009/04/jumping-work-queue-in-executor.html
+
+
+
+=> Entscheidung: Ansatz: java.util.concurrent.ThreadPoolExecutor +
+BlockingQueue verwenden. Eigene BlockingQueue mit Priorität pro
+Element schreiben, die die Klasse für den prioritätsbasierten Cache
+(siehe intelligent-caching.txt) wiederverwendet
+(NumericPriorityBlockingQueue).
+
+
+ThreadPoolExecutor
+------------------
+
+execute(Runnable r) fügt r direkt zur workQueue hinzu.
+
+Future<?> submit(Runnable r) wrappt r in eine RunnableFuture rf (via
+newTaskFor -- überschreibbar!) und fügt rf zur workQueue hinzu (und
+gibt es zurück).
+
+remove(Runnable r) -- r muss ein Element der workQueue sein
+(d.h. ggf. die wrappende RunnableFuture)
+
+
+
+
+=> Plan:
+
+public class PrioritizedTask<T> extends FutureTask<T> {
+
+    double priority;
+
+    NumericPriorityThreadPoolExecutor owner;
+
+
+    setPriority(double prio) {
+        if (owner != null) {
+            owner.remove(this);
+            this.<change prio>;
+            owner.submit(this);   //problem: erzeugt neue (this wrappende) PrioritizedTask-Instanz in owner; this ist danach nicht mehr direkt ein Element von owner
+        } else {
+            this.<change prio>;
+        }
+    }
+
+    //equals/hashCode based on identity
+}
+
+
+public class NumericPriorityThreadPoolExecutor extends ThreadPoolExecutor {
+
+    NumericPriorityThreadPoolExecutor(...) {
+        super(..., new NumericPriorityBlockingQueue<Runnable>(.., prioCostFunction, .), ...);
+    }
+
+    private static Function1<Runnable, Double> prioCostFunction = new Function1<Runnable, Double>() {
+        @Override
+        public Double run(Runnable r) {
+            return ((PrioritizedTask<?>)r).getPriority();
+        }
+    };
+
+    @Override
+    execute(Runnable r) {
+        r.owner = this;
+        super.execute(r);
+    }
+
+    @Override
+    PrioritizedTask<T> submit(Runnable r) {
+    //^^^covariant return type
+        r.owner = this;
+        return (PrioritizedTask) super.submit(r);
+    }
+
+
+    @Override
+    protected <T> RunnableFuture<T> newTaskFor(Runnable runnable, T value) {
+        PrioritizedTask<T> result = new PrioritizedTask<T>(runnable, value);
+        if (runnable instanceof PrioritizedTask) {
+             result.setPriority(runnable.getPriority());
+        }
+        return result;
+    }
+
+    @Override
+    protected <T> RunnableFuture<T> newTaskFor(Callable<T> callable) {
+        PrioritizedTask result = new PrioritizedTask<T>(callable);
+        if (callable instanceof PrioritizedTask) {
+             result.setPriority(callable.getPriority());
+        }
+        return result;
+    }
+
+}
+
+
+
+public class NumericPriorityBlockingQueue<E> implements BlockingQueue<E> {
+
+    private PriorityCache<E, E> delegate;   //key==value in all elements
+}
+
