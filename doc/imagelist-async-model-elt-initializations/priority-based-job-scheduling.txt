@@ -57,19 +57,25 @@ remove(Runnable r) -- r muss ein Element der workQueue sein
 
 public class PrioritizedTask<T> extends FutureTask<T> {
 
-    double priority;
+    double priority = 0.0;
+    Runnable wrappedRunnable; T wrappedResult;
+    Callable<T> wrappedCallable;
 
     NumericPriorityThreadPoolExecutor owner;
 
+    PrioritizedTask(Runnable r, T result) {  //package-private
+        super(r, result);
+        wrappedRunnable = r;
+        wrappedResult = result;
+    }
 
-    setPriority(double prio) {
-        if (owner != null) {
-            owner.remove(this);
-            this.<change prio>;
-            owner.submit(this);   //problem: erzeugt neue (this wrappende) PrioritizedTask-Instanz in owner; this ist danach nicht mehr direkt ein Element von owner
-        } else {
-            this.<change prio>;
-        }
+    PrioritizedTask(Callable<T> c) {    //package-private
+        super(c);
+        wrappedCallable = c;
+    }
+
+    public double getPriority() {
+        return priority;
     }
 
     //equals/hashCode based on identity
@@ -90,17 +96,31 @@ public class NumericPriorityThreadPoolExecutor extends ThreadPoolExecutor {
     };
 
     @Override
-    execute(Runnable r) {
-        r.owner = this;
-        super.execute(r);
-    }
-
-    @Override
-    PrioritizedTask<T> submit(Runnable r) {
+    PrioritizedTask<T> submit(Runnable task) {
     //^^^covariant return type
-        r.owner = this;
-        return (PrioritizedTask) super.submit(r);
+        return (PrioritizedTask) super.submit(task);
     }
+    //same for other submit methods...
+    
+
+    PrioritizedTask<T> submitWithPriority(Runnable task, double priority) {
+        PrioritizedTask<Object> ftask = newTaskFor(task, null);
+        ftask.priority = priority;
+        execute(ftask);
+        return ftask;
+    }
+    //same for other submit methods...
+
+    PrioritizedTask<T> resubmitWithPriority(PrioritizedTask<T> task, double priority) {
+        if (!remove(task)) {
+            throw new IAE();
+        }
+        PrioritizedTask<Object> ftask = newTaskFor(task.wrappedRunnable|Callable, task.wrappedResult|null);
+        ftask.priority = priority;
+        execute(ftask);
+        return ftask;
+    }
+    //same for other submit methods...
 
 
     @Override
@@ -109,6 +129,7 @@ public class NumericPriorityThreadPoolExecutor extends ThreadPoolExecutor {
         if (runnable instanceof PrioritizedTask) {
              result.setPriority(runnable.getPriority());
         }
+        result.owner = this;
         return result;
     }
 
@@ -118,6 +139,7 @@ public class NumericPriorityThreadPoolExecutor extends ThreadPoolExecutor {
         if (callable instanceof PrioritizedTask) {
              result.setPriority(callable.getPriority());
         }
+        result.owner = this;
         return result;
     }
 
