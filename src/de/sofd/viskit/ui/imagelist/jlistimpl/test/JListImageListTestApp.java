@@ -127,7 +127,7 @@ public class JListImageListTestApp {
     
     public JListImageListTestApp() throws Exception {
         if (isUserHonglinh()) {
-            factory = new DicomModelFactory(new IntuitiveFileNameComparator(),true,"/home/honglinh/Desktop/cache.txt");;
+            factory = new DicomModelFactory(new IntuitiveFileNameComparator(), true, System.getProperty("user.home") + File.separator + "viskit-model-cache.txt");;
             //JFrame f1 = newSingleListFrame("Viskit ImageList test app window 1", null);
             //JFrame f2 = newSingleListFrame("Viskit ImageList test app window 2", null);
             JFrame f2 = newMultiListFrame("Multi-List frame", null);
@@ -483,7 +483,7 @@ public class JListImageListTestApp {
 
             // a unique key should be used instead of 1 and 2, f.e. PatientID+StudyInstanceUID+SeriesInstanceUID to identify the series
             factory.addModel("1", fileCollection);
-            factory.addModel("2", new File("/home/honglinh/Desktop/cd800__center4001"));
+            factory.addModel("2", new File("/home/honglinh/cd857__center4001"));
             
 //          listModels.add(factory.createModelFromDir(new File("/home/honglinh/Desktop/dicomfiles1")));
             
@@ -668,7 +668,7 @@ public class JListImageListTestApp {
         public ListViewPanel() {
             this.setLayout(new BorderLayout());
             if (isUserHonglinh()) {
-                //listView = newJGLImageListView();
+//                listView = newJGLImageListView();
                 listView = newJGridImageListView();
             } else if (isUserFokko()) {
                 //listView = newJGLImageListView();

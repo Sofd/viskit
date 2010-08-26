@@ -45,7 +45,7 @@ public class LutTrackRenderer extends JComponent implements TrackRenderer {
             Color background = UIManager.getColor("ToolBar.background");
 
             
-            // calculate border absolute border positions
+            // calculate absolute border positions
             int startPos = thumbPos[0]+leftRightOffset; // position of lower thumb
             int endPos = thumbPos[1]-leftRightOffset; // position of upper thumb
 
@@ -79,6 +79,12 @@ public class LutTrackRenderer extends JComponent implements TrackRenderer {
                 g2d.setColor(c);
                 g2d.drawLine(x, offset, x, sz.height-1);
             }
+            // draw left and right background to override the LUT graphic
+            g2d.setColor(background);
+            g2d.fillRect(0, 0, leftRightOffset, sz.height);
+            g2d.fillRect(sz.width-leftRightOffset, 0, sz.width, sz.height);
+            
+            
             // draw a border around the lookup table
             g2d.setColor(Color.GRAY);
             g2d.drawRect(leftRightOffset, offset, sz.width-1-2*leftRightOffset, sz.height-offset-1);

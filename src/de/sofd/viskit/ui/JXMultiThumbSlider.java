@@ -118,11 +118,11 @@ public class JXMultiThumbSlider<E> extends JComponent {
         g.fillRect(0,0,getWidth(),getHeight());
     }    
     
-    private float getThumbValue(int thumbIndex) {
+    protected float getThumbValue(int thumbIndex) {
         return getModel().getThumbAt(thumbIndex).getPosition();
     }
     
-    private float getThumbValue(ThumbComp thumb) {
+    protected float getThumbValue(ThumbComp thumb) {
         return getThumbValue(thumbs.indexOf(thumb));
     }
     
@@ -130,7 +130,7 @@ public class JXMultiThumbSlider<E> extends JComponent {
         return thumbs.indexOf(thumb);
     }
     
-    private void clipThumbPosition(ThumbComp thumb) {
+    protected void clipThumbPosition(ThumbComp thumb) {
         if(getThumbValue(thumb) < getModel().getMinimumValue()) {
             getModel().getThumbAt(getThumbIndex(thumb)).setPosition(
                 getModel().getMinimumValue());
@@ -199,7 +199,7 @@ public class JXMultiThumbSlider<E> extends JComponent {
         thumb.setLocation((int)tp-thumb.getWidth()/2 + thumb.getWidth()/2, thumb.getY());
     }
     
-    private void recalc() {
+    protected void recalc() {
         for(ThumbComp th : thumbs) {
             setThumbXByPosition(th,getModel().getThumbAt(getThumbIndex(th)).getPosition());
             //getPositionAt(getThumbIndex(th)));

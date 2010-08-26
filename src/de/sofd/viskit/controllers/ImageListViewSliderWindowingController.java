@@ -43,7 +43,12 @@ public class ImageListViewSliderWindowingController {
     private ImageListViewInitialWindowingController initialWindowingController;
     public static final String PROP_CONTROLLEDIMAGELISTVIEW = "controlledImageListView";
     public static final String PROP_LUTWINDOWINGSLIDER = "lutWindowingSlider";
-    private boolean sliderInitialization;
+    
+    // this flag indicates the phase of changing windowing values of a cells to avoid circular event firing of thumb moved events and property change events
+    private boolean inChangePhase = false;
+    
+    // this flag indicates the cell initialization phase
+    private boolean cellInitPhase = false;
 
     public ImageListViewSliderWindowingController() {
     }
@@ -118,24 +123,27 @@ public class ImageListViewSliderWindowingController {
                     && !propertyName.equals(ImageListViewCell.PROP_WINDOWWIDTH)) {
                 return;
             }
+            if(cellInitPhase || inChangePhase) {
+                return;
+            }
             // get only the windowing values for the selected model element
             ImageListViewModelElement elt = controlledImageListView.getSelectedValue();
             if (elt != null) {
                 ImageListViewCell cell = (ImageListViewCell) evt.getSource();
-                // compare event of the cell with the selected model element
-                // cell
                 if (controlledImageListView.getCellForElement(elt).equals(cell)) {
-                    // during initialization phase default windowing values are
-                    // assigned to the cells, skip those events
-                    if (initialWindowingController.isCellInitialized(cell)) {
-                        sliderInitialization = true;
-                        int wl = cell.getWindowLocation();
-                        int ww = cell.getWindowWidth();
-                        float lowerValue = wl - ww / 2.0f;
-                        float upperValue = wl + ww / 2.0f;
-                        slider.setSliderValues(lowerValue, upperValue);
-                        sliderInitialization = false;
+                    // cell have to be initialized first
+                    if (!initialWindowingController.isCellInitialized(cell)) {
+                        cellInitPhase = true;
+                        // property change events will be fired
+                        initialWindowingController.initializeCellImmediately(cell, true);
+                        cellInitPhase = false;
                     }
+                    int wl = cell.getWindowLocation();
+                    int ww = cell.getWindowWidth();
+                    float lowerValue = wl - ww / 2.0f;
+                    float upperValue = wl + ww / 2.0f;
+                    // thumb moved events will be fired
+                    slider.setSliderValues(lowerValue, upperValue);
                 }
             }
         }
@@ -149,25 +157,28 @@ public class ImageListViewSliderWindowingController {
 
         @Override
         public void valueChanged(ListSelectionEvent e) {
-            // this event is fired during initialization phase -> return
+            // this event is fired during initialization phase and the model has not been set yet
+            ImageListViewModelElement elt = null;
             if (e.getFirstIndex() == 0 && e.getLastIndex() == 0) {
                 return;
             }
-            ImageListViewModelElement elt = controlledImageListView.getSelectedValue();
+            elt = controlledImageListView.getSelectedValue();
             if (elt != null) {
                 final ImageListViewCell cell = controlledImageListView.getCellForElement(elt);
-                // cell has not been initialized yet, because the
-                // ListSelectionevent is fired before the
-                // ImageListViewCellPaintEvent in the
-                // ImageListViewInitialWindowingController
+                // cell has not been initialized yet, because the ListSelectionevent is fired before the
+                // ImageListViewCellPaintEvent in the ImageListViewInitialWindowingController
                 if (!initialWindowingController.isCellInitialized(cell)) {
                     // initialize the cell immediately
+                    cellInitPhase = true;
+                    // property change events will be fired
                     initialWindowingController.initializeCellImmediately(cell, true);
+                    cellInitPhase = false;
                 }
                 int wl = cell.getWindowLocation();
                 int ww = cell.getWindowWidth();
                 float lowerValue = wl - ww / 2.0f;
                 float upperValue = wl + ww / 2.0f;
+                // thumb moved event will be fired
                 slider.setSliderValues(lowerValue, upperValue);
             }
         }
@@ -192,26 +203,20 @@ public class ImageListViewSliderWindowingController {
                 cell.runWithPropChangingInteractively(ImageListViewCell.PROP_WINDOWLOCATION, new Runnable() {
                     @Override
                     public void run() {
-                        // property change listener has to be unregistered
-                        // first, otherwise circular event firing
-                        if(!sliderInitialization) {
-                            controlledImageListView.removeCellPropertyChangeListener(propertyChangeListener);
-                            cell.setWindowLocation((int) slider.getWindowLocation());
-                            controlledImageListView.addCellPropertyChangeListener(propertyChangeListener);
-                        }
+                        // in change phase so avoid event firing of property change listener
+                        inChangePhase = true;
+                        cell.setWindowLocation((int) slider.getWindowLocation());
+                        inChangePhase = false;
                     }
                 });
 
                 cell.runWithPropChangingInteractively(ImageListViewCell.PROP_WINDOWWIDTH, new Runnable() {
                     @Override
                     public void run() {
-                        // property change listener has to be unregistered
-                        // first, otherwise circular event firing
-                        if(!sliderInitialization) {
-                            controlledImageListView.removeCellPropertyChangeListener(propertyChangeListener);
-                            cell.setWindowWidth((int) slider.getWindowWidth());
-                            controlledImageListView.addCellPropertyChangeListener(propertyChangeListener);
-                        }
+                        // in change phase so avoid event firing of property change listener
+                        inChangePhase = true;
+                        cell.setWindowWidth((int) slider.getWindowWidth());
+                        inChangePhase = false;
                     }
                 });
             }
