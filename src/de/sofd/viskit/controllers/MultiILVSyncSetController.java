@@ -15,6 +15,8 @@ import javax.swing.JToggleButton;
 import de.sofd.util.IdentityHashSet;
 import de.sofd.viskit.ui.imagelist.JImageListView;
 import de.sofd.viskit.ui.imagelist.glimpl.JGLImageListView;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 
 /**
  * Controller that holds multiple, mutable sets of {@link JImageListView}s
@@ -341,9 +343,10 @@ public class MultiILVSyncSetController {
             attrs.put(name, value);
         }
 
-        protected ActionListener controllerUpdater = new ActionListener() {
+        protected ChangeListener controllerUpdater = new ChangeListener() {
+
             @Override
-            public void actionPerformed(ActionEvent e) {
+            public void stateChanged(ChangeEvent e) {
                 updateSyncControllers();
             }
         };
@@ -357,7 +360,7 @@ public class MultiILVSyncSetController {
             MultiImageListViewController controller = fac.createController();
             syncControllersByFactoryKey.put(factoryKey, controller);
             ButtonModel model = new JToggleButton.ToggleButtonModel();
-            model.addActionListener(controllerUpdater);
+            model.addChangeListener(controllerUpdater);
             isSyncedModelByFactoryKey.put(factoryKey, model);
         }
         
