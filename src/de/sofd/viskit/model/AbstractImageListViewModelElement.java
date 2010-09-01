@@ -121,7 +121,10 @@ public abstract class AbstractImageListViewModelElement implements ImageListView
     @Override
     public void setPriority(Object source, double value) {
         priorityBySource.put(source, value);
-        effectivePriority = Math.max(effectivePriority, value);
+        effectivePriority = 0;
+        for (double prio : priorityBySource.values()) {
+            effectivePriority = Math.max(effectivePriority, prio);
+        }
     }
     
     @Override

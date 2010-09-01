@@ -6,6 +6,7 @@ import java.awt.image.Raster;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.net.URL;
 import java.nio.IntBuffer;
 import java.nio.ShortBuffer;
 import java.util.Collections;
@@ -31,9 +32,14 @@ import org.dcm4che2.imageioimpl.plugins.dcm.DicomImageReaderSpi;
 import org.dcm4che2.io.DicomOutputStream;
 import org.dcm4che2.media.FileMetaInformation;
 
+import de.sofd.lang.Function1;
+import de.sofd.util.BucketedNumericPriorityMap;
 import de.sofd.util.FloatRange;
 import de.sofd.util.Histogram;
 import de.sofd.util.IntRange;
+import de.sofd.util.NumericPriorityMap;
+import de.sofd.util.concurrent.NumericPriorityThreadPoolExecutor;
+import de.sofd.util.concurrent.PrioritizedTask;
 import de.sofd.viskit.model.ImageListViewModelElement.InitializationState;
 import de.sofd.viskit.test.windowing.RawDicomImageReader;
 
@@ -84,8 +90,11 @@ public abstract class CachingDicomImageListViewModelElement extends AbstractImag
         }
     };
 
-    private static ExecutorService imageFetchingJobsExecutor = Executors.newFixedThreadPool(3, ourThreadFactory);
+    private static NumericPriorityThreadPoolExecutor imageFetchingJobsExecutor =
+        NumericPriorityThreadPoolExecutor.newFixedThreadPool(3, 0, 10, 10, ourThreadFactory);  // 3 worker threads, priority 10(lowest)...0(highest)
 
+    private PrioritizedTask<Object> myBackgroundLoaderTask;
+    
     /**
      * Caller must ensure to setInitializationState(UNINITIALIZED) only after getDicomObjectKey() et al. return
      * correct, final values.
@@ -100,7 +109,7 @@ public abstract class CachingDicomImageListViewModelElement extends AbstractImag
             if (!asyncMode) {
                 throw new IllegalStateException("BUG: attempt to set UNINITIALIZED state in synchronous mode");
             }
-            imageFetchingJobsExecutor.submit(new Runnable() {
+            Runnable r = new Runnable() {
                 @Override
                 public void run() {
                     logger.debug("background-loading: " + getDicomObjectKey());
@@ -110,7 +119,7 @@ public abstract class CachingDicomImageListViewModelElement extends AbstractImag
                         dcmObj = dcmObjectCache.get(getDicomObjectKey());
                         if (dcmObj == null) {
                             dcmObj = getBackendDicomObject();
-                            dcmObjectCache.put(getDicomObjectKey(), dcmObj);
+                            dcmObjectCache.put(getDicomObjectKey(), dcmObj, 10 - getEffectivePriority());
                         }
                         //}
         
@@ -140,7 +149,23 @@ public abstract class CachingDicomImageListViewModelElement extends AbstractImag
                         });
                     }
                 }
-            });
+            };
+            myBackgroundLoaderTask = imageFetchingJobsExecutor.submitWithPriority(r, 10 - getEffectivePriority()); // 10 = lowest priority
+            System.out.println("" + getTmpDebugDcmObjId() + " submPrio " + (10 - getEffectivePriority()));
+        }
+    }
+    
+    /**
+     * temporary function for debugging
+     * 
+     * @return
+     */
+    private String getTmpDebugDcmObjId() {
+        URL url = (URL) getDicomObjectKey();
+        try {
+            return url.toString().substring(60);
+        } catch (IndexOutOfBoundsException e) {
+            return url.toString();
         }
     }
     
@@ -353,8 +378,17 @@ public abstract class CachingDicomImageListViewModelElement extends AbstractImag
     }
 
 
-    private static Map<Object, DicomObject> dcmObjectCache
-        = Collections.synchronizedMap(new LRUMemoryCache<Object, DicomObject>(Config.prop.getI("de.sofd.viskit.dcmObjectCacheSize")));
+    private static Function1<DicomObject, Double> dcmObjMemConsumptionFunction = new Function1<DicomObject, Double>() {
+        @Override
+        public Double run(DicomObject dobj) {
+            return 1.0;
+        }
+    };
+
+    //private static Map<Object, DicomObject> dcmObjectCache
+    //    = Collections.synchronizedMap(new LRUMemoryCache<Object, DicomObject>(Config.prop.getI("de.sofd.viskit.dcmObjectCacheSize")));
+    private static NumericPriorityMap<Object, DicomObject> dcmObjectCache
+        = new BucketedNumericPriorityMap<Object, DicomObject>(0, 10, 5, Config.prop.getI("de.sofd.viskit.dcmObjectCacheSize"), dcmObjMemConsumptionFunction, true);
 
     private static LRUMemoryCache<Object, BufferedImage> imageCache
         = new LRUMemoryCache<Object, BufferedImage>(Config.prop.getI("de.sofd.viskit.imageCacheSize"));
@@ -373,7 +407,7 @@ public abstract class CachingDicomImageListViewModelElement extends AbstractImag
                 throw new NotInitializedException();
             }
             result = getBackendDicomObject();
-            dcmObjectCache.put(getDicomObjectKey(), result);
+            dcmObjectCache.put(getDicomObjectKey(), result, 10 - getEffectivePriority());
         }
         return result;
     }
@@ -383,7 +417,7 @@ public abstract class CachingDicomImageListViewModelElement extends AbstractImag
     }
 
     public boolean isDicomObjectCached() {
-        return dcmObjectCache.containsKey(getDicomObjectKey());
+        return dcmObjectCache.contains(getDicomObjectKey());
     }
 
     public boolean isImageCached() {
@@ -517,10 +551,8 @@ public abstract class CachingDicomImageListViewModelElement extends AbstractImag
         DicomObject imgMetadata = getDicomImageMetaData();
         
         String transferSyntaxUID = imgMetadata.getString(Tag.TransferSyntaxUID);
-        logger.debug(getImageKey());
-        logger.debug("transferSyntaxUID : " + transferSyntaxUID);
-        //System.out.println(getImageKey());
-        //System.out.println("transferSyntaxUID : " + transferSyntaxUID);
+        //logger.debug(getImageKey());
+        //logger.debug("transferSyntaxUID : " + transferSyntaxUID);
         
         //jpeg or rle compressed
         if (transferSyntaxUID != null && 
@@ -680,7 +712,16 @@ public abstract class CachingDicomImageListViewModelElement extends AbstractImag
     @Override
     public void setPriority(Object source, double value) {
         super.setPriority(source, value);
-        //TODO
+        double internalPrio = 10 - getEffectivePriority();
+        if (myBackgroundLoaderTask != null) {
+            try {
+                myBackgroundLoaderTask = imageFetchingJobsExecutor.resubmitWithPriority(myBackgroundLoaderTask, internalPrio);
+                logger.debug("" + getTmpDebugDcmObjId() + " chngPrio " + internalPrio + " (" + value + "," + getEffectivePriority() + ")");
+            } catch (IllegalArgumentException e) {
+                //myBackgroundLoaderTask isn't currently running or waiting -- no error.
+            }
+        }
+        dcmObjectCache.setPriority(getDicomObjectKey(), internalPrio);
     }
     
     @Override
