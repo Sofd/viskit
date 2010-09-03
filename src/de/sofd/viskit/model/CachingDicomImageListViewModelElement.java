@@ -13,8 +13,6 @@ import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ThreadFactory;
 
 import javax.imageio.ImageIO;
 import javax.imageio.ImageReader;
@@ -30,8 +28,6 @@ import org.dcm4che2.imageioimpl.plugins.dcm.DicomImageReaderSpi;
 import org.dcm4che2.io.DicomOutputStream;
 import org.dcm4che2.media.FileMetaInformation;
 
-import de.sofd.lang.Function1;
-import de.sofd.util.BucketedNumericPriorityMap;
 import de.sofd.util.FloatRange;
 import de.sofd.util.Histogram;
 import de.sofd.util.IntRange;
@@ -53,6 +49,16 @@ public abstract class CachingDicomImageListViewModelElement extends AbstractImag
     protected int frameNumber = 0;
     protected int totalFrameNumber = -1;
 
+    private final NumericPriorityMap<Object, DicomObject> dcmObjectCache;
+
+    private final LRUMemoryCache<Object, BufferedImage> imageCache = Config.defaultBufferedImageCache;
+
+    private static Map<Object, DicomObject> rawDicomImageMetadataCache
+        = Collections.synchronizedMap(new LRUMemoryCache<Object, DicomObject>(Config.prop.getI("de.sofd.viskit.rawDicomImageMetadataCacheSize")));
+
+    private static LRUMemoryCache<Object, Integer> frameCountByDcmObjectIdCache
+        = new LRUMemoryCache<Object, Integer>(Config.prop.getI("de.sofd.viskit.frameCountByDcmObjectIdCacheSize"));
+
     /**
      * Asynchronous mode. When enabled, the initalizationState property may
      * attain the UNINITIALIZED value as long as the image is not cached, and
@@ -70,28 +76,18 @@ public abstract class CachingDicomImageListViewModelElement extends AbstractImag
         RawDicomImageReader.registerWithImageIO();
     }
 
-    /**
-     * use our own thread factory for the imageFetchingJobsExecutor because the
-     * default one creates non-daemon threads, which may prevent JVM shutdowns
-     * in certain situations
-     */
-    private static ThreadFactory ourThreadFactory = new ThreadFactory() {
-        private ThreadFactory defaultThreadFactory = Executors.defaultThreadFactory();
-
-        @Override
-        public Thread newThread(Runnable r) {
-            Thread t = defaultThreadFactory.newThread(r);
-            t.setName("Viskit-ImageFetchingJob");
-            t.setDaemon(true);
-            return t;
-        }
-    };
-
-    private static NumericPriorityThreadPoolExecutor imageFetchingJobsExecutor =
-        NumericPriorityThreadPoolExecutor.newFixedThreadPool(3, 0, 10, 10, ourThreadFactory);  // 3 worker threads, priority 10(lowest)...0(highest)
+    private final NumericPriorityThreadPoolExecutor imageFetchingJobsExecutor;
 
     private PrioritizedTask<Object> myBackgroundLoaderTask;
+
+    public CachingDicomImageListViewModelElement() {
+        this(Config.defaultDcmObjectCache, Config.defaultImageFetchingJobsExecutor);
+    }
     
+    public CachingDicomImageListViewModelElement(NumericPriorityMap<Object, DicomObject> dcmObjectCache, NumericPriorityThreadPoolExecutor imageFetchingJobsExecutor) {
+        this.dcmObjectCache = dcmObjectCache;
+        this.imageFetchingJobsExecutor = imageFetchingJobsExecutor;
+    }
     /**
      * Caller must ensure to setInitializationState(UNINITIALIZED) only after getDicomObjectKey() et al. return
      * correct, final values.
@@ -345,41 +341,6 @@ public abstract class CachingDicomImageListViewModelElement extends AbstractImag
 
         return range;
     }
-
-    // TODO: use a utility library for the cache
-
-    private static class LRUMemoryCache<K,V> extends LinkedHashMap<K,V> {
-        private final int maxSize;
-        public LRUMemoryCache(int maxSize) {
-            this.maxSize = maxSize;
-        }
-        @Override
-        protected boolean removeEldestEntry(Entry<K,V> eldest) {
-            return this.size() > maxSize;
-        }
-    }
-
-
-    private static Function1<DicomObject, Double> dcmObjMemConsumptionFunction = new Function1<DicomObject, Double>() {
-        @Override
-        public Double run(DicomObject dobj) {
-            return 1.0;
-        }
-    };
-
-    //private static Map<Object, DicomObject> dcmObjectCache
-    //    = Collections.synchronizedMap(new LRUMemoryCache<Object, DicomObject>(Config.prop.getI("de.sofd.viskit.dcmObjectCacheSize")));
-    private static NumericPriorityMap<Object, DicomObject> dcmObjectCache
-        = new BucketedNumericPriorityMap<Object, DicomObject>(0, 10, 5, Config.prop.getI("de.sofd.viskit.dcmObjectCacheSize"), dcmObjMemConsumptionFunction, true);
-
-    private static LRUMemoryCache<Object, BufferedImage> imageCache
-        = new LRUMemoryCache<Object, BufferedImage>(Config.prop.getI("de.sofd.viskit.imageCacheSize"));
-
-    private static Map<Object, DicomObject> rawDicomImageMetadataCache
-        = Collections.synchronizedMap(new LRUMemoryCache<Object, DicomObject>(Config.prop.getI("de.sofd.viskit.rawDicomImageMetadataCacheSize")));
-
-    private static LRUMemoryCache<Object, Integer> frameCountByDcmObjectIdCache
-        = new LRUMemoryCache<Object, Integer>(Config.prop.getI("de.sofd.viskit.frameCountByDcmObjectIdCacheSize"));
 
     @Override
     public DicomObject getDicomObject() {

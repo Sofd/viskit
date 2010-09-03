@@ -32,11 +32,13 @@ public class FileBasedDicomImageListViewModelElement extends CachingDicomImageLi
     protected FileBasedDicomImageListViewModelElement() {
     }
 
+    // TODO: caches, thread pool as additional c'tor parameter (see superclass)
     // TODO: frameNumber as additional c'tor parameter (we can't support later setFrameNumber() calls anyway b/c the keys would change)
     
     public FileBasedDicomImageListViewModelElement(URL url) {
         setUrl(url, true);
         if (asyncMode) {
+            // must to do this only after the Url (and thus, the dicomObjectKey for the caches) is valid
             setInitializationState(InitializationState.UNINITIALIZED);
         }
     }
@@ -44,6 +46,7 @@ public class FileBasedDicomImageListViewModelElement extends CachingDicomImageLi
     public FileBasedDicomImageListViewModelElement(URL url, boolean checkReadability) {
         setUrl(url, checkReadability);
         if (asyncMode) {
+            // must to do this only after the Url (and thus, the dicomObjectKey for the caches) is valid
             setInitializationState(InitializationState.UNINITIALIZED);
         }
     }
