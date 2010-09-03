@@ -6,7 +6,6 @@ import java.awt.image.Raster;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.net.URL;
 import java.nio.IntBuffer;
 import java.nio.ShortBuffer;
 import java.util.Collections;
@@ -14,7 +13,6 @@ import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
 
@@ -40,7 +38,6 @@ import de.sofd.util.IntRange;
 import de.sofd.util.NumericPriorityMap;
 import de.sofd.util.concurrent.NumericPriorityThreadPoolExecutor;
 import de.sofd.util.concurrent.PrioritizedTask;
-import de.sofd.viskit.model.ImageListViewModelElement.InitializationState;
 import de.sofd.viskit.test.windowing.RawDicomImageReader;
 
 /**
@@ -112,7 +109,7 @@ public abstract class CachingDicomImageListViewModelElement extends AbstractImag
             Runnable r = new Runnable() {
                 @Override
                 public void run() {
-                    logger.debug("background-loading: " + getDicomObjectKey());
+                    //logger.debug("background-loading: " + getDicomObjectKey());
                     try {
                         DicomObject dcmObj;
                         //synchronized (dcmObjectCache) {  // not doing this b/c getBackendDicomObject() may block for a long time...so maybe two threads fetch the same dicom -- not a problem, right?
@@ -150,22 +147,7 @@ public abstract class CachingDicomImageListViewModelElement extends AbstractImag
                     }
                 }
             };
-            myBackgroundLoaderTask = imageFetchingJobsExecutor.submitWithPriority(r, 10 - getEffectivePriority()); // 10 = lowest priority
-            System.out.println("" + getTmpDebugDcmObjId() + " submPrio " + (10 - getEffectivePriority()));
-        }
-    }
-    
-    /**
-     * temporary function for debugging
-     * 
-     * @return
-     */
-    private String getTmpDebugDcmObjId() {
-        URL url = (URL) getDicomObjectKey();
-        try {
-            return url.toString().substring(60);
-        } catch (IndexOutOfBoundsException e) {
-            return url.toString();
+            myBackgroundLoaderTask = imageFetchingJobsExecutor.submitWithPriority(r, getInternalEffectivePriority()); // 10 = lowest priority
         }
     }
     
@@ -407,7 +389,7 @@ public abstract class CachingDicomImageListViewModelElement extends AbstractImag
                 throw new NotInitializedException();
             }
             result = getBackendDicomObject();
-            dcmObjectCache.put(getDicomObjectKey(), result, 10 - getEffectivePriority());
+            dcmObjectCache.put(getDicomObjectKey(), result, getInternalEffectivePriority());
         }
         return result;
     }
@@ -712,16 +694,25 @@ public abstract class CachingDicomImageListViewModelElement extends AbstractImag
     @Override
     public void setPriority(Object source, double value) {
         super.setPriority(source, value);
-        double internalPrio = 10 - getEffectivePriority();
+        double internalPrio = getInternalEffectivePriority();
         if (myBackgroundLoaderTask != null) {
             try {
                 myBackgroundLoaderTask = imageFetchingJobsExecutor.resubmitWithPriority(myBackgroundLoaderTask, internalPrio);
-                logger.debug("" + getTmpDebugDcmObjId() + " chngPrio " + internalPrio + " (" + value + "," + getEffectivePriority() + ")");
             } catch (IllegalArgumentException e) {
                 //myBackgroundLoaderTask isn't currently running or waiting -- no error.
             }
         }
         dcmObjectCache.setPriority(getDicomObjectKey(), internalPrio);
+    }
+    
+    /**
+     * Effective priority value to be used for the cache and executor. In those, 0
+     * is the highest priority and 10 is the lowest.
+     * 
+     * @return
+     */
+    protected double getInternalEffectivePriority() {
+        return 10 - getEffectivePriority();
     }
     
     @Override
