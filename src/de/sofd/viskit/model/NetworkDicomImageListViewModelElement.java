@@ -13,6 +13,9 @@ import org.dcm4che2.data.DicomObject;
 import org.dcm4che2.data.Tag;
 import org.dcm4che2.io.DicomInputStream;
 
+import de.sofd.util.NumericPriorityMap;
+import de.sofd.util.concurrent.NumericPriorityThreadPoolExecutor;
+
 import javax.imageio.stream.FileCacheImageInputStream;
 
 /**
@@ -39,11 +42,16 @@ public class NetworkDicomImageListViewModelElement extends CachingDicomImageList
     }
 
     public NetworkDicomImageListViewModelElement(URL url) {
-        setUrl(url, true);
+        this(null, url, true, null, null);
     }
 
     public NetworkDicomImageListViewModelElement(URL url, boolean checkReadability) {
-        setUrl(url, checkReadability);
+        this(null, url, checkReadability, null, null);
+    }
+
+    public NetworkDicomImageListViewModelElement(URL url, boolean checkReadability,
+            NumericPriorityMap<Object, DicomObject> dcmObjectCache, NumericPriorityThreadPoolExecutor imageFetchingJobsExecutor) {
+        this(null, url, checkReadability, dcmObjectCache, imageFetchingJobsExecutor);
     }
 
     public NetworkDicomImageListViewModelElement(String fileName) {
@@ -59,14 +67,46 @@ public class NetworkDicomImageListViewModelElement extends CachingDicomImageList
     }
 
     public NetworkDicomImageListViewModelElement(File file, boolean checkReadability) {
+        this(file, null, true, null, null);
+    }
+
+    public NetworkDicomImageListViewModelElement(File file, boolean checkReadability,
+            NumericPriorityMap<Object, DicomObject> dcmObjectCache, NumericPriorityThreadPoolExecutor imageFetchingJobsExecutor) {
+        this(file, null, true, dcmObjectCache, imageFetchingJobsExecutor);
+    }
+
+    /**
+     * Non-public c'tor that does the actual work. Exactly one of (url, file) must be != null.
+     * 
+     * @param file
+     * @param url
+     * @param checkReadability
+     * @param dcmObjectCache passed to superclass (see there)
+     * @param imageFetchingJobsExecutor passed to superclass (see there)
+     */
+    protected NetworkDicomImageListViewModelElement(File file, URL url, boolean checkReadability,
+                            NumericPriorityMap<Object, DicomObject> dcmObjectCache, NumericPriorityThreadPoolExecutor imageFetchingJobsExecutor) {
+        super(dcmObjectCache, imageFetchingJobsExecutor);
         try {
-            setUrl(file.toURI().toURL(), checkReadability);
-            urlAsFile = file.getAbsoluteFile();
+            if (url != null) {
+                if (file != null) {
+                    throw new IllegalArgumentException("exactly one of (url,file) must be != null");
+                }
+                urlAsFile = null;
+                setUrl(url, checkReadability);
+            } else {
+                //url == null
+                if (file == null) {
+                    throw new IllegalArgumentException("exactly one of (url,file) must be != null");
+                }
+                urlAsFile = file.getAbsoluteFile();
+                setUrl(file.toURI().toURL(), checkReadability);
+            }
         } catch (MalformedURLException e) {
             throw new RuntimeException(e);
         }
     }
-
+    
     public void setAppletContext(AppletContext appletContext) {
         this.appletContext = appletContext;
     }

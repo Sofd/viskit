@@ -10,9 +10,7 @@ import java.nio.IntBuffer;
 import java.nio.ShortBuffer;
 import java.util.Collections;
 import java.util.Iterator;
-import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.Map.Entry;
 
 import javax.imageio.ImageIO;
 import javax.imageio.ImageReader;
@@ -68,7 +66,7 @@ public abstract class CachingDicomImageListViewModelElement extends AbstractImag
      * which is why this flag is set to false and can only be changed in the
      * source code for now.
      */
-    protected boolean asyncMode = true;
+    protected boolean asyncMode = false;
     
     private static final Logger logger = Logger.getLogger(CachingDicomImageListViewModelElement.class);
 
@@ -81,12 +79,12 @@ public abstract class CachingDicomImageListViewModelElement extends AbstractImag
     private PrioritizedTask<Object> myBackgroundLoaderTask;
 
     public CachingDicomImageListViewModelElement() {
-        this(Config.defaultDcmObjectCache, Config.defaultImageFetchingJobsExecutor);
+        this(null, null);
     }
     
     public CachingDicomImageListViewModelElement(NumericPriorityMap<Object, DicomObject> dcmObjectCache, NumericPriorityThreadPoolExecutor imageFetchingJobsExecutor) {
-        this.dcmObjectCache = dcmObjectCache;
-        this.imageFetchingJobsExecutor = imageFetchingJobsExecutor;
+        this.dcmObjectCache = (dcmObjectCache == null ? Config.defaultDcmObjectCache : dcmObjectCache);
+        this.imageFetchingJobsExecutor = (imageFetchingJobsExecutor == null ? Config.defaultImageFetchingJobsExecutor : null);
     }
     /**
      * Caller must ensure to setInitializationState(UNINITIALIZED) only after getDicomObjectKey() et al. return

@@ -17,6 +17,9 @@ import org.dcm4che2.imageio.plugins.dcm.DicomStreamMetaData;
 import org.dcm4che2.imageioimpl.plugins.dcm.DicomImageReaderSpi;
 import org.dcm4che2.io.DicomInputStream;
 
+import de.sofd.util.NumericPriorityMap;
+import de.sofd.util.concurrent.NumericPriorityThreadPoolExecutor;
+
 /**
  * Cached DicomImageListViewModelElement that obtains the DICOM object from an external
  * standard DICOM file whose location is given by a URL (so the file may be
@@ -29,45 +32,72 @@ public class FileBasedDicomImageListViewModelElement extends CachingDicomImageLi
     protected /*final*/ URL url;
     protected File urlAsFile; // url as a file again (if it represents one), for user convenience
 
-    protected FileBasedDicomImageListViewModelElement() {
-    }
-
     // TODO: caches, thread pool as additional c'tor parameter (see superclass)
     // TODO: frameNumber as additional c'tor parameter (we can't support later setFrameNumber() calls anyway b/c the keys would change)
     
     public FileBasedDicomImageListViewModelElement(URL url) {
-        setUrl(url, true);
-        if (asyncMode) {
-            // must to do this only after the Url (and thus, the dicomObjectKey for the caches) is valid
-            setInitializationState(InitializationState.UNINITIALIZED);
-        }
+        this(null, url, true, null, null);
     }
 
     public FileBasedDicomImageListViewModelElement(URL url, boolean checkReadability) {
-        setUrl(url, checkReadability);
-        if (asyncMode) {
-            // must to do this only after the Url (and thus, the dicomObjectKey for the caches) is valid
-            setInitializationState(InitializationState.UNINITIALIZED);
-        }
+        this(null, url, checkReadability, null, null);
+    }
+
+    public FileBasedDicomImageListViewModelElement(URL url, boolean checkReadability,
+                                                   NumericPriorityMap<Object, DicomObject> dcmObjectCache, NumericPriorityThreadPoolExecutor imageFetchingJobsExecutor) {
+        this(null, url, checkReadability, dcmObjectCache, imageFetchingJobsExecutor);
     }
 
     public FileBasedDicomImageListViewModelElement(String fileName) {
-        this(new File(fileName), true);
+        this(new File(fileName), null, true, null, null);
     }
 
     public FileBasedDicomImageListViewModelElement(String fileName, boolean checkReadability) {
-        this(new File(fileName), checkReadability);
+        this(new File(fileName), null, checkReadability, null, null);
+    }
+
+    public FileBasedDicomImageListViewModelElement(String fileName, boolean checkReadability,
+                                                   NumericPriorityMap<Object, DicomObject> dcmObjectCache, NumericPriorityThreadPoolExecutor imageFetchingJobsExecutor) {
+        this(new File(fileName), null, checkReadability, dcmObjectCache, imageFetchingJobsExecutor);
     }
 
     public FileBasedDicomImageListViewModelElement(File file) {
-        this(file, true);
+        this(file, null, true, null, null);
     }
 
     public FileBasedDicomImageListViewModelElement(File file, boolean checkReadability) {
+        this(file, null, checkReadability, null, null);
+    }
+
+    /**
+     * Non-public c'tor that does the actual work. Exactly one of (url, file) must be != null.
+     * 
+     * @param file
+     * @param url
+     * @param checkReadability
+     * @param dcmObjectCache passed to superclass (see there)
+     * @param imageFetchingJobsExecutor passed to superclass (see there)
+     */
+    protected FileBasedDicomImageListViewModelElement(File file, URL url, boolean checkReadability,
+                                                      NumericPriorityMap<Object, DicomObject> dcmObjectCache, NumericPriorityThreadPoolExecutor imageFetchingJobsExecutor) {
+        super(dcmObjectCache, imageFetchingJobsExecutor);
         try {
-            setUrl(file.toURI().toURL(), checkReadability);
-            urlAsFile = file.getAbsoluteFile();
+            if (url != null) {
+                if (file != null) {
+                    throw new IllegalArgumentException("exactly one of (url,file) must be != null");
+                }
+                urlAsFile = null;
+                setUrl(url, checkReadability);
+            } else {
+                //url == null
+                if (file == null) {
+                    throw new IllegalArgumentException("exactly one of (url,file) must be != null");
+                }
+                urlAsFile = file.getAbsoluteFile();
+                setUrl(file.toURI().toURL(), checkReadability);
+            }
             if (asyncMode) {
+                // must to do this only after the Url (and thus, the dicomObjectKey for the caches) is valid
                 setInitializationState(InitializationState.UNINITIALIZED);
             }
         } catch (MalformedURLException e) {
