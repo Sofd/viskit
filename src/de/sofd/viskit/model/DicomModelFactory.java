@@ -28,14 +28,18 @@ public class DicomModelFactory extends ModelFactory {
     protected static final Logger logger = Logger.getLogger(DicomModelFactory.class);
 
     private boolean supportMultiframes = true;
+    private boolean checkFileReadability = true;
 
     public DicomModelFactory() {
-        super(null, null);
+        this(null, true, true, null);
     }
 
     public DicomModelFactory(boolean supportMultiframes) {
-        super(null, null);
-        this.supportMultiframes = supportMultiframes;
+        this(null, supportMultiframes, true, null);
+    }
+
+    public DicomModelFactory(boolean supportMultiframes, boolean checkFileReadability) {
+        this(null, supportMultiframes, checkFileReadability, null);
     }
 
     /**
@@ -47,8 +51,15 @@ public class DicomModelFactory extends ModelFactory {
      *            if cachePath is null, caching is deactivated
      */
     public DicomModelFactory(boolean supportMultiframes, String cachePath) {
-        super(cachePath, null);
-        this.supportMultiframes = supportMultiframes;
+        this(null, supportMultiframes, true, cachePath);
+    }
+
+    public DicomModelFactory(boolean supportMultiframes, boolean checkFileReadability, String cachePath) {
+        this(null, supportMultiframes, checkFileReadability, cachePath);
+    }
+
+    public DicomModelFactory(Comparator<File> c, boolean supportMultiframes, String cachePath) {
+        this(c, supportMultiframes, true, cachePath);
     }
 
     /**
@@ -56,11 +67,13 @@ public class DicomModelFactory extends ModelFactory {
      * 
      * @param c
      * @param supportMultiframes
+     * @param checkFileReadability
      * @param cachePath
      *            if cachePath is null, caching is deactivated
      */
-    public DicomModelFactory(Comparator<File> c, boolean supportMultiframes, String cachePath) {
+    public DicomModelFactory(Comparator<File> c, boolean supportMultiframes, boolean checkFileReadability, String cachePath) {
         super(cachePath, c);
+        this.checkFileReadability = checkFileReadability;
         this.supportMultiframes = supportMultiframes;
     }
 
@@ -130,11 +143,11 @@ public class DicomModelFactory extends ModelFactory {
     }
 
     protected DicomImageListViewModelElement createDicomImageListViewModelElement(Object f) {
-        return new FileBasedDicomImageListViewModelElement((File) f);  //variant without frameNumber avoids reading the DICOM, which can increase model creation speed 10x
+        return new FileBasedDicomImageListViewModelElement((File) f, checkFileReadability);  //variant without frameNumber avoids reading the DICOM, which can increase model creation speed 10x
     }
 
     protected DicomImageListViewModelElement createDicomImageListViewModelElement(Object f, int frameNumber) {
-        FileBasedDicomImageListViewModelElement felt = new FileBasedDicomImageListViewModelElement((File) f);
+        FileBasedDicomImageListViewModelElement felt = new FileBasedDicomImageListViewModelElement((File) f, checkFileReadability);
         felt.setFrameNumber(frameNumber);
         return felt;
     }
