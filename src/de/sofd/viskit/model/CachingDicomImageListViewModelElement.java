@@ -85,6 +85,7 @@ public abstract class CachingDicomImageListViewModelElement extends AbstractImag
         this.dcmObjectCache = (dcmObjectCache == null ? Config.defaultDcmObjectCache : dcmObjectCache);
         this.imageFetchingJobsExecutor = (imageFetchingJobsExecutor == null ? Config.defaultImageFetchingJobsExecutor : null);
     }
+    
     /**
      * Caller must ensure to setInitializationState(UNINITIALIZED) only after getDicomObjectKey() et al. return
      * correct, final values.
@@ -99,10 +100,13 @@ public abstract class CachingDicomImageListViewModelElement extends AbstractImag
             if (!isAsyncMode()) {
                 throw new IllegalStateException("BUG: attempt to set UNINITIALIZED state in synchronous mode");
             }
+            //TODO: check whether the element is already loaded and refuse to change to UNINITIALIZED if it is?
+            //  Also, what if the background task is loading while the initState is externally set to INITIALIZED?
+            //  Shouldn't this method really be called by list classes only (as it currently is)?
             Runnable r = new Runnable() {
                 @Override
                 public void run() {
-                    logger.debug("background-loading: " + getDicomObjectKey());
+                    //logger.debug("background-loading: " + getDicomObjectKey());
                     try {
                         DicomObject dcmObj;
                         //synchronized (dcmObjectCache) {  // not doing this b/c getBackendDicomObject() may block for a long time...so maybe two threads fetch the same dicom -- not a problem, right?
@@ -177,10 +181,15 @@ public abstract class CachingDicomImageListViewModelElement extends AbstractImag
      * elements.
      * <p>
      * Asynchronous mode is off by default, and may be enabled or disabled
-     * at any time.
+     * at any time (TODO: really? what about async=>sync changes? would have
+     * to synchronously remove myBackgroundLoaderTask from the queue and set
+     * the initState to INITIALIZED or ERROR, right?)
      */
     public void setAsyncMode(boolean asyncMode) {
         this.asyncMode = asyncMode;
+        if (asyncMode && getInitializationState() == InitializationState.INITIALIZED && ! dcmObjectCache.contains(getDicomObjectKey())) {
+            setInitializationState(InitializationState.UNINITIALIZED);
+        }
     }
     
     // TODO: frameNumber as c'tor parameter (we can't support later setFrameNumber() calls anyway b/c the keys would change)
