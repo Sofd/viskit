@@ -96,7 +96,7 @@ public class FileBasedDicomImageListViewModelElement extends CachingDicomImageLi
                 urlAsFile = file.getAbsoluteFile();
                 setUrl(file.toURI().toURL(), checkReadability);
             }
-            if (asyncMode) {
+            if (isAsyncMode()) {
                 // must to do this only after the Url (and thus, the dicomObjectKey for the caches) is valid
                 setInitializationState(InitializationState.UNINITIALIZED);
             }

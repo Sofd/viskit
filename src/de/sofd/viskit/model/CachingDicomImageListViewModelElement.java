@@ -6,7 +6,6 @@ import java.awt.image.Raster;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.net.URL;
 import java.nio.IntBuffer;
 import java.nio.ShortBuffer;
 import java.util.Collections;
@@ -36,11 +35,19 @@ import de.sofd.util.concurrent.PrioritizedTask;
 import de.sofd.viskit.test.windowing.RawDicomImageReader;
 
 /**
- * Implements getDicomObject(), getImage() as caching delegators to the (subclass-provided)
- * methods getImageKey(), getBackendDicomObject(), and optionally getBackendImage() and getBackendDicomObjectMetaData().
- *
+ * Implements getDicomObject(), getImage() as caching delegators to the
+ * (subclass-provided) methods getImageKey(), getBackendDicomObject(), and
+ * optionally getBackendImage() and getBackendDicomObjectMetaData().
+ * <p>
+ * Supports asynchronous mode (see {@link #isAsyncMode()},
+ * {@link #setAsyncMode(boolean)}) in which, as long as the DICOM object isn't
+ * loaded yet, the element's {@link #getInitializationState()
+ * initializationState} will be set to UNINITIALIZED and the image will be
+ * loaded in a background thread. When that's done, the initializationState will
+ * be set to INITIALIZED (or to ERROR if an error occured).
+ * 
  * TODO: Optional caching of #getRawImage()?
- *
+ * 
  * @author olaf
  */
 public abstract class CachingDicomImageListViewModelElement extends AbstractImageListViewModelElement implements DicomImageListViewModelElement {
@@ -58,16 +65,7 @@ public abstract class CachingDicomImageListViewModelElement extends AbstractImag
     private static LRUMemoryCache<Object, Integer> frameCountByDcmObjectIdCache
         = new LRUMemoryCache<Object, Integer>(Config.prop.getI("de.sofd.viskit.frameCountByDcmObjectIdCacheSize"));
 
-    /**
-     * Asynchronous mode. When enabled, the initalizationState property may
-     * attain the UNINITIALIZED value as long as the image is not cached, and
-     * background threads will be pooled to load the images of uninitialized
-     * elements. This isn't fully implemented yet (especially for situations
-     * where the cache is smaller than the number of existing model elements),
-     * which is why this flag is set to false and can only be changed in the
-     * source code for now.
-     */
-    protected boolean asyncMode = true;
+    private boolean asyncMode = false;
     
     private static final Logger logger = Logger.getLogger(CachingDicomImageListViewModelElement.class);
 
@@ -98,7 +96,7 @@ public abstract class CachingDicomImageListViewModelElement extends AbstractImag
         }
         super.setInitializationState(initializationState);
         if (initializationState == InitializationState.UNINITIALIZED) {
-            if (!asyncMode) {
+            if (!isAsyncMode()) {
                 throw new IllegalStateException("BUG: attempt to set UNINITIALIZED state in synchronous mode");
             }
             Runnable r = new Runnable() {
@@ -160,6 +158,29 @@ public abstract class CachingDicomImageListViewModelElement extends AbstractImag
             };
             myBackgroundLoaderTask = imageFetchingJobsExecutor.submitWithPriority(r, getInternalEffectivePriority());
         }
+    }
+    
+    /**
+     * Asynchronous mode. When enabled, the initalizationState property may
+     * attain the UNINITIALIZED value as long as the image is not cached, and
+     * background threads will be pooled to load the images of uninitialized
+     * elements.
+     */
+    public boolean isAsyncMode() {
+        return asyncMode;
+    }
+    
+    /**
+     * Asynchronous mode. When enabled, the initalizationState property may
+     * attain the UNINITIALIZED value as long as the image is not cached, and
+     * background threads will be pooled to load the images of uninitialized
+     * elements.
+     * <p>
+     * Asynchronous mode is off by default, and may be enabled or disabled
+     * at any time.
+     */
+    public void setAsyncMode(boolean asyncMode) {
+        this.asyncMode = asyncMode;
     }
     
     // TODO: frameNumber as c'tor parameter (we can't support later setFrameNumber() calls anyway b/c the keys would change)
@@ -361,7 +382,7 @@ public abstract class CachingDicomImageListViewModelElement extends AbstractImag
     public DicomObject getDicomObject() {
         DicomObject result = dcmObjectCache.get(getDicomObjectKey());
         if (result == null) {
-            if (asyncMode) {
+            if (isAsyncMode()) {
                 throw new NotInitializedException();
             }
             result = getBackendDicomObject();
@@ -387,7 +408,7 @@ public abstract class CachingDicomImageListViewModelElement extends AbstractImag
         DicomObject result = rawDicomImageMetadataCache.get(getDicomObjectKey());
         
         if (result == null) {
-            if (asyncMode) {
+            if (isAsyncMode()) {
                 throw new NotInitializedException();
             }
             result = getBackendDicomImageMetaData();
@@ -451,7 +472,7 @@ public abstract class CachingDicomImageListViewModelElement extends AbstractImag
     public BufferedImage getImage() {
         BufferedImage result = imageCache.get(getImageKey());
         if (result == null) {
-            if (asyncMode) {
+            if (isAsyncMode()) {
                 throw new NotInitializedException();
             }
             result = getBackendImage();
