@@ -147,7 +147,7 @@ public class JGLImageListView extends JImageListView {
     public void setModel(ListModel model) {
         super.setModel(model);
         updateScrollbar();
-        updateCellPriorities();
+        updateElementPriorities();
     }
 
     @Override
@@ -157,7 +157,7 @@ public class JGLImageListView extends JImageListView {
             cellsViewer.repaint();
             // TODO: set initial scale
         }
-        updateCellPriorities();
+        updateElementPriorities();
     }
 
     @Override
@@ -166,7 +166,7 @@ public class JGLImageListView extends JImageListView {
         if (cellsViewer != null) {
             cellsViewer.repaint();
         }
-        updateCellPriorities();
+        updateElementPriorities();
     }
 
     @Override
@@ -175,13 +175,13 @@ public class JGLImageListView extends JImageListView {
         if (cellsViewer != null) {
             cellsViewer.repaint();
         }
-        updateCellPriorities();
+        updateElementPriorities();
     }
 
     @Override
     public void setFirstVisibleIndex(int newValue) {
         super.setFirstVisibleIndex(newValue);
-        updateCellPriorities();
+        updateElementPriorities();
         updateScrollbar();
         if (cellsViewer != null) {
             cellsViewer.repaint();
@@ -197,12 +197,12 @@ public class JGLImageListView extends JImageListView {
 
     /**
      * Determine newly visible and newly invisible model elements (compared to
-     * last call of this methods), change their priorities accordingly (newly
+     * last call of this method), change their priorities accordingly (newly
      * invisible ones to 0 (the default), newly visible ones to 10).
      * <p>
      * TODO: This is a 100% copy&paste from JGridImageListView
      */
-    protected void updateCellPriorities() {
+    protected void updateElementPriorities() {
         int firstVisIdx = getFirstVisibleIndex();
         int lastVisIdx = getLastVisibleIndex();
         if (getModel() != null) {
@@ -318,7 +318,7 @@ public class JGLImageListView extends JImageListView {
     @Override
     protected void doSetScaleMode(ScaleMode oldScaleMode, ScaleMode newScaleMode) {
         updateScrollbar();
-        updateCellPriorities();
+        updateElementPriorities();
     }
 
     @Override

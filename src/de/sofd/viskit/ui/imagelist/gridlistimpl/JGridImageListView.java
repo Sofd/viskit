@@ -114,7 +114,7 @@ public class JGridImageListView extends JImageListView {
         wrappedGridList.setModel(null);
         super.setModel(model);
         wrappedGridList.setModel(wrappedGridListModel = copyModel(model));
-        updateCellPriorities();
+        updateElementPriorities();
     }
 
     private static DefaultListModel copyModel(ListModel m) {
@@ -132,7 +132,7 @@ public class JGridImageListView extends JImageListView {
         for (int i = e.getIndex0(); i <= e.getIndex1(); i++) {
             wrappedGridListModel.add(i, getModel().getElementAt(i));
         }
-        updateCellPriorities();
+        updateElementPriorities();
         // TODO: set initial scale
     }
 
@@ -140,14 +140,14 @@ public class JGridImageListView extends JImageListView {
     protected void modelIntervalRemoved(ListDataEvent e) {
         super.modelIntervalRemoved(e);
         wrappedGridListModel.removeRange(e.getIndex0(), e.getIndex1());
-        updateCellPriorities();
+        updateElementPriorities();
     }
 
     @Override
     protected void modelContentsChanged(ListDataEvent e) {
         super.modelContentsChanged(e);
         wrappedGridList.setModel(wrappedGridListModel = copyModel(getModel()));
-        updateCellPriorities();
+        updateElementPriorities();
     }
 
     // delegate our selectionModel property to wrappedGridList's selectionModel
@@ -181,7 +181,7 @@ public class JGridImageListView extends JImageListView {
     @Override
     public void setFirstVisibleIndex(int newValue) {
         super.setFirstVisibleIndex(newValue);
-        updateCellPriorities();
+        updateElementPriorities();
         inExternalSetFirstVisibleIdx = true;
         try {
             wrappedGridList.setFirstDisplayedIdx(getFirstVisibleIndex());
@@ -205,10 +205,10 @@ public class JGridImageListView extends JImageListView {
 
     /**
      * Determine newly visible and newly invisible model elements (compared to
-     * last call of this methods), change their priorities accordingly (newly
+     * last call of this method), change their priorities accordingly (newly
      * invisible ones to 0 (the default), newly visible ones to 10).
      */
-    protected void updateCellPriorities() {
+    protected void updateElementPriorities() {
         int firstVisIdx = getFirstVisibleIndex();
         int lastVisIdx = getLastVisibleIndex();
         if (getModel() != null) {
@@ -324,7 +324,7 @@ public class JGridImageListView extends JImageListView {
     @Override
     protected void doSetScaleMode(ScaleMode oldScaleMode, ScaleMode newScaleMode) {
         MyScaleMode sm = (MyScaleMode) newScaleMode;
-        updateCellPriorities();
+        updateElementPriorities();
         wrappedGridList.setGridSizes(sm.getCellRowCount(), sm.getCellColumnCount());
     }
 
