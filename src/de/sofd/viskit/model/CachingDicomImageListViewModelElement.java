@@ -6,6 +6,7 @@ import java.awt.image.Raster;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.net.URL;
 import java.nio.IntBuffer;
 import java.nio.ShortBuffer;
 import java.util.Collections;
@@ -66,7 +67,7 @@ public abstract class CachingDicomImageListViewModelElement extends AbstractImag
      * which is why this flag is set to false and can only be changed in the
      * source code for now.
      */
-    protected boolean asyncMode = false;
+    protected boolean asyncMode = true;
     
     private static final Logger logger = Logger.getLogger(CachingDicomImageListViewModelElement.class);
 
@@ -103,14 +104,14 @@ public abstract class CachingDicomImageListViewModelElement extends AbstractImag
             Runnable r = new Runnable() {
                 @Override
                 public void run() {
-                    //logger.debug("background-loading: " + getDicomObjectKey());
+                    logger.debug("background-loading: " + getDicomObjectKey());
                     try {
                         DicomObject dcmObj;
                         //synchronized (dcmObjectCache) {  // not doing this b/c getBackendDicomObject() may block for a long time...so maybe two threads fetch the same dicom -- not a problem, right?
                         dcmObj = dcmObjectCache.get(getDicomObjectKey());
                         if (dcmObj == null) {
                             dcmObj = getBackendDicomObject();
-                            dcmObjectCache.put(getDicomObjectKey(), dcmObj, 10 - getEffectivePriority());
+                            dcmObjectCache.put(getDicomObjectKey(), dcmObj, getInternalEffectivePriority());
                         }
                         //}
         
@@ -138,10 +139,26 @@ public abstract class CachingDicomImageListViewModelElement extends AbstractImag
                                 setErrorInfo(e);
                             }
                         });
+                    } catch (final Error e) {
+                        //Errors are normally fatal, but:
+                        //- dcm4che may throw a non-fatal OOM error when trying to read a non-DICOM file (should be mostly fixed in 2.0.21; see http://www.dcm4che.org/jira/browse/DCM-338)
+                        //- if we didn't log the error here, it would just be silently eaten by the RunnableFuture, and
+                        //  we would have to call get() on the future at a later time (which we don't otherwise have to) just to obtain the exception
+                        //Thus we catch any Error exception here, log it, and rethrow it
+                        logger.error("ERROR background-loading " + getDicomObjectKey() + ": " +
+                                     e.getLocalizedMessage() + ". Setting the model element to permanent error state.", e);
+                        SwingUtilities.invokeLater(new Runnable() {
+                            @Override
+                            public void run() {
+                                setInitializationState(InitializationState.ERROR);
+                                setErrorInfo(e);
+                            }
+                        });
+                        throw e;
                     }
                 }
             };
-            myBackgroundLoaderTask = imageFetchingJobsExecutor.submitWithPriority(r, getInternalEffectivePriority()); // 10 = lowest priority
+            myBackgroundLoaderTask = imageFetchingJobsExecutor.submitWithPriority(r, getInternalEffectivePriority());
         }
     }
     

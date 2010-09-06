@@ -76,6 +76,7 @@ public class Config {
             Thread t = defaultThreadFactory.newThread(r);
             t.setName("Viskit-ImageFetchingJob");
             t.setDaemon(true);
+            t.setPriority(Thread.MIN_PRIORITY);
             return t;
         }
     };
