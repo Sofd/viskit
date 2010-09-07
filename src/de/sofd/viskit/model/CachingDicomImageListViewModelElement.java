@@ -11,6 +11,7 @@ import java.nio.ShortBuffer;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.concurrent.ExecutionException;
 
 import javax.imageio.ImageIO;
 import javax.imageio.ImageReader;
@@ -95,18 +96,18 @@ public abstract class CachingDicomImageListViewModelElement extends AbstractImag
         if (initializationState == getInitializationState()) {
             return;
         }
+        if (!isAsyncMode() && initializationState == InitializationState.UNINITIALIZED) {
+            throw new IllegalStateException("BUG: attempt to set UNINITIALIZED state in synchronous mode");
+        }
         super.setInitializationState(initializationState);
         if (initializationState == InitializationState.UNINITIALIZED) {
-            if (!isAsyncMode()) {
-                throw new IllegalStateException("BUG: attempt to set UNINITIALIZED state in synchronous mode");
-            }
             //TODO: check whether the element is already loaded and refuse to change to UNINITIALIZED if it is?
             //  Also, what if the background task is loading while the initState is externally set to INITIALIZED?
             //  Shouldn't this method really be called by list classes only (as it currently is)?
             Runnable r = new Runnable() {
                 @Override
                 public void run() {
-                    //logger.debug("background-loading: " + getDicomObjectKey());
+                    logger.debug("background-loading: " + getDicomObjectKey());
                     try {
                         DicomObject dcmObj;
                         //synchronized (dcmObjectCache) {  // not doing this b/c getBackendDicomObject() may block for a long time...so maybe two threads fetch the same dicom -- not a problem, right?
@@ -186,9 +187,35 @@ public abstract class CachingDicomImageListViewModelElement extends AbstractImag
      * the initState to INITIALIZED or ERROR, right?)
      */
     public void setAsyncMode(boolean asyncMode) {
+        if (asyncMode == this.asyncMode) {
+            return;
+        }
         this.asyncMode = asyncMode;
         if (asyncMode && getInitializationState() == InitializationState.INITIALIZED && ! dcmObjectCache.contains(getDicomObjectKey())) {
             setInitializationState(InitializationState.UNINITIALIZED);
+        } else if (!asyncMode) {
+            //async=>sync changel. Need to remove myBackgroundLoaderTask from the queue
+            if (null != myBackgroundLoaderTask) {
+                if (!imageFetchingJobsExecutor.remove(myBackgroundLoaderTask)) {
+                    //myBackgroundLoaderTask already running
+                    //TODO: doesn't work (blocks a long time for some elements, apparently)
+                    try {
+                        myBackgroundLoaderTask.get();
+                    } catch (InterruptedException e) {
+                        //shouldn't happen.
+                    } catch (ExecutionException e) {
+                        //shouldn't happen.
+                    }
+                }
+                
+                ///alternative approach? =>not really. too slow and we don't want to interfere with other lists' usage of the executor
+                //myBackgroundLoaderTask.cancel(false);
+                //myBackgroundLoaderTask.get();
+                //imageFetchingJobsExecutor.purge();
+                if (initializationState == InitializationState.UNINITIALIZED) {
+                    initializationState = InitializationState.INITIALIZED;
+                }
+            }
         }
     }
     

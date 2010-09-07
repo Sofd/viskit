@@ -120,11 +120,20 @@ public class ImageListViewInitStateIndicationPaintController extends CellPaintCo
 
     protected String getErrorString(ImageListViewCell cell) {
         ImageListViewModelElement elt = cell.getDisplayedModelElement();
-        Exception ei = (Exception) elt.getErrorInfo();
-        if (ei != null) {
-            return "Error: " + ei.getLocalizedMessage();
+        Object ei = elt.getErrorInfo();
+        if (ei == null) {
+            return "Error";
         } else {
-            return "ERROR";
+            if (ei instanceof Throwable) {
+                Throwable t = (Throwable) ei;
+                if (t.getLocalizedMessage() != null) {
+                    return t.getLocalizedMessage();
+                } else {
+                    return t.toString();
+                }
+            } else {
+                return ei.toString();
+            }
         }
     }
 
