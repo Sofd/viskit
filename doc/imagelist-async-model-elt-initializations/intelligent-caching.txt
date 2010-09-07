@@ -81,18 +81,6 @@ Caches konfigurieren, ohne an den Default-Cache-Properties drehen zu
 müssen.
 
 
-TODO: 
-
-- wg. Wiederverwendung im Prioritätsbasierten Job-Scheduler
-  (s. priority-based-job-scheduling.txt):
-
-  - Kostenbegrenzung optional machen
-
-  - PriorityCache umbenennen in NumericPriorityMap
-
-
-
-
 [1] hierbei vorher unerwünschte Effekte überlegen. Wenn ein Element
 erst sichtbar ist, dann "knapp" unsichtbar wird (=> Prio auf hohen
 Wert < 10 gesetzt), und dann "weniger knapp" unsichtbar wird, dann
@@ -101,3 +89,10 @@ von der Liste verwalteten "Menge der zuletzt sichtbaren Elemente" drin
 ist und deshalb seine Prio nicht mehr geupdatet wird => die Prio
 bleibt auf dem hohen Wert < 10, auch wenn das Element sich beliebig
 weit vom Sichtbarkeitsintervall entfernt
+
+
+
+==> 7.9.2010: Alles implementiert bis auf Prio-Setzung auf Wert
+zwischen 0 und 10 bei Elementen, die "knapp unsichtbar" sind
+(Prio-Setzung auf 10 bei Sichtbarkeit und 0 bei Unsichtbarkeit ist
+implementiert)

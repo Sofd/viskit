@@ -85,10 +85,10 @@ public class PrioritizedTask<T> extends FutureTask<T> {
 public class NumericPriorityThreadPoolExecutor extends ThreadPoolExecutor {
 
     NumericPriorityThreadPoolExecutor(...) {
-        super(..., new NumericPriorityBlockingQueue<Runnable>(.., prioCostFunction, .), ...);
+        super(..., new NumericPriorityBlockingQueue<Runnable>(.., priorityFunction, .), ...);
     }
 
-    private static Function1<Runnable, Double> prioCostFunction = new Function1<Runnable, Double>() {
+    private static Function1<Runnable, Double> priorityFunction = new Function1<Runnable, Double>() {
         @Override
         public Double run(Runnable r) {
             return ((PrioritizedTask<?>)r).getPriority();
@@ -150,5 +150,6 @@ public class NumericPriorityThreadPoolExecutor extends ThreadPoolExecutor {
 public class NumericPriorityBlockingQueue<E> implements BlockingQueue<E> {
 
     private PriorityCache<E, E> delegate;   //key==value in all elements
+    private Function1<E, Double> elementPriorityFunction;
 }
 
