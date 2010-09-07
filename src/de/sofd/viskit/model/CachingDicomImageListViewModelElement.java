@@ -45,7 +45,11 @@ import de.sofd.viskit.test.windowing.RawDicomImageReader;
  * loaded yet, the element's {@link #getInitializationState()
  * initializationState} will be set to UNINITIALIZED and the image will be
  * loaded in a background thread. When that's done, the initializationState will
- * be set to INITIALIZED (or to ERROR if an error occured).
+ * be set to INITIALIZED (or to ERROR if an error occurred). A corresponding
+ * property change event will be fired as specified in the
+ * {@link #getInitializationState()} Javadoc. Lists that contain the element
+ * will pick up that event and change their display of the corresponding cell
+ * accordingly.
  * 
  * TODO: Optional caching of #getRawImage()?
  * 
