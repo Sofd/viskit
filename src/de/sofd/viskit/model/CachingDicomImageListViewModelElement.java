@@ -107,7 +107,7 @@ public abstract class CachingDicomImageListViewModelElement extends AbstractImag
             Runnable r = new Runnable() {
                 @Override
                 public void run() {
-                    logger.debug("background-loading: " + getDicomObjectKey());
+                    logger.debug("" + getDicomObjectKey() + ": START background loading");
                     try {
                         DicomObject dcmObj;
                         //synchronized (dcmObjectCache) {  // not doing this b/c getBackendDicomObject() may block for a long time...so maybe two threads fetch the same dicom -- not a problem, right?
@@ -125,6 +125,7 @@ public abstract class CachingDicomImageListViewModelElement extends AbstractImag
                             rawDicomImageMetadataCache.put(getDicomObjectKey(), dcmMetadata);
                         }
                         
+                        logger.debug("" + getDicomObjectKey() + ": DONE background loading");
                         SwingUtilities.invokeLater(new Runnable() {  //TODO: this may create 100s of Runnables in a short time. use our own queue instead?
                             @Override
                             public void run() {
@@ -162,6 +163,7 @@ public abstract class CachingDicomImageListViewModelElement extends AbstractImag
                 }
             };
             myBackgroundLoaderTask = imageFetchingJobsExecutor.submitWithPriority(r, getInternalEffectivePriority());
+            logger.debug("" + getDicomObjectKey() + ": QUEUED");
         }
     }
     
@@ -193,19 +195,30 @@ public abstract class CachingDicomImageListViewModelElement extends AbstractImag
         this.asyncMode = asyncMode;
         if (asyncMode && getInitializationState() == InitializationState.INITIALIZED && ! dcmObjectCache.contains(getDicomObjectKey())) {
             setInitializationState(InitializationState.UNINITIALIZED);
+            logger.debug("" + getDicomObjectKey() + "=>async and wasn't cached");
         } else if (!asyncMode) {
-            //async=>sync changel. Need to remove myBackgroundLoaderTask from the queue
+            //async=>sync change. Need to remove myBackgroundLoaderTask from the queue, waiting for it to finish if necessary
+            //  this code is somewhat beta, and will probably rarely be used
             if (null != myBackgroundLoaderTask) {
+                logger.debug("" + getDicomObjectKey() + "=>sync, null != myBLT");
                 if (!imageFetchingJobsExecutor.remove(myBackgroundLoaderTask)) {
-                    //myBackgroundLoaderTask already running
-                    //TODO: doesn't work (blocks a long time for some elements, apparently)
+                    //myBackgroundLoaderTask no longer queued => either still running or already done
                     try {
-                        myBackgroundLoaderTask.get();
+                        logger.debug("" + getDicomObjectKey() + "=>sync, job wasn't queued");
+                        long t0 = System.currentTimeMillis();
+                        if (!myBackgroundLoaderTask.isDone()) {  //test not really necessary, get() will return immediately if isDone()
+                            logger.debug("" + getDicomObjectKey() + "=>sync, job wasn't done, get...");
+                            myBackgroundLoaderTask.get();
+                        }
+                        long t1 = System.currentTimeMillis();
+                        logger.debug("" + getDicomObjectKey() + "=>sync, done in " + (t1-t0) + " ms");
                     } catch (InterruptedException e) {
                         //shouldn't happen.
                     } catch (ExecutionException e) {
                         //shouldn't happen.
                     }
+                } else {
+                    logger.debug("" + getDicomObjectKey() + "=>sync, job unqueued");
                 }
                 
                 ///alternative approach? =>not really. too slow and we don't want to interfere with other lists' usage of the executor
@@ -215,6 +228,8 @@ public abstract class CachingDicomImageListViewModelElement extends AbstractImag
                 if (initializationState == InitializationState.UNINITIALIZED) {
                     initializationState = InitializationState.INITIALIZED;
                 }
+                
+                //TODO: what if other lists display the same elements and are still in async mode? We may be removing their jobs here...
             }
         }
     }

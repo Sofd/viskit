@@ -966,7 +966,11 @@ public class JListImageListTestApp {
             asyncCb.addActionListener(new ActionListener() {
                 @Override
                 public void actionPerformed(ActionEvent e) {
-                    for (int i = 0; i < listView.getLength(); i++) {
+                    for (int i = listView.getLength() - 1; i >= 0; i--) {
+                        // going backwards through the list generally has a higher chance of not getting the UI thread
+                        // "interlocked" with the background loader threads, which may lead end up loading all unloaded
+                        // elements synchronously (this can still happen anyway in some cases, so changing the asyncMode
+                        // of elements while they're being displayed is probably not a good idea in end user applications)
                         ImageListViewModelElement elt = listView.getElementAt(i);
                         if (elt instanceof CachingDicomImageListViewModelElement) {
                             CachingDicomImageListViewModelElement celt = (CachingDicomImageListViewModelElement) elt;
