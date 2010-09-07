@@ -70,3 +70,16 @@ Bugs:
 - setScaleMode-induzierte Zoom-Aenderungen wirken nicht auf
   uninitialisierte Zellen
 
+
+- versehentlich versuchtes Laden von non-DICOM-Dateien
+  (z.B. Shellscripte, Verzeichnisse) im Hintergrund im async-Mode
+  führt oft zu Errors (Throwables, die nicht von Exception erben,
+  z.B. OutOfMemoryError). Problem ist, dass dieses Sterben offenbar
+  die ganze JVM, inkl. des GUI-Threads, sekundenlang in Beschlag
+  nimmt.
+
+  Teil des Problems ist mglw. dcm4che, das oft solche Fehler
+  produziert, wenn man versucht, non-DICOM-Dateien
+  einzulesen. Mglw. tritt das Problem aber ab 2.0.21 nicht mehr oder
+  sehr viel seltener auf; siehe
+  http://www.dcm4che.org/jira/browse/DCM-338

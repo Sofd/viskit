@@ -45,6 +45,7 @@ import org.dcm4che2.data.Tag;
 
 import de.sofd.lang.Runnable1;
 import de.sofd.util.IdentityHashSet;
+import de.sofd.util.IntRange;
 import de.sofd.util.Misc;
 import de.sofd.viskit.draw2d.gc.ViskitGC;
 import de.sofd.viskit.model.DicomImageListViewModelElement;
@@ -146,6 +147,7 @@ public class JGLImageListView extends JImageListView {
     public void setModel(ListModel model) {
         super.setModel(model);
         updateScrollbar();
+        updateElementPriorities();
     }
 
     @Override
@@ -155,6 +157,7 @@ public class JGLImageListView extends JImageListView {
             cellsViewer.repaint();
             // TODO: set initial scale
         }
+        updateElementPriorities();
     }
 
     @Override
@@ -163,6 +166,7 @@ public class JGLImageListView extends JImageListView {
         if (cellsViewer != null) {
             cellsViewer.repaint();
         }
+        updateElementPriorities();
     }
 
     @Override
@@ -171,11 +175,13 @@ public class JGLImageListView extends JImageListView {
         if (cellsViewer != null) {
             cellsViewer.repaint();
         }
+        updateElementPriorities();
     }
 
     @Override
     public void setFirstVisibleIndex(int newValue) {
         super.setFirstVisibleIndex(newValue);
+        updateElementPriorities();
         updateScrollbar();
         if (cellsViewer != null) {
             cellsViewer.repaint();
@@ -187,6 +193,44 @@ public class JGLImageListView extends JImageListView {
         return getFirstVisibleIndex() + getScaleMode().getCellColumnCount() * getScaleMode().getCellRowCount() - 1;
     }
     
+    protected IntRange previouslyVisibleRange = null;
+
+    /**
+     * Determine newly visible and newly invisible model elements (compared to
+     * last call of this method), change their priorities accordingly (newly
+     * invisible ones to 0 (the default), newly visible ones to 10).
+     * <p>
+     * TODO: This is a 100% copy&paste from JGridImageListView
+     */
+    protected void updateElementPriorities() {
+        int firstVisIdx = getFirstVisibleIndex();
+        int lastVisIdx = getLastVisibleIndex();
+        if (getModel() != null) {
+            IntRange newlyVisibleRange = null;
+            int lastVisModelIdx = Math.min(lastVisIdx, getModel().getSize() - 1);
+            if (lastVisModelIdx >= firstVisIdx) {
+                newlyVisibleRange = new IntRange(firstVisIdx, lastVisModelIdx);
+                IntRange[] newlyInvisibleRanges = IntRange.subtract(previouslyVisibleRange, newlyVisibleRange);
+                IntRange[] newlyVisibleRanges =   IntRange.subtract(newlyVisibleRange, previouslyVisibleRange);
+                for (IntRange r : newlyInvisibleRanges) {
+                    for (int i = r.getMin(); i <= r.getMax(); i++) {
+                        logger.debug("setting to prio  0: index " + i);
+                        getElementAt(i).setPriority(this, 0);
+                    }
+                }
+                for (IntRange r : newlyVisibleRanges) {
+                    for (int i = r.getMin(); i <= r.getMax(); i++) {
+                        logger.debug("setting to prio 10: index " + i);
+                        getElementAt(i).setPriority(this, 10);
+                    }
+                }
+            }
+            previouslyVisibleRange = newlyVisibleRange;
+        } else {
+            previouslyVisibleRange = null;
+        }
+    }
+
     /**
      * Class for the ScaleModes that JGLImageListView instances support. Any
      * rectangular grid of n x m cells is supported.
@@ -274,6 +318,7 @@ public class JGLImageListView extends JImageListView {
     @Override
     protected void doSetScaleMode(ScaleMode oldScaleMode, ScaleMode newScaleMode) {
         updateScrollbar();
+        updateElementPriorities();
     }
 
     @Override

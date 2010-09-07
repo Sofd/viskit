@@ -28,42 +28,56 @@ public class DicomModelFactory extends ModelFactory {
     protected static final Logger logger = Logger.getLogger(DicomModelFactory.class);
 
     private boolean supportMultiframes = true;
+    private boolean checkFileReadability = true;
+    private boolean asyncMode = false;
 
-    public DicomModelFactory() {
-        super(null, null);
+    public DicomModelFactory(String cachePath, Comparator<File> comparator) {
+        super(cachePath, comparator);
     }
 
-    public DicomModelFactory(boolean supportMultiframes) {
-        super(null, null);
-        this.supportMultiframes = supportMultiframes;
-    }
-
-    /**
-     * Constructor
-     * 
-     * 
-     * @param supportMultiframes
-     * @param cachePath
-     *            if cachePath is null, caching is deactivated
-     */
-    public DicomModelFactory(boolean supportMultiframes, String cachePath) {
-        super(cachePath, null);
-        this.supportMultiframes = supportMultiframes;
+    public boolean isSupportMultiframes() {
+        return supportMultiframes;
     }
 
     /**
-     * Constructor
+     * Specify whether the factory should check for multiframe images when creating
+     * models. This requires that all DICOM files be read in before the model can
+     * be created, so the model creation time may increase substantially.
      * 
-     * @param c
      * @param supportMultiframes
-     * @param cachePath
-     *            if cachePath is null, caching is deactivated
      */
-    public DicomModelFactory(Comparator<File> c, boolean supportMultiframes, String cachePath) {
-        super(cachePath, c);
+    public void setSupportMultiframes(boolean supportMultiframes) {
         this.supportMultiframes = supportMultiframes;
     }
+    
+    public boolean isCheckFileReadability() {
+        return checkFileReadability;
+    }
 
+    /**
+     * Specify whether the factory should check for file readability as it creates
+     * model elements. Will increase model creation time moderately.
+     * 
+     * @param checkFileReadability
+     */
+    public void setCheckFileReadability(boolean checkFileReadability) {
+        this.checkFileReadability = checkFileReadability;
+    }
+    
+    public boolean isAsyncMode() {
+        return asyncMode;
+    }
+
+    /**
+     * Specify whether the factory should create all model elements in asynchronous
+     * mode.
+     * 
+     * @param asyncMode
+     */
+    public void setAsyncMode(boolean asyncMode) {
+        this.asyncMode = asyncMode;
+    }
+    
     @Override
     protected float[] calculatePixelValueRange(ListModel model) {
         float[] minMaxRange = new float[2];
@@ -130,11 +144,13 @@ public class DicomModelFactory extends ModelFactory {
     }
 
     protected DicomImageListViewModelElement createDicomImageListViewModelElement(Object f) {
-        return new FileBasedDicomImageListViewModelElement((File) f);  //variant without frameNumber avoids reading the DICOM, which can increase model creation speed 10x
+        FileBasedDicomImageListViewModelElement result = new FileBasedDicomImageListViewModelElement((File) f, checkFileReadability);  //variant without frameNumber avoids reading the DICOM, which can increase model creation speed 10x
+        result.setAsyncMode(asyncMode);
+        return result;
     }
 
     protected DicomImageListViewModelElement createDicomImageListViewModelElement(Object f, int frameNumber) {
-        FileBasedDicomImageListViewModelElement felt = new FileBasedDicomImageListViewModelElement((File) f);
+        FileBasedDicomImageListViewModelElement felt = new FileBasedDicomImageListViewModelElement((File) f, checkFileReadability);
         felt.setFrameNumber(frameNumber);
         return felt;
     }

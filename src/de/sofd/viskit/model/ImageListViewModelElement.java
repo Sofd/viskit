@@ -216,6 +216,34 @@ public interface ImageListViewModelElement {
     void setErrorInfo(Object info);
 
     /**
+     * Informs this model element that it is needed with priority <i>value</i>
+     * (0..10) in the list <i>source</i> (will always be an instance of
+     * {@link JImageListView} at this time). Generally, a list "needs" a model
+     * element with higher priority if it wants to display it or is likely to be
+     * going to display it very soon.
+     * <p>
+     * The model element may use this information to decide whether and for how
+     * long it wants to cache its data (e.g., image data) in-memory for faster
+     * access. The {@link CachingDicomImageListViewModelElement} subclass does
+     * this -- it caches the image data in a shared cache that evicts elements
+     * based on the priority.
+     * 
+     * @param source
+     * @param value
+     */
+    void setPriority(Object source, double value);
+
+    /**
+     * Informs this model element that it no longer needed in the list
+     * <i>source</i> (will always be an instance of {@link JImageListView} at
+     * this time). It was probably removed from the list.
+     * 
+     * @param source
+     * @param value
+     */
+    void removePriority(Object source);
+
+    /**
      * Store arbitrary additional data in this model element. The data can be
      * retrieved again using {@link #getAttribute(java.lang.String) }.
      * 

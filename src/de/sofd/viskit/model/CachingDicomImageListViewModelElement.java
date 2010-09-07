@@ -10,12 +10,8 @@ import java.nio.IntBuffer;
 import java.nio.ShortBuffer;
 import java.util.Collections;
 import java.util.Iterator;
-import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.Map.Entry;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.ExecutionException;
 
 import javax.imageio.ImageIO;
 import javax.imageio.ImageReader;
@@ -34,14 +30,29 @@ import org.dcm4che2.media.FileMetaInformation;
 import de.sofd.util.FloatRange;
 import de.sofd.util.Histogram;
 import de.sofd.util.IntRange;
+import de.sofd.util.NumericPriorityMap;
+import de.sofd.util.concurrent.NumericPriorityThreadPoolExecutor;
+import de.sofd.util.concurrent.PrioritizedTask;
 import de.sofd.viskit.test.windowing.RawDicomImageReader;
 
 /**
- * Implements getDicomObject(), getImage() as caching delegators to the (subclass-provided)
- * methods getImageKey(), getBackendDicomObject(), and optionally getBackendImage() and getBackendDicomObjectMetaData().
- *
+ * Implements getDicomObject(), getImage() as caching delegators to the
+ * (subclass-provided) methods getImageKey(), getBackendDicomObject(), and
+ * optionally getBackendImage() and getBackendDicomObjectMetaData().
+ * <p>
+ * Supports asynchronous mode (see {@link #isAsyncMode()},
+ * {@link #setAsyncMode(boolean)}) in which, as long as the DICOM object isn't
+ * loaded yet, the element's {@link #getInitializationState()
+ * initializationState} will be set to UNINITIALIZED and the image will be
+ * loaded in a background thread. When that's done, the initializationState will
+ * be set to INITIALIZED (or to ERROR if an error occurred). A corresponding
+ * property change event will be fired as specified in the
+ * {@link #getInitializationState()} Javadoc. Lists that contain the element
+ * will pick up that event and change their display of the corresponding cell
+ * accordingly.
+ * 
  * TODO: Optional caching of #getRawImage()?
- *
+ * 
  * @author olaf
  */
 public abstract class CachingDicomImageListViewModelElement extends AbstractImageListViewModelElement implements DicomImageListViewModelElement {
@@ -49,16 +60,17 @@ public abstract class CachingDicomImageListViewModelElement extends AbstractImag
     protected int frameNumber = 0;
     protected int totalFrameNumber = -1;
 
-    /**
-     * Asynchronous mode. When enabled, the initalizationState property may
-     * attain the UNINITIALIZED value as long as the image is not cached, and
-     * background threads will be pooled to load the images of uninitialized
-     * elements. This isn't fully implemented yet (especially for situations
-     * where the cache is smaller than the number of existing model elements),
-     * which is why this flag is set to false and can only be changed in the
-     * source code for now.
-     */
-    protected boolean asyncMode = false;
+    private final NumericPriorityMap<Object, DicomObject> dcmObjectCache;
+
+    private final LRUMemoryCache<Object, BufferedImage> imageCache = Config.defaultBufferedImageCache;
+
+    private static Map<Object, DicomObject> rawDicomImageMetadataCache
+        = Collections.synchronizedMap(new LRUMemoryCache<Object, DicomObject>(Config.prop.getI("de.sofd.viskit.rawDicomImageMetadataCacheSize")));
+
+    private static LRUMemoryCache<Object, Integer> frameCountByDcmObjectIdCache
+        = new LRUMemoryCache<Object, Integer>(Config.prop.getI("de.sofd.viskit.frameCountByDcmObjectIdCacheSize"));
+
+    private boolean asyncMode = false;
     
     private static final Logger logger = Logger.getLogger(CachingDicomImageListViewModelElement.class);
 
@@ -66,25 +78,19 @@ public abstract class CachingDicomImageListViewModelElement extends AbstractImag
         RawDicomImageReader.registerWithImageIO();
     }
 
-    /**
-     * use our own thread factory for the imageFetchingJobsExecutor because the
-     * default one creates non-daemon threads, which may prevent JVM shutdowns
-     * in certain situations
-     */
-    private static ThreadFactory ourThreadFactory = new ThreadFactory() {
-        private ThreadFactory defaultThreadFactory = Executors.defaultThreadFactory();
+    private final NumericPriorityThreadPoolExecutor imageFetchingJobsExecutor;
 
-        @Override
-        public Thread newThread(Runnable r) {
-            Thread t = defaultThreadFactory.newThread(r);
-            t.setName("Viskit-ImageFetchingJob");
-            t.setDaemon(true);
-            return t;
-        }
-    };
+    private PrioritizedTask<Object> myBackgroundLoaderTask;
 
-    private static ExecutorService imageFetchingJobsExecutor = Executors.newFixedThreadPool(3, ourThreadFactory);
-
+    public CachingDicomImageListViewModelElement() {
+        this(null, null);
+    }
+    
+    public CachingDicomImageListViewModelElement(NumericPriorityMap<Object, DicomObject> dcmObjectCache, NumericPriorityThreadPoolExecutor imageFetchingJobsExecutor) {
+        this.dcmObjectCache = (dcmObjectCache == null ? Config.defaultDcmObjectCache : dcmObjectCache);
+        this.imageFetchingJobsExecutor = (imageFetchingJobsExecutor == null ? Config.defaultImageFetchingJobsExecutor : null);
+    }
+    
     /**
      * Caller must ensure to setInitializationState(UNINITIALIZED) only after getDicomObjectKey() et al. return
      * correct, final values.
@@ -94,39 +100,141 @@ public abstract class CachingDicomImageListViewModelElement extends AbstractImag
         if (initializationState == getInitializationState()) {
             return;
         }
+        if (!isAsyncMode() && initializationState == InitializationState.UNINITIALIZED) {
+            throw new IllegalStateException("BUG: attempt to set UNINITIALIZED state in synchronous mode");
+        }
         super.setInitializationState(initializationState);
         if (initializationState == InitializationState.UNINITIALIZED) {
-            if (!asyncMode) {
-                throw new IllegalStateException("BUG: attempt to set UNINITIALIZED state in synchronous mode");
-            }
-            imageFetchingJobsExecutor.submit(new Runnable() {
+            //TODO: check whether the element is already loaded and refuse to change to UNINITIALIZED if it is?
+            //  Also, what if the background task is loading while the initState is externally set to INITIALIZED?
+            //  Shouldn't this method really be called by list classes only (as it currently is)?
+            Runnable r = new Runnable() {
                 @Override
                 public void run() {
-                    logger.debug("background-loading: " + getDicomObjectKey());
-                    DicomObject dcmObj;
-                    //synchronized (dcmObjectCache) {  // not doing this b/c getBackendDicomObject() may block for a long time...so maybe two threads fetch the same dicom -- not a problem, right?
-                    dcmObj = dcmObjectCache.get(getDicomObjectKey());
-                    if (dcmObj == null) {
-                        dcmObj = getBackendDicomObject();
-                        dcmObjectCache.put(getDicomObjectKey(), dcmObj);
-                    }
-                    //}
-    
-                    DicomObject dcmMetadata = rawDicomImageMetadataCache.get(getDicomObjectKey());
-                    if (null == dcmMetadata) {
-                        dcmMetadata = new BasicDicomObject();
-                        dcmObj.subSet(0, Tag.PixelData - 1).copyTo(dcmMetadata);
-                        rawDicomImageMetadataCache.put(getDicomObjectKey(), dcmMetadata);
-                    }
-                    
-                    SwingUtilities.invokeLater(new Runnable() {  //TODO: this may create 100s of Runnables in a short time. use our own queue instead?
-                        @Override
-                        public void run() {
-                            setInitializationState(InitializationState.INITIALIZED);
+                    logger.debug("" + getDicomObjectKey() + ": START background loading");
+                    try {
+                        DicomObject dcmObj;
+                        //synchronized (dcmObjectCache) {  // not doing this b/c getBackendDicomObject() may block for a long time...so maybe two threads fetch the same dicom -- not a problem, right?
+                        dcmObj = dcmObjectCache.get(getDicomObjectKey());
+                        if (dcmObj == null) {
+                            dcmObj = getBackendDicomObject();
+                            dcmObjectCache.put(getDicomObjectKey(), dcmObj, getInternalEffectivePriority());
                         }
-                    });
+                        //}
+        
+                        DicomObject dcmMetadata = rawDicomImageMetadataCache.get(getDicomObjectKey());
+                        if (null == dcmMetadata) {
+                            dcmMetadata = new BasicDicomObject();
+                            dcmObj.subSet(0, Tag.PixelData - 1).copyTo(dcmMetadata);
+                            rawDicomImageMetadataCache.put(getDicomObjectKey(), dcmMetadata);
+                        }
+                        
+                        logger.debug("" + getDicomObjectKey() + ": DONE background loading");
+                        SwingUtilities.invokeLater(new Runnable() {  //TODO: this may create 100s of Runnables in a short time. use our own queue instead?
+                            @Override
+                            public void run() {
+                                setInitializationState(InitializationState.INITIALIZED);
+                            }
+                        });
+                    } catch (final Exception e) {
+                        logger.error("Exception background-loading " + getDicomObjectKey() + ": " +
+                                     e.getLocalizedMessage() + ". Setting the model element to permanent error state.", e);
+                        //TODO: support the notion of "temporary" errors, for which we would not change the initializationState?
+                        SwingUtilities.invokeLater(new Runnable() {
+                            @Override
+                            public void run() {
+                                setInitializationState(InitializationState.ERROR);
+                                setErrorInfo(e);
+                            }
+                        });
+                    } catch (final Error e) {
+                        //Errors are normally fatal, but:
+                        //- dcm4che may throw a non-fatal OOM error when trying to read a non-DICOM file (should be mostly fixed in 2.0.21; see http://www.dcm4che.org/jira/browse/DCM-338)
+                        //- if we didn't log the error here, it would just be silently eaten by the RunnableFuture, and
+                        //  we would have to call get() on the future at a later time (which we don't otherwise have to) just to obtain the exception
+                        //Thus we catch any Error exception here, log it, and rethrow it
+                        logger.error("ERROR background-loading " + getDicomObjectKey() + ": " +
+                                     e.getLocalizedMessage() + ". Setting the model element to permanent error state.", e);
+                        SwingUtilities.invokeLater(new Runnable() {
+                            @Override
+                            public void run() {
+                                setInitializationState(InitializationState.ERROR);
+                                setErrorInfo(e);
+                            }
+                        });
+                        throw e;
+                    }
                 }
-            });
+            };
+            myBackgroundLoaderTask = imageFetchingJobsExecutor.submitWithPriority(r, getInternalEffectivePriority());
+            logger.debug("" + getDicomObjectKey() + ": QUEUED");
+        }
+    }
+    
+    /**
+     * Asynchronous mode. When enabled, the initalizationState property may
+     * attain the UNINITIALIZED value as long as the image is not cached, and
+     * background threads will be pooled to load the images of uninitialized
+     * elements.
+     */
+    public boolean isAsyncMode() {
+        return asyncMode;
+    }
+    
+    /**
+     * Asynchronous mode. When enabled, the initalizationState property may
+     * attain the UNINITIALIZED value as long as the image is not cached, and
+     * background threads will be pooled to load the images of uninitialized
+     * elements.
+     * <p>
+     * Asynchronous mode is off by default, and may be enabled or disabled
+     * at any time (TODO: really? what about async=>sync changes? would have
+     * to synchronously remove myBackgroundLoaderTask from the queue and set
+     * the initState to INITIALIZED or ERROR, right?)
+     */
+    public void setAsyncMode(boolean asyncMode) {
+        if (asyncMode == this.asyncMode) {
+            return;
+        }
+        this.asyncMode = asyncMode;
+        if (asyncMode && getInitializationState() == InitializationState.INITIALIZED && ! dcmObjectCache.contains(getDicomObjectKey())) {
+            setInitializationState(InitializationState.UNINITIALIZED);
+            logger.debug("" + getDicomObjectKey() + "=>async and wasn't cached");
+        } else if (!asyncMode) {
+            //async=>sync change. Need to remove myBackgroundLoaderTask from the queue, waiting for it to finish if necessary
+            //  this code is somewhat beta, and will probably rarely be used
+            if (null != myBackgroundLoaderTask) {
+                logger.debug("" + getDicomObjectKey() + "=>sync, null != myBLT");
+                if (!imageFetchingJobsExecutor.remove(myBackgroundLoaderTask)) {
+                    //myBackgroundLoaderTask no longer queued => either still running or already done
+                    try {
+                        logger.debug("" + getDicomObjectKey() + "=>sync, job wasn't queued");
+                        long t0 = System.currentTimeMillis();
+                        if (!myBackgroundLoaderTask.isDone()) {  //test not really necessary, get() will return immediately if isDone()
+                            logger.debug("" + getDicomObjectKey() + "=>sync, job wasn't done, get...");
+                            myBackgroundLoaderTask.get();
+                        }
+                        long t1 = System.currentTimeMillis();
+                        logger.debug("" + getDicomObjectKey() + "=>sync, done in " + (t1-t0) + " ms");
+                    } catch (InterruptedException e) {
+                        //shouldn't happen.
+                    } catch (ExecutionException e) {
+                        //shouldn't happen.
+                    }
+                } else {
+                    logger.debug("" + getDicomObjectKey() + "=>sync, job unqueued");
+                }
+                
+                ///alternative approach? =>not really. too slow and we don't want to interfere with other lists' usage of the executor
+                //myBackgroundLoaderTask.cancel(false);
+                //myBackgroundLoaderTask.get();
+                //imageFetchingJobsExecutor.purge();
+                if (initializationState == InitializationState.UNINITIALIZED) {
+                    initializationState = InitializationState.INITIALIZED;
+                }
+                
+                //TODO: what if other lists display the same elements and are still in async mode? We may be removing their jobs here...
+            }
         }
     }
     
@@ -325,41 +433,15 @@ public abstract class CachingDicomImageListViewModelElement extends AbstractImag
         return range;
     }
 
-    // TODO: use a utility library for the cache
-
-    private static class LRUMemoryCache<K,V> extends LinkedHashMap<K,V> {
-        private final int maxSize;
-        public LRUMemoryCache(int maxSize) {
-            this.maxSize = maxSize;
-        }
-        @Override
-        protected boolean removeEldestEntry(Entry<K,V> eldest) {
-            return this.size() > maxSize;
-        }
-    }
-
-
-    private static Map<Object, DicomObject> dcmObjectCache
-        = Collections.synchronizedMap(new LRUMemoryCache<Object, DicomObject>(Config.prop.getI("de.sofd.viskit.dcmObjectCacheSize")));
-
-    private static LRUMemoryCache<Object, BufferedImage> imageCache
-        = new LRUMemoryCache<Object, BufferedImage>(Config.prop.getI("de.sofd.viskit.imageCacheSize"));
-
-    private static Map<Object, DicomObject> rawDicomImageMetadataCache
-        = Collections.synchronizedMap(new LRUMemoryCache<Object, DicomObject>(Config.prop.getI("de.sofd.viskit.rawDicomImageMetadataCacheSize")));
-
-    private static LRUMemoryCache<Object, Integer> frameCountByDcmObjectIdCache
-        = new LRUMemoryCache<Object, Integer>(Config.prop.getI("de.sofd.viskit.frameCountByDcmObjectIdCacheSize"));
-
     @Override
     public DicomObject getDicomObject() {
         DicomObject result = dcmObjectCache.get(getDicomObjectKey());
         if (result == null) {
-            if (asyncMode) {
+            if (isAsyncMode()) {
                 throw new NotInitializedException();
             }
             result = getBackendDicomObject();
-            dcmObjectCache.put(getDicomObjectKey(), result);
+            dcmObjectCache.put(getDicomObjectKey(), result, getInternalEffectivePriority());
         }
         return result;
     }
@@ -369,7 +451,7 @@ public abstract class CachingDicomImageListViewModelElement extends AbstractImag
     }
 
     public boolean isDicomObjectCached() {
-        return dcmObjectCache.containsKey(getDicomObjectKey());
+        return dcmObjectCache.contains(getDicomObjectKey());
     }
 
     public boolean isImageCached() {
@@ -381,7 +463,7 @@ public abstract class CachingDicomImageListViewModelElement extends AbstractImag
         DicomObject result = rawDicomImageMetadataCache.get(getDicomObjectKey());
         
         if (result == null) {
-            if (asyncMode) {
+            if (isAsyncMode()) {
                 throw new NotInitializedException();
             }
             result = getBackendDicomImageMetaData();
@@ -445,7 +527,7 @@ public abstract class CachingDicomImageListViewModelElement extends AbstractImag
     public BufferedImage getImage() {
         BufferedImage result = imageCache.get(getImageKey());
         if (result == null) {
-            if (asyncMode) {
+            if (isAsyncMode()) {
                 throw new NotInitializedException();
             }
             result = getBackendImage();
@@ -503,10 +585,8 @@ public abstract class CachingDicomImageListViewModelElement extends AbstractImag
         DicomObject imgMetadata = getDicomImageMetaData();
         
         String transferSyntaxUID = imgMetadata.getString(Tag.TransferSyntaxUID);
-        logger.debug(getImageKey());
-        logger.debug("transferSyntaxUID : " + transferSyntaxUID);
-        //System.out.println(getImageKey());
-        //System.out.println("transferSyntaxUID : " + transferSyntaxUID);
+        //logger.debug(getImageKey());
+        //logger.debug("transferSyntaxUID : " + transferSyntaxUID);
         
         //jpeg or rle compressed
         if (transferSyntaxUID != null && 
@@ -663,6 +743,29 @@ public abstract class CachingDicomImageListViewModelElement extends AbstractImag
         return pixelType;
     }
     
+    @Override
+    public void setPriority(Object source, double value) {
+        super.setPriority(source, value);
+        double internalPrio = getInternalEffectivePriority();
+        if (myBackgroundLoaderTask != null) {
+            try {
+                myBackgroundLoaderTask = imageFetchingJobsExecutor.resubmitWithPriority(myBackgroundLoaderTask, internalPrio);
+            } catch (IllegalArgumentException e) {
+                //myBackgroundLoaderTask isn't currently running or waiting -- no error.
+            }
+        }
+        dcmObjectCache.setPriority(getDicomObjectKey(), internalPrio);
+    }
+    
+    /**
+     * Effective priority value to be used for the cache and executor. In those, 0
+     * is the highest priority and 10 is the lowest.
+     * 
+     * @return
+     */
+    protected double getInternalEffectivePriority() {
+        return 10 - getEffectivePriority();
+    }
     
     @Override
     public String toString() {

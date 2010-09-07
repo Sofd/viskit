@@ -17,7 +17,7 @@ public class TestImageModelElement extends FileBasedDicomImageListViewModelEleme
     private final Drawing roiDrawing;
 
     public TestImageModelElement(int number) {
-        setUrl(this.getClass().getResource("/de/sofd/viskit/test/resources/series/series2/cd014__center001__24.dcm"));
+        super(TestImageModelElement.class.getResource("/de/sofd/viskit/test/resources/series/series2/cd014__center001__24.dcm"));
         roiDrawing = getRoiDrawing();
         RectangleObject rect = new RectangleObject();
         rect.setLocation(50, 30, 200, 125);
