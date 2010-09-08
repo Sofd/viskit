@@ -170,6 +170,11 @@ add_sm_entry \
     'viskit: test app: + zRST button'
 
 add_sm_entry \
+    'viskit: latest trunk changes merged into async_model_elt_init branch' \
+    'viskit: doc/imagelist-async-model-elt-initializations/todo.txt updated some' \
+    '2010-07-23 18:06'  # 'viskit: svn2hg splicemap update'
+
+add_sm_entry \
     'viskit: current async_model_elt_init branch state merged into trunk to get stuff thats already' \
     'viskit: svn-to-hg splicemap updated' \
     'viskit: async img loading: model elt error state handling specified & implemented'
