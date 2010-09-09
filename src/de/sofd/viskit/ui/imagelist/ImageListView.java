@@ -318,6 +318,14 @@ public interface ImageListView {
     public void removeImageListViewListener(
             ImageListViewListener listener);
 
+    public void addPropertyChangeListener(PropertyChangeListener listener);
+    
+    public void removePropertyChangeListener(PropertyChangeListener listener);
+
+    public void addPropertyChangeListener(String propertyName, PropertyChangeListener listener);
+
+    public void removePropertyChangeListener(String propertyName, PropertyChangeListener listener);
+    
     /**
      * Add a PropertyChangeListener that receives property change events for all
      * properties of all cells of this list. This is a convenient way to be

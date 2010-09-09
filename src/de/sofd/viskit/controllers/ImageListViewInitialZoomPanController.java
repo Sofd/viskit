@@ -1,9 +1,8 @@
 package de.sofd.viskit.controllers;
 
-import de.sofd.util.FloatRange;
 import de.sofd.viskit.model.ImageListViewModelElement;
+import de.sofd.viskit.ui.imagelist.ImageListView;
 import de.sofd.viskit.ui.imagelist.ImageListViewCell;
-import de.sofd.viskit.ui.imagelist.JImageListView;
 import de.sofd.viskit.ui.imagelist.event.cellpaint.ImageListViewCellPaintEvent;
 import de.sofd.viskit.ui.imagelist.event.cellpaint.ImageListViewCellPaintListener;
 
@@ -19,13 +18,14 @@ import java.util.Set;
 
 import javax.media.opengl.GL;
 import javax.media.opengl.GLAutoDrawable;
+import javax.swing.JComponent;
 
 /**
- * Controller that references a single JImageListView and provides a lazy
+ * Controller that references a single ImageListView and provides a lazy
  * initialization of the zoom/pan properties of cells immediately before they're
  * first drawn (unless their zoom/pan properties were set explicitly before
  * that). It will also initiate a reset of the parameters in all cells if the
- * JImageListView is resized.
+ * ImageListView is resized.
  * <p>
  * This is similar to what {@link ImageListViewInitialWindowingController} does
  * for the windowing parameters of the cell (TODO: combine/generalize the two --
@@ -38,7 +38,7 @@ public class ImageListViewInitialZoomPanController {
     // implementation strategy: use a CellPaintListener that's called before the image of the cell is drawn,
     // initialize the cell there, memorize which cells have already been initialized
 
-    protected JImageListView controlledImageListView;
+    protected ImageListView controlledImageListView;
     public static final String PROP_CONTROLLEDIMAGELISTVIEW = "controlledImageListView";
     private boolean enabled;
     public static final String PROP_ENABLED = "enabled";
@@ -46,7 +46,7 @@ public class ImageListViewInitialZoomPanController {
     public ImageListViewInitialZoomPanController() {
     }
 
-    public ImageListViewInitialZoomPanController(JImageListView controlledImageListView) {
+    public ImageListViewInitialZoomPanController(ImageListView controlledImageListView) {
         setControlledImageListView(controlledImageListView);
     }
 
@@ -75,7 +75,7 @@ public class ImageListViewInitialZoomPanController {
      *
      * @return the value of controlledImageListView
      */
-    public JImageListView getControlledImageListView() {
+    public ImageListView getControlledImageListView() {
         return controlledImageListView;
     }
 
@@ -84,22 +84,24 @@ public class ImageListViewInitialZoomPanController {
      *
      * @param controlledImageListView new value of controlledImageListView
      */
-    public void setControlledImageListView(JImageListView controlledImageListView) {
-        JImageListView oldControlledImageListView = this.controlledImageListView;
+    public void setControlledImageListView(ImageListView controlledImageListView) {
+        ImageListView oldControlledImageListView = this.controlledImageListView;
         this.controlledImageListView = controlledImageListView;
         if (null != oldControlledImageListView) {
             oldControlledImageListView.removeCellPaintListener(cellHandler);
             oldControlledImageListView.removeCellPropertyChangeListener(cellHandler);
             oldControlledImageListView.removePropertyChangeListener(reseterOnModelOrScaleModeChange);
-            oldControlledImageListView.removeComponentListener(reseterOnResize);
+            //TODO: avoid Swing (JComponent) dependency by introducing introduce UI-independent equivalent to add/RemoveComponentListener()
+            // into ImageListView
+            ((JComponent)oldControlledImageListView).removeComponentListener(reseterOnResize);
         }
         if (null != controlledImageListView) {
             // add the paint listener below the image in the z-order, so it will be invoked
             // before the image (and anything else, most likely) is drawn
-            controlledImageListView.addCellPaintListener(JImageListView.PAINT_ZORDER_IMAGE - 1, cellHandler);
+            controlledImageListView.addCellPaintListener(ImageListView.PAINT_ZORDER_IMAGE - 1, cellHandler);
             controlledImageListView.addCellPropertyChangeListener(cellHandler);
             controlledImageListView.addPropertyChangeListener(reseterOnModelOrScaleModeChange);
-            controlledImageListView.addComponentListener(reseterOnResize);
+            ((JComponent)controlledImageListView).addComponentListener(reseterOnResize);
             alreadyInitializedImagesKeys.clear();
         }
         propertyChangeSupport.firePropertyChange(PROP_CONTROLLEDIMAGELISTVIEW, oldControlledImageListView, controlledImageListView);
@@ -253,7 +255,7 @@ public class ImageListViewInitialZoomPanController {
     private PropertyChangeListener reseterOnModelOrScaleModeChange = new PropertyChangeListener() {
         @Override
         public void propertyChange(PropertyChangeEvent evt) {
-            if (!(evt.getPropertyName().equals(JImageListView.PROP_MODEL) || evt.getPropertyName().equals(JImageListView.PROP_SCALEMODE))) {
+            if (!(evt.getPropertyName().equals(ImageListView.PROP_MODEL) || evt.getPropertyName().equals(ImageListView.PROP_SCALEMODE))) {
                 return;
             }
             reset();

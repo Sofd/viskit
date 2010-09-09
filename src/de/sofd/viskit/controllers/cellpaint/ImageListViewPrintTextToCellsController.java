@@ -11,11 +11,11 @@ import javax.media.opengl.GL2;
 
 import com.sun.opengl.util.gl2.GLUT;
 
+import de.sofd.viskit.ui.imagelist.ImageListView;
 import de.sofd.viskit.ui.imagelist.ImageListViewCell;
-import de.sofd.viskit.ui.imagelist.JImageListView;
 
 /**
- * Controller that references a JImageListView and an "enabled" flag. When
+ * Controller that references a ImageListView and an "enabled" flag. When
  * enabled, the controller prints text into every cell as it is drawn. The
  * cell-relative x/y position of the text as well as the text color can be set,
  * the text to print is obtained through the callback method
@@ -35,14 +35,14 @@ public class ImageListViewPrintTextToCellsController extends CellPaintController
     public static final String PROP_TEXTPOSITION = "textPosition";
 
     public ImageListViewPrintTextToCellsController() {
-        this(null, JImageListView.PAINT_ZORDER_LABELS);
+        this(null, ImageListView.PAINT_ZORDER_LABELS);
     }
 
-    public ImageListViewPrintTextToCellsController(JImageListView controlledImageListView) {
-        super(controlledImageListView, JImageListView.PAINT_ZORDER_LABELS);
+    public ImageListViewPrintTextToCellsController(ImageListView controlledImageListView) {
+        super(controlledImageListView, ImageListView.PAINT_ZORDER_LABELS);
     }
 
-    public ImageListViewPrintTextToCellsController(JImageListView controlledImageListView, int zOrder) {
+    public ImageListViewPrintTextToCellsController(ImageListView controlledImageListView, int zOrder) {
         super(controlledImageListView, zOrder);
     }
 

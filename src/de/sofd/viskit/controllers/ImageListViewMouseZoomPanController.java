@@ -2,8 +2,8 @@ package de.sofd.viskit.controllers;
 
 import de.sofd.viskit.model.DicomImageListViewModelElement;
 import de.sofd.viskit.model.ImageListViewModelElement;
+import de.sofd.viskit.ui.imagelist.ImageListView;
 import de.sofd.viskit.ui.imagelist.ImageListViewCell;
-import de.sofd.viskit.ui.imagelist.JImageListView;
 import java.awt.Point;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
@@ -24,14 +24,14 @@ public class ImageListViewMouseZoomPanController {
     private static final int MOUSE_BUTTON = MouseEvent.BUTTON2;
     private static final int MOUSE_MASK = MouseEvent.BUTTON2_MASK;
 
-    protected JImageListView controlledImageListView;
+    protected ImageListView controlledImageListView;
     public static final String PROP_CONTROLLEDIMAGELISTVIEW = "controlledImageListView";
     private boolean doubleClickResetEnabled = true;
 
     public ImageListViewMouseZoomPanController() {
     }
 
-    public ImageListViewMouseZoomPanController(JImageListView controlledImageListView) {
+    public ImageListViewMouseZoomPanController(ImageListView controlledImageListView) {
         setControlledImageListView(controlledImageListView);
     }
 
@@ -40,7 +40,7 @@ public class ImageListViewMouseZoomPanController {
      *
      * @return the value of controlledImageListView
      */
-    public JImageListView getControlledImageListView() {
+    public ImageListView getControlledImageListView() {
         return controlledImageListView;
     }
 
@@ -49,8 +49,8 @@ public class ImageListViewMouseZoomPanController {
      *
      * @param controlledImageListView new value of controlledImageListView
      */
-    public void setControlledImageListView(JImageListView controlledImageListView) {
-        JImageListView oldControlledImageListView = this.controlledImageListView;
+    public void setControlledImageListView(ImageListView controlledImageListView) {
+        ImageListView oldControlledImageListView = this.controlledImageListView;
         this.controlledImageListView = controlledImageListView;
         if (null != oldControlledImageListView) {
             oldControlledImageListView.removeCellMouseListener(mouseHandler);

@@ -13,8 +13,8 @@ import java.util.Set;
 
 import javax.swing.ListSelectionModel;
 
+import de.sofd.viskit.ui.imagelist.ImageListView;
 import de.sofd.viskit.ui.imagelist.ImageListViewCell;
-import de.sofd.viskit.ui.imagelist.JImageListView;
 
 /**
  * Generic cell property sync controller that can synchronize any set bean
@@ -33,7 +33,7 @@ public class GenericILVCellPropertySyncController extends ImageListViewCellPrope
         setPropertiesToSynchronize(propertiesToSynchronize);
     }
 
-    public GenericILVCellPropertySyncController(String[] propertiesToSynchronize, JImageListView... lists) {
+    public GenericILVCellPropertySyncController(String[] propertiesToSynchronize, ImageListView... lists) {
         super(lists);
         setPropertiesToSynchronize(propertiesToSynchronize);
     }
@@ -62,13 +62,13 @@ public class GenericILVCellPropertySyncController extends ImageListViewCellPrope
             return;
         }
         ImageListViewCell sourceCell = (ImageListViewCell) e.getSource();
-        JImageListView sourceList = sourceCell.getOwner();
+        ImageListView sourceList = sourceCell.getOwner();
         ListSelectionModel sourceListSM = sourceList.getSelectionModel();
         if (!sourceListSM.isSelectionEmpty()) {
             int sourceCellIndex = sourceList.getIndexOf(sourceCell);
             if (sourceListSM.isSelectedIndex(sourceCellIndex)) {
                 try {
-                    for (JImageListView destList : getLists()) {
+                    for (ImageListView destList : getLists()) {
                         if (destList != sourceList) {
                             int si = destList.getSelectedIndex();
                             if (si >= 0 && si < destList.getLength()) {

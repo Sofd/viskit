@@ -39,7 +39,7 @@ public interface ImageListViewCell {
 
     public static enum CompositingMode {CM_REPLACE, CM_BLEND};
     
-    JImageListView getOwner();
+    ImageListView getOwner();
 
     ImageListViewModelElement getDisplayedModelElement();
 

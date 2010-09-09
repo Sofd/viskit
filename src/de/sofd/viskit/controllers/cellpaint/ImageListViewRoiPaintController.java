@@ -13,8 +13,8 @@ import org.dcm4che2.data.Tag;
 import de.sofd.viskit.draw2d.gc.ViskitGC;
 import de.sofd.viskit.model.DicomImageListViewModelElement;
 import de.sofd.viskit.model.ImageListViewModelElement;
+import de.sofd.viskit.ui.imagelist.ImageListView;
 import de.sofd.viskit.ui.imagelist.ImageListViewCell;
-import de.sofd.viskit.ui.imagelist.JImageListView;
 
 /**
  * Controller that paints the ROIs of the cell's model element
@@ -25,14 +25,14 @@ import de.sofd.viskit.ui.imagelist.JImageListView;
 public class ImageListViewRoiPaintController extends CellPaintControllerBase {
     
     public ImageListViewRoiPaintController() {
-        this(null, JImageListView.PAINT_ZORDER_ROI);
+        this(null, ImageListView.PAINT_ZORDER_ROI);
     }
 
-    public ImageListViewRoiPaintController(JImageListView controlledImageListView) {
-        super(controlledImageListView, JImageListView.PAINT_ZORDER_ROI);
+    public ImageListViewRoiPaintController(ImageListView controlledImageListView) {
+        super(controlledImageListView, ImageListView.PAINT_ZORDER_ROI);
     }
 
-    public ImageListViewRoiPaintController(JImageListView controlledImageListView, int zOrder) {
+    public ImageListViewRoiPaintController(ImageListView controlledImageListView, int zOrder) {
         super(controlledImageListView, zOrder);
     }
     

@@ -1,13 +1,14 @@
 package de.sofd.viskit.controllers;
 
-import de.sofd.util.FloatRange;
-import de.sofd.viskit.ui.imagelist.ImageListViewCell;
-import de.sofd.viskit.ui.imagelist.JImageListView;
 import java.awt.Point;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
+
+import de.sofd.util.FloatRange;
+import de.sofd.viskit.ui.imagelist.ImageListView;
+import de.sofd.viskit.ui.imagelist.ImageListViewCell;
 
 /**
  *
@@ -19,21 +20,21 @@ public class ImageListViewMouseWindowingController {
     private static final int WINDOWING_MOUSE_BUTTON = MouseEvent.BUTTON3;
     private static final int WINDOWING_MOUSE_MASK = MouseEvent.BUTTON3_MASK;
 
-    protected JImageListView controlledImageListView;
+    protected ImageListView controlledImageListView;
     public static final String PROP_CONTROLLEDIMAGELISTVIEW = "controlledImageListView";
     private int zOrder;
     public static final String PROP_ZORDER = "zOrder";
-    protected static final int DEFAULT_ZORDER = JImageListView.PAINT_ZORDER_LABELS + 20;
+    protected static final int DEFAULT_ZORDER = ImageListView.PAINT_ZORDER_LABELS + 20;
 
     public ImageListViewMouseWindowingController() {
         this(null, DEFAULT_ZORDER);
     }
 
-    public ImageListViewMouseWindowingController(JImageListView controlledImageListView) {
+    public ImageListViewMouseWindowingController(ImageListView controlledImageListView) {
         this(controlledImageListView, DEFAULT_ZORDER);
     }
 
-    public ImageListViewMouseWindowingController(JImageListView controlledImageListView, int zOrder) {
+    public ImageListViewMouseWindowingController(ImageListView controlledImageListView, int zOrder) {
         if (controlledImageListView != null) {
             setControlledImageListView(controlledImageListView);
         }
@@ -45,7 +46,7 @@ public class ImageListViewMouseWindowingController {
      *
      * @return the value of controlledImageListView
      */
-    public JImageListView getControlledImageListView() {
+    public ImageListView getControlledImageListView() {
         return controlledImageListView;
     }
 
@@ -54,8 +55,8 @@ public class ImageListViewMouseWindowingController {
      *
      * @param controlledImageListView new value of controlledImageListView
      */
-    public void setControlledImageListView(JImageListView controlledImageListView) {
-        JImageListView oldControlledImageListView = this.controlledImageListView;
+    public void setControlledImageListView(ImageListView controlledImageListView) {
+        ImageListView oldControlledImageListView = this.controlledImageListView;
         this.controlledImageListView = controlledImageListView;
         if (null != oldControlledImageListView) {
             oldControlledImageListView.removeCellMouseListener(windowingCellMouseListener);

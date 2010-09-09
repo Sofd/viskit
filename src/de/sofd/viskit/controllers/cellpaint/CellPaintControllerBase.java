@@ -12,16 +12,16 @@ import javax.media.opengl.GLAutoDrawable;
 import de.sofd.viskit.draw2d.gc.ViskitGC;
 import de.sofd.viskit.model.ImageListViewModelElement;
 import de.sofd.viskit.model.ImageListViewModelElement.InitializationState;
+import de.sofd.viskit.ui.imagelist.ImageListView;
 import de.sofd.viskit.ui.imagelist.ImageListViewCell;
-import de.sofd.viskit.ui.imagelist.JImageListView;
 import de.sofd.viskit.ui.imagelist.event.cellpaint.ImageListViewCellPaintEvent;
 import de.sofd.viskit.ui.imagelist.event.cellpaint.ImageListViewCellPaintListener;
 
 /**
  * Base class that eases implementation of simple controllers that paint into
- * the cells of a JImageListView.
+ * the cells of a ImageListView.
  * <p>
- * The base class implements managing the controlled JImageListView, implements
+ * The base class implements managing the controlled ImageListView, implements
  * an enable flag and z y order value, takes care of refreshing the cells if the
  * controlled list or the enabled flag changes, and dispatches each cell paint
  * event to one of the methods {@link #paintJ2D(ImageListViewCell, Graphics2D)}
@@ -47,18 +47,18 @@ import de.sofd.viskit.ui.imagelist.event.cellpaint.ImageListViewCellPaintListene
  */
 public class CellPaintControllerBase {
     
-    protected JImageListView controlledImageListView;
+    protected ImageListView controlledImageListView;
     public static final String PROP_CONTROLLEDIMAGELISTVIEW = "controlledImageListView";
     private boolean enabled;
     public static final String PROP_ENABLED = "enabled";
-    private int zOrder = JImageListView.PAINT_ZORDER_DEFAULT;
+    private int zOrder = ImageListView.PAINT_ZORDER_DEFAULT;
     public static final String PROP_ZORDER = "zOrder";
 
     public CellPaintControllerBase() {
         
     }
 
-    public CellPaintControllerBase(JImageListView controlledImageListView, int zOrder) {
+    public CellPaintControllerBase(ImageListView controlledImageListView, int zOrder) {
         if (controlledImageListView != null) {
             setControlledImageListView(controlledImageListView);
         }
@@ -93,7 +93,7 @@ public class CellPaintControllerBase {
      *
      * @return the value of controlledImageListView
      */
-    public JImageListView getControlledImageListView() {
+    public ImageListView getControlledImageListView() {
         return controlledImageListView;
     }
 
@@ -102,8 +102,8 @@ public class CellPaintControllerBase {
      *
      * @param controlledImageListView new value of controlledImageListView
      */
-    public void setControlledImageListView(JImageListView controlledImageListView) {
-        JImageListView oldControlledImageListView = this.controlledImageListView;
+    public void setControlledImageListView(ImageListView controlledImageListView) {
+        ImageListView oldControlledImageListView = this.controlledImageListView;
         this.controlledImageListView = controlledImageListView;
         if (null != oldControlledImageListView) {
             oldControlledImageListView.removeCellPaintListener(cellPaintListener);

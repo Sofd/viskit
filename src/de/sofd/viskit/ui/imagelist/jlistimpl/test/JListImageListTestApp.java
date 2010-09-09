@@ -28,6 +28,7 @@ import javax.swing.AbstractAction;
 import javax.swing.DefaultListModel;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
+import javax.swing.JComponent;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
@@ -87,6 +88,7 @@ import de.sofd.viskit.model.ModelFactory;
 import de.sofd.viskit.ui.JLutWindowingSlider;
 import de.sofd.viskit.ui.LookupTableCellRenderer;
 import de.sofd.viskit.ui.RoiToolPanel;
+import de.sofd.viskit.ui.imagelist.ImageListView;
 import de.sofd.viskit.ui.imagelist.ImageListViewCell;
 import de.sofd.viskit.ui.imagelist.JImageListView;
 import de.sofd.viskit.ui.imagelist.event.ImageListViewCellAddEvent;
@@ -240,7 +242,7 @@ public class JListImageListTestApp {
 
         final DefaultListModel model = (DefaultListModel)factory.getModel(factory.getAllModelKeys().iterator().next());
 
-        final JImageListView viewer;
+        final ImageListView viewer;
         if (isUserHonglinh()) {
             //viewer = newJListImageListView();
             //viewer = newJGridImageListView(true);
@@ -471,7 +473,7 @@ public class JListImageListTestApp {
             }
         });
         
-        f.getContentPane().add(viewer, BorderLayout.CENTER);
+        f.getContentPane().add((JComponent)viewer, BorderLayout.CENTER);
         f.getContentPane().add(toolbar, BorderLayout.PAGE_START);
         f.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         f.setSize(1100, 900);
@@ -630,7 +632,7 @@ public class JListImageListTestApp {
             // to take the time when a cell in the list is first drawn,
             // which happens when the list has been completely initialized and the list's UI is coming up
             final int[] lnumCaptured = new int[]{lnum};
-            lvp.getListView().addCellPaintListener(JImageListView.PAINT_ZORDER_IMAGE+100, new ImageListViewCellPaintListener() {
+            lvp.getListView().addCellPaintListener(ImageListView.PAINT_ZORDER_IMAGE+100, new ImageListViewCellPaintListener() {
                 long t1 = -1;
                 @Override
                 public void onCellPaint(ImageListViewCellPaintEvent e) {

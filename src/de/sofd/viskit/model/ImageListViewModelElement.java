@@ -3,13 +3,13 @@ package de.sofd.viskit.model;
 import de.sofd.draw2d.Drawing;
 import de.sofd.util.FloatRange;
 import de.sofd.viskit.controllers.cellpaint.ImageListViewInitStateIndicationPaintController;
-import de.sofd.viskit.ui.imagelist.JImageListView;
+import de.sofd.viskit.ui.imagelist.ImageListView;
 import java.awt.image.BufferedImage;
 import java.beans.PropertyChangeListener;
 import java.util.Collection;
 
 /**
- * Base interface for elements of the ListModel of a {@link JImageListView}.
+ * Base interface for elements of the ListModel of a {@link ImageListView}.
  * 
  * @author olaf
  */
@@ -116,12 +116,12 @@ public interface ImageListViewModelElement {
      * e.g. "my image has finished loading" (state is set to INITIALIZED),
      * "there was an error" (state is set to ERROR) etc.
      * <p>
-     * A {@link JImageListView} listens for initializationState changes in any
+     * A {@link ImageListView} listens for initializationState changes in any
      * of its model elements and reacts (updates model element's display
      * accordingly, e.g. with an hourglass or an error display).
      * <p>
      * The general contract here is that if the initialization state is set to
-     * INITIALIZED, a {@link JImageListView} that contains this model element
+     * INITIALIZED, a {@link ImageListView} that contains this model element
      * may call all the data getter methods of the model elements (
      * {@link #getImage()}, {@link #getRawImage()}, {@link #getRoiDrawing()},
      * and DICOM data getter methods in subclasses) at any time, so they should
@@ -200,7 +200,7 @@ public interface ImageListViewModelElement {
     /**
      * Additional information for the last error condition that caused this
      * model element's {@link #getInitializationState() initialization state} to
-     * be set to ERROR. For the time being, the JImageListView will set this to
+     * be set to ERROR. For the time being, the ImageListView will set this to
      * the Exception that caused the condition (i.e. any exception thrown by
      * data getter methods like {@link #getImage()}, getDicomObject etc.)
      * 
@@ -218,7 +218,7 @@ public interface ImageListViewModelElement {
     /**
      * Informs this model element that it is needed with priority <i>value</i>
      * (0..10) in the list <i>source</i> (will always be an instance of
-     * {@link JImageListView} at this time). Generally, a list "needs" a model
+     * {@link ImageListView} at this time). Generally, a list "needs" a model
      * element with higher priority if it wants to display it or is likely to be
      * going to display it very soon.
      * <p>
@@ -235,7 +235,7 @@ public interface ImageListViewModelElement {
 
     /**
      * Informs this model element that it no longer needed in the list
-     * <i>source</i> (will always be an instance of {@link JImageListView} at
+     * <i>source</i> (will always be an instance of {@link ImageListView} at
      * this time). It was probably removed from the list.
      * 
      * @param source

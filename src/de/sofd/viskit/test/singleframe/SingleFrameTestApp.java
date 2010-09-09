@@ -2,8 +2,8 @@ package de.sofd.viskit.test.singleframe;
 
 import de.sofd.viskit.model.DicomImageListViewModelElement;
 import de.sofd.viskit.model.FileBasedDicomImageListViewModelElement;
+import de.sofd.viskit.ui.imagelist.ImageListView;
 import de.sofd.viskit.ui.imagelist.ImageListViewCell;
-import de.sofd.viskit.ui.imagelist.JImageListView;
 import de.sofd.viskit.ui.imagelist.event.ImageListViewCellAddEvent;
 import de.sofd.viskit.ui.imagelist.event.ImageListViewEvent;
 import de.sofd.viskit.ui.imagelist.event.ImageListViewListener;
@@ -55,7 +55,7 @@ public class SingleFrameTestApp {
             listModels.add(dirListModel);
         }
         SingleFrame f = new SingleFrame(listModels);
-        for (JImageListView listView: f.getEmbeddedImageListViews()) {
+        for (ImageListView listView: f.getEmbeddedImageListViews()) {
             for (int i = 0; i < listView.getLength(); i++) {
                 setWindowingToDcm(listView.getCell(i));
             }

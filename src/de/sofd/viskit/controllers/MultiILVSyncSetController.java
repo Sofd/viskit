@@ -1,7 +1,5 @@
 package de.sofd.viskit.controllers;
 
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -13,22 +11,22 @@ import javax.swing.ButtonModel;
 import javax.swing.JToggleButton;
 
 import de.sofd.util.IdentityHashSet;
-import de.sofd.viskit.ui.imagelist.JImageListView;
+import de.sofd.viskit.ui.imagelist.ImageListView;
 import de.sofd.viskit.ui.imagelist.glimpl.JGLImageListView;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
 /**
- * Controller that holds multiple, mutable sets of {@link JImageListView}s
+ * Controller that holds multiple, mutable sets of {@link ImageListView}s
  * called "sync sets" and, for each sync set, a number of
  * {@link MultiImageListViewController}s. Each such MultiImageListViewController
- * can have its list of {@link JImageListView}s be kept in sync with the sync
+ * can have its list of {@link ImageListView}s be kept in sync with the sync
  * set, or emptied, dynamically at any time.
  * <p>
- * If a sync set is modified (i.e., if {@link JImageListView}s are
+ * If a sync set is modified (i.e., if {@link ImageListView}s are
  * added/removed), which may be done at any time dynamically, all
  * MultiImageListViewControllers of the sync set that currently have their set
- * of JImageListViews kept in sync with the sync set, will have that set updated
+ * of ImageListViews kept in sync with the sync set, will have that set updated
  * accordingly.
  * <p>
  * The MultiImageListViewControllers aren't added individually to each sync set.
@@ -119,18 +117,18 @@ public class MultiILVSyncSetController {
      */
     public static interface SyncSet {
         /**
-         * set/add/removeList -- dynamically modify the list of JImageListViews
+         * set/add/removeList -- dynamically modify the list of ImageListViews
          * in the sync set.
          * 
          * @param lists
          */
-        void setLists(Collection<JImageListView> lists);
+        void setLists(Collection<ImageListView> lists);
         
-        void setLists(JImageListView[] lists);
+        void setLists(ImageListView[] lists);
 
-        void addList(JImageListView list);
+        void addList(ImageListView list);
         
-        void removeList(JImageListView list);
+        void removeList(ImageListView list);
 
         boolean isEmpty();
 
@@ -173,7 +171,7 @@ public class MultiILVSyncSetController {
         Object getAttribute(String name);
 
         /**
-         * Keep the list of JImageListViews of one of this sync set's
+         * Keep the list of ImageListViews of one of this sync set's
          * {@link MultiImageListViewController}s in sync with this sync set, or
          * empty it.
          * 
@@ -185,7 +183,7 @@ public class MultiILVSyncSetController {
          *            )
          * @param synced
          *            flag indicating whether to keep the controller's list of
-         *            JImageListViews in sync with the sync set (synced=true),
+         *            ImageListViews in sync with the sync set (synced=true),
          *            or clear it
          */
         <C extends MultiImageListViewController> void syncController(Class<C> clazz, boolean synced);
@@ -204,7 +202,7 @@ public class MultiILVSyncSetController {
         /**
          * Getter operation for syncController(). Tells whether a given
          * controller in this sync set (specified by its class or factory key)
-         * currently has its list of {@link JImageListView}s synced to this sync
+         * currently has its list of {@link ImageListView}s synced to this sync
          * set.
          * 
          * @param <C>
@@ -277,7 +275,7 @@ public class MultiILVSyncSetController {
     protected class SyncSetImpl implements SyncSet {
 
         protected final Object key;
-        protected final Set<JImageListView> lists = new IdentityHashSet<JImageListView>();
+        protected final Set<ImageListView> lists = new IdentityHashSet<ImageListView>();
         protected final Map<Object, MultiImageListViewController> syncControllersByFactoryKey
             = new HashMap<Object, MultiImageListViewController>();
         protected final Map<Object, ButtonModel> isSyncedModelByFactoryKey = new HashMap<Object, ButtonModel>();
@@ -293,20 +291,20 @@ public class MultiILVSyncSetController {
         }
 
         @Override
-        public void addList(JImageListView list) {
+        public void addList(ImageListView list) {
             lists.add(list);
             updateSyncControllers();
         }
         
         @Override
-        public void removeList(JImageListView list) {
+        public void removeList(ImageListView list) {
             disassociateControllers();
             lists.remove(list);
             updateSyncControllers();
         }
 
         @Override
-        public void setLists(Collection<JImageListView> lists) {
+        public void setLists(Collection<ImageListView> lists) {
             disassociateControllers();
             this.lists.clear();
             this.lists.addAll(lists);
@@ -314,10 +312,10 @@ public class MultiILVSyncSetController {
         }
 
         @Override
-        public void setLists(JImageListView[] lists) {
+        public void setLists(ImageListView[] lists) {
             disassociateControllers();
             this.lists.clear();
-            for (JImageListView l : lists) {
+            for (ImageListView l : lists) {
                 this.lists.add(l);
             }
             updateSyncControllers();
@@ -423,7 +421,7 @@ public class MultiILVSyncSetController {
                 if (ss.isControllerSynced(factoryKey)) {
                     ss.getSyncController(factoryKey).setLists(ss.lists);
                 } else {
-                    ss.getSyncController(factoryKey).setLists(new JImageListView[0]);
+                    ss.getSyncController(factoryKey).setLists(new ImageListView[0]);
                 }
             }
         }

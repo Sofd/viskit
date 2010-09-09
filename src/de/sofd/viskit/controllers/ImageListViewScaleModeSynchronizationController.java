@@ -1,6 +1,6 @@
 package de.sofd.viskit.controllers;
 
-import de.sofd.viskit.ui.imagelist.JImageListView;
+import de.sofd.viskit.ui.imagelist.ImageListView;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
@@ -8,7 +8,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Controller that maintains a list of references to {@link JImageListView} objects
+ * Controller that maintains a list of references to {@link ImageListView} objects
  * and a boolean "enabled" flag. If the flag is set to true, the scale modes of
  * all the lists are kept synchronized.
  *
@@ -16,14 +16,14 @@ import java.util.List;
  */
 public class ImageListViewScaleModeSynchronizationController {
 
-    private final List<JImageListView> lists = new ArrayList<JImageListView>();
+    private final List<ImageListView> lists = new ArrayList<ImageListView>();
     private boolean enabled;
     public static final String PROP_ENABLED = "enabled";
 
     public ImageListViewScaleModeSynchronizationController() {
     }
 
-    public ImageListViewScaleModeSynchronizationController(JImageListView... lists) {
+    public ImageListViewScaleModeSynchronizationController(ImageListView... lists) {
         setLists(lists);
     }
 
@@ -32,8 +32,8 @@ public class ImageListViewScaleModeSynchronizationController {
      *
      * @return the value of lists
      */
-    public JImageListView[] getLists() {
-        return (JImageListView[]) lists.toArray(new JImageListView[0]);
+    public ImageListView[] getLists() {
+        return (ImageListView[]) lists.toArray(new ImageListView[0]);
     }
 
     /**
@@ -41,13 +41,13 @@ public class ImageListViewScaleModeSynchronizationController {
      *
      * @param lists new value of lists
      */
-    public void setLists(JImageListView[] lists) {
+    public void setLists(ImageListView[] lists) {
         // TODO: deal with selection model changes on the lists?
-        for (JImageListView lv : this.lists) {
+        for (ImageListView lv : this.lists) {
             lv.removePropertyChangeListener(scaleModeChangeHandler);
         }
         this.lists.clear();
-        for (JImageListView lv : lists) {
+        for (ImageListView lv : lists) {
             this.lists.add(lv);
             lv.addPropertyChangeListener(scaleModeChangeHandler);
         }
@@ -59,7 +59,7 @@ public class ImageListViewScaleModeSynchronizationController {
      * @param index
      * @return the value of lists at specified index
      */
-    public JImageListView getLists(int index) {
+    public ImageListView getLists(int index) {
         return this.lists.get(index);
     }
 
@@ -91,14 +91,14 @@ public class ImageListViewScaleModeSynchronizationController {
             if (!isEnabled()) {
                 return;
             }
-            if (! JImageListView.PROP_SCALEMODE.equals(evt.getPropertyName())) {
+            if (! ImageListView.PROP_SCALEMODE.equals(evt.getPropertyName())) {
                 return;
             }
             if (inProgrammedChange) {
                 return;
             }
-            JImageListView source = (JImageListView) evt.getSource();
-            for (JImageListView l : getLists()) {
+            ImageListView source = (ImageListView) evt.getSource();
+            for (ImageListView l : getLists()) {
                 if (l != source) {
                     inProgrammedChange = true;
                     try {

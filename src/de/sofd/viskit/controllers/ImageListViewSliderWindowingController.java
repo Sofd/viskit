@@ -4,8 +4,6 @@ import java.awt.event.MouseEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
-import java.util.HashSet;
-import java.util.Set;
 
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
@@ -14,8 +12,8 @@ import org.jdesktop.swingx.multislider.ThumbListener;
 
 import de.sofd.viskit.model.ImageListViewModelElement;
 import de.sofd.viskit.ui.JLutWindowingSlider;
+import de.sofd.viskit.ui.imagelist.ImageListView;
 import de.sofd.viskit.ui.imagelist.ImageListViewCell;
-import de.sofd.viskit.ui.imagelist.JImageListView;
 
 /**
  * Controller to translate thumb movements of the LUT Windowing Slider to cell
@@ -37,7 +35,7 @@ import de.sofd.viskit.ui.imagelist.JImageListView;
  */
 public class ImageListViewSliderWindowingController {
 
-    private JImageListView controlledImageListView;
+    private ImageListView controlledImageListView;
     private JLutWindowingSlider slider;
     private PropertyChangeSupport propertyChangeSupport = new PropertyChangeSupport(this);
     private ImageListViewInitialWindowingController initialWindowingController;
@@ -53,7 +51,7 @@ public class ImageListViewSliderWindowingController {
     public ImageListViewSliderWindowingController() {
     }
 
-    public ImageListViewSliderWindowingController(JImageListView controlledImageListView,
+    public ImageListViewSliderWindowingController(ImageListView controlledImageListView,
             ImageListViewInitialWindowingController initialWindowingController, JLutWindowingSlider slider) {
         setControlledImageListView(controlledImageListView);
         setSlider(slider);
@@ -66,8 +64,8 @@ public class ImageListViewSliderWindowingController {
      * @param controlledImageListView
      *            new value of controlledImageListView
      */
-    public void setControlledImageListView(JImageListView controlledImageListView) {
-        JImageListView oldControlledImageListView = this.controlledImageListView;
+    public void setControlledImageListView(ImageListView controlledImageListView) {
+        ImageListView oldControlledImageListView = this.controlledImageListView;
         this.controlledImageListView = controlledImageListView;
         if (null != oldControlledImageListView) {
             oldControlledImageListView.removeListSelectionListener(listListener);
@@ -86,7 +84,7 @@ public class ImageListViewSliderWindowingController {
      * 
      * @return the value of controlledImageListView
      */
-    public JImageListView getControlledImageListView() {
+    public ImageListView getControlledImageListView() {
         return controlledImageListView;
     }
 

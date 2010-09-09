@@ -8,16 +8,16 @@ import javax.swing.ListSelectionModel;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 
-import de.sofd.viskit.ui.imagelist.JImageListView;
+import de.sofd.viskit.ui.imagelist.ImageListView;
 
 /**
  * Controller that can synchronize the selection and the scroll position of a
- * {@link JImageListView} in various ways.
+ * {@link ImageListView} in various ways.
  * 
  * @author Olaf Klischat
  */
 public class ImageListViewSelectionScrollSyncController {
-    protected JImageListView controlledImageListView;
+    protected ImageListView controlledImageListView;
     public static final String PROP_CONTROLLEDIMAGELISTVIEW = "controlledImageListView";
     private boolean enabled;
     public static final String PROP_ENABLED = "enabled";
@@ -34,7 +34,7 @@ public class ImageListViewSelectionScrollSyncController {
         setAllowEmptySelection(true);
     }
 
-    public ImageListViewSelectionScrollSyncController(JImageListView controlledImageListView) {
+    public ImageListViewSelectionScrollSyncController(ImageListView controlledImageListView) {
         this();
         setControlledImageListView(controlledImageListView);
     }
@@ -114,7 +114,7 @@ public class ImageListViewSelectionScrollSyncController {
      *
      * @return the value of controlledImageListView
      */
-    public JImageListView getControlledImageListView() {
+    public ImageListView getControlledImageListView() {
         return controlledImageListView;
     }
 
@@ -123,8 +123,8 @@ public class ImageListViewSelectionScrollSyncController {
      *
      * @param controlledImageListView new value of controlledImageListView
      */
-    public void setControlledImageListView(JImageListView controlledImageListView) {
-        JImageListView oldControlledImageListView = this.controlledImageListView;
+    public void setControlledImageListView(ImageListView controlledImageListView) {
+        ImageListView oldControlledImageListView = this.controlledImageListView;
         this.controlledImageListView = controlledImageListView;
         if (null != oldControlledImageListView) {
             oldControlledImageListView.removePropertyChangeListener(syncHandler);
@@ -152,8 +152,8 @@ public class ImageListViewSelectionScrollSyncController {
             if (inProgrammedChange) {
                 return;
             }
-            if (!evt.getPropertyName().equals(JImageListView.PROP_FIRSTVISIBLEINDEX) &&
-                !evt.getPropertyName().equals(JImageListView.PROP_SCALEMODE)) {
+            if (!evt.getPropertyName().equals(ImageListView.PROP_FIRSTVISIBLEINDEX) &&
+                !evt.getPropertyName().equals(ImageListView.PROP_SCALEMODE)) {
                 return;
             }
             if (!isSelectionTracksScrollPosition()) {

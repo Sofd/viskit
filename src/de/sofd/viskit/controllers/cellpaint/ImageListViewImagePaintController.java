@@ -30,8 +30,8 @@ import de.sofd.viskit.model.DicomImageListViewModelElement;
 import de.sofd.viskit.model.ImageListViewModelElement;
 import de.sofd.viskit.model.LookupTable;
 import de.sofd.viskit.model.RawImage;
+import de.sofd.viskit.ui.imagelist.ImageListView;
 import de.sofd.viskit.ui.imagelist.ImageListViewCell;
-import de.sofd.viskit.ui.imagelist.JImageListView;
 import java.nio.IntBuffer;
 import javax.media.opengl.GLException;
 import org.apache.log4j.Logger;
@@ -53,14 +53,14 @@ public class ImageListViewImagePaintController extends CellPaintControllerBase {
     private GLShader rescaleShader;
     
     public ImageListViewImagePaintController() {
-        this(null, JImageListView.PAINT_ZORDER_IMAGE);
+        this(null, ImageListView.PAINT_ZORDER_IMAGE);
     }
 
-    public ImageListViewImagePaintController(JImageListView controlledImageListView) {
-        super(controlledImageListView, JImageListView.PAINT_ZORDER_IMAGE);
+    public ImageListViewImagePaintController(ImageListView controlledImageListView) {
+        super(controlledImageListView, ImageListView.PAINT_ZORDER_IMAGE);
     }
 
-    public ImageListViewImagePaintController(JImageListView controlledImageListView, int zOrder) {
+    public ImageListViewImagePaintController(ImageListView controlledImageListView, int zOrder) {
         super(controlledImageListView, zOrder);
     }
 

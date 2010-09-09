@@ -23,7 +23,7 @@ import java.util.Set;
  */
 public class ImageListViewCellBase implements ImageListViewCell {
 
-    private final JImageListView owner;
+    private final ImageListView owner;
     private final ImageListViewModelElement displayedModelElement;
     private int windowLocation;
     private int windowWidth;
@@ -37,7 +37,7 @@ public class ImageListViewCellBase implements ImageListViewCell {
     private DrawingViewer roiDrawingViewer;
     private final Set<String> interactivelyChangingProps = new HashSet<String>();
 
-    protected ImageListViewCellBase(JImageListView owner, ImageListViewModelElement displayedModelElement) {
+    protected ImageListViewCellBase(ImageListView owner, ImageListViewModelElement displayedModelElement) {
         this.owner = owner;
         this.displayedModelElement = displayedModelElement;
         windowLocation = 300;
@@ -50,7 +50,7 @@ public class ImageListViewCellBase implements ImageListViewCell {
     }
 
     @Override
-    public JImageListView getOwner() {
+    public ImageListView getOwner() {
         return owner;
     }
 
