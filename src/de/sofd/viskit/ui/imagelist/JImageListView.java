@@ -67,22 +67,16 @@ import de.sofd.viskit.ui.imagelist.event.cellpaint.ImageListViewCellPaintListene
  *
  * @author olaf
  */
-public abstract class JImageListView extends JPanel {
+public abstract class JImageListView extends JPanel implements ImageListView {
 
     static final Logger logger = Logger.getLogger(JImageListView.class);
 
     private ListModel model;
-    public static final String PROP_MODEL = "model";
     private ListSelectionModel selectionModel;
-    public static final String PROP_SELECTIONMODEL = "selectionModel";
     private int firstVisibleIndex = 0;
-    public static final String PROP_FIRSTVISIBLEINDEX = "firstVisibleIndex";
     private Integer lowerVisibilityLimit, upperVisibilityLimit;
-    public static final String PROP_LOWERVISIBILITYLIMIT = "lowerVisibilityLimit";
-    public static final String PROP_UPPERVISIBILITYLIMIT = "upperVisibilityLimit";
     private final List<ListSelectionListener> listSelectionListeners = new ArrayList<ListSelectionListener>();
     private String displayName = "";
-    public static final String PROP_SCALEMODE = "scaleMode";
     private ScaleMode scaleMode;
     private final Map<ImageListViewCell, Integer> cellToIndexMap = new IdentityHashMap<ImageListViewCell, Integer>();
 
@@ -1146,43 +1140,6 @@ public abstract class JImageListView extends JPanel {
             }
         }
     }
-    
-    /**
-     * Paint z-order at which the image is normally drawn. Numerical value is 10, which
-     * is the lowest of all the PAINT_ZORDER_* constants, so the image will normally be drawn
-     * at the bottom of anything else (i.e., everything else will be drawn on top).
-     */
-    public static final int PAINT_ZORDER_IMAGE = 10;
-
-    /**
-     * Paint z-order at which the ROIs are normally drawn. Numerical value is
-     * 50, which means the ROIs are drawn on top of the image, but below any
-     * labels (see PAINT_ZORDER_LABELS)
-     * 
-     * (TODO: not implemented)
-     */
-    public static final int PAINT_ZORDER_ROI = 50;
-
-    /**
-     * Paint z-order at which any labels are normally drawn. Numerical value is
-     * 200, which is the highest of all the PAINT_ZORDER_* constants, so this
-     * will be drawn on top of everything else unless you specify a z-order
-     * that's not one of the PAINT_ZORDER_* constants, and is higher than
-     * PAINT_ZORDER_LABELS.
-     * 
-     * (TODO: not implemented)
-     */
-    public static final int PAINT_ZORDER_LABELS = 200;
-
-    /**
-     * Default paint z-order. This is used if you call
-     * {@link #addCellPaintListener(ImageListViewCellPaintListener)} (i.e.
-     * without explicitly specifying a z-order). Numerical value is 100,
-     * meaning that this would normally be drawn between the ROIs and any
-     * labels.
-     */
-    public static final int PAINT_ZORDER_DEFAULT = 100;
-    
     
     /**
      * NOT A PUBLIC API! DON'T CALL.
