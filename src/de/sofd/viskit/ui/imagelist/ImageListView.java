@@ -6,6 +6,7 @@ import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
 import java.awt.event.MouseWheelListener;
 import java.beans.PropertyChangeListener;
+import java.io.Serializable;
 import java.util.Collection;
 
 import javax.swing.AbstractListModel;
@@ -14,7 +15,6 @@ import javax.swing.ListSelectionModel;
 import javax.swing.event.ListSelectionListener;
 
 import de.sofd.viskit.model.ImageListViewModelElement;
-import de.sofd.viskit.ui.imagelist.JImageListView.ScaleMode;
 import de.sofd.viskit.ui.imagelist.event.ImageListViewListener;
 import de.sofd.viskit.ui.imagelist.event.cellpaint.ImageListViewCellPaintListener;
 
@@ -50,6 +50,10 @@ public interface ImageListView {
     public static final String PROP_LOWERVISIBILITYLIMIT = "lowerVisibilityLimit";
     public static final String PROP_UPPERVISIBILITYLIMIT = "upperVisibilityLimit";
     public static final String PROP_SCALEMODE = "scaleMode";
+
+    public static interface ScaleMode extends Serializable {
+        String getDisplayName();
+    }
 
     public boolean isUiInitialized();
 

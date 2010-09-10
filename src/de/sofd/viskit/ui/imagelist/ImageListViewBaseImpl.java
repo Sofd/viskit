@@ -1,10 +1,6 @@
 package de.sofd.viskit.ui.imagelist;
 
-import java.awt.Color;
-import java.awt.Component;
 import java.awt.Dimension;
-import java.awt.event.ContainerAdapter;
-import java.awt.event.ContainerEvent;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
@@ -12,7 +8,7 @@ import java.awt.event.MouseWheelEvent;
 import java.awt.event.MouseWheelListener;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.io.Serializable;
+import java.beans.PropertyChangeSupport;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.EventListener;
@@ -26,7 +22,6 @@ import java.util.TreeSet;
 import javax.media.opengl.GL;
 import javax.media.opengl.GLAutoDrawable;
 import javax.swing.AbstractListModel;
-import javax.swing.JPanel;
 import javax.swing.ListModel;
 import javax.swing.ListSelectionModel;
 import javax.swing.event.ListDataEvent;
@@ -52,24 +47,14 @@ import de.sofd.viskit.ui.imagelist.event.cellpaint.ImageListViewCellPaintEvent;
 import de.sofd.viskit.ui.imagelist.event.cellpaint.ImageListViewCellPaintListener;
 
 /**
- * Base class for GUI components displaying a list of elements, which are objects implementing {@link ImageListViewModelElement}.
- * <p>
- * The elements must be fed to the JImageListView via a {@link ListModel} that contains them.
- * <p>
- * A selection of elements is maintained via a {@link ListSelectionModel}.
- * <p>
- * The list automatically maintains a list of "cell" objects, implementing {@link ImageListViewCell},
- * that will always be associated 1:1 to the current elements (i.e. each element is associated
- * to exactly one cell, and vice versa). A cell is used to hold data that should be associated
- * with a model element in this list, but not elsewhere, i.e. if a model element is displayed
- * simultaneously in more than one JImageListView, each one has separate cell data associated with
- * the element.
+ * Basic implementation of the {@link ImageListView} interface. Meant to be inherited or (mostly)
+ * aggregated by actual implementations.
  *
  * @author olaf
  */
-public abstract class JImageListView extends JPanel implements ImageListView {
+public abstract class ImageListViewBaseImpl implements ImageListView {
 
-    static final Logger logger = Logger.getLogger(JImageListView.class);
+    static final Logger logger = Logger.getLogger(ImageListViewBaseImpl.class);
 
     private ListModel model;
     private ListSelectionModel selectionModel;
@@ -79,6 +64,7 @@ public abstract class JImageListView extends JPanel implements ImageListView {
     private String displayName = "";
     private ScaleMode scaleMode;
     private final Map<ImageListViewCell, Integer> cellToIndexMap = new IdentityHashMap<ImageListViewCell, Integer>();
+    private PropertyChangeSupport propertyChangeSupport = new PropertyChangeSupport(this);
 
     // TODO: it's probably better to use a map that uses normal (equals()/hashCode()-based)
     //       mapping for the modelElement => cell direction
@@ -89,12 +75,7 @@ public abstract class JImageListView extends JPanel implements ImageListView {
     private BiMap<ImageListViewModelElement, ImageListViewCell> cellsByElementMap
             = new BiIdentityHashMap<ImageListViewModelElement, ImageListViewCell>();
 
-    public JImageListView() {
-        ensureUiStateIsCopiedForAddedComponents();
-    }
-
-    public boolean isUiInitialized() {
-        return isDisplayable();
+    public ImageListViewBaseImpl() {
     }
 
     /**
@@ -104,6 +85,47 @@ public abstract class JImageListView extends JPanel implements ImageListView {
      */
     public ListModel getModel() {
         return model;
+    }
+
+    public void addPropertyChangeListener(PropertyChangeListener listener) {
+        propertyChangeSupport.addPropertyChangeListener(listener);
+    }
+
+    public void addPropertyChangeListener(String propertyName,
+            PropertyChangeListener listener) {
+        propertyChangeSupport.addPropertyChangeListener(propertyName, listener);
+    }
+
+    public void firePropertyChange(PropertyChangeEvent evt) {
+        propertyChangeSupport.firePropertyChange(evt);
+    }
+
+    public void firePropertyChange(String propertyName, boolean oldValue,
+            boolean newValue) {
+        propertyChangeSupport.firePropertyChange(propertyName, oldValue,
+                newValue);
+    }
+
+    public void firePropertyChange(String propertyName, int oldValue,
+            int newValue) {
+        propertyChangeSupport.firePropertyChange(propertyName, oldValue,
+                newValue);
+    }
+
+    public void firePropertyChange(String propertyName, Object oldValue,
+            Object newValue) {
+        propertyChangeSupport.firePropertyChange(propertyName, oldValue,
+                newValue);
+    }
+
+    public void removePropertyChangeListener(PropertyChangeListener listener) {
+        propertyChangeSupport.removePropertyChangeListener(listener);
+    }
+
+    public void removePropertyChangeListener(String propertyName,
+            PropertyChangeListener listener) {
+        propertyChangeSupport.removePropertyChangeListener(propertyName,
+                listener);
     }
 
     /**
@@ -150,7 +172,7 @@ public abstract class JImageListView extends JPanel implements ImageListView {
             if (newElements) {
                 garbageCollectStaleCells();
             }
-            JImageListView.this.modelContentsChanged(e);
+            ImageListViewBaseImpl.this.modelContentsChanged(e);
         }
         @Override
         public void intervalAdded(ListDataEvent e) {
@@ -163,11 +185,11 @@ public abstract class JImageListView extends JPanel implements ImageListView {
                 ImageListViewCell cell = createCell(elt);
                 cellsByElementMap.put(elt, cell);
             }
-            JImageListView.this.modelIntervalAdded(e);
+            ImageListViewBaseImpl.this.modelIntervalAdded(e);
         }
         @Override
         public void intervalRemoved(ListDataEvent e) {
-            JImageListView.this.modelIntervalRemoved(e);
+            ImageListViewBaseImpl.this.modelIntervalRemoved(e);
             garbageCollectStaleCells();
         }
     };
@@ -268,7 +290,7 @@ public abstract class JImageListView extends JPanel implements ImageListView {
      * Set the scaleMode ({@link #getScaleMode()}) of this viewer to one of the {@link #getSupportedScaleModes() }
      * (calling this with an unsupported scale mode will raise an exception). Sets the bean property,
      * fires the corresponding PropertyChangeEvent, and (before firing, but after setting the property) calls
-     * {@link #doSetScaleMode(de.sofd.viskit.ui.imagelist.JImageListView.ScaleMode, de.sofd.viskit.ui.imagelist.JImageListView.ScaleMode) },
+     * {@link #doSetScaleMode(de.sofd.viskit.ui.imagelist.ImageListViewBaseImpl.ScaleMode, de.sofd.viskit.ui.imagelist.ImageListViewBaseImpl.ScaleMode) },
      * which subclasses should override normally (rather than overriding this method).
      *
      * @param scaleMode new value of scaleMode
@@ -300,7 +322,7 @@ public abstract class JImageListView extends JPanel implements ImageListView {
      * which is pretty useless unless the subclass doesn't support any ScaleModes or doesn't want
      * to do anything when the scaleMode is set (which would be kind of pointless). Thus, subclasses
      * should normally override this method. Alternatively, they could override
-     * {@link #setScaleMode(de.sofd.viskit.ui.imagelist.JImageListView.ScaleMode) } and
+     * {@link #setScaleMode(de.sofd.viskit.ui.imagelist.ImageListViewBaseImpl.ScaleMode) } and
      * {@link #getScaleMode() } in concert to implement some completely different way of setting the
      * scale mode; however, in that case, the general contract for the bound bean property getter/setter
      * (which is adhered to by the default implementations of those methods) must be re-implemented.
@@ -396,7 +418,7 @@ public abstract class JImageListView extends JPanel implements ImageListView {
     private PropertyChangeListener cellPropertyChangeEventForwarder = new PropertyChangeListener() {
         @Override
         public void propertyChange(PropertyChangeEvent evt) {
-            JImageListView.this.fireCellPropertyChangeEvent(evt);
+            ImageListViewBaseImpl.this.fireCellPropertyChangeEvent(evt);
         }
     };
 
@@ -406,7 +428,7 @@ public abstract class JImageListView extends JPanel implements ImageListView {
             if (ImageListViewModelElement.PROP_INITIALIZATIONSTATE.equals(evt.getPropertyName())) {
                 refreshCellForElement((ImageListViewModelElement)evt.getSource());
             }
-            JImageListView.this.fireModelElementPropertyChangeEvent(evt);
+            ImageListViewBaseImpl.this.fireModelElementPropertyChangeEvent(evt);
         }
     };
 
@@ -505,7 +527,7 @@ public abstract class JImageListView extends JPanel implements ImageListView {
     private ListSelectionListener listSelectionListener = new ListSelectionListener() {
         @Override
         public void valueChanged(ListSelectionEvent e) {
-            JImageListView.this.selectionChanged(e);
+            ImageListViewBaseImpl.this.selectionChanged(e);
             fireListSelectionEvent(e.getFirstIndex(), e.getLastIndex(), e.getValueIsAdjusting());
         }
     };
@@ -799,72 +821,6 @@ public abstract class JImageListView extends JPanel implements ImageListView {
             refreshCellForIndex(index);
         }
     }
-
-    @Override
-    public void setForeground(Color fg) {
-        super.setForeground(fg);
-        copyUiStateToSubComponents();
-    }
-
-
-    @Override
-    public void setBackground(Color bg) {
-        super.setBackground(bg);
-        copyUiStateToSubComponents();
-    }
-
-
-    protected void copyUiStateToSubComponents() {
-        for (Component c : this.getComponents()) {
-            copyUiStateToSubComponent(c);
-        }
-    }
-
-    /**
-     * The base class (JImageListView) calls this whenever a UI state like
-     * foreground/background colors should to be copied from this component
-     * to a child component (c). This happens when (a) such a UI state
-     * was changed or (b) when a new child component was added. JImageListView
-     * ensures that this is done correctly ((b) is ensured by the constructor
-     * calling {@link #ensureUiStateIsCopiedForAddedComponents() }). The default
-     * implementation copies the foreground and background color. Subclasses
-     * may override to copy additional properties.
-     *
-     * @param c
-     */
-    protected void copyUiStateToSubComponent(Component c) {
-        c.setForeground(this.getForeground());
-        c.setBackground(this.getBackground());
-    }
-
-    /**
-     * Ensures {@link #copyUiStateToSubComponent(java.awt.Component) } will
-     * be called for any child component added to this component in the
-     * future. Called once by the default constructor of JImageListView.
-     * Subclasses may (rarely) override, e.g. with an empty implementation
-     * if they want to inhibit this behaviour for some (strange) reason.
-     */
-    protected void ensureUiStateIsCopiedForAddedComponents() {
-        this.addContainerListener(new ContainerAdapter() {
-            @Override
-            public void componentAdded(ContainerEvent e) {
-                JImageListView.this.copyUiStateToSubComponent(e.getChild());
-            }
-        });
-    }
-
-    /*
-    private PropertyChangeSupport propertyChangeSupport = new PropertyChangeSupport(this);
-
-    protected PropertyChangeSupport getPropertyChangeSupport() {
-        //Need to get the propertyChangeSupport via this lazy intialization
-        //getter because the in-place initialization
-        if (null == propertyChangeSupport) {
-            propertyChangeSupport = new PropertyChangeSupport(this);
-        }
-        return propertyChangeSupport;
-    }
-    */
 
     private Collection<ImageListViewListener> imageListViewListeners =
             new ArrayList<ImageListViewListener>();
