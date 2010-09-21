@@ -59,7 +59,10 @@ import de.sofd.viskit.ui.imagelist.event.cellpaint.ImageListViewCellPaintListene
  * defines a class that's identical to this one except that it has a different
  * name and is derived from a the needed toolkit-specific base class like
  * JPanel. From this preprocessor-generated class actual implementations would
- * then be derived.
+ * then be derived. The preprocessor is a small Java program that lives in the
+ * build-dep/ subdirectory of the project folder and is called by its
+ * accompanying Ant build file, which in turn is called by the IDE-specific
+ * build process.
  * <p>
  * At the moment, this class in only used in this way (as a mixin source for the
  * preprocessor build step). So it wouldn't actually need to be compiled because
