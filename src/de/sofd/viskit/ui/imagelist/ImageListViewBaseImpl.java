@@ -1,4 +1,4 @@
-package de.sofd.viskit.ui.imagelist;
+package de.sofd.viskit.ui.imagelist/*<$subPackage>*/;
 
 import java.awt.Dimension;
 import java.awt.event.MouseEvent;
@@ -45,6 +45,8 @@ import de.sofd.viskit.ui.imagelist.event.ImageListViewEvent;
 import de.sofd.viskit.ui.imagelist.event.ImageListViewListener;
 import de.sofd.viskit.ui.imagelist.event.cellpaint.ImageListViewCellPaintEvent;
 import de.sofd.viskit.ui.imagelist.event.cellpaint.ImageListViewCellPaintListener;
+
+/*<import de.sofd.viskit.ui.imagelist.*;>*/
 
 /**
  * Basic implementation of the {@link ImageListView} interface. Meant to be
