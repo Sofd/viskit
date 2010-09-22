@@ -117,7 +117,7 @@ public class TexSliceVolumeView extends GLCanvas implements GLEventListener, Mou
         gl.glDisable(GL_DEPTH_TEST);
         gl.glBindTexture(GL_TEXTURE_3D, volumeObject.getTexId());
         gl.glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-        
+        //gl.glBlendFunc(GL_SRC_ALPHA, GL_ONE);
         float adjAlpha = alpha/slices;
                 
         double maxDim = volumeObject.getSizeRange().getMax();
@@ -187,7 +187,7 @@ public class TexSliceVolumeView extends GLCanvas implements GLEventListener, Mou
         gl.glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
         
         gl.glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-       //gl.glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+        //gl.glBlendFunc(GL_SRC_ALPHA, GL_ONE);
         //gl.glBlendColor(1.0f, 1.0f, 1.0f, 1.0f/MAX_PLANES);
         //gl.glBlendEquation(GL_MAX);
         gl.glEnable(GL_BLEND);
