@@ -216,6 +216,29 @@ public class JListImageListTestApp {
         }
     }
     
+    protected static void addModelForDirTree(ModelFactory factory, File dir) throws IOException {
+        factory.addModel(dir.getCanonicalPath(), getModelForDirTree(dir));
+    }
+
+    protected static DefaultListModel getModelForDirTree(File dir) throws IOException {
+        DefaultListModel result = new DefaultListModel();
+        addDirTreeEltsToModel(dir, result);
+        return result;
+    }
+    
+    private static void addDirTreeEltsToModel(File dirOrFile, DefaultListModel model) throws IOException {
+        if (dirOrFile.isFile() && dirOrFile.getName().toLowerCase().endsWith(".dcm")) {
+            FileBasedDicomImageListViewModelElement elt = new FileBasedDicomImageListViewModelElement((File) dirOrFile, false);  //variant without frameNumber avoids reading the DICOM, which can increase model creation speed 10x
+            elt.setAsyncMode(null != System.getProperty("viskit.testapp.asyncMode"));
+            model.addElement(elt);
+        } else if (dirOrFile.isDirectory()) {
+            for (File subFile: dirOrFile.listFiles()) {
+                addDirTreeEltsToModel(subFile, model);
+            }
+        }
+    }
+    
+
     public JFrame newSingleListFrame(String frameTitle, GraphicsConfiguration graphicsConfig) throws Exception {
         if (isUserHonglinh()) {
 //            final DefaultListModel model = StaticModelFactory.createModelFromDir(new File("/home/honglinh/Desktop/dicomfiles1"));
@@ -541,7 +564,13 @@ public class JListImageListTestApp {
             ///*
             addModelForDir(factory, new File("/home/olaf/hieronymusr/br312046/images/cd00906__center10102"));
             addModelForDir(factory, new File("/home/olaf/hieronymusr/br312046/images/cd00908__center10101"));
+            
             //addModelForDir(factory, new File("/home/olaf/Downloads/MESA-storage-B_10_11_0/links"));
+
+            //addModelForDir(factory, new File("/shares/shared/DICOM-Testbilder/von-schering-geht-nicht/AXIAL_5333"));
+            //addModelForDir(factory, new File("/shares/shared/DICOM-Testbilder/von-schering-geht-nicht"));
+
+            //addModelForDirTree(factory, new File("/shares/projects/DICOM-Testbilder/20100819"));
 
             //listModels.add(factory.getModel("1"));
             //listModels.add(factory.getModel("2"));
