@@ -1,4 +1,4 @@
-package de.sofd.viskit.ui.imagelist/*<$subPackage>*/;
+package de.sofd.viskit.ui.imagelist/*<$!subPackage>*/;
 
 import java.awt.Dimension;
 import java.awt.event.MouseEvent;
@@ -84,7 +84,6 @@ public abstract class ImageListViewBaseImpl /*< extends $baseClass >*/ implement
     private String displayName = "";
     private ScaleMode scaleMode;
     private final Map<ImageListViewCell, Integer> cellToIndexMap = new IdentityHashMap<ImageListViewCell, Integer>();
-    private PropertyChangeSupport propertyChangeSupport; //initialized lazily
 
     // TODO: it's probably better to use a map that uses normal (equals()/hashCode()-based)
     //       mapping for the modelElement => cell direction
@@ -107,6 +106,10 @@ public abstract class ImageListViewBaseImpl /*< extends $baseClass >*/ implement
     public ListModel getModel() {
         return model;
     }
+
+//</  #if ($baseClass != "de.matthiasmann.twl.Widget")  ## Widget already defines the property event methods as final, thus redefining them wouldn't work
+    
+    private PropertyChangeSupport propertyChangeSupport; //initialized lazily
 
     protected PropertyChangeSupport getPropertyChangeSupport() {
         if (null == propertyChangeSupport) {
@@ -160,6 +163,9 @@ public abstract class ImageListViewBaseImpl /*< extends $baseClass >*/ implement
                 listener);
     }
 
+//</  #end
+
+    
     /**
      * Set the value of model
      *
@@ -329,7 +335,7 @@ public abstract class ImageListViewBaseImpl /*< extends $baseClass >*/ implement
      * Set the scaleMode ({@link #getScaleMode()}) of this viewer to one of the {@link #getSupportedScaleModes() }
      * (calling this with an unsupported scale mode will raise an exception). Sets the bean property,
      * fires the corresponding PropertyChangeEvent, and (before firing, but after setting the property) calls
-     * {@link #doSetScaleMode(de.sofd.viskit.ui.imagelist.ImageListViewBaseImpl.ScaleMode, de.sofd.viskit.ui.imagelist.ImageListViewBaseImpl.ScaleMode) },
+     * {@link \#doSetScaleMode(de.sofd.viskit.ui.imagelist.ImageListViewBaseImpl.ScaleMode, de.sofd.viskit.ui.imagelist.ImageListViewBaseImpl.ScaleMode) },
      * which subclasses should override normally (rather than overriding this method).
      *
      * @param scaleMode new value of scaleMode
@@ -362,7 +368,7 @@ public abstract class ImageListViewBaseImpl /*< extends $baseClass >*/ implement
      * which is pretty useless unless the subclass doesn't support any ScaleModes or doesn't want
      * to do anything when the scaleMode is set (which would be kind of pointless). Thus, subclasses
      * should normally override this method. Alternatively, they could override
-     * {@link #setScaleMode(de.sofd.viskit.ui.imagelist.ImageListViewBaseImpl.ScaleMode) } and
+     * {@link \#setScaleMode(de.sofd.viskit.ui.imagelist.ImageListViewBaseImpl.ScaleMode) } and
      * {@link #getScaleMode() } in concert to implement some completely different way of setting the
      * scale mode; however, in that case, the general contract for the bound bean property getter/setter
      * (which is adhered to by the default implementations of those methods) must be re-implemented.
@@ -376,10 +382,10 @@ public abstract class ImageListViewBaseImpl /*< extends $baseClass >*/ implement
 
     /**
      * Creates a new ImageListViewCell (using doCreateCell()), ensures the cell's
-     * PropertyChangeEvents are exposed to {@link #addCellPropertyChangeListener(java.beans.PropertyChangeListener) },
-     * and calls {@link #ensureCellRepaintsOnRoiDrawingViewerChanges(de.sofd.viskit.ui.imagelist.ImageListViewCell) }.
+     * PropertyChangeEvents are exposed to {@link \#addCellPropertyChangeListener(java.beans.PropertyChangeListener) },
+     * and calls {@link \#ensureCellRepaintsOnRoiDrawingViewerChanges(de.sofd.viskit.ui.imagelist.ImageListViewCell) }.
      * Not normally called by subclasses (and never called by users). Hardly ever overridden;
-     * override {@link #doCreateCell(de.sofd.viskit.ui.imagelist.ImageListViewModelElement) } instead.
+     * override {@link \#doCreateCell(de.sofd.viskit.ui.imagelist.ImageListViewModelElement) } instead.
      *
      * @param modelElement
      * @return
@@ -393,10 +399,10 @@ public abstract class ImageListViewBaseImpl /*< extends $baseClass >*/ implement
     }
 
     /**
-     * Called by {@link #createCell(de.sofd.viskit.ui.imagelist.ImageListViewModelElement) }
+     * Called by {@link \#createCell(de.sofd.viskit.ui.imagelist.ImageListViewModelElement) }
      * for newly created cells. Ensures that any changes to the cell's ROI drawing viewer
      * cause the cell to be repainted. Default impl. registers a {@link DrawingViewerBackend}
-     * on the ROI drawing viewer that calls {@link #refreshCell(de.sofd.viskit.ui.imagelist.ImageListViewCell) }
+     * on the ROI drawing viewer that calls {@link \#refreshCell(de.sofd.viskit.ui.imagelist.ImageListViewCell) }
      * whenever a repaint is requested.
      *
      * @param cell
@@ -588,7 +594,7 @@ public abstract class ImageListViewBaseImpl /*< extends $baseClass >*/ implement
 
     /**
      * Find the index of a cell in this list. Reverse operation to
-     * {@link #getCell(int)}.
+     * {@link \#getCell(int)}.
      * <p>
      * This operation will generally be efficient (O(1)) if the cell is present
      * in the list.
@@ -1001,7 +1007,7 @@ public abstract class ImageListViewBaseImpl /*< extends $baseClass >*/ implement
     }
 
     /**
-     * Like {@link #addCellMouseListener(int, java.awt.event.MouseListener) }, but for
+     * Like {@link \#addCellMouseListener(int, java.awt.event.MouseListener) }, but for
      * MouseMotionListeners.
      *
      * @param zOrder
@@ -1028,7 +1034,7 @@ public abstract class ImageListViewBaseImpl /*< extends $baseClass >*/ implement
 
 
     /**
-     * Like {@link #addCellMouseListener(int, java.awt.event.MouseListener) }, but for
+     * Like {@link \#addCellMouseListener(int, java.awt.event.MouseListener) }, but for
      * MouseWheelListener.
      *
      * @param zOrder
