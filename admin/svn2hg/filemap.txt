@@ -1,1 +1,2 @@
+exclude "de.sofd.viskit/de.sofd.viskit"  # undo shit done in svn 1171
 rename "de.sofd.viskit" "."
