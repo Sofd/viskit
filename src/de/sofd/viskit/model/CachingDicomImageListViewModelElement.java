@@ -528,7 +528,22 @@ public abstract class CachingDicomImageListViewModelElement extends AbstractImag
         BufferedImage result = imageCache.get(getImageKey());
         if (result == null) {
             if (isAsyncMode()) {
-                throw new NotInitializedException();
+                //throw new NotInitializedException();
+                //TODO: async mode doesn't work right now for the BufferedImage fallback:
+                //
+                //throwing the above exception would lead to the list/ImagePaintController calling
+                //setInitializationState(UNINITIALIZED),
+                //which will enqueue the Runnable that loads the DICOM object into the cache, but it does not
+                //fill the imageCache. So, on the next call to getImage(), the exception will be rethrown and
+                //the process repeats endlessly. As a workaround, we don't throw the exception and thus force
+                //sync mode for the BufferedImage fallback.
+                //
+                //as a real solution, we should, in async mode, create the BufferedImage from the
+                //background-loaded DicomObject either here or in the Runnable (after finding that the
+                //RawImage isn't available).
+                //
+                //Best idea is probably to solve this issue along with ticket #37 and the
+                //RawImage/BufferedImage unification
             }
             result = getBackendImage();
             imageCache.put(getImageKey(), result);

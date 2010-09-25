@@ -37,7 +37,7 @@ public class TexSliceVolumeViewer extends JFrame implements ChangeListener
         
         setBackground( Color.BLACK );
 
-        ArrayList<DicomObject> dicomList = DicomInputOutput.readDir( "/home/oliver/dicom/series1", null );
+        ArrayList<DicomObject> dicomList = DicomInputOutput.readDir( "../dicom/series3", null );
         
         //ShortBuffer dataBuf = DicomUtil.getFilledShortBuffer( dicomList );
         ArrayList<ShortBuffer> dataBufList = DicomUtil.getFilledShortBufferList(dicomList);
