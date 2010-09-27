@@ -22,7 +22,9 @@ Brainstorming:
   sollten in einer einzigen Zelle gemalt werden wobei immer nur ein
   Frame sichtbar ist und vor/zurück-Buttons zum Durchnavigieren
   eingeblendet werden ("aktuelle Framenummer" wäre dann wohl eine
-  Eigenschaft der Zelle)
+  Eigenschaft der Zelle? -- Entscheidung: Nein, wird vorerst
+  Eigenschaft des Modellelements -- mglw. im Vorgriff auf spätere
+  Abschaffung der ILVCell-Hierarchie (s.a. Ticket #15))
 
   - Motivation: z.B. Drag&Drop in HieronymusQ (man will sicher nicht
     einzelne Frames draggen können, oder?) => Rücksprache mit Fokko.
@@ -34,3 +36,78 @@ Brainstorming:
   ImagePaintListener etc. als Key für Texturcache etc. benutzt werden)
 
 - => separate Modellklasse für "Image"?
+
+
+====================
+
+//Entwurf:
+
+
+public interface ImageListViewModelElement {
+
+    /**
+     * Replaces getImageKey().
+     *
+     * Unique, time-constant object identifying this model element
+     */
+    Object getKey();
+
+    /**
+     * The image of this model element. May change at any time
+     * (incl. property change event support).
+     * 
+     * (ViskitImage is the new image class that encapsulates
+     * RawImage|BufferedImage plus accompanying methods like
+     * getProxyRawImage() etc.)
+     */
+    ViskitImage getImage();
+
+    //move getPixelValuesRange() / getUsedPixelValuesRange() / getHistogram() into ViskitImage?
+
+    //APIs for attributes, initializationState/errorInfo, priority etc. stay
+}
+
+
+/**
+ * Base interface for ImageListViewModelElements that wrap a
+ * DicomObject. #getImage() is mapped to an arbitrary frame of the
+ * DicomObject. The frame number is the #getFrameNumber() property,
+ * which may be changed at any time.
+ *
+ */
+public interface DicomImageListViewModelElement extends ImageListViewModelElement {
+    
+
+    //keep all existing methods, add setFrameNumber(int num)
+}
+
+
+public abstract class CachingDicomImageListViewModelElement extends AbstractImageListViewModelElement implements DicomImageListViewModelElement {
+
+    // async/background-loading logic stays in here as-is
+}
+
+
+
+/**
+ * Base interface for an ImageListViewModelElement that wraps a single
+ * frame of a DicomImageListViewModelElement
+ */
+public interface DicomFrameImageListViewModelElement extends ImageListViewModelElement {
+
+    DicomImageListViewModelElement getOwner();
+
+    /**
+     * Non-changing frame number of this element in #getOwner()
+     */
+    int getFrameNumber();
+
+    //this's initializationState is coupled to the owner's (via
+    //observer pattern)
+
+}
+//TODO: brauchen wir diese Klasse? Ein DicomILVME pro Frame (d.h. die
+//frameNumber würde nicht geändert werden) sollte eigentlich denselben
+//Zweck erfüllen. Der geteilte Cache in CachingDicomILVME stellt
+//sicher, dass jedes DicomObject trotzdem nur einmal im Speicher
+//gehalten wird
