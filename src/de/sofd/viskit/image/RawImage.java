@@ -1,4 +1,4 @@
-package de.sofd.viskit.model;
+package de.sofd.viskit.image;
 
 import java.awt.image.BufferedImage;
 import java.nio.Buffer;

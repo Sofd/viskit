@@ -1,6 +1,7 @@
-package de.sofd.viskit.model;
+package de.sofd.viskit.image;
 
 import java.nio.Buffer;
+
 
 /**
  * Trivial implementation of {@link RawImage}.

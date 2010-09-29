@@ -24,12 +24,12 @@ import com.sun.opengl.util.texture.TextureCoords;
 
 import de.sofd.math.LinAlg;
 import de.sofd.util.FloatRange;
+import de.sofd.viskit.image.RawImage;
 import de.sofd.viskit.image3D.jogl.util.GLShader;
 import de.sofd.viskit.image3D.jogl.util.ShaderManager;
 import de.sofd.viskit.model.DicomImageListViewModelElement;
 import de.sofd.viskit.model.ImageListViewModelElement;
 import de.sofd.viskit.model.LookupTable;
-import de.sofd.viskit.model.RawImage;
 import de.sofd.viskit.ui.imagelist.ImageListView;
 import de.sofd.viskit.ui.imagelist.ImageListViewCell;
 import java.nio.IntBuffer;

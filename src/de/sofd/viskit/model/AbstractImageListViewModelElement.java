@@ -2,6 +2,8 @@ package de.sofd.viskit.model;
 
 import de.sofd.draw2d.Drawing;
 import de.sofd.util.FloatRange;
+import de.sofd.viskit.image.RawImage;
+
 import java.awt.image.BufferedImage;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;

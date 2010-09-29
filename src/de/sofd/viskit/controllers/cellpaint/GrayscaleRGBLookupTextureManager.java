@@ -11,8 +11,8 @@ import javax.media.opengl.GL2;
 
 import org.apache.log4j.Logger;
 
+import de.sofd.viskit.image.RawImage;
 import de.sofd.viskit.model.ImageListViewModelElement;
-import de.sofd.viskit.model.RawImage;
 import de.sofd.viskit.ui.grayscale.GrayscaleUtil;
 
 /**

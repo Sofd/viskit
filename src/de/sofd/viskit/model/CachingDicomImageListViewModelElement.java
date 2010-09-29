@@ -33,6 +33,8 @@ import de.sofd.util.IntRange;
 import de.sofd.util.NumericPriorityMap;
 import de.sofd.util.concurrent.NumericPriorityThreadPoolExecutor;
 import de.sofd.util.concurrent.PrioritizedTask;
+import de.sofd.viskit.image.RawImage;
+import de.sofd.viskit.image.RawImageImpl;
 import de.sofd.viskit.test.windowing.RawDicomImageReader;
 
 /**

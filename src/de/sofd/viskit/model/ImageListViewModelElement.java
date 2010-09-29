@@ -3,6 +3,7 @@ package de.sofd.viskit.model;
 import de.sofd.draw2d.Drawing;
 import de.sofd.util.FloatRange;
 import de.sofd.viskit.controllers.cellpaint.ImageListViewInitStateIndicationPaintController;
+import de.sofd.viskit.image.RawImage;
 import de.sofd.viskit.ui.imagelist.ImageListView;
 import java.awt.image.BufferedImage;
 import java.beans.PropertyChangeListener;

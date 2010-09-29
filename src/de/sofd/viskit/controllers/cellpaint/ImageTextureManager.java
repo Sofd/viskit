@@ -13,8 +13,8 @@ import com.sun.opengl.util.texture.TextureCoords;
 import com.sun.opengl.util.texture.TextureData;
 import com.sun.opengl.util.texture.awt.AWTTextureIO;
 
+import de.sofd.viskit.image.RawImage;
 import de.sofd.viskit.model.ImageListViewModelElement;
-import de.sofd.viskit.model.RawImage;
 
 /**
  *
