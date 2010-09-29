@@ -1,15 +1,12 @@
 package de.sofd.viskit.model;
 
-import de.sofd.draw2d.Drawing;
-import de.sofd.util.FloatRange;
-import de.sofd.viskit.image.RawImage;
-
-import java.awt.image.BufferedImage;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
+
+import de.sofd.draw2d.Drawing;
 
 /**
  * Abstract base class from which concrete {@link ImageListViewModelElement}
@@ -51,47 +48,6 @@ public abstract class AbstractImageListViewModelElement implements ImageListView
     public Object removeAttribute(String name) {
         return attributes.remove(name);
     }
-    
-    @Override
-    public boolean hasBufferedImage() {
-        return false;
-    }
-
-    @Override
-    public boolean hasRawImage() {
-        return false;
-    }
-
-    @Override
-    public boolean isRawImagePreferable() {
-        return true;
-    }
-
-    @Override
-    public BufferedImage getImage() {
-        throw new UnsupportedOperationException("getImage() not supported by this model element.");
-    }
-
-    @Override
-    public RawImage getRawImage() {
-        throw new UnsupportedOperationException("getRawImage() not supported by this model element.");
-    }
-
-    @Override
-    public RawImage getProxyRawImage() {
-        throw new UnsupportedOperationException("getProxyRawImage() not supported by this model element.");
-    }
-
-    @Override
-    public FloatRange getPixelValuesRange() {
-        throw new UnsupportedOperationException("Implement me");
-    }
-
-    @Override
-    public FloatRange getUsedPixelValuesRange() {
-        throw new UnsupportedOperationException("Implement me");
-    }
-
 
     @Override
     public Drawing getRoiDrawing() {

@@ -35,6 +35,8 @@ import de.sofd.util.concurrent.NumericPriorityThreadPoolExecutor;
 import de.sofd.util.concurrent.PrioritizedTask;
 import de.sofd.viskit.image.RawImage;
 import de.sofd.viskit.image.RawImageImpl;
+import de.sofd.viskit.image.ViskitImage;
+import de.sofd.viskit.image.ViskitImageImpl;
 import de.sofd.viskit.test.windowing.RawDicomImageReader;
 
 /**
@@ -316,11 +318,10 @@ public abstract class CachingDicomImageListViewModelElement extends AbstractImag
         return numFrames;
     }
 
-    @Override
     public Object getImageKey() {
         return getDicomObjectKey() + "#" + frameNumber;
     }
-    
+
     /**
      * @return the unique identifier of the DICOM object that this model element's image comes from
      */
@@ -525,8 +526,10 @@ public abstract class CachingDicomImageListViewModelElement extends AbstractImag
         return this.histogram;
     }
 
+    //TODO: move the following methods into a inner-class ViskitImage implementation, which is returned by the overridden getImage() then?
+    
     @Override
-    public BufferedImage getImage() {
+    public BufferedImage _getImage() {
         BufferedImage result = imageCache.get(getImageKey());
         if (result == null) {
             if (isAsyncMode()) {
@@ -587,18 +590,22 @@ public abstract class CachingDicomImageListViewModelElement extends AbstractImag
         }
         return result;
     }
-    
 
     @Override
-    public RawImage getProxyRawImage() {
-        RawImageImpl result = maybeGetProxyRawImage();
+    public ViskitImage getImage() {
+        // TODO return inner-class ViskitImage with above methods
+        return null;
+    }
+
+    public ViskitImage getProxyImage() {
+        ViskitImageImpl result = maybeGetProxyImage();
         if (null == result) {
             throw new IllegalStateException("this model element can't provide a raw image");
         }
         return result;
     }
 
-    protected RawImageImpl maybeGetProxyRawImage() {
+    protected ViskitImageImpl maybeGetProxyImage() {
         DicomObject imgMetadata = getDicomImageMetaData();
         
         String transferSyntaxUID = imgMetadata.getString(Tag.TransferSyntaxUID);
@@ -622,7 +629,7 @@ public abstract class CachingDicomImageListViewModelElement extends AbstractImag
         int width = imgMetadata.getInt(Tag.Columns);
         int height = imgMetadata.getInt(Tag.Rows);
         
-        return new RawImageImpl(width, height, pixelFormat, pixelType, null);
+        return new ViskitImageImpl(getImageKey(), new RawImageImpl(width, height, pixelFormat, pixelType, null));
     }
 
     @Override

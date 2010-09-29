@@ -1,13 +1,13 @@
 package de.sofd.viskit.model;
 
+import java.beans.PropertyChangeListener;
+import java.util.Collection;
+
 import de.sofd.draw2d.Drawing;
 import de.sofd.util.FloatRange;
 import de.sofd.viskit.controllers.cellpaint.ImageListViewInitStateIndicationPaintController;
-import de.sofd.viskit.image.RawImage;
+import de.sofd.viskit.image.ViskitImage;
 import de.sofd.viskit.ui.imagelist.ImageListView;
-import java.awt.image.BufferedImage;
-import java.beans.PropertyChangeListener;
-import java.util.Collection;
 
 /**
  * Base interface for elements of the ListModel of a {@link ImageListView}.
@@ -20,39 +20,14 @@ public interface ImageListViewModelElement {
 
     // TODO: make the other properties bean properties as well
 
-    /**
-     * 
-     * @return does {@link #getRawImage() } work?
-     */
-    boolean hasRawImage();
 
     /**
-     * 
-     * @return does {@link #getImage() } work?
+     * @return the image of the model element
      */
-    boolean hasBufferedImage();
+    ViskitImage getImage();
 
     /**
-     * 
-     * @return is hasRawImage(), is getRawImage() more efficient the getImage()
-     *         too?
-     */
-    boolean isRawImagePreferable();
-
-    /**
-     * If this.hasRawImage(), return the image of the model element, as a
-     * {@link RawImage} object. This may be (see {@link #isRawImagePreferable() }
-     * ) a more efficient representation than {@link #getImage() } to process as
-     * well as to acquire from the backing store, so, if this.hasRawImage() and
-     * isRawImagePreferable() this.users should try to use this in preference to
-     * {@link #getImage() }, falling back on the latter only if needed.
-     * <p>
-     * Throws an exception if !this.hasRawImage().
-     */
-    RawImage getRawImage();
-
-    /**
-     * Return a RawImage object that's identical to #getRadImage() except for
+     * Return a ViskitImage object that's identical to #getImage() except for
      * the pixel data, which may be null. This may be much more efficient to
      * acquire than the whole image, and it enables the caller to learn about
      * the metadata (width, height, pixel type, format etc.) of the image
@@ -61,35 +36,7 @@ public interface ImageListViewModelElement {
      * this RawImage, and only if it does, actually get the pixels and process
      * them.
      */
-    RawImage getProxyRawImage();
-
-    /**
-     * If this.hasBufferedImage(), return the image of the model element as a
-     * {@link BufferedImage}.
-     * <p>
-     * Throws an exception if !this.hasBufferedImage().
-     * <p>
-     * N.B. it should never happen that both hasRawImage() and
-     * hasBufferedImage() return false because in that case there would be no
-     * way to obtain the image data. The implementation must ensure that that
-     * never happens.
-     */
-    BufferedImage getImage();
-
-    /**
-     * Returns a key that uniquely identifies the image.
-     * <p>
-     * The key can be used by various front-end (view) and other components for
-     * caching data associated with the image.
-     * <p>
-     * This key should be constant under equals()/hashCode() throughout the
-     * lifetime of <i>this</i>. This method will be called often, so it should
-     * operate quickly. It should not call getImage() or getRawImage() if those
-     * may take long to execute.
-     * 
-     * @return
-     */
-    Object getImageKey();
+    ViskitImage getProxyImage();
 
     FloatRange getPixelValuesRange();
 
