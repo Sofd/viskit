@@ -11,7 +11,7 @@ import java.awt.image.BufferedImage;
  */
 public class ViskitImageImpl implements ViskitImage {
 
-    protected final Object key;
+    protected final Object imageKey;
 
     /*
      * use an explicit flag rather than (rawImage != null) b/c there may be
@@ -23,14 +23,14 @@ public class ViskitImageImpl implements ViskitImage {
     protected RawImage rawImage;
     protected BufferedImage bufferedImage;
     
-    public ViskitImageImpl(Object key, BufferedImage bimg) {
-        this.key = key;
+    public ViskitImageImpl(Object imageKey, BufferedImage bimg) {
+        this.imageKey = imageKey;
         this.bufferedImage = bimg;
         this.hasRawImage = false;
     }
 
     public ViskitImageImpl(Object key, RawImage rimg) {
-        this.key = key;
+        this.imageKey = key;
         this.rawImage = rimg;
         this.hasRawImage = false;
     }
@@ -40,7 +40,7 @@ public class ViskitImageImpl implements ViskitImage {
         if (hasRawImage()) {
             return getRawImage().getHeight();
         } else {
-            return getImage().getHeight();
+            return getBufferedImage().getHeight();
         }
     }
 
@@ -49,12 +49,12 @@ public class ViskitImageImpl implements ViskitImage {
         if (hasRawImage()) {
             return getRawImage().getWidth();
         } else {
-            return getImage().getWidth();
+            return getBufferedImage().getWidth();
         }
     }
 
     @Override
-    public BufferedImage getImage() {
+    public BufferedImage getBufferedImage() {
         if (hasRawImage()) {
             //TODO: create it from getRawImage()? What about caching the result then?
             throw new IllegalStateException("no BufferedImage");
@@ -64,7 +64,7 @@ public class ViskitImageImpl implements ViskitImage {
 
     @Override
     public Object getImageKey() {
-        return key;
+        return imageKey;
     }
 
     @Override
@@ -87,4 +87,8 @@ public class ViskitImageImpl implements ViskitImage {
         return hasRawImage();
     }
 
+    @Override
+    public int hashCode() {
+        return getImageKey().hashCode();
+    }
 }

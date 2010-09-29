@@ -24,13 +24,13 @@ public interface ViskitImage {
 
     /**
      * 
-     * @return does {@link #getImage() } work?
+     * @return does {@link #getBufferedImage() } work?
      */
     boolean hasBufferedImage();
 
     /**
      * 
-     * @return is hasRawImage(), is getRawImage() more efficient the getImage()
+     * @return if hasRawImage(), is getRawImage() more efficient than getImage()
      *         too?
      */
     boolean isRawImagePreferable();
@@ -38,10 +38,10 @@ public interface ViskitImage {
     /**
      * If this.hasRawImage(), return the image of the model element, as a
      * {@link RawImage} object. This may be (see {@link #isRawImagePreferable() }
-     * ) a more efficient representation than {@link #getImage() } to process as
+     * ) a more efficient representation than {@link #getBufferedImage() } to process as
      * well as to acquire from the backing store, so, if this.hasRawImage() and
      * isRawImagePreferable() this.users should try to use this in preference to
-     * {@link #getImage() }, falling back on the latter only if needed.
+     * {@link #getBufferedImage() }, falling back on the latter only if needed.
      * <p>
      * Throws an exception if !this.hasRawImage().
      */
@@ -58,7 +58,7 @@ public interface ViskitImage {
      * way to obtain the image data. The implementation must ensure that that
      * never happens.
      */
-    BufferedImage getImage();
+    BufferedImage getBufferedImage();
 
     /**
      * Returns a key that uniquely identifies the image.
