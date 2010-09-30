@@ -1,13 +1,5 @@
 package de.sofd.viskit.controllers;
 
-import de.sofd.util.FloatRange;
-import de.sofd.viskit.model.ImageListViewModelElement;
-import de.sofd.viskit.ui.imagelist.ImageListView;
-import de.sofd.viskit.ui.imagelist.ImageListViewCell;
-import de.sofd.viskit.ui.imagelist.JImageListView;
-import de.sofd.viskit.ui.imagelist.event.cellpaint.ImageListViewCellPaintEvent;
-import de.sofd.viskit.ui.imagelist.event.cellpaint.ImageListViewCellPaintListener;
-
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
@@ -17,6 +9,13 @@ import java.util.Set;
 
 import javax.media.opengl.GL;
 import javax.media.opengl.GLAutoDrawable;
+
+import de.sofd.util.FloatRange;
+import de.sofd.viskit.model.ImageListViewModelElement;
+import de.sofd.viskit.ui.imagelist.ImageListView;
+import de.sofd.viskit.ui.imagelist.ImageListViewCell;
+import de.sofd.viskit.ui.imagelist.event.cellpaint.ImageListViewCellPaintEvent;
+import de.sofd.viskit.ui.imagelist.event.cellpaint.ImageListViewCellPaintListener;
 
 /**
  * Controller that references a single JImageListView and provides a
@@ -128,7 +127,7 @@ public class ImageListViewInitialWindowingController {
     }
     
     public boolean isCellInitialized(ImageListViewCell cell) {
-        return alreadyInitializedImagesKeys.contains(cell.getDisplayedModelElement().getImageKey());
+        return alreadyInitializedImagesKeys.contains(cell.getDisplayedModelElement().getKey());
     }
 
     /**
@@ -139,7 +138,7 @@ public class ImageListViewInitialWindowingController {
      */
     public void initializeCellImmediately(ImageListViewCell cell, boolean force) {
         if (controlledImageListView != null && cell.getOwner() == controlledImageListView) {
-            if (force || !alreadyInitializedImagesKeys.contains(cell.getDisplayedModelElement().getImageKey())) {
+            if (force || !alreadyInitializedImagesKeys.contains(cell.getDisplayedModelElement().getKey())) {
                 initializeCell(cell);
                 controlledImageListView.refreshCells();
             }
@@ -158,7 +157,7 @@ public class ImageListViewInitialWindowingController {
             int count = controlledImageListView.getLength();
             for (int i = 0; i < count; i++) {
                 ImageListViewCell cell = controlledImageListView.getCell(i);
-                if (force || !alreadyInitializedImagesKeys.contains(cell.getDisplayedModelElement().getImageKey())) {
+                if (force || !alreadyInitializedImagesKeys.contains(cell.getDisplayedModelElement().getKey())) {
                     initializeCell(cell);
                 }
             }
@@ -176,9 +175,9 @@ public class ImageListViewInitialWindowingController {
 
     /**
      * Method that actually does the initialization. Sets windowing to optimal
-     * parameters by default, may be overridden/replaced by subclasses. Never
-     * called by subclasses.
-     *
+     * parameters for the element's current image by default, may be
+     * overridden/replaced by subclasses. Never called by subclasses.
+     * 
      * @param cell
      */
     protected void initializeCell(final ImageListViewCell cell) {
@@ -222,7 +221,7 @@ public class ImageListViewInitialWindowingController {
             inProgrammedChange = true;
             try {
                 ImageListViewModelElement elt = cell.getDisplayedModelElement();
-                Object imageKey = elt.getImageKey();
+                Object imageKey = elt.getKey();
                 if (alreadyInitializedImagesKeys.contains(imageKey)) {
                     return;
                 }
@@ -248,7 +247,7 @@ public class ImageListViewInitialWindowingController {
             // some external change to a cell's windowing parameters occured => we shouldn't
             // change that cell's windowing parameters anymore now
             ImageListViewCell sourceCell = (ImageListViewCell) evt.getSource();
-            alreadyInitializedImagesKeys.add(sourceCell.getDisplayedModelElement().getImageKey());
+            alreadyInitializedImagesKeys.add(sourceCell.getDisplayedModelElement().getKey());
         }
 
         @Override

@@ -31,7 +31,7 @@ public class WindowingUtil {
             cell.setWindowLocation((int) (usedRange.getMin() + usedRange.getMax()) / 2);
         } catch (Exception e) {
             e.printStackTrace();
-            System.out.println(elt.getImageKey());
+            System.out.println(elt.getImage().getImageKey());
             System.out.println(elt.getDicomImageMetaData().toString());
         }
     }

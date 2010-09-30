@@ -71,6 +71,11 @@ public class ViskitImageImpl implements ViskitImage {
     public RawImage getRawImage() {
         return rawImage;
     }
+    
+    @Override
+    public RawImage getProxyRawImage() {
+        return rawImage;
+    }
 
     @Override
     public boolean hasBufferedImage() {

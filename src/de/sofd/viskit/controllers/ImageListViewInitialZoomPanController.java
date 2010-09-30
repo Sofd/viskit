@@ -116,7 +116,7 @@ public class ImageListViewInitialZoomPanController {
     }
 
     public boolean isCellInitialized(ImageListViewCell cell) {
-        return alreadyInitializedImagesKeys.contains(cell.getDisplayedModelElement().getImageKey());
+        return alreadyInitializedImagesKeys.contains(cell.getDisplayedModelElement().getKey());
     }
 
     /**
@@ -127,7 +127,7 @@ public class ImageListViewInitialZoomPanController {
      */
     public void initializeCellImmediately(ImageListViewCell cell, boolean force) {
         if (controlledImageListView != null && cell.getOwner() == controlledImageListView) {
-            if (force || !alreadyInitializedImagesKeys.contains(cell.getDisplayedModelElement().getImageKey())) {
+            if (force || !alreadyInitializedImagesKeys.contains(cell.getDisplayedModelElement().getKey())) {
                 initializeCell(cell);
                 controlledImageListView.refreshCells();
             }
@@ -146,7 +146,7 @@ public class ImageListViewInitialZoomPanController {
             int count = controlledImageListView.getLength();
             for (int i = 0; i < count; i++) {
                 ImageListViewCell cell = controlledImageListView.getCell(i);
-                if (force || !alreadyInitializedImagesKeys.contains(cell.getDisplayedModelElement().getImageKey())) {
+                if (force || !alreadyInitializedImagesKeys.contains(cell.getDisplayedModelElement().getKey())) {
                     initializeCell(cell);
                 }
             }
@@ -216,7 +216,7 @@ public class ImageListViewInitialZoomPanController {
             inProgrammedChange = true;
             try {
                 ImageListViewModelElement elt = cell.getDisplayedModelElement();
-                Object imageKey = elt.getImageKey();
+                Object imageKey = elt.getKey();
                 if (alreadyInitializedImagesKeys.contains(imageKey)) {
                     return;
                 }
@@ -242,7 +242,7 @@ public class ImageListViewInitialZoomPanController {
             // some external change to a cell's zoom/pan occured => we shouldn't
             // change that cell anymore now
             ImageListViewCell sourceCell = (ImageListViewCell) evt.getSource();
-            alreadyInitializedImagesKeys.add(sourceCell.getDisplayedModelElement().getImageKey());
+            alreadyInitializedImagesKeys.add(sourceCell.getDisplayedModelElement().getKey());
         }
 
         @Override

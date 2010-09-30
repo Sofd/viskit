@@ -48,6 +48,23 @@ public interface ViskitImage {
     RawImage getRawImage();
 
     /**
+     * Return a RawImage object that's identical to #getRawImage() except for
+     * the pixel data, which may be null. This may be much more efficient to
+     * acquire than the whole image, and it enables the caller to learn about
+     * the metadata (width, height, pixel type, format etc.) of the image
+     * without having to get the pixel data itself. This may be used e.g. if the
+     * caller first wants to decide whether it supports processing the pixels of
+     * this RawImage, and only if it does, actually get the pixels and process
+     * them.
+     * <p>
+     * TODO: Get rid of this method again in favor of a "lazily initialized"
+     * {@link #getRawImage()} which only acquires e.g. the pixel data when
+     * {@link RawImage#getPixelData()} is first called (implementors will
+     * have to do that, obviously).
+     */
+    RawImage getProxyRawImage();
+
+    /**
      * If this.hasBufferedImage(), return the image of the model element as a
      * {@link BufferedImage}.
      * <p>
@@ -74,4 +91,6 @@ public interface ViskitImage {
      * @return
      */
     Object getImageKey();
+
+    //TODO: declare getHistogram(), get*PixelValuesRange in here as well
 }

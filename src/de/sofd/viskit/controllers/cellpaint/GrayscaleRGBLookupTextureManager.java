@@ -12,6 +12,7 @@ import javax.media.opengl.GL2;
 import org.apache.log4j.Logger;
 
 import de.sofd.viskit.image.RawImage;
+import de.sofd.viskit.image.ViskitImage;
 import de.sofd.viskit.model.ImageListViewModelElement;
 import de.sofd.viskit.ui.grayscale.GrayscaleUtil;
 
@@ -63,8 +64,9 @@ public class GrayscaleRGBLookupTextureManager {
         }
 
         int bitCount = 0;
-        if (elt.hasRawImage() && elt.isRawImagePreferable()) {
-            RawImage rawImgProxy = elt.getProxyRawImage();
+        ViskitImage img = elt.getImage();
+        if (img.hasRawImage() && img.isRawImagePreferable()) {
+            RawImage rawImgProxy = img.getProxyRawImage();
             if (rawImgProxy.getPixelFormat() == RawImage.PIXEL_FORMAT_LUMINANCE &&
                     (rawImgProxy.getPixelType() == RawImage.PIXEL_TYPE_SIGNED_16BIT || rawImgProxy.getPixelType() == RawImage.PIXEL_TYPE_UNSIGNED_16BIT)) {
                 bitCount = 16;

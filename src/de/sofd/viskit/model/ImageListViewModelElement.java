@@ -20,9 +20,31 @@ public interface ImageListViewModelElement {
 
     // TODO: make the other properties bean properties as well
 
-
     /**
-     * @return the image of the model element
+     * Unique, time-constant object identifying this model element
+     */
+    Object getKey();
+    
+    /**
+     * The current image of this model element.
+     * <p>
+     * The images and its getter methods will generally be implemented using a
+     * "lazy initialization" scheme, i.e. data is retrieved or computed only
+     * when a getter method that needs to return it is called the first time,
+     * and an attempt is made to retrieve only that data and nothing more (if
+     * retrieving more might be time-consuming). For example, the pixel data
+     * will only be retrieved when it is actually needed, and the
+     * getWidth()/getHeight() methods or the pixel format getter methods of the
+     * image may try to read that information from metadata that is available
+     * quickly, rather than loading the whole image into memory and determining
+     * the data from that. See the documentation of a specific implementation
+     * for details on how it implements this.
+     * <p>
+     * In asynchronous mode, methods of the returned image that depend on data
+     * that's loaded in the background may throw {@link NotInitializedException}
+     * (see {@link #setInitializationState(InitializationState)} for details)
+     * 
+     * @return the image
      */
     ViskitImage getImage();
 
@@ -36,7 +58,7 @@ public interface ImageListViewModelElement {
      * this RawImage, and only if it does, actually get the pixels and process
      * them.
      */
-    ViskitImage getProxyImage();
+    //ViskitImage getProxyImage();
 
     FloatRange getPixelValuesRange();
 
@@ -64,28 +86,28 @@ public interface ImageListViewModelElement {
      * e.g. "my image has finished loading" (state is set to INITIALIZED),
      * "there was an error" (state is set to ERROR) etc.
      * <p>
-     * A {@link ImageListView} listens for initializationState changes in any
-     * of its model elements and reacts (updates model element's display
+     * A {@link ImageListView} listens for initializationState changes in any of
+     * its model elements and reacts (updates model element's display
      * accordingly, e.g. with an hourglass or an error display).
      * <p>
      * The general contract here is that if the initialization state is set to
-     * INITIALIZED, a {@link ImageListView} that contains this model element
-     * may call all the data getter methods of the model elements (
-     * {@link #getImage()}, {@link #getRawImage()}, {@link #getRoiDrawing()},
-     * and DICOM data getter methods in subclasses) at any time, so they should
-     * operate quickly (the UI will block as long as they run). Generally this
-     * means that in INITIALIZED state, all the data that's returned by data
-     * getter methods is readily available for the element without having to
-     * obtain it from a slow backing store like the network or a slow filesystem
-     * (this may mean that the data is not available in an in-memory cache (this
-     * is what the {@link CachingDicomImageListViewModelElement} subclass does),
-     * but generally it is at the discretion of the model element what it
-     * considers "slow" and what not). As long as the state is not INITIALIZED
-     * (i.e., UNINITIALIZED or ERROR), the list won't call the data getter
-     * methods. In this case the model element may want to run some kind of
-     * background processing/thread (e.g. load the image from the backing
-     * store/network) to bring itself into a state where the data getter methods
-     * can operate quickly. When it has finished this task, it would set its
+     * INITIALIZED, a {@link ImageListView} that contains this model element may
+     * call all the data getter methods of the model elements (data getters of
+     * the {@link #getImage()}, and DICOM data getter methods in subclasses) at
+     * any time, so they should operate quickly (the UI will block as long as
+     * they run). Generally this means that in INITIALIZED state, all the data
+     * that's returned by data getter methods is readily available for the
+     * element without having to obtain it from a slow backing store like the
+     * network or a slow filesystem (this may mean that the data is not
+     * available in an in-memory cache (this is what the
+     * {@link CachingDicomImageListViewModelElement} subclass does), but
+     * generally it is at the discretion of the model element what it considers
+     * "slow" and what not). As long as the state is not INITIALIZED (i.e.,
+     * UNINITIALIZED or ERROR), the list won't call the data getter methods. In
+     * this case the model element may want to run some kind of background
+     * processing/thread (e.g. load the image from the backing store/network) to
+     * bring itself into a state where the data getter methods can operate
+     * quickly. When it has finished this task, it would set its
      * initializationState property to INITIALIZED (firing the corresponding
      * property change event) to indicate this state transition to the outside
      * (especially to any JImageLists that contain the model element).

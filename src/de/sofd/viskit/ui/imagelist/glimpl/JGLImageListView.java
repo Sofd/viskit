@@ -10,8 +10,6 @@ import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelEvent;
-import java.awt.geom.Point2D;
-import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Set;
@@ -41,14 +39,13 @@ import javax.swing.event.ChangeListener;
 import javax.swing.event.ListDataEvent;
 
 import org.apache.log4j.Logger;
-import org.dcm4che2.data.Tag;
 
 import de.sofd.lang.Runnable1;
 import de.sofd.util.IdentityHashSet;
 import de.sofd.util.IntRange;
 import de.sofd.util.Misc;
 import de.sofd.viskit.draw2d.gc.ViskitGC;
-import de.sofd.viskit.model.DicomImageListViewModelElement;
+import de.sofd.viskit.image.ViskitImage;
 import de.sofd.viskit.model.ImageListViewModelElement;
 import de.sofd.viskit.model.NotInitializedException;
 import de.sofd.viskit.model.ImageListViewModelElement.InitializationState;
@@ -334,21 +331,10 @@ public class JGLImageListView extends JImageListView {
 
     @Override
     public Dimension getUnscaledPreferredCellDisplayAreaSize(ImageListViewCell cell) {
-        int w, h;
-        ImageListViewModelElement elt = cell.getDisplayedModelElement();
-        if (elt instanceof DicomImageListViewModelElement) {
-            // performance optimization for this case -- read the values from DICOM metadata instead of getting the image
-            DicomImageListViewModelElement dicomElt = (DicomImageListViewModelElement) elt;
-            w = dicomElt.getDicomImageMetaData().getInt(Tag.Columns);
-            h = dicomElt.getDicomImageMetaData().getInt(Tag.Rows);
-        } else {
-            BufferedImage img = elt.getImage();
-            w = img.getWidth();
-            h = img.getHeight();
-        }
-        return new Dimension(w, h);
+        ViskitImage img = cell.getDisplayedModelElement().getImage();
+        return new Dimension(img.getWidth(), img.getHeight());
     }
-
+    
     @Override
     public void refreshCell(ImageListViewCell cell) {
         if (null == cellsViewer) {
@@ -383,32 +369,6 @@ public class JGLImageListView extends JImageListView {
 
     public GLAutoDrawable getCellsViewer() {
         return cellsViewer;
-    }
-
-    public int getOriginalImageWidth(ImageListViewCell cell) {
-        ImageListViewModelElement elt = cell.getDisplayedModelElement();
-        if (elt instanceof DicomImageListViewModelElement) {
-            // performance optimization for this case -- read the value from DICOM metadata instead of getting the image
-            DicomImageListViewModelElement dicomElt = (DicomImageListViewModelElement) elt;
-            return dicomElt.getDicomImageMetaData().getInt(Tag.Columns);
-        } else if (elt.hasRawImage() && elt.isRawImagePreferable()){
-            return elt.getRawImage().getWidth();
-        } else {
-            return elt.getImage().getWidth();
-        }
-    }
-
-    public int getOriginalImageHeight(ImageListViewCell cell) {
-        ImageListViewModelElement elt = cell.getDisplayedModelElement();
-        if (elt instanceof DicomImageListViewModelElement) {
-            // performance optimization for this case -- read the value from DICOM metadata instead of getting the image
-            DicomImageListViewModelElement dicomElt = (DicomImageListViewModelElement) elt;
-            return dicomElt.getDicomImageMetaData().getInt(Tag.Rows);
-        } else if (elt.hasRawImage() && elt.isRawImagePreferable()){
-            return elt.getRawImage().getHeight();
-        } else {
-            return elt.getImage().getHeight();
-        }
     }
 
     protected class GLEventHandler implements GLEventListener {

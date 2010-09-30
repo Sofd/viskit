@@ -8,11 +8,8 @@ import java.util.Map;
 
 import javax.media.opengl.GL2;
 
-import org.dcm4che2.data.Tag;
-
 import de.sofd.viskit.draw2d.gc.ViskitGC;
-import de.sofd.viskit.model.DicomImageListViewModelElement;
-import de.sofd.viskit.model.ImageListViewModelElement;
+import de.sofd.viskit.image.ViskitImage;
 import de.sofd.viskit.ui.imagelist.ImageListView;
 import de.sofd.viskit.ui.imagelist.ImageListViewCell;
 
@@ -55,8 +52,8 @@ public class ImageListViewRoiPaintController extends CellPaintControllerBase {
         try {
             Point2D centerOffset = cell.getCenterOffset();
             float scale = (float) cell.getScale();
-            float w2 = (float) getOriginalImageWidth(cell) * scale / 2;
-            float h2 = (float) getOriginalImageHeight(cell) * scale / 2;
+            float w2 = (float) cell.getDisplayedModelElement().getImage().getWidth() * scale / 2;
+            float h2 = (float) cell.getDisplayedModelElement().getImage().getHeight() * scale / 2;
             Dimension cellSize = cell.getLatestSize();
             gl.glTranslated(cellSize.getWidth() / 2, cellSize.getHeight() / 2, 0);
             gl.glTranslated(centerOffset.getX(), centerOffset.getY(), 0);
@@ -68,39 +65,14 @@ public class ImageListViewRoiPaintController extends CellPaintControllerBase {
         }
     }
     
-    protected int getOriginalImageWidth(ImageListViewCell cell) {
-        ImageListViewModelElement elt = cell.getDisplayedModelElement();
-        if (elt instanceof DicomImageListViewModelElement) {
-            // performance optimization for this case -- read the value from DICOM metadata instead of getting the image
-            DicomImageListViewModelElement dicomElt = (DicomImageListViewModelElement) elt;
-            return dicomElt.getDicomImageMetaData().getInt(Tag.Columns);
-        } else if (elt.hasRawImage() && elt.isRawImagePreferable()){
-            return elt.getRawImage().getWidth();
-        } else {
-            return elt.getImage().getWidth();
-        }
-    }
-
-    protected int getOriginalImageHeight(ImageListViewCell cell) {
-        ImageListViewModelElement elt = cell.getDisplayedModelElement();
-        if (elt instanceof DicomImageListViewModelElement) {
-            // performance optimization for this case -- read the value from DICOM metadata instead of getting the image
-            DicomImageListViewModelElement dicomElt = (DicomImageListViewModelElement) elt;
-            return dicomElt.getDicomImageMetaData().getInt(Tag.Rows);
-        } else if (elt.hasRawImage() && elt.isRawImagePreferable()){
-            return elt.getRawImage().getHeight();
-        } else {
-            return elt.getImage().getHeight();
-        }
-    }
-    
     private AffineTransform getDicomToUiTransform(ImageListViewCell cell) {
         double z = cell.getScale();
         return AffineTransform.getScaleInstance(z, z);
     }
 
     private Point2D getScaledImageSize(ImageListViewCell cell) {
-        return getDicomToUiTransform(cell).transform(new Point2D.Double(getOriginalImageWidth(cell), getOriginalImageHeight(cell)), null);
+        ViskitImage img = cell.getDisplayedModelElement().getImage();
+        return getDicomToUiTransform(cell).transform(new Point2D.Double(img.getWidth(), img.getHeight()), null);
     }
 
     protected Point2D getImageOffset(ImageListViewCell cell) {

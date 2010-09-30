@@ -53,7 +53,8 @@ import de.sofd.viskit.test.windowing.RawDicomImageReader;
  * property change event will be fired as specified in the
  * {@link #getInitializationState()} Javadoc. Lists that contain the element
  * will pick up that event and change their display of the corresponding cell
- * accordingly.
+ * accordingly. Asynchronous mode should generally be used in elements that
+ * may be loaded from a slow or high-latency backing store.
  * 
  * TODO: Optional caching of #getRawImage()?
  * 
@@ -63,6 +64,8 @@ public abstract class CachingDicomImageListViewModelElement extends AbstractImag
 
     protected int frameNumber = 0;
     protected int totalFrameNumber = -1;
+
+    protected ViskitImage image = new MyViskitImageImpl(); //TODO: must change when the frameNumber changes
 
     private final NumericPriorityMap<Object, DicomObject> dcmObjectCache;
 
@@ -96,7 +99,7 @@ public abstract class CachingDicomImageListViewModelElement extends AbstractImag
     }
     
     /**
-     * Caller must ensure to setInitializationState(UNINITIALIZED) only after getDicomObjectKey() et al. return
+     * Caller must ensure to setInitializationState(UNINITIALIZED) only after getKey() et al. return
      * correct, final values.
      */
     @Override
@@ -115,25 +118,25 @@ public abstract class CachingDicomImageListViewModelElement extends AbstractImag
             Runnable r = new Runnable() {
                 @Override
                 public void run() {
-                    logger.debug("" + getDicomObjectKey() + ": START background loading");
+                    logger.debug("" + getKey() + ": START background loading");
                     try {
                         DicomObject dcmObj;
                         //synchronized (dcmObjectCache) {  // not doing this b/c getBackendDicomObject() may block for a long time...so maybe two threads fetch the same dicom -- not a problem, right?
-                        dcmObj = dcmObjectCache.get(getDicomObjectKey());
+                        dcmObj = dcmObjectCache.get(getKey());
                         if (dcmObj == null) {
                             dcmObj = getBackendDicomObject();
-                            dcmObjectCache.put(getDicomObjectKey(), dcmObj, getInternalEffectivePriority());
+                            dcmObjectCache.put(getKey(), dcmObj, getInternalEffectivePriority());
                         }
                         //}
         
-                        DicomObject dcmMetadata = rawDicomImageMetadataCache.get(getDicomObjectKey());
+                        DicomObject dcmMetadata = rawDicomImageMetadataCache.get(getKey());
                         if (null == dcmMetadata) {
                             dcmMetadata = new BasicDicomObject();
                             dcmObj.subSet(0, Tag.PixelData - 1).copyTo(dcmMetadata);
-                            rawDicomImageMetadataCache.put(getDicomObjectKey(), dcmMetadata);
+                            rawDicomImageMetadataCache.put(getKey(), dcmMetadata);
                         }
                         
-                        logger.debug("" + getDicomObjectKey() + ": DONE background loading");
+                        logger.debug("" + getKey() + ": DONE background loading");
                         SwingUtilities.invokeLater(new Runnable() {  //TODO: this may create 100s of Runnables in a short time. use our own queue instead?
                             @Override
                             public void run() {
@@ -141,7 +144,7 @@ public abstract class CachingDicomImageListViewModelElement extends AbstractImag
                             }
                         });
                     } catch (final Exception e) {
-                        logger.error("Exception background-loading " + getDicomObjectKey() + ": " +
+                        logger.error("Exception background-loading " + getKey() + ": " +
                                      e.getLocalizedMessage() + ". Setting the model element to permanent error state.", e);
                         //TODO: support the notion of "temporary" errors, for which we would not change the initializationState?
                         SwingUtilities.invokeLater(new Runnable() {
@@ -157,7 +160,7 @@ public abstract class CachingDicomImageListViewModelElement extends AbstractImag
                         //- if we didn't log the error here, it would just be silently eaten by the RunnableFuture, and
                         //  we would have to call get() on the future at a later time (which we don't otherwise have to) just to obtain the exception
                         //Thus we catch any Error exception here, log it, and rethrow it
-                        logger.error("ERROR background-loading " + getDicomObjectKey() + ": " +
+                        logger.error("ERROR background-loading " + getKey() + ": " +
                                      e.getLocalizedMessage() + ". Setting the model element to permanent error state.", e);
                         SwingUtilities.invokeLater(new Runnable() {
                             @Override
@@ -171,7 +174,7 @@ public abstract class CachingDicomImageListViewModelElement extends AbstractImag
                 }
             };
             myBackgroundLoaderTask = imageFetchingJobsExecutor.submitWithPriority(r, getInternalEffectivePriority());
-            logger.debug("" + getDicomObjectKey() + ": QUEUED");
+            logger.debug("" + getKey() + ": QUEUED");
         }
     }
     
@@ -201,32 +204,32 @@ public abstract class CachingDicomImageListViewModelElement extends AbstractImag
             return;
         }
         this.asyncMode = asyncMode;
-        if (asyncMode && getInitializationState() == InitializationState.INITIALIZED && ! dcmObjectCache.contains(getDicomObjectKey())) {
+        if (asyncMode && getInitializationState() == InitializationState.INITIALIZED && ! dcmObjectCache.contains(getKey())) {
             setInitializationState(InitializationState.UNINITIALIZED);
-            logger.debug("" + getDicomObjectKey() + "=>async and wasn't cached");
+            logger.debug("" + getKey() + "=>async and wasn't cached");
         } else if (!asyncMode) {
             //async=>sync change. Need to remove myBackgroundLoaderTask from the queue, waiting for it to finish if necessary
             //  this code is somewhat beta, and will probably rarely be used
             if (null != myBackgroundLoaderTask) {
-                logger.debug("" + getDicomObjectKey() + "=>sync, null != myBLT");
+                logger.debug("" + getKey() + "=>sync, null != myBLT");
                 if (!imageFetchingJobsExecutor.remove(myBackgroundLoaderTask)) {
                     //myBackgroundLoaderTask no longer queued => either still running or already done
                     try {
-                        logger.debug("" + getDicomObjectKey() + "=>sync, job wasn't queued");
+                        logger.debug("" + getKey() + "=>sync, job wasn't queued");
                         long t0 = System.currentTimeMillis();
                         if (!myBackgroundLoaderTask.isDone()) {  //test not really necessary, get() will return immediately if isDone()
-                            logger.debug("" + getDicomObjectKey() + "=>sync, job wasn't done, get...");
+                            logger.debug("" + getKey() + "=>sync, job wasn't done, get...");
                             myBackgroundLoaderTask.get();
                         }
                         long t1 = System.currentTimeMillis();
-                        logger.debug("" + getDicomObjectKey() + "=>sync, done in " + (t1-t0) + " ms");
+                        logger.debug("" + getKey() + "=>sync, done in " + (t1-t0) + " ms");
                     } catch (InterruptedException e) {
                         //shouldn't happen.
                     } catch (ExecutionException e) {
                         //shouldn't happen.
                     }
                 } else {
-                    logger.debug("" + getDicomObjectKey() + "=>sync, job unqueued");
+                    logger.debug("" + getKey() + "=>sync, job unqueued");
                 }
                 
                 ///alternative approach? =>not really. too slow and we don't want to interfere with other lists' usage of the executor
@@ -242,7 +245,91 @@ public abstract class CachingDicomImageListViewModelElement extends AbstractImag
         }
     }
     
+    /**
+     * The current image of this model element.
+     * <p>
+     * The images and its getter methods are generally implemented using a
+     * "lazy initialization" scheme, i.e. data is retrieved or computed only
+     * when a getter method that needs to return it is called the first time,
+     * and an attempt is made to retrieve only that data and nothing more (if
+     * retrieving more might be time-consuming). For example, the pixel data
+     * will only be retrieved when it is actually needed, and the
+     * getWidth()/getHeight() methods or the pixel format getter methods of the
+     * image will read the width and height from the corresponding DICOM tags
+     * rather than retrieving the pixel data.
+     * <p>
+     * In async mode, methods of the returned image that depend on the DICOM
+     * object being loaded (e.g. pixel data getters) may throw
+     * {@link NotInitializedException} (see documentation of
+     * {@link ImageListViewModelElement#setInitializationState(de.sofd.viskit.model.ImageListViewModelElement.InitializationState)}
+     * for details).
+     */
+    @Override
+    public ViskitImage getImage() {
+        return image;
+    }
+
+    /**
+     * The ViskitImage handed out by {@link #getImage()}. Delegates its calls to
+     * the corresponding (non-public) methods of the model element.
+     * 
+     * @author olaf
+     */
+    protected class MyViskitImageImpl extends ViskitImageImpl {
+
+        public MyViskitImageImpl() {
+            super(null, (RawImage)null);  //we override all data getters and setters and don't use the superclass's fields
+        }
+        
+        @Override
+        public BufferedImage getBufferedImage() {
+            return CachingDicomImageListViewModelElement.this.getBufferedImage();
+        }
+
+        @Override
+        public Object getImageKey() {
+            return CachingDicomImageListViewModelElement.this.getImageKey();
+        }
+
+        @Override
+        public RawImage getRawImage() {
+            return CachingDicomImageListViewModelElement.this.getRawImage();
+        }
+
+        @Override
+        public boolean hasBufferedImage() {
+            return !hasRawImage();
+        }
+
+        @Override
+        public boolean hasRawImage() {
+            return CachingDicomImageListViewModelElement.this.hasRawImage();
+        }
+
+        @Override
+        public RawImage getProxyRawImage() {
+            return CachingDicomImageListViewModelElement.this.getProxyRawImage();
+        }
+        
+        @Override
+        public boolean isRawImagePreferable() {
+            return CachingDicomImageListViewModelElement.this.isRawImagePreferable();
+        }
+        
+        @Override
+        public int getWidth() {
+            return getDicomImageMetaData().getInt(Tag.Columns);
+        }
+        
+        @Override
+        public int getHeight() {
+            return getDicomImageMetaData().getInt(Tag.Rows);
+        }
+
+    }
+
     // TODO: frameNumber as c'tor parameter (we can't support later setFrameNumber() calls anyway b/c the keys would change)
+    // TODO: multiframe stuff is broken atm. due to ongoing refactoring
     
     /**
      * set the frame number this model element represents in case of a multiframe DICOM object. Initially the first
@@ -266,7 +353,7 @@ public abstract class CachingDicomImageListViewModelElement extends AbstractImag
    
     @Override
     public int getTotalFrameNumber() {
-        Object dcmKey = getDicomObjectKey();
+        Object dcmKey = getKey();
         Integer cached = frameCountByDcmObjectIdCache.get(dcmKey);
         if (cached == null) {
             if (totalFrameNumber == -1) {
@@ -313,19 +400,14 @@ public abstract class CachingDicomImageListViewModelElement extends AbstractImag
             }
         }
         catch (IOException e) {
-            throw new IllegalStateException("error reading DICOM object from " + getDicomObjectKey(), e);
+            throw new IllegalStateException("error reading DICOM object from " + getKey(), e);
         }
         return numFrames;
     }
 
-    public Object getImageKey() {
-        return getDicomObjectKey() + "#" + frameNumber;
+    protected Object getImageKey() {
+        return getKey() + "#" + frameNumber;
     }
-
-    /**
-     * @return the unique identifier of the DICOM object that this model element's image comes from
-     */
-    protected abstract Object getDicomObjectKey();
 
     /**
      * Extract from the backend and return the DicomObject. This method should not cache the
@@ -438,23 +520,23 @@ public abstract class CachingDicomImageListViewModelElement extends AbstractImag
 
     @Override
     public DicomObject getDicomObject() {
-        DicomObject result = dcmObjectCache.get(getDicomObjectKey());
+        DicomObject result = dcmObjectCache.get(getKey());
         if (result == null) {
             if (isAsyncMode()) {
                 throw new NotInitializedException();
             }
             result = getBackendDicomObject();
-            dcmObjectCache.put(getDicomObjectKey(), result, getInternalEffectivePriority());
+            dcmObjectCache.put(getKey(), result, getInternalEffectivePriority());
         }
         return result;
     }
 
     public boolean isDicomMetadataCached() {
-        return rawDicomImageMetadataCache.containsKey(getDicomObjectKey());
+        return rawDicomImageMetadataCache.containsKey(getKey());
     }
 
     public boolean isDicomObjectCached() {
-        return dcmObjectCache.contains(getDicomObjectKey());
+        return dcmObjectCache.contains(getKey());
     }
 
     public boolean isImageCached() {
@@ -463,14 +545,14 @@ public abstract class CachingDicomImageListViewModelElement extends AbstractImag
 
     @Override
     public DicomObject getDicomImageMetaData() {
-        DicomObject result = rawDicomImageMetadataCache.get(getDicomObjectKey());
+        DicomObject result = rawDicomImageMetadataCache.get(getKey());
         
         if (result == null) {
             if (isAsyncMode()) {
                 throw new NotInitializedException();
             }
             result = getBackendDicomImageMetaData();
-            rawDicomImageMetadataCache.put(getDicomObjectKey(), result);
+            rawDicomImageMetadataCache.put(getKey(), result);
         }
         return result;
     }
@@ -495,7 +577,8 @@ public abstract class CachingDicomImageListViewModelElement extends AbstractImag
         getBackendDicomObject().subSet(0, Tag.PixelData - 1).copyTo(result);  // make a deep copy so no reference to the PixelData is kept
         return result;
     }
-    
+
+    //TODO: move this to ViskitImage as well
     @Override
     public Histogram getHistogram() {
         if (this.histogram != null)
@@ -507,7 +590,7 @@ public abstract class CachingDicomImageListViewModelElement extends AbstractImag
         int max = (int)range.getMax();
 
         if (!hasRawImage() || !isRawImagePreferable()) {
-            BufferedImage bimg = getImage();
+            BufferedImage bimg = getBufferedImage();
             return new Histogram(bimg.getRaster(), new IntRange(min, max));
         }
             
@@ -528,8 +611,7 @@ public abstract class CachingDicomImageListViewModelElement extends AbstractImag
 
     //TODO: move the following methods into a inner-class ViskitImage implementation, which is returned by the overridden getImage() then?
     
-    @Override
-    public BufferedImage _getImage() {
+    protected BufferedImage getBufferedImage() {
         BufferedImage result = imageCache.get(getImageKey());
         if (result == null) {
             if (isAsyncMode()) {
@@ -556,18 +638,15 @@ public abstract class CachingDicomImageListViewModelElement extends AbstractImag
         return result;
     }
 
-    @Override
-    public boolean hasRawImage() {
+    protected boolean hasRawImage() {
         return null != maybeGetProxyRawImage();
     }
 
-    @Override
-    public boolean isRawImagePreferable() {
+    protected boolean isRawImagePreferable() {
         return hasRawImage();
     }
     
-    @Override
-    public RawImage getRawImage() {
+    protected RawImage getRawImage() {
         RawImageImpl result = (RawImageImpl) getProxyRawImage();
 
         DicomObject dicomObject = getDicomObject();
@@ -590,22 +669,17 @@ public abstract class CachingDicomImageListViewModelElement extends AbstractImag
         }
         return result;
     }
+    
 
-    @Override
-    public ViskitImage getImage() {
-        // TODO return inner-class ViskitImage with above methods
-        return null;
-    }
-
-    public ViskitImage getProxyImage() {
-        ViskitImageImpl result = maybeGetProxyImage();
+    protected RawImage getProxyRawImage() {
+        RawImageImpl result = maybeGetProxyRawImage();
         if (null == result) {
             throw new IllegalStateException("this model element can't provide a raw image");
         }
         return result;
     }
 
-    protected ViskitImageImpl maybeGetProxyImage() {
+    protected RawImageImpl maybeGetProxyRawImage() {
         DicomObject imgMetadata = getDicomImageMetaData();
         
         String transferSyntaxUID = imgMetadata.getString(Tag.TransferSyntaxUID);
@@ -629,7 +703,7 @@ public abstract class CachingDicomImageListViewModelElement extends AbstractImag
         int width = imgMetadata.getInt(Tag.Columns);
         int height = imgMetadata.getInt(Tag.Rows);
         
-        return new ViskitImageImpl(getImageKey(), new RawImageImpl(width, height, pixelFormat, pixelType, null));
+        return new RawImageImpl(width, height, pixelFormat, pixelType, null);
     }
 
     @Override
@@ -693,7 +767,7 @@ public abstract class CachingDicomImageListViewModelElement extends AbstractImag
                 }
             }
         } else {
-            BufferedImage bimg = getImage();
+            BufferedImage bimg = getBufferedImage();
 
             if (bimg.getColorModel().getColorSpace().getType() == ColorSpace.TYPE_GRAY) {
 
@@ -778,7 +852,7 @@ public abstract class CachingDicomImageListViewModelElement extends AbstractImag
                 //myBackgroundLoaderTask isn't currently running or waiting -- no error.
             }
         }
-        dcmObjectCache.setPriority(getDicomObjectKey(), internalPrio);
+        dcmObjectCache.setPriority(getKey(), internalPrio);
     }
     
     /**

@@ -13,7 +13,6 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionAdapter;
 import java.awt.event.MouseWheelEvent;
 import java.awt.event.MouseWheelListener;
-import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 import java.util.Collection;
 
@@ -30,11 +29,9 @@ import javax.swing.event.ListDataEvent;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 
-import org.dcm4che2.data.Tag;
-
 import de.sofd.util.Misc;
 import de.sofd.viskit.controllers.ImageListViewInitialZoomPanController;
-import de.sofd.viskit.model.DicomImageListViewModelElement;
+import de.sofd.viskit.image.ViskitImage;
 import de.sofd.viskit.model.ImageListViewModelElement;
 import de.sofd.viskit.ui.imagelist.ImageListViewCell;
 import de.sofd.viskit.ui.imagelist.JImageListView;
@@ -438,19 +435,8 @@ public class JListImageListView extends JImageListView {
     
     @Override
     public Dimension getUnscaledPreferredCellDisplayAreaSize(ImageListViewCell cell) {
-        int w, h;
-        ImageListViewModelElement elt = cell.getDisplayedModelElement();
-        if (elt instanceof DicomImageListViewModelElement) {
-            // performance optimization for this case -- read the values from DICOM metadata instead of getting the image
-            DicomImageListViewModelElement dicomElt = (DicomImageListViewModelElement) elt;
-            w = dicomElt.getDicomImageMetaData().getInt(Tag.Columns);
-            h = dicomElt.getDicomImageMetaData().getInt(Tag.Rows);
-        } else {
-            BufferedImage img = elt.getImage();
-            w = img.getWidth();
-            h = img.getHeight();
-        }
-        return new Dimension(w, h);
+        ViskitImage img = cell.getDisplayedModelElement().getImage();
+        return new Dimension(img.getWidth(), img.getHeight());
     }
     
     @Override

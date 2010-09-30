@@ -25,6 +25,7 @@ import com.sun.opengl.util.texture.TextureCoords;
 import de.sofd.math.LinAlg;
 import de.sofd.util.FloatRange;
 import de.sofd.viskit.image.RawImage;
+import de.sofd.viskit.image.ViskitImage;
 import de.sofd.viskit.image3D.jogl.util.GLShader;
 import de.sofd.viskit.image3D.jogl.util.ShaderManager;
 import de.sofd.viskit.model.DicomImageListViewModelElement;
@@ -63,32 +64,6 @@ public class ImageListViewImagePaintController extends CellPaintControllerBase {
     public ImageListViewImagePaintController(ImageListView controlledImageListView, int zOrder) {
         super(controlledImageListView, zOrder);
     }
-
-    public int getOriginalImageWidth(ImageListViewCell cell) {
-        ImageListViewModelElement elt = cell.getDisplayedModelElement();
-        if (elt instanceof DicomImageListViewModelElement) {
-            // performance optimization for this case -- read the value from DICOM metadata instead of getting the image
-            DicomImageListViewModelElement dicomElt = (DicomImageListViewModelElement) elt;
-            return dicomElt.getDicomImageMetaData().getInt(Tag.Columns);
-        } else if (elt.hasRawImage() && elt.isRawImagePreferable()){
-            return elt.getRawImage().getWidth();
-        } else {
-            return elt.getImage().getWidth();
-        }
-    }
-
-    public int getOriginalImageHeight(ImageListViewCell cell) {
-        ImageListViewModelElement elt = cell.getDisplayedModelElement();
-        if (elt instanceof DicomImageListViewModelElement) {
-            // performance optimization for this case -- read the value from DICOM metadata instead of getting the image
-            DicomImageListViewModelElement dicomElt = (DicomImageListViewModelElement) elt;
-            return dicomElt.getDicomImageMetaData().getInt(Tag.Rows);
-        } else if (elt.hasRawImage() && elt.isRawImagePreferable()){
-            return elt.getRawImage().getHeight();
-        } else {
-            return elt.getImage().getHeight();
-        }
-    }
     
     ///////////// OpenGL rendering
     
@@ -118,6 +93,9 @@ public class ImageListViewImagePaintController extends CellPaintControllerBase {
 
     @Override
     protected void paintGL(ImageListViewCell cell, GL2 gl, Map<String, Object> sharedContextData) {
+        final ImageListViewModelElement elt = cell.getDisplayedModelElement();
+        final ViskitImage img = elt.getImage();
+        
         Dimension cellSize = cell.getLatestSize();
         gl.glPushMatrix();
         try {
@@ -135,6 +113,8 @@ public class ImageListViewImagePaintController extends CellPaintControllerBase {
                 logger.error("binding the rescale GL shader failed, trying to compile it anew", e);
                 initializeGLShader(gl);
             }
+            //TODO: reuse the pixelTransform stuff from the J2D renderer (tryWindowRawImage()) and use only that in the
+            // shader rather than the plethora of shader variables we have now
             rescaleShader.bindUniform("tex", 1);
             if (cell.isOutputGrayscaleRGBs()) {
                 GrayscaleRGBLookupTextureManager.bindGrayscaleRGBLutTexture(gl, GL2.GL_TEXTURE3, sharedContextData, cell.getDisplayedModelElement());
@@ -172,7 +152,6 @@ public class ImageListViewImagePaintController extends CellPaintControllerBase {
                 // HACK HACK: Apply DICOM rescale slope/intercept values if present. TODO: DICOM-specific code doesn't belong here?
                 // TODO: this will cause the "optimal windowing" parameters as calculated by e.g. ImageListViewInitialWindowingController
                 // to produce wrongly windowed images. Happens e.g. with the Charite dental images.
-                ImageListViewModelElement elt = cell.getDisplayedModelElement();
                 if (elt instanceof DicomImageListViewModelElement) {
                     try {
                         DicomImageListViewModelElement delt = (DicomImageListViewModelElement) elt;
@@ -195,7 +174,7 @@ public class ImageListViewImagePaintController extends CellPaintControllerBase {
             gl.glTexEnvi(GL2.GL_TEXTURE_ENV, GL2.GL_TEXTURE_ENV_MODE, gl.GL_REPLACE);
             TextureCoords coords = texRef.getCoords();
             gl.glColor3f(0, 1, 0);
-            float w2 = (float) getOriginalImageWidth(cell) / 2, h2 = (float) getOriginalImageHeight(cell) / 2;
+            float w2 = (float) img.getWidth() / 2, h2 = (float) img.getHeight() / 2;
             gl.glBegin(GL2.GL_QUADS);
             // TODO: wrong orientation here? check visually!
             gl.glTexCoord2f(coords.left(), coords.top());
@@ -241,7 +220,8 @@ public class ImageListViewImagePaintController extends CellPaintControllerBase {
     }
 
     public Point2D getScaledImageSize(ImageListViewCell cell) {
-        return getDicomToUiTransform(cell).transform(new Point2D.Double(getOriginalImageWidth(cell), getOriginalImageHeight(cell)), null);
+        ViskitImage img = cell.getDisplayedModelElement().getImage();
+        return getDicomToUiTransform(cell).transform(new Point2D.Double(img.getWidth(), img.getHeight()), null);
     }
     
     protected AffineTransform getDicomToUiTransform(ImageListViewCell cell) {
@@ -256,7 +236,7 @@ public class ImageListViewImagePaintController extends CellPaintControllerBase {
         } else {
             // TODO: caching of windowed images, probably using
             //       displayedCell.getDisplayedModelElement().getImageKey() and the windowing parameters as the cache key
-            BufferedImage srcImg = displayedCell.getDisplayedModelElement().getImage();
+            BufferedImage srcImg = displayedCell.getDisplayedModelElement().getImage().getBufferedImage();
             // TODO: use the model element's RawImage instead of the BufferedImage when possible
             ///*
             if (srcImg.getColorModel().getColorSpace().getType() == ColorSpace.TYPE_GRAY) {
@@ -280,7 +260,8 @@ public class ImageListViewImagePaintController extends CellPaintControllerBase {
 
     private BufferedImage tryWindowRawImage(ImageListViewCell displayedCell) {
         ImageListViewModelElement elt = displayedCell.getDisplayedModelElement();
-        if (!(elt.hasRawImage() && elt.isRawImagePreferable())) {
+        ViskitImage img = elt.getImage();
+        if (!(img.hasRawImage() && img.isRawImagePreferable())) {
             return null;
         }
         
@@ -330,7 +311,7 @@ public class ImageListViewImagePaintController extends CellPaintControllerBase {
             LinAlg.matrMult1D(new float[]{256, 0}, pixelTransform, pixelTransform);
         }
         
-        RawImage rimg = elt.getRawImage();
+        RawImage rimg = img.getRawImage();
         if (rimg.getPixelFormat() != RawImage.PIXEL_FORMAT_LUMINANCE) {
             return null;  // can't window raw RGB images for now
         } else {

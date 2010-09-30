@@ -16,8 +16,8 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -37,8 +37,6 @@ import javax.swing.JToolBar;
 import javax.swing.ListModel;
 import javax.swing.ListSelectionModel;
 import javax.swing.SwingUtilities;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 
@@ -812,7 +810,7 @@ public class JListImageListTestApp {
                     final DicomImageListViewModelElement elt = (DicomImageListViewModelElement) cell.getDisplayedModelElement();
                     DicomObject dicomImageMetaData = elt.getDicomImageMetaData();
                     return new String[] {
-                            "" + elt.getImageKey(),
+                            "" + elt.getImage().getImageKey(),
                             "Frame: " + elt.getFrameNumber()+"/"+(elt.getTotalFrameNumber()-1),
                             "PN: " + dicomImageMetaData.getString(Tag.PatientName),
                             "SL: " + dicomImageMetaData.getString(Tag.SliceLocation),

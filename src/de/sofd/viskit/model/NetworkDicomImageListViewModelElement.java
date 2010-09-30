@@ -28,6 +28,7 @@ import javax.imageio.stream.FileCacheImageInputStream;
  * @author oliver
  */
 public class NetworkDicomImageListViewModelElement extends CachingDicomImageListViewModelElement {
+    //TODO: this class is probably broken atm. due to model layer refactoring work
 
     private static final Logger logger = Logger.getLogger(NetworkDicomImageListViewModelElement.class);
 
@@ -207,7 +208,7 @@ public class NetworkDicomImageListViewModelElement extends CachingDicomImageList
     }
     
     @Override
-    public Object getDicomObjectKey() {
+    public Object getKey() {
         return url;
     }
 

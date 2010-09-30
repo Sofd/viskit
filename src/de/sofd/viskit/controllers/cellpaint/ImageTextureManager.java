@@ -14,6 +14,7 @@ import com.sun.opengl.util.texture.TextureData;
 import com.sun.opengl.util.texture.awt.AWTTextureIO;
 
 import de.sofd.viskit.image.RawImage;
+import de.sofd.viskit.image.ViskitImage;
 import de.sofd.viskit.model.ImageListViewModelElement;
 
 /**
@@ -75,20 +76,16 @@ public class ImageTextureManager {
             this.maxMemConsumption = maxMemConsumption;
         }
 
-        public boolean containsTextureFor(ImageListViewModelElement elt) {
-            return texRefsByImageKey.containsKey(elt.getImageKey());
+        public boolean containsTextureFor(ViskitImage img) {
+            return texRefsByImageKey.containsKey(img.getImageKey());
         }
 
-        public TextureRef getTexRef(ImageListViewModelElement elt) {
-            return texRefsByImageKey.get(elt.getImageKey());
+        public TextureRef getTexRef(ViskitImage img) {
+            return texRefsByImageKey.get(img.getImageKey());
         }
 
-        public TextureRef getTexRef(Object imageKey) {
-            return texRefsByImageKey.get(imageKey);
-        }
-
-        public void putTexRef(ImageListViewModelElement elt, TextureRef texRef, GL gl) {
-            texRefsByImageKey.put(elt.getImageKey(), texRef);
+        public void putTexRef(ViskitImage img, TextureRef texRef, GL gl) {
+            texRefsByImageKey.put(img.getImageKey(), texRef);
             totalMemConsumption += texRef.getMemorySize();
             freeExcessTextureMemory(gl);
         }
@@ -114,7 +111,17 @@ public class ImageTextureManager {
 
     private static final String TEX_STORE = "texturesStore";
 
+    /**
+     * Bind a 2D texture that contains the current image of elt into gl/texUnit.
+     * 
+     * @param gl
+     * @param texUnit
+     * @param sharedContextData
+     * @param elt
+     * @return
+     */
     public static TextureRef bindImageTexture(GL2 gl, int texUnit, Map<String, Object> sharedContextData, ImageListViewModelElement elt/*, boolean outputGrayscaleRGBs*/) {
+        ViskitImage eltImage = elt.getImage();
         TextureRefStore texRefStore = (TextureRefStore) sharedContextData.get(TEX_STORE);
         if (null == texRefStore) {
             System.out.println("CREATING NEW TextureRefStore");
@@ -135,10 +142,10 @@ public class ImageTextureManager {
             texRefStore = new TextureRefStore(texMemInMB*1024*1024);  // <<== configure max. GL texture memory consumption here (for now)
             sharedContextData.put(TEX_STORE, texRefStore);
         }
-        TextureRef texRef = texRefStore.getTexRef(elt);
+        TextureRef texRef = texRefStore.getTexRef(eltImage);
         
         if (null == texRef) {
-            logger.debug("need to create texture for: " + elt.getImageKey());
+            logger.debug("need to create texture for: " + eltImage.getImageKey());
             // TODO: maybe strive to allocate textures with non-normalized, integer-valued texel values, which
             // is recommended by nVidia for 12-bit grayscale displays to preserve image fidelity (but it really
             // shouldn't make a difference in my opinion -- single precision floats normalized to [0,1] texel
@@ -148,12 +155,12 @@ public class ImageTextureManager {
             // for details
             Texture imageTexture = null;
             float preScale = 1.0F, preOffset = 0.0F;
-            if (elt.hasRawImage() && elt.isRawImagePreferable()) {
-                RawImage rawImgProxy = elt.getProxyRawImage();
+            if (eltImage.hasRawImage() && eltImage.isRawImagePreferable()) {
+                RawImage rawImgProxy = eltImage.getProxyRawImage();
                 if (rawImgProxy.getPixelFormat() == RawImage.PIXEL_FORMAT_LUMINANCE &&
                         rawImgProxy.getPixelType() == RawImage.PIXEL_TYPE_SIGNED_16BIT) {
                     logger.debug("(creating texture from raw 16-bit signed image pixel data)");
-                    RawImage rawImg = elt.getRawImage();
+                    RawImage rawImg = eltImage.getRawImage();
                     TextureData imageTextureData =
                         new TextureData(  GL2.GL_LUMINANCE16F, // int internalFormat,  // GL_*_SNORM result in GL_INVALID_ENUM and all-white texels on tack (GeForce 8600 GT/nvidia 190.42)
                                           rawImg.getWidth(), // int width,
@@ -175,7 +182,7 @@ public class ImageTextureManager {
                 } else if (rawImgProxy.getPixelFormat() == RawImage.PIXEL_FORMAT_LUMINANCE &&
                            rawImgProxy.getPixelType() == RawImage.PIXEL_TYPE_UNSIGNED_16BIT) {
                     logger.debug("(creating texture from raw 16-bit unsigned image pixel data)");
-                    RawImage rawImg = elt.getRawImage();
+                    RawImage rawImg = eltImage.getRawImage();
                     TextureData imageTextureData =
                         new TextureData(  GL2.GL_LUMINANCE16F, // int internalFormat,  // GL_*_SNORM result in GL_INVALID_ENUM and all-white texels on tack (GeForce 8600 GT/nvidia 190.42)
                                           rawImg.getWidth(), // int width,
@@ -197,7 +204,7 @@ public class ImageTextureManager {
                 } else if (rawImgProxy.getPixelFormat() == RawImage.PIXEL_FORMAT_LUMINANCE &&
                            rawImgProxy.getPixelType() == RawImage.PIXEL_TYPE_UNSIGNED_12BIT) {
                     logger.debug("(creating texture from raw 12-bit unsigned image pixel data)");
-                    RawImage rawImg = elt.getRawImage();
+                    RawImage rawImg = eltImage.getRawImage();
                     TextureData imageTextureData =
                         new TextureData(  GL2.GL_LUMINANCE16, // NOT GL_LUMINANCE12 b/c pixelType is 16-bit and we'd thus lose precision
                                           rawImg.getWidth(), // int width,
@@ -222,7 +229,7 @@ public class ImageTextureManager {
             if (null == imageTexture) {
                 logger.debug("(creating texture from AWT image (fallback -- inefficient))");
                 //TextureData imageTextureData = AWTTextureIO.newTextureData(elt.getImage(), true);  // with mipmapping
-                TextureData imageTextureData = AWTTextureIO.newTextureData(elt.getImage(), false);   // w/o mipmapping
+                TextureData imageTextureData = AWTTextureIO.newTextureData(eltImage.getBufferedImage(), false);   // w/o mipmapping
                 imageTextureData.flush();
                 gl.glActiveTexture(texUnit);
                 imageTexture = new Texture(imageTextureData);
@@ -232,7 +239,7 @@ public class ImageTextureManager {
                                     imageTexture.getEstimatedMemorySize(),
                                     preScale,
                                     preOffset);
-            texRefStore.putTexRef(elt, texRef, gl);
+            texRefStore.putTexRef(eltImage, texRef, gl);
             logger.debug("GL texture memory consumption now (est.): " + (texRefStore.getTotalMemConsumption()/1024/1024) + " MB");
         }
         gl.glEnable(GL.GL_TEXTURE_2D);
