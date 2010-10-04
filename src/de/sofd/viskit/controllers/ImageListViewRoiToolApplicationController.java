@@ -6,8 +6,8 @@ import de.sofd.draw2d.viewer.tools.DrawingViewerTool;
 import de.sofd.draw2d.viewer.tools.SelectorTool;
 import de.sofd.draw2d.viewer.tools.TagNames;
 import de.sofd.viskit.ui.RoiToolPanel;
+import de.sofd.viskit.ui.imagelist.ImageListView;
 import de.sofd.viskit.ui.imagelist.ImageListViewCell;
-import de.sofd.viskit.ui.imagelist.JImageListView;
 import de.sofd.viskit.ui.imagelist.event.ImageListViewCellAddEvent;
 import de.sofd.viskit.ui.imagelist.event.ImageListViewCellRemoveEvent;
 import de.sofd.viskit.ui.imagelist.event.ImageListViewEvent;
@@ -34,7 +34,7 @@ public class ImageListViewRoiToolApplicationController {
 
     static final Logger logger = Logger.getLogger(ImageListViewRoiToolApplicationController.class);
 
-    private final List<JImageListView> lists = new ArrayList<JImageListView>();
+    private final List<ImageListView> lists = new ArrayList<ImageListView>();
     private RoiToolPanel roiToolPanel;
     private boolean enabled = true;
     public static final String PROP_ENABLED = "enabled";
@@ -42,7 +42,7 @@ public class ImageListViewRoiToolApplicationController {
     public ImageListViewRoiToolApplicationController() {
     }
 
-    public ImageListViewRoiToolApplicationController(JImageListView... lists) {
+    public ImageListViewRoiToolApplicationController(ImageListView... lists) {
         setLists(lists);
     }
 
@@ -51,8 +51,8 @@ public class ImageListViewRoiToolApplicationController {
      *
      * @return the value of lists
      */
-    public JImageListView[] getLists() {
-        return (JImageListView[]) lists.toArray(new JImageListView[0]);
+    public ImageListView[] getLists() {
+        return (ImageListView[]) lists.toArray(new ImageListView[0]);
     }
 
     /**
@@ -60,10 +60,10 @@ public class ImageListViewRoiToolApplicationController {
      *
      * @param lists new value of lists
      */
-    public void setLists(JImageListView[] lists) {
+    public void setLists(ImageListView[] lists) {
         disconnectUiElements();
         this.lists.clear();
-        for (JImageListView lv : lists) {
+        for (ImageListView lv : lists) {
             this.lists.add(lv);
         }
         connectUiElements();
@@ -75,7 +75,7 @@ public class ImageListViewRoiToolApplicationController {
      * @param index
      * @return the value of lists at specified index
      */
-    public JImageListView getLists(int index) {
+    public ImageListView getLists(int index) {
         return this.lists.get(index);
     }
 
@@ -124,7 +124,7 @@ public class ImageListViewRoiToolApplicationController {
             return;
         }
         this.roiToolPanel.addPropertyChangeListener(roiToolChangeHandler);
-        for (JImageListView lv : this.lists) {
+        for (ImageListView lv : this.lists) {
             for (int i = 0; i < lv.getLength(); i++) {
                 lv.getElementAt(i).getRoiDrawing().addDrawingListener(drawingEventHandler);
             }
@@ -138,7 +138,7 @@ public class ImageListViewRoiToolApplicationController {
             return;
         }
         this.roiToolPanel.removePropertyChangeListener(roiToolChangeHandler);
-        for (JImageListView lv : this.lists) {
+        for (ImageListView lv : this.lists) {
             for (int i = 0; i < lv.getLength(); i++) {
                 lv.getElementAt(i).getRoiDrawing().removeDrawingListener(drawingEventHandler);
             }
@@ -185,7 +185,7 @@ public class ImageListViewRoiToolApplicationController {
             //disconnectUiElements();
             //connectUiElements();
             // same effect more efficiently:
-            JImageListView list = e.getSource();
+            ImageListView list = e.getSource();
             if (e instanceof ImageListViewCellAddEvent) {
                 ImageListViewCellAddEvent cae = (ImageListViewCellAddEvent) e;
                 ImageListViewCell cell = cae.getCell();
@@ -203,7 +203,7 @@ public class ImageListViewRoiToolApplicationController {
     private PropertyChangeListener listModelChangeHandler = new PropertyChangeListener() {
         @Override
         public void propertyChange(PropertyChangeEvent evt) {
-            if (! JImageListView.PROP_MODEL.equals(evt.getPropertyName())) {
+            if (! ImageListView.PROP_MODEL.equals(evt.getPropertyName())) {
                 return;
             }
             disconnectUiElements();
@@ -222,7 +222,7 @@ public class ImageListViewRoiToolApplicationController {
     public void activateToolClass(Class<? extends DrawingViewerTool> toolClass) {
         if (!isEnabled()) { return; }
         logger.debug("activating tool on all roiDrawingViewers: " + toolClass);
-        for (JImageListView lv : lists) {
+        for (ImageListView lv : lists) {
             for (int i = 0; i < lv.getLength(); i++) {
                 activateToolClassOnCell(toolClass, lv.getCell(i));
             }

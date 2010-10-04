@@ -1,0 +1,98 @@
+Es sollten priorisiert die Bilder gecached werden, die sichtbar
+sind. Idealerweise sollten auch Bilder, die in der Nähe des sichtbaren
+Intervalls sind, noch mit höherer Priorität gecached werden als weit
+davon entfernte Bilder.
+
+=> Cache mit Priorität pro Element nötig. Bei Speichermangel (Cache am
+Anschlag) würden Elemente mit niedrigerer Prio immer bevorzugt vor
+solchen mit hoher prio entfernt (evicted) werden
+
+=> Problem: eigentlich muss die Liste den Cache kennen
+
+   - machen wir nicht, statt dessen Methode setPriority(double value)
+     auf ILVModelElement, mit dem die Liste auf Elementen die Prio
+     setzen kann
+
+   - ein Element kann in mehreren Listen sein => die Methode sollte
+     setPriority(Object source, double value) heißen (source wäre
+     z.Zt. immer eine Instanz von ILV, Object statt ILV verwendet für
+     evtl. bessere Erweiterbarkeit und weil wir hier eh keine Methoden
+     von ILV aufrufen müssen). Die effektive Prio eines Elements wäre
+     dann der Maximalwert der Prios für alle sources, oder 0
+     (Defaultwert). Zusätzliche Methode: removePriority(Object source)
+     (wenn das Element aus einer Liste (source) entfernt wird)
+
+=> neue Methoden in ILVModelElement:
+
+   setPriority(Object source, double value);
+   removePriority(Object source);
+
+Bis auf weiteres folgende Policy beim Setzen der Prios:
+
+Die Listen setzen die Prios aller sichtbaren Elemente auf 10, die der
+anderen Elemente auf 0. Impl. als Seiteneffekt in der
+display()/paint()-Methode. Darauf achten, bei vorher sichtbaren, neu
+unsichtbaren Elementen die Prio aktiv auf 0 (oder vielleicht auf einen
+Wert abhängig von der Entfernung zu den sichtbaren Zellen[1])
+zurückzusetzen. => die Liste muss sich merken, welche Elemente zuletzt
+angezeigt wurden.
+
+CachingILVModelElement würde das Caching implementieren
+(ILVModelElement-Klassen, die nicht von CachingILVModelElement erben,
+würden die Priority-Werte ignorieren)
+
+Der Cache selbst war bisher als LinkedHashMap implementiert. Statt
+dessen wird eine neue, Viskit-(oder util-?)eigene Klasse verwendet,
+die die prioritätsgesteuerte Eviction-Policy berücksichtigt:
+
+class PriorityCache<K,V> {
+
+    public void put(K k, V v, double priority);
+
+
+    public V get(K k);
+
+    /**
+     * Doesn't do anything if k isn't currently stored. The caller
+     * should be aware of that if needed.
+     */
+    public void setPriority(K k, double priority);
+
+
+    // the cache size at which eviction occurs should no longer be
+    // determined by number of elements, but by memory consumption.
+    // For that to work, instances of this class should be
+    // parameterizable with a de.sofd.long.Function1<V,int> that gives
+    // the memory consumption for an value in the cache. (similar to
+    // the texture cache in ImageTextureManager) (ABER TODO: im
+    // Uninitialized-State ist die Groesse nicht ermittelbar...)
+
+    // priority-based eviction policy: when eviction occurs, elements
+    // with the lowest priority will be evicted first
+}
+
+
+CachingILVModelElement sollte den Cache nicht mehr in einer privaten
+statischen Variable halten, sondern in einer Instanzvariable, die
+optional aus einem Konstruktorparameter initialisiert werden kann und
+per Default auf ein in einer separaten Klassen verwaltetes Singleton
+gesetzt wird. Auf diese Weise können Viskit-Benutzer bei Bedarf eigene
+Caches konfigurieren, ohne an den Default-Cache-Properties drehen zu
+müssen.
+
+
+[1] hierbei vorher unerwünschte Effekte überlegen. Wenn ein Element
+erst sichtbar ist, dann "knapp" unsichtbar wird (=> Prio auf hohen
+Wert < 10 gesetzt), und dann "weniger knapp" unsichtbar wird, dann
+könnte es passieren, dass beim 2. Aufruf das Element nicht mehr in der
+von der Liste verwalteten "Menge der zuletzt sichtbaren Elemente" drin
+ist und deshalb seine Prio nicht mehr geupdatet wird => die Prio
+bleibt auf dem hohen Wert < 10, auch wenn das Element sich beliebig
+weit vom Sichtbarkeitsintervall entfernt
+
+
+
+==> 7.9.2010: Alles implementiert bis auf Prio-Setzung auf Wert
+zwischen 0 und 10 bei Elementen, die "knapp unsichtbar" sind
+(Prio-Setzung auf 10 bei Sichtbarkeit und 0 bei Unsichtbarkeit ist
+implementiert)

@@ -13,8 +13,8 @@ import com.sun.opengl.util.gl2.GLUT;
 
 import de.sofd.viskit.model.ImageListViewModelElement;
 import de.sofd.viskit.model.ImageListViewModelElement.InitializationState;
+import de.sofd.viskit.ui.imagelist.ImageListView;
 import de.sofd.viskit.ui.imagelist.ImageListViewCell;
-import de.sofd.viskit.ui.imagelist.JImageListView;
 
 /**
  * Cell paint controller that draws indications into a cell if the cell's model
@@ -27,15 +27,15 @@ import de.sofd.viskit.ui.imagelist.JImageListView;
 public class ImageListViewInitStateIndicationPaintController extends CellPaintControllerBase {
     
     public ImageListViewInitStateIndicationPaintController() {
-        this(null, JImageListView.PAINT_ZORDER_LABELS);
+        this(null, ImageListView.PAINT_ZORDER_LABELS);
     }
 
-    public ImageListViewInitStateIndicationPaintController(JImageListView controlledImageListView) {
-        super(controlledImageListView, JImageListView.PAINT_ZORDER_LABELS);
+    public ImageListViewInitStateIndicationPaintController(ImageListView controlledImageListView) {
+        super(controlledImageListView, ImageListView.PAINT_ZORDER_LABELS);
         setEnabled(true);
     }
 
-    public ImageListViewInitStateIndicationPaintController(JImageListView controlledImageListView, int zOrder) {
+    public ImageListViewInitStateIndicationPaintController(ImageListView controlledImageListView, int zOrder) {
         super(controlledImageListView, zOrder);
         setEnabled(true);
     }
@@ -120,11 +120,20 @@ public class ImageListViewInitStateIndicationPaintController extends CellPaintCo
 
     protected String getErrorString(ImageListViewCell cell) {
         ImageListViewModelElement elt = cell.getDisplayedModelElement();
-        Exception ei = (Exception) elt.getErrorInfo();
-        if (ei != null) {
-            return "Error: " + ei.getLocalizedMessage();
+        Object ei = elt.getErrorInfo();
+        if (ei == null) {
+            return "Error";
         } else {
-            return "ERROR";
+            if (ei instanceof Throwable) {
+                Throwable t = (Throwable) ei;
+                if (t.getLocalizedMessage() != null) {
+                    return t.getLocalizedMessage();
+                } else {
+                    return t.toString();
+                }
+            } else {
+                return ei.toString();
+            }
         }
     }
 

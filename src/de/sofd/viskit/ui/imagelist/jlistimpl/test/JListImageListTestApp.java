@@ -28,6 +28,7 @@ import javax.swing.AbstractAction;
 import javax.swing.DefaultListModel;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
+import javax.swing.JComponent;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
@@ -36,6 +37,8 @@ import javax.swing.JToolBar;
 import javax.swing.ListModel;
 import javax.swing.ListSelectionModel;
 import javax.swing.SwingUtilities;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 
@@ -73,6 +76,7 @@ import de.sofd.viskit.controllers.cellpaint.ImageListViewPrintLUTController;
 import de.sofd.viskit.controllers.cellpaint.ImageListViewPrintTextToCellsController;
 import de.sofd.viskit.controllers.cellpaint.ImageListViewRoiPaintController;
 import de.sofd.viskit.controllers.cellpaint.ImageListViewPrintLUTController.ScaleType;
+import de.sofd.viskit.model.CachingDicomImageListViewModelElement;
 import de.sofd.viskit.model.DicomImageListViewModelElement;
 import de.sofd.viskit.model.DicomModelFactory;
 import de.sofd.viskit.model.FileBasedDicomImageListViewModelElement;
@@ -84,6 +88,7 @@ import de.sofd.viskit.model.ModelFactory;
 import de.sofd.viskit.ui.JLutWindowingSlider;
 import de.sofd.viskit.ui.LookupTableCellRenderer;
 import de.sofd.viskit.ui.RoiToolPanel;
+import de.sofd.viskit.ui.imagelist.ImageListView;
 import de.sofd.viskit.ui.imagelist.ImageListViewCell;
 import de.sofd.viskit.ui.imagelist.JImageListView;
 import de.sofd.viskit.ui.imagelist.event.ImageListViewCellAddEvent;
@@ -123,21 +128,51 @@ public class JListImageListTestApp {
         return isUser("olaf");
     }
     
-    private ModelFactory factory;
+    private DicomModelFactory factory;
     
     public JListImageListTestApp() throws Exception {
+        boolean useAsyncMode = (null != System.getProperty("viskit.testapp.asyncMode"));
         if (isUserHonglinh()) {
-            factory = new DicomModelFactory(new IntuitiveFileNameComparator(), true, System.getProperty("user.home") + File.separator + "viskit-model-cache.txt");;
+            factory = new DicomModelFactory("/home/honglinh/Desktop/cache.txt", new IntuitiveFileNameComparator());
+            if (useAsyncMode) {
+                factory.setSupportMultiframes(true);
+                factory.setCheckFileReadability(true);
+                factory.setAsyncMode(false);
+            } else {
+                // when using async mode, also avoid pre-reading of DICOM files to further minimize startup time
+                factory.setSupportMultiframes(false);
+                factory.setCheckFileReadability(false);
+                factory.setAsyncMode(false);
+            }
             //JFrame f1 = newSingleListFrame("Viskit ImageList test app window 1", null);
             //JFrame f2 = newSingleListFrame("Viskit ImageList test app window 2", null);
             JFrame f2 = newMultiListFrame("Multi-List frame", null);
         } else if (isUserFokko()) {
-            factory = new DicomModelFactory(new IntuitiveFileNameComparator(), true, System.getProperty("user.home") + File.separator + "viskit-model-cache.txt");
+            factory = new DicomModelFactory(System.getProperty("user.home") + File.separator + "viskit-model-cache.txt", new IntuitiveFileNameComparator());
+            if (useAsyncMode) {
+                factory.setSupportMultiframes(true);
+                factory.setCheckFileReadability(true);
+                factory.setAsyncMode(false);
+            } else {
+                // when using async mode, also avoid pre-reading of DICOM files to further minimize startup time
+                factory.setSupportMultiframes(false);
+                factory.setCheckFileReadability(false);
+                factory.setAsyncMode(false);
+            }
             //JFrame f1 = newSingleListFrame("Viskit ImageList test app window 1", null);
             //JFrame f2 = newSingleListFrame("Viskit ImageList test app window 2", null);
             JFrame f2 = newMultiListFrame("Multi-List frame", null);
         } else if (isUserOlaf()) {
-            factory = new DicomModelFactory(new IntuitiveFileNameComparator(), false, System.getProperty("user.home") + File.separator + "viskit-model-cache.txt");
+            factory = new DicomModelFactory(System.getProperty("user.home") + File.separator + "viskit-model-cache.txt", new IntuitiveFileNameComparator());
+            if (useAsyncMode) {
+                factory.setSupportMultiframes(false);
+                factory.setCheckFileReadability(false);
+                factory.setAsyncMode(true);
+            } else {
+                factory.setSupportMultiframes(false);
+                factory.setCheckFileReadability(false);
+                factory.setAsyncMode(false);
+            }
             GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
             GraphicsDevice[] gs = ge.getScreenDevices();
             
@@ -150,11 +185,23 @@ public class JListImageListTestApp {
             //JFrame f2 = newSingleListFrame("Viskit ImageList test app window 2", null);
             JFrame f2 = newMultiListFrame("Multi-List frame", null);
         } else {
-            factory = new DicomModelFactory(new IntuitiveFileNameComparator(), true, System.getProperty("user.home") + File.separator + "viskit-model-cache.txt");
+            factory = new DicomModelFactory(System.getProperty("user.home") + File.separator + "viskit-model-cache.txt", new IntuitiveFileNameComparator());
+            if (useAsyncMode) {
+                factory.setSupportMultiframes(true);
+                factory.setCheckFileReadability(true);
+                factory.setAsyncMode(false);
+            } else {
+                // when using async mode, also avoid pre-reading of DICOM files to further minimize startup time
+                factory.setSupportMultiframes(false);
+                factory.setCheckFileReadability(false);
+                factory.setAsyncMode(false);
+            }
             //JFrame f1 = newSingleListFrame("Viskit ImageList test app window 1", null);
             //JFrame f2 = newSingleListFrame("Viskit ImageList test app window 2", null);
             JFrame f2 = newMultiListFrame("Multi-List frame", null);
         }
+
+        debugObjects.put("fac", factory);
         
         //debugObjects.put("mlf", f2);
 
@@ -167,10 +214,33 @@ public class JListImageListTestApp {
         if (isUserOlaf()) {
             //test error states (file-not-found in this case)
             DefaultListModel dlm = (DefaultListModel) factory.getModel(dir.getCanonicalPath());
-            dlm.insertElementAt(new FileBasedDicomImageListViewModelElement(new File("/foo/bar/baz"), false), 1);
+            //dlm.insertElementAt(new FileBasedDicomImageListViewModelElement(new File("/foo/bar/baz"), false), 1);
         }
     }
     
+    protected static void addModelForDirTree(ModelFactory factory, File dir) throws IOException {
+        factory.addModel(dir.getCanonicalPath(), getModelForDirTree(dir));
+    }
+
+    protected static DefaultListModel getModelForDirTree(File dir) throws IOException {
+        DefaultListModel result = new DefaultListModel();
+        addDirTreeEltsToModel(dir, result);
+        return result;
+    }
+    
+    private static void addDirTreeEltsToModel(File dirOrFile, DefaultListModel model) throws IOException {
+        if (dirOrFile.isFile() && dirOrFile.getName().toLowerCase().endsWith(".dcm")) {
+            FileBasedDicomImageListViewModelElement elt = new FileBasedDicomImageListViewModelElement((File) dirOrFile, false);  //variant without frameNumber avoids reading the DICOM, which can increase model creation speed 10x
+            elt.setAsyncMode(null != System.getProperty("viskit.testapp.asyncMode"));
+            model.addElement(elt);
+        } else if (dirOrFile.isDirectory()) {
+            for (File subFile: dirOrFile.listFiles()) {
+                addDirTreeEltsToModel(subFile, model);
+            }
+        }
+    }
+    
+
     public JFrame newSingleListFrame(String frameTitle, GraphicsConfiguration graphicsConfig) throws Exception {
         if (isUserHonglinh()) {
 //            final DefaultListModel model = StaticModelFactory.createModelFromDir(new File("/home/honglinh/Desktop/dicomfiles1"));
@@ -195,7 +265,7 @@ public class JListImageListTestApp {
 
         final DefaultListModel model = (DefaultListModel)factory.getModel(factory.getAllModelKeys().iterator().next());
 
-        final JImageListView viewer;
+        final ImageListView viewer;
         if (isUserHonglinh()) {
             //viewer = newJListImageListView();
             //viewer = newJGridImageListView(true);
@@ -426,7 +496,7 @@ public class JListImageListTestApp {
             }
         });
         
-        f.getContentPane().add(viewer, BorderLayout.CENTER);
+        f.getContentPane().add((JComponent)viewer, BorderLayout.CENTER);
         f.getContentPane().add(toolbar, BorderLayout.PAGE_START);
         f.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         f.setSize(1100, 900);
@@ -496,6 +566,14 @@ public class JListImageListTestApp {
             ///*
             addModelForDir(factory, new File("/home/olaf/hieronymusr/br312046/images/cd00906__center10102"));
             addModelForDir(factory, new File("/home/olaf/hieronymusr/br312046/images/cd00908__center10101"));
+            
+            //addModelForDir(factory, new File("/home/olaf/Downloads/MESA-storage-B_10_11_0/links"));
+
+            //addModelForDir(factory, new File("/shares/shared/DICOM-Testbilder/von-schering-geht-nicht/AXIAL_5333"));
+            //addModelForDir(factory, new File("/shares/shared/DICOM-Testbilder/von-schering-geht-nicht"));
+
+            //addModelForDirTree(factory, new File("/shares/projects/DICOM-Testbilder/20100819"));
+
             //listModels.add(factory.getModel("1"));
             //listModels.add(factory.getModel("2"));
             //*/
@@ -583,7 +661,7 @@ public class JListImageListTestApp {
             // to take the time when a cell in the list is first drawn,
             // which happens when the list has been completely initialized and the list's UI is coming up
             final int[] lnumCaptured = new int[]{lnum};
-            lvp.getListView().addCellPaintListener(JImageListView.PAINT_ZORDER_IMAGE+100, new ImageListViewCellPaintListener() {
+            lvp.getListView().addCellPaintListener(ImageListView.PAINT_ZORDER_IMAGE+100, new ImageListViewCellPaintListener() {
                 long t1 = -1;
                 @Override
                 public void onCellPaint(ImageListViewCellPaintEvent e) {
@@ -674,8 +752,8 @@ public class JListImageListTestApp {
                 //listView = newJGLImageListView();
                 listView = newJGridImageListView();
             } else if (isUserOlaf()) {
-                //listView = newJGLImageListView();
-                listView = newJGridImageListView();
+                listView = newJGLImageListView();
+                //listView = newJGridImageListView();
             } else {
                 //listView = newJGLImageListView();
                 listView = newJGridImageListView();
@@ -907,12 +985,32 @@ public class JListImageListTestApp {
                 }
             });
             final JCheckBox cb = new JCheckBox("G");
+            cb.setToolTipText("grayscale display");
             toolbar.add(cb);
             cb.addActionListener(new ActionListener() {
                 @Override
                 public void actionPerformed(ActionEvent e) {
                     for (int i = 0; i < listView.getLength(); i++) {
                         listView.getCell(i).setOutputGrayscaleRGBs(cb.isSelected());
+                    }
+                }
+            });
+            final JCheckBox asyncCb = new JCheckBox("A");
+            asyncCb.setToolTipText("asynchronous mode (checkbox may be reversed)");
+            toolbar.add(asyncCb);
+            asyncCb.addActionListener(new ActionListener() {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    for (int i = listView.getLength() - 1; i >= 0; i--) {
+                        // going backwards through the list generally has a higher chance of not getting the UI thread
+                        // "interlocked" with the background loader threads, which may lead end up loading all unloaded
+                        // elements synchronously (this can still happen anyway in some cases, so changing the asyncMode
+                        // of elements while they're being displayed is probably not a good idea in end user applications)
+                        ImageListViewModelElement elt = listView.getElementAt(i);
+                        if (elt instanceof CachingDicomImageListViewModelElement) {
+                            CachingDicomImageListViewModelElement celt = (CachingDicomImageListViewModelElement) elt;
+                            celt.setAsyncMode(! celt.isAsyncMode());
+                        }
                     }
                 }
             });

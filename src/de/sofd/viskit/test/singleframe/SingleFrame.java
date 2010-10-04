@@ -6,6 +6,7 @@
 
 package de.sofd.viskit.test.singleframe;
 
+import de.sofd.viskit.ui.imagelist.ImageListView;
 import de.sofd.viskit.ui.imagelist.JImageListView;
 import java.awt.GridLayout;
 import java.util.ArrayList;
@@ -193,7 +194,7 @@ public class SingleFrame extends javax.swing.JFrame {
             return;
         }
         ListModel prevModel = lists.get(lists.size() - 1).getModel();
-        for (JImageListView list : lists) {
+        for (ImageListView list : lists) {
             ListModel tmp = prevModel;
             prevModel = list.getModel();
             list.setModel(tmp);

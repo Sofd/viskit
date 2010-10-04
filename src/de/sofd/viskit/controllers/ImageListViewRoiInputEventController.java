@@ -3,8 +3,8 @@ package de.sofd.viskit.controllers;
 import de.sofd.util.Misc;
 import de.sofd.viskit.model.DicomImageListViewModelElement;
 import de.sofd.viskit.model.ImageListViewModelElement;
+import de.sofd.viskit.ui.imagelist.ImageListView;
 import de.sofd.viskit.ui.imagelist.ImageListViewCell;
-import de.sofd.viskit.ui.imagelist.JImageListView;
 import java.awt.Dimension;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
@@ -20,13 +20,13 @@ import org.dcm4che2.data.Tag;
  */
 public class ImageListViewRoiInputEventController {
 
-    protected JImageListView controlledImageListView;
+    protected ImageListView controlledImageListView;
     public static final String PROP_CONTROLLEDIMAGELISTVIEW = "controlledImageListView";
 
     public ImageListViewRoiInputEventController() {
     }
 
-    public ImageListViewRoiInputEventController(JImageListView controlledImageListView) {
+    public ImageListViewRoiInputEventController(ImageListView controlledImageListView) {
         setControlledImageListView(controlledImageListView);
     }
 
@@ -35,7 +35,7 @@ public class ImageListViewRoiInputEventController {
      *
      * @return the value of controlledImageListView
      */
-    public JImageListView getControlledImageListView() {
+    public ImageListView getControlledImageListView() {
         return controlledImageListView;
     }
 
@@ -44,8 +44,8 @@ public class ImageListViewRoiInputEventController {
      *
      * @param controlledImageListView new value of controlledImageListView
      */
-    public void setControlledImageListView(JImageListView controlledImageListView) {
-        JImageListView oldControlledImageListView = this.controlledImageListView;
+    public void setControlledImageListView(ImageListView controlledImageListView) {
+        ImageListView oldControlledImageListView = this.controlledImageListView;
         this.controlledImageListView = controlledImageListView;
         if (null != oldControlledImageListView) {
             oldControlledImageListView.removeCellMouseListener(mouseHandler);

@@ -180,6 +180,16 @@ public abstract class ModelFactory {
         keyModelMap.put(key,model);
     }
     
+    /**
+     * Just add a model that was already created and filled externally.
+     * 
+     * @param key
+     * @param model
+     */
+    public void addModel(String key, ListModel model) {
+        keyModelMap.put(key,model);
+    }
+
     protected DefaultListModel createModelFromDir(File dir) {
         DefaultListModel result = new DefaultListModel();
         File[] files = readFilesFromDir(dir);

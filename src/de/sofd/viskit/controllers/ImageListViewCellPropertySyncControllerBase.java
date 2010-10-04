@@ -4,12 +4,12 @@ import de.sofd.viskit.ui.imagelist.ImageListViewCell;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 
-import de.sofd.viskit.ui.imagelist.JImageListView;
+import de.sofd.viskit.ui.imagelist.ImageListView;
 
 /**
  * Base class for controllers that synchronize a per-cell property (e.g.
  * windowing parameters, zoom/pan setting) between multiple
- * {@link JImageListView}s. Subclasses must implement
+ * {@link ImageListView}s. Subclasses must implement
  * {@link #onCellPropertyChange(PropertyChangeEvent)}.
  * 
  * @author Olaf Klischat
@@ -21,12 +21,12 @@ public abstract class ImageListViewCellPropertySyncControllerBase extends Defaul
     public ImageListViewCellPropertySyncControllerBase() {
     }
 
-    public ImageListViewCellPropertySyncControllerBase(JImageListView... lists) {
+    public ImageListViewCellPropertySyncControllerBase(ImageListView... lists) {
         setLists(lists);
     }
 
     @Override
-    public boolean addList(JImageListView l) {
+    public boolean addList(ImageListView l) {
         boolean retval = super.addList(l);
         if (retval) {
             l.addCellPropertyChangeListener(listsCellPropertyChangeListener);
@@ -35,7 +35,7 @@ public abstract class ImageListViewCellPropertySyncControllerBase extends Defaul
     }
 
     @Override
-    public boolean removeList(JImageListView l) {
+    public boolean removeList(ImageListView l) {
         boolean retval = super.removeList(l);
         if (retval) {
             l.removeCellPropertyChangeListener(listsCellPropertyChangeListener);
@@ -93,7 +93,7 @@ public abstract class ImageListViewCellPropertySyncControllerBase extends Defaul
     };
 
     /**
-     * A property of a cell of any of the JImageListViews {@link #getLists()}
+     * A property of a cell of any of the ImageListViews {@link #getLists()}
      * has changed. Subclasses must decide here what to do with this.
      * 
      * @param e

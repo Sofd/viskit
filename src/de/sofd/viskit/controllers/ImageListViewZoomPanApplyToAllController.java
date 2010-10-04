@@ -1,14 +1,14 @@
 package de.sofd.viskit.controllers;
 
 import de.sofd.util.DynScope;
+import de.sofd.viskit.ui.imagelist.ImageListView;
 import de.sofd.viskit.ui.imagelist.ImageListViewCell;
-import de.sofd.viskit.ui.imagelist.JImageListView;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 
 /**
- * Controller that references a JImageListView and an "enabled" flag. When
+ * Controller that references a ImageListView and an "enabled" flag. When
  * enabled, the controller tracks any outside changes to the windowing
  * parameters of any of the list's cells and copies those changes to all other
  * cells of the list.
@@ -21,7 +21,7 @@ import java.beans.PropertyChangeSupport;
  */
 public class ImageListViewZoomPanApplyToAllController {
 
-    protected JImageListView controlledImageListView;
+    protected ImageListView controlledImageListView;
     public static final String PROP_CONTROLLEDIMAGELISTVIEW = "controlledImageListView";
     private boolean enabled;
     public static final String PROP_ENABLED = "enabled";
@@ -38,7 +38,7 @@ public class ImageListViewZoomPanApplyToAllController {
     public ImageListViewZoomPanApplyToAllController() {
     }
 
-    public ImageListViewZoomPanApplyToAllController(JImageListView controlledImageListView) {
+    public ImageListViewZoomPanApplyToAllController(ImageListView controlledImageListView) {
         setControlledImageListView(controlledImageListView);
     }
 
@@ -85,7 +85,7 @@ public class ImageListViewZoomPanApplyToAllController {
      *
      * @return the value of controlledImageListView
      */
-    public JImageListView getControlledImageListView() {
+    public ImageListView getControlledImageListView() {
         return controlledImageListView;
     }
 
@@ -94,8 +94,8 @@ public class ImageListViewZoomPanApplyToAllController {
      *
      * @param controlledImageListView new value of controlledImageListView
      */
-    public void setControlledImageListView(JImageListView controlledImageListView) {
-        JImageListView oldControlledImageListView = this.controlledImageListView;
+    public void setControlledImageListView(ImageListView controlledImageListView) {
+        ImageListView oldControlledImageListView = this.controlledImageListView;
         this.controlledImageListView = controlledImageListView;
         if (null != oldControlledImageListView) {
             oldControlledImageListView.removeCellPropertyChangeListener(cellPropChangeHandler);
@@ -165,7 +165,7 @@ public class ImageListViewZoomPanApplyToAllController {
                 if (targetCell != null && targetCell != sourceCell) {
                     // targetCell != null test because targetCell may be null null under some circumstances,
                     // e.g. if the windowing is set in a cellCreated handler for a newly created cell, which
-                    // may have been created b/c of a dynamic JImageListView#setModel call, which ends up
+                    // may have been created b/c of a dynamic ImageListView#setModel call, which ends up
                     // firing the cellCreared event before adding the cell to
                     // the internal cell list that getCell(int) uses
                     inProgrammedChange = true;

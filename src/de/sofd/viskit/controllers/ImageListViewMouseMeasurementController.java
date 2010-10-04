@@ -3,8 +3,8 @@ package de.sofd.viskit.controllers;
 import static com.sun.opengl.util.gl2.GLUT.BITMAP_8_BY_13;
 import de.sofd.viskit.model.DicomImageListViewModelElement;
 import de.sofd.viskit.model.ImageListViewModelElement;
+import de.sofd.viskit.ui.imagelist.ImageListView;
 import de.sofd.viskit.ui.imagelist.ImageListViewCell;
-import de.sofd.viskit.ui.imagelist.JImageListView;
 import de.sofd.viskit.ui.imagelist.event.cellpaint.ImageListViewCellPaintEvent;
 import de.sofd.viskit.ui.imagelist.event.cellpaint.ImageListViewCellPaintListener;
 
@@ -38,7 +38,7 @@ public class ImageListViewMouseMeasurementController {
     private static final int MOUSE_BUTTON = MouseEvent.BUTTON3;
     private static final int MOUSE_MASK = MouseEvent.BUTTON3_MASK;
 
-    protected JImageListView controlledImageListView;
+    protected ImageListView controlledImageListView;
     public static final String PROP_CONTROLLEDIMAGELISTVIEW = "controlledImageListView";
     private boolean enabled;
     public static final String PROP_ENABLED = "enabled";
@@ -50,17 +50,17 @@ public class ImageListViewMouseMeasurementController {
     
     private int zOrder;
     public static final String PROP_ZORDER = "zOrder";
-    protected static final int DEFAULT_ZORDER = JImageListView.PAINT_ZORDER_LABELS + 100;
+    protected static final int DEFAULT_ZORDER = ImageListView.PAINT_ZORDER_LABELS + 100;
 
     public ImageListViewMouseMeasurementController() {
         this(null, DEFAULT_ZORDER);
     }
 
-    public ImageListViewMouseMeasurementController(JImageListView controlledImageListView) {
+    public ImageListViewMouseMeasurementController(ImageListView controlledImageListView) {
         this(controlledImageListView, DEFAULT_ZORDER);
     }
 
-    public ImageListViewMouseMeasurementController(JImageListView controlledImageListView, int zOrder) {
+    public ImageListViewMouseMeasurementController(ImageListView controlledImageListView, int zOrder) {
         if (controlledImageListView != null) {
             setControlledImageListView(controlledImageListView);
         }
@@ -72,7 +72,7 @@ public class ImageListViewMouseMeasurementController {
      *
      * @return the value of controlledImageListView
      */
-    public JImageListView getControlledImageListView() {
+    public ImageListView getControlledImageListView() {
         return controlledImageListView;
     }
 
@@ -104,8 +104,8 @@ public class ImageListViewMouseMeasurementController {
      *
      * @param controlledImageListView new value of controlledImageListView
      */
-    public void setControlledImageListView(JImageListView controlledImageListView) {
-        JImageListView oldControlledImageListView = this.controlledImageListView;
+    public void setControlledImageListView(ImageListView controlledImageListView) {
+        ImageListView oldControlledImageListView = this.controlledImageListView;
         this.controlledImageListView = controlledImageListView;
         if (null != oldControlledImageListView) {
             oldControlledImageListView.removeCellMouseListener(mouseHandler);

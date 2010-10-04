@@ -6,7 +6,7 @@ import java.util.Collection;
 import java.util.Set;
 
 import de.sofd.util.IdentityHashSet;
-import de.sofd.viskit.ui.imagelist.JImageListView;
+import de.sofd.viskit.ui.imagelist.ImageListView;
 
 /**
  * Simple implementation of {@link MultiImageListViewController} that keeps all
@@ -23,24 +23,24 @@ import de.sofd.viskit.ui.imagelist.JImageListView;
  */
 public class DefaultMultiImageListViewController implements MultiImageListViewController {
 
-    private final Set<JImageListView> lists = new IdentityHashSet<JImageListView>();
+    private final Set<ImageListView> lists = new IdentityHashSet<ImageListView>();
     private boolean enabled;
     public static final String PROP_ENABLED = "enabled";
 
     public DefaultMultiImageListViewController() {
     }
 
-    public DefaultMultiImageListViewController(JImageListView... lists) {
+    public DefaultMultiImageListViewController(ImageListView... lists) {
         setLists(lists);
     }
 
     @Override
-    public JImageListView[] getLists() {
-        return (JImageListView[]) lists.toArray(new JImageListView[0]);
+    public ImageListView[] getLists() {
+        return (ImageListView[]) lists.toArray(new ImageListView[0]);
     }
 
     @Override
-    public boolean addList(JImageListView l) {
+    public boolean addList(ImageListView l) {
         if (! this.lists.contains(l)) {
             this.lists.add(l);
             return true;
@@ -50,7 +50,7 @@ public class DefaultMultiImageListViewController implements MultiImageListViewCo
     }
 
     @Override
-    public boolean removeList(JImageListView l) {
+    public boolean removeList(ImageListView l) {
         if (this.lists.contains(l)) {
             this.lists.remove(l);
             return true;
@@ -60,7 +60,7 @@ public class DefaultMultiImageListViewController implements MultiImageListViewCo
     }
 
     @Override
-    public boolean containsList(JImageListView l) {
+    public boolean containsList(ImageListView l) {
         return this.lists.contains(l);
     }
 
@@ -68,21 +68,21 @@ public class DefaultMultiImageListViewController implements MultiImageListViewCo
      * Set the set of lists directly.
      */
     @Override
-    public void setLists(JImageListView[] lists) {
-        for (JImageListView l : this.lists.toArray(new JImageListView[0])) {
+    public void setLists(ImageListView[] lists) {
+        for (ImageListView l : this.lists.toArray(new ImageListView[0])) {
             removeList(l);
         }
-        for (JImageListView l : lists) {
+        for (ImageListView l : lists) {
             addList(l);
         }
     }
 
     @Override
-    public void setLists(Collection<JImageListView> lists) {
-        for (JImageListView l : this.lists.toArray(new JImageListView[0])) {
+    public void setLists(Collection<ImageListView> lists) {
+        for (ImageListView l : this.lists.toArray(new ImageListView[0])) {
             removeList(l);
         }
-        for (JImageListView l : lists) {
+        for (ImageListView l : lists) {
             addList(l);
         }
     }

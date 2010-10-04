@@ -99,4 +99,47 @@
 			<jvmarg value="-Xmx1000M" />
 		</java>
 	</target>
+	
+	<target name="run-isosurface" depends="init">
+		<java classname="de.sofd.viskit.test.image3D.Dicom3DViewer" fork="true">
+			<classpath>
+			 	<pathelement path="${run.classpath}"/>
+			</classpath>
+			<jvmarg value="-Djava.library.path=lib/vtk"/>
+		</java>	
+    </target>
+	
+	<target name="run-slice" depends="init">
+			<java classname="de.sofd.viskit.test.image3D.jogl.SliceViewer" fork="true">
+				<classpath>
+				 	<pathelement path="${run.classpath}"/>
+				</classpath>
+				<jvmarg value="-Djava.library.path=lib/jogl/windows32;lib/vtk"/>
+				<jvmarg value="-Dsun.java2d.noddraw=true"/>
+				<jvmarg value="-XX:MaxDirectMemorySize=512m"/>
+			</java>	
+	    </target>
+	
+	<target name="run-volume1" depends="init">
+		<java classname="de.sofd.viskit.test.image3D.jogl.TexSliceVolumeViewer" fork="true">
+			<classpath>
+			 	<pathelement path="${run.classpath}"/>
+			</classpath>
+			<jvmarg value="-Djava.library.path=lib/jogl/windows32;lib/vtk"/>
+			<jvmarg value="-Dsun.java2d.noddraw=true"/>
+			<jvmarg value="-XX:MaxDirectMemorySize=512m"/>
+		</java>	
+    </target>
+	
+	<target name="run-volume2" depends="init">
+		<echo message="${run.classpath}"/>
+		<java classname="de.sofd.viskit.test.image3D.jogl.GPUVolumeViewer" fork="true" dir=".">
+			<classpath>
+			 	<pathelement path="${run.classpath}"/>
+			</classpath>
+			<jvmarg value="-Djava.library.path=lib/jogl/windows32;lib/vtk"/>
+			<jvmarg value="-Dsun.java2d.noddraw=true"/>
+			<jvmarg value="-XX:MaxDirectMemorySize=512m"/>
+		</java>	
+    </target>
 </project>

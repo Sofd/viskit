@@ -9,7 +9,7 @@ import java.awt.geom.Point2D;
  */
 public class DefaultImageListViewCell extends ImageListViewCellBase {
 
-    public DefaultImageListViewCell(JImageListView owner, ImageListViewModelElement displayedModelElement) {
+    public DefaultImageListViewCell(ImageListView owner, ImageListViewModelElement displayedModelElement) {
         super(owner, displayedModelElement);
     }
 

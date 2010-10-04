@@ -1,0 +1,2 @@
+- introduce UI-independent equivalent to add/RemoveComponentListener()
+  for reacting to size changes of the list UI component

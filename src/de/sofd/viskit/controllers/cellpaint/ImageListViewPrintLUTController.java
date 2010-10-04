@@ -18,8 +18,8 @@ import com.sun.opengl.util.gl2.GLUT;
 
 import de.sofd.viskit.image3D.jogl.control.LutController;
 import de.sofd.viskit.model.LookupTable;
+import de.sofd.viskit.ui.imagelist.ImageListView;
 import de.sofd.viskit.ui.imagelist.ImageListViewCell;
-import de.sofd.viskit.ui.imagelist.JImageListView;
 
 /**
  * Controller that draws a lookup table legend to the cell elements. The size of
@@ -45,32 +45,32 @@ public class ImageListViewPrintLUTController extends CellPaintControllerBase {
     private int cellDistance = 10;
 
     public ImageListViewPrintLUTController() {
-        this(null, JImageListView.PAINT_ZORDER_LABELS);
+        this(null, ImageListView.PAINT_ZORDER_LABELS);
     }
 
     public ImageListViewPrintLUTController(int intervals, ScaleType type) {
-        this(null, JImageListView.PAINT_ZORDER_LABELS);
+        this(null, ImageListView.PAINT_ZORDER_LABELS);
         checkInterval(intervals);
         this.type = type;
         this.intervals = intervals;
     }
 
-    public ImageListViewPrintLUTController(JImageListView controlledImageListView) {
-        super(controlledImageListView, JImageListView.PAINT_ZORDER_LABELS);
+    public ImageListViewPrintLUTController(ImageListView controlledImageListView) {
+        super(controlledImageListView, ImageListView.PAINT_ZORDER_LABELS);
     }
 
-    public ImageListViewPrintLUTController(JImageListView controlledImageListView, int intervals, ScaleType type) {
-        this(controlledImageListView, JImageListView.PAINT_ZORDER_LABELS);
+    public ImageListViewPrintLUTController(ImageListView controlledImageListView, int intervals, ScaleType type) {
+        this(controlledImageListView, ImageListView.PAINT_ZORDER_LABELS);
         checkInterval(intervals);
         this.type = type;
         this.intervals = intervals;
     }
 
-    public ImageListViewPrintLUTController(JImageListView controlledImageListView, int zOrder) {
+    public ImageListViewPrintLUTController(ImageListView controlledImageListView, int zOrder) {
         super(controlledImageListView, zOrder);
     }
 
-    public ImageListViewPrintLUTController(JImageListView controlledImageListView, int zOrder, int intervals,
+    public ImageListViewPrintLUTController(ImageListView controlledImageListView, int zOrder, int intervals,
             ScaleType type) {
         this(controlledImageListView, zOrder);
         checkInterval(intervals);

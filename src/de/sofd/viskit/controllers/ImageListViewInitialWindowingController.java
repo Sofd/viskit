@@ -2,6 +2,7 @@ package de.sofd.viskit.controllers;
 
 import de.sofd.util.FloatRange;
 import de.sofd.viskit.model.ImageListViewModelElement;
+import de.sofd.viskit.ui.imagelist.ImageListView;
 import de.sofd.viskit.ui.imagelist.ImageListViewCell;
 import de.sofd.viskit.ui.imagelist.JImageListView;
 import de.sofd.viskit.ui.imagelist.event.cellpaint.ImageListViewCellPaintEvent;
@@ -53,7 +54,7 @@ public class ImageListViewInitialWindowingController {
     // implementation strategy: use a CellPaintListener that's called before the image of the cell is drawn,
     // initialize the cell there, memorize which cells have already been initialized
 
-    protected JImageListView controlledImageListView;
+    protected ImageListView controlledImageListView;
     public static final String PROP_CONTROLLEDIMAGELISTVIEW = "controlledImageListView";
     private boolean enabled;
     public static final String PROP_ENABLED = "enabled";
@@ -61,7 +62,7 @@ public class ImageListViewInitialWindowingController {
     public ImageListViewInitialWindowingController() {
     }
 
-    public ImageListViewInitialWindowingController(JImageListView controlledImageListView) {
+    public ImageListViewInitialWindowingController(ImageListView controlledImageListView) {
         setControlledImageListView(controlledImageListView);
     }
 
@@ -90,7 +91,7 @@ public class ImageListViewInitialWindowingController {
      *
      * @return the value of controlledImageListView
      */
-    public JImageListView getControlledImageListView() {
+    public ImageListView getControlledImageListView() {
         return controlledImageListView;
     }
 
@@ -99,8 +100,8 @@ public class ImageListViewInitialWindowingController {
      *
      * @param controlledImageListView new value of controlledImageListView
      */
-    public void setControlledImageListView(JImageListView controlledImageListView) {
-        JImageListView oldControlledImageListView = this.controlledImageListView;
+    public void setControlledImageListView(ImageListView controlledImageListView) {
+        ImageListView oldControlledImageListView = this.controlledImageListView;
         this.controlledImageListView = controlledImageListView;
         if (null != oldControlledImageListView) {
             oldControlledImageListView.removeCellPaintListener(cellHandler);
@@ -110,7 +111,7 @@ public class ImageListViewInitialWindowingController {
         if (null != controlledImageListView) {
             // add the paint listener below the image in the z-order, so it will be invoked
             // before the image (and anything else, most likely) is drawn
-            controlledImageListView.addCellPaintListener(JImageListView.PAINT_ZORDER_IMAGE - 1, cellHandler);
+            controlledImageListView.addCellPaintListener(ImageListView.PAINT_ZORDER_IMAGE - 1, cellHandler);
             controlledImageListView.addCellPropertyChangeListener(cellHandler);
             controlledImageListView.addPropertyChangeListener(reseterOnModelChange);
             alreadyInitializedImagesKeys.clear();
@@ -260,7 +261,7 @@ public class ImageListViewInitialWindowingController {
     private PropertyChangeListener reseterOnModelChange = new PropertyChangeListener() {
         @Override
         public void propertyChange(PropertyChangeEvent evt) {
-            if (!evt.getPropertyName().equals(JImageListView.PROP_MODEL)) {
+            if (!evt.getPropertyName().equals(ImageListView.PROP_MODEL)) {
                 return;
             }
             reset();

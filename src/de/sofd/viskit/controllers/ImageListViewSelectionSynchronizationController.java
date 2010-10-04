@@ -13,10 +13,10 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 
 import de.sofd.swing.BoundedListSelectionModel;
-import de.sofd.viskit.ui.imagelist.JImageListView;
+import de.sofd.viskit.ui.imagelist.ImageListView;
 
 /**
- * Controller that maintains a list of references to {@link JImageListView}
+ * Controller that maintains a list of references to {@link ImageListView}
  * objects and a boolean "enabled" flag. If the flag is set to true, the
  * selections of all the lists are kept synchronized.
  * <p>
@@ -28,7 +28,7 @@ import de.sofd.viskit.ui.imagelist.JImageListView;
  * appropriately, such that, depending on the situation, some indices at the
  * beginning and/or end of the lists can no longer be selected. To make this
  * work, the selection models of the participating lists (
- * {@link JImageListView#setSelectionModel(ListSelectionModel)} must be set to
+ * {@link ImageListView#setSelectionModel(ListSelectionModel)} must be set to
  * instances of {@link BoundedListSelectionModel}.
  * 
  * @author Sofd GmbH
@@ -39,27 +39,27 @@ public class ImageListViewSelectionSynchronizationController implements MultiIma
     public static final String PROP_ENABLED = "enabled";
     private boolean keepRelativeSelectionIndices;
     public static final String PROP_KEEPRELATIVESELECTIONINDICES = "keepRelativeSelectionIndices";
-    private Map<JImageListView, Integer> listsAndSelectionIndices = new IdentityHashMap<JImageListView, Integer>();
+    private Map<ImageListView, Integer> listsAndSelectionIndices = new IdentityHashMap<ImageListView, Integer>();
 
     public ImageListViewSelectionSynchronizationController() {
     }
 
-    public ImageListViewSelectionSynchronizationController(JImageListView... lists) {
+    public ImageListViewSelectionSynchronizationController(ImageListView... lists) {
         setLists(lists);
     }
 
     @Override
-    public JImageListView[] getLists() {
-        return (JImageListView[]) listsAndSelectionIndices.keySet().toArray(new JImageListView[0]);
+    public ImageListView[] getLists() {
+        return (ImageListView[]) listsAndSelectionIndices.keySet().toArray(new ImageListView[0]);
     }
 
     @Override
-    public boolean containsList(JImageListView l) {
+    public boolean containsList(ImageListView l) {
         return listsAndSelectionIndices.containsKey(l);
     }
 
     @Override
-    public boolean addList(JImageListView l) {
+    public boolean addList(ImageListView l) {
         if (! listsAndSelectionIndices.containsKey(l)) {
             putSelectionIndex(l, l.getLeadSelectionIndex());
             l.addListSelectionListener(selectionHandler);
@@ -71,7 +71,7 @@ public class ImageListViewSelectionSynchronizationController implements MultiIma
     }
 
     @Override
-    public boolean removeList(JImageListView l) {
+    public boolean removeList(ImageListView l) {
         if (listsAndSelectionIndices.containsKey(l)) {
             clearSelectionBounds();
             listsAndSelectionIndices.remove(l);
@@ -83,7 +83,7 @@ public class ImageListViewSelectionSynchronizationController implements MultiIma
         }
     }
 
-    private void putSelectionIndex(JImageListView l, int idx) {
+    private void putSelectionIndex(ImageListView l, int idx) {
         if (idx == -1) {
             listsAndSelectionIndices.put(l, null);
         } else {
@@ -92,21 +92,21 @@ public class ImageListViewSelectionSynchronizationController implements MultiIma
     }
 
     @Override
-    public void setLists(JImageListView[] lists) {
-        for (JImageListView l : new ArrayList<JImageListView>(listsAndSelectionIndices.keySet())) {  // copy keySet to avoid ConcurrModifException
+    public void setLists(ImageListView[] lists) {
+        for (ImageListView l : new ArrayList<ImageListView>(listsAndSelectionIndices.keySet())) {  // copy keySet to avoid ConcurrModifException
             removeList(l);
         }
-        for (JImageListView l : lists) {
+        for (ImageListView l : lists) {
             addList(l);
         }
     }
 
     @Override
-    public void setLists(Collection<JImageListView> lists) {
-        for (JImageListView l : new ArrayList<JImageListView>(listsAndSelectionIndices.keySet())) {  // copy keySet to avoid ConcurrModifException
+    public void setLists(Collection<ImageListView> lists) {
+        for (ImageListView l : new ArrayList<ImageListView>(listsAndSelectionIndices.keySet())) {  // copy keySet to avoid ConcurrModifException
             removeList(l);
         }
-        for (JImageListView l : lists) {
+        for (ImageListView l : lists) {
             addList(l);
         }
     }
@@ -114,13 +114,13 @@ public class ImageListViewSelectionSynchronizationController implements MultiIma
     // TODO: deal with selection model changes on the lists?
     
     private void recordSelectionIndices() {
-        for (JImageListView l : getLists()) {
+        for (ImageListView l : getLists()) {
             putSelectionIndex(l, l.getLeadSelectionIndex());
         }
     }
     
     private void dumpSelectionIndices() {
-        for (JImageListView l : listsAndSelectionIndices.keySet()) {
+        for (ImageListView l : listsAndSelectionIndices.keySet()) {
             System.out.print("" + listsAndSelectionIndices.get(l) + " ");
         }
         System.out.println();
@@ -191,7 +191,7 @@ public class ImageListViewSelectionSynchronizationController implements MultiIma
             }
             inProgrammedSelectionChange = true;
             try {
-                JImageListView sourceList = (JImageListView) e.getSource();
+                ImageListView sourceList = (ImageListView) e.getSource();
                 int selIndex = sourceList.getLeadSelectionIndex();
                 if (selIndex >= 0) {
                     if (keepRelativeSelectionIndices) {
@@ -203,7 +203,7 @@ public class ImageListViewSelectionSynchronizationController implements MultiIma
                         } else {
                             putSelectionIndex(sourceList, selIndex);
                             int change = selIndex - lastSourceSelIdx;
-                            for (JImageListView l : getLists()) {
+                            for (ImageListView l : getLists()) {
                                 if (l != sourceList) {
                                     Integer si = listsAndSelectionIndices.get(l);
                                     if (si != null) {
@@ -222,7 +222,7 @@ public class ImageListViewSelectionSynchronizationController implements MultiIma
                         }
                     } else {
                         putSelectionIndex(sourceList, selIndex);
-                        for (JImageListView l : getLists()) {
+                        for (ImageListView l : getLists()) {
                             if (l != sourceList) {
                                 l.getSelectionModel().setSelectionInterval(selIndex, selIndex);
                                 putSelectionIndex(l, selIndex);
@@ -256,8 +256,8 @@ public class ImageListViewSelectionSynchronizationController implements MultiIma
         }
         int minSelIndex = Integer.MAX_VALUE;
         int minHeadroom = Integer.MAX_VALUE;
-        for (Entry<JImageListView, Integer> e : listsAndSelectionIndices.entrySet()) {
-            JImageListView list = e.getKey();
+        for (Entry<ImageListView, Integer> e : listsAndSelectionIndices.entrySet()) {
+            ImageListView list = e.getKey();
             Integer i = e.getValue();
             if (i == null) {
                 continue;
@@ -270,7 +270,7 @@ public class ImageListViewSelectionSynchronizationController implements MultiIma
                 minHeadroom = length - 1 - i;
             }
         }
-        for (JImageListView l : listsAndSelectionIndices.keySet()) {
+        for (ImageListView l : listsAndSelectionIndices.keySet()) {
             ListSelectionModel sm = l.getSelectionModel();
             if (!(sm instanceof BoundedListSelectionModel)) {
                 continue;
@@ -300,7 +300,7 @@ public class ImageListViewSelectionSynchronizationController implements MultiIma
         if (listsAndSelectionIndices.isEmpty()) {
             return;
         }
-        for (JImageListView l : listsAndSelectionIndices.keySet()) {
+        for (ImageListView l : listsAndSelectionIndices.keySet()) {
             ListSelectionModel sm = l.getSelectionModel();
             if (!(sm instanceof BoundedListSelectionModel)) {
                 continue;

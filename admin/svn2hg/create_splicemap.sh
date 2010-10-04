@@ -5,6 +5,7 @@ set -e
 . ./hgutils.sh
 
 add_sm_entry() {
+    echo "creating splicemap entry: $@"
     first="1"
     second="1"
     for desc in "$@"; do
@@ -35,6 +36,24 @@ touch splicemap.txt
 ####### create the lines in the splicemap file
 ##### for add_sm_entry calls with date/time values instead of commit comments for id'ing a commit,
 ##### the corresponding commit comments are appended in a comment for reference (no comments possible inside multi-line commands)
+
+## for merges of a branch b1 into a branch b2:
+#
+#add_sm_entry \
+#    'merge commit on b2' \
+#    'previous b2 commit' \
+#    'previous b1 commit'
+#
+#
+# so e.g. for merging a branch into the trunk:
+#
+#add_sm_entry \
+#    'trunk merge commit' \
+#    'previous trunk commit' \
+#    'previous branch commit'
+#
+# be sure to have no whitespace or anything else behind such a "\" --
+# the shell is very particular about that
 
 #####  HieronymusR312046 branch
 
@@ -152,6 +171,38 @@ add_sm_entry \
     'viskit: latest trunk changes (ILVInitialZoomPanCtrler and others) merged into as' \
     'viskit: latest trunk changes merged into async_model_elt_init branch' \
     'viskit: test app: + zRST button'
+
+add_sm_entry \
+    'viskit: latest trunk changes merged into async_model_elt_init branch' \
+    'viskit: doc/imagelist-async-model-elt-initializations/todo.txt updated some' \
+    '2010-07-23 18:06'  # 'viskit: svn2hg splicemap update'
+
+add_sm_entry \
+    'viskit: current async_model_elt_init branch state merged into trunk to get stuff thats already' \
+    'viskit: svn-to-hg splicemap updated' \
+    'viskit: async img loading: model elt error state handling specified & implemented'
+
+add_sm_entry \
+    'viskit: async image loading latest changes merged. async mode should be reasonably stable now' \
+    'viskit: Bugfix (MultiILVSyncSetController: must use addChangeListener to react to programmatic changes' \
+    '2010-09-07 21:15'  # 'viskit: async img loading: documentation update' (2nd of two commits with that comment)
+
+##### ui-lib-neutrality-refactoring* branch(es)
+
+add_sm_entry \
+    'ui-lib-neutrality-refactoring branch created' \
+    'viskit: svn2hg splicemap update 9'
+
+add_sm_entry \
+    '2010-09-17 17:39' \
+    'viskit: UI lib neutrality: ImageListViewBaseImpl started'
+#   'ui-lib-refactoring-aj branch created' \
+#   'viskit: UI lib neutrality: ImageListViewBaseImpl started'
+
+add_sm_entry \
+    'viskit: ui-lib-neutrality-refactoring-preproc branch created' \
+    'viskit: UI lib neutrality: ImageListViewBaseImpl started'
+
 
 ##### HieronymusR312043S1 branch
 

@@ -6,8 +6,6 @@ import java.awt.Dimension;
 import java.awt.GridLayout;
 import java.awt.Point;
 import java.awt.event.ActionEvent;
-import java.awt.event.ComponentAdapter;
-import java.awt.event.ComponentEvent;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
@@ -16,8 +14,6 @@ import java.awt.event.MouseWheelEvent;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashSet;
-import java.util.Set;
 
 import javax.swing.AbstractAction;
 import javax.swing.Action;
@@ -42,6 +38,7 @@ import org.dcm4che2.data.Tag;
 import de.sofd.swing.AbstractFramedSelectionGridListComponentFactory;
 import de.sofd.swing.JGridList;
 import de.sofd.util.DynScope;
+import de.sofd.util.IntRange;
 import de.sofd.util.Misc;
 import de.sofd.viskit.model.DicomImageListViewModelElement;
 import de.sofd.viskit.model.ImageListViewModelElement;
@@ -98,6 +95,7 @@ public class JGridImageListView extends JImageListView {
         wrappedGridList.setBackground(Color.BLACK);
         wrappedGridList.setVisible(true);
         this.add(wrappedGridList);
+        setScaleMode(new MyScaleMode(2, 2));
         setModel(new DefaultListModel());
         wrappedGridList.setComponentFactory(new WrappedGridListComponentFactory());
         setSelectionModel(wrappedGridList.getSelectionModel());
@@ -116,6 +114,7 @@ public class JGridImageListView extends JImageListView {
         wrappedGridList.setModel(null);
         super.setModel(model);
         wrappedGridList.setModel(wrappedGridListModel = copyModel(model));
+        updateElementPriorities();
     }
 
     private static DefaultListModel copyModel(ListModel m) {
@@ -133,6 +132,7 @@ public class JGridImageListView extends JImageListView {
         for (int i = e.getIndex0(); i <= e.getIndex1(); i++) {
             wrappedGridListModel.add(i, getModel().getElementAt(i));
         }
+        updateElementPriorities();
         // TODO: set initial scale
     }
 
@@ -140,12 +140,14 @@ public class JGridImageListView extends JImageListView {
     protected void modelIntervalRemoved(ListDataEvent e) {
         super.modelIntervalRemoved(e);
         wrappedGridListModel.removeRange(e.getIndex0(), e.getIndex1());
+        updateElementPriorities();
     }
 
     @Override
     protected void modelContentsChanged(ListDataEvent e) {
         super.modelContentsChanged(e);
         wrappedGridList.setModel(wrappedGridListModel = copyModel(getModel()));
+        updateElementPriorities();
     }
 
     // delegate our selectionModel property to wrappedGridList's selectionModel
@@ -175,10 +177,11 @@ public class JGridImageListView extends JImageListView {
             fireListSelectionEvent(e.getFirstIndex(), e.getLastIndex(), e.getValueIsAdjusting());
         }
     };
-    
+
     @Override
     public void setFirstVisibleIndex(int newValue) {
         super.setFirstVisibleIndex(newValue);
+        updateElementPriorities();
         inExternalSetFirstVisibleIdx = true;
         try {
             wrappedGridList.setFirstDisplayedIdx(getFirstVisibleIndex());
@@ -196,6 +199,42 @@ public class JGridImageListView extends JImageListView {
     
     public void ensureIndexIsVisible(int idx) {
         wrappedGridList.ensureIndexIsVisible(idx);
+    }
+    
+    protected IntRange previouslyVisibleRange = null;
+
+    /**
+     * Determine newly visible and newly invisible model elements (compared to
+     * last call of this method), change their priorities accordingly (newly
+     * invisible ones to 0 (the default), newly visible ones to 10).
+     */
+    protected void updateElementPriorities() {
+        int firstVisIdx = getFirstVisibleIndex();
+        int lastVisIdx = getLastVisibleIndex();
+        if (getModel() != null) {
+            IntRange newlyVisibleRange = null;
+            int lastVisModelIdx = Math.min(lastVisIdx, getModel().getSize() - 1);
+            if (lastVisModelIdx >= firstVisIdx) {
+                newlyVisibleRange = new IntRange(firstVisIdx, lastVisModelIdx);
+                IntRange[] newlyInvisibleRanges = IntRange.subtract(previouslyVisibleRange, newlyVisibleRange);
+                IntRange[] newlyVisibleRanges =   IntRange.subtract(newlyVisibleRange, previouslyVisibleRange);
+                for (IntRange r : newlyInvisibleRanges) {
+                    for (int i = r.getMin(); i <= r.getMax(); i++) {
+                        logger.debug("setting to prio  0: index " + i);
+                        getElementAt(i).setPriority(this, 0);
+                    }
+                }
+                for (IntRange r : newlyVisibleRanges) {
+                    for (int i = r.getMin(); i <= r.getMax(); i++) {
+                        logger.debug("setting to prio 10: index " + i);
+                        getElementAt(i).setPriority(this, 10);
+                    }
+                }
+            }
+            previouslyVisibleRange = newlyVisibleRange;
+        } else {
+            previouslyVisibleRange = null;
+        }
     }
     
     /**
@@ -285,6 +324,7 @@ public class JGridImageListView extends JImageListView {
     @Override
     protected void doSetScaleMode(ScaleMode oldScaleMode, ScaleMode newScaleMode) {
         MyScaleMode sm = (MyScaleMode) newScaleMode;
+        updateElementPriorities();
         wrappedGridList.setGridSizes(sm.getCellRowCount(), sm.getCellColumnCount());
     }
 

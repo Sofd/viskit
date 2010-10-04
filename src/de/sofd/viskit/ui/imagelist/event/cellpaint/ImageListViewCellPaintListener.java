@@ -5,13 +5,13 @@ import java.util.Map;
 import javax.media.opengl.GL;
 import javax.media.opengl.GLAutoDrawable;
 
-import de.sofd.viskit.ui.imagelist.JImageListView;
+import de.sofd.viskit.ui.imagelist.ImageListView;
 import de.sofd.viskit.ui.imagelist.glimpl.JGLImageListView;
 import de.sofd.viskit.ui.imagelist.gridlistimpl.JGridImageListView;
 
 /**
  * Listener for receiving {@link ImageListViewCellPaintEvent}s from a
- * {@link JImageListView}.
+ * {@link ImageListView}.
  * 
  * @author olaf
  */

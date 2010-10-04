@@ -10,13 +10,15 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Abstract base class from which concrete {@link ImageListViewModelElement} implementations
- * may be derived. Provides implementations for holding the attribute set and the ROI
+ * Abstract base class from which concrete {@link ImageListViewModelElement}
+ * implementations may be derived. Provides implementations for holding the
+ * attribute set, the priority of the model element by source list, and the ROI
  * drawing of the model element. Subclasses must implement at least one of
- * getRawImage(), getImage(), and make the corresponding haveXxxImage() return true.
- *
+ * getRawImage(), getImage(), and make the corresponding haveXxxImage() return
+ * true.
+ * 
  * TODO: implement getRawImage(), getImage() in terms of each other
- *
+ * 
  * @author olaf
  */
 public abstract class AbstractImageListViewModelElement implements ImageListViewModelElement {
@@ -24,6 +26,8 @@ public abstract class AbstractImageListViewModelElement implements ImageListView
     protected InitializationState initializationState = InitializationState.INITIALIZED;
     protected Map<String, Object> attributes = new HashMap<String, Object>();
     protected final Drawing roiDrawing = new Drawing();
+    protected Map<Object, Double> priorityBySource = new HashMap<Object, Double>();
+    protected double effectivePriority = 0;
     protected Object errorInfo;
 
     @Override
@@ -45,7 +49,7 @@ public abstract class AbstractImageListViewModelElement implements ImageListView
     public Object removeAttribute(String name) {
         return attributes.remove(name);
     }
-
+    
     @Override
     public boolean hasBufferedImage() {
         return false;
@@ -112,6 +116,33 @@ public abstract class AbstractImageListViewModelElement implements ImageListView
         InitializationState oldValue = getInitializationState();
         this.initializationState = initializationState;
         propertyChangeSupport.firePropertyChange(PROP_INITIALIZATIONSTATE, oldValue, this.initializationState);
+    }
+    
+    @Override
+    public void setPriority(Object source, double value) {
+        priorityBySource.put(source, value);
+        effectivePriority = 0;
+        for (double prio : priorityBySource.values()) {
+            effectivePriority = Math.max(effectivePriority, prio);
+        }
+    }
+    
+    @Override
+    public void removePriority(Object source) {
+        priorityBySource.remove(source);
+        effectivePriority = 0;
+        for (double prio : priorityBySource.values()) {
+            effectivePriority = Math.max(effectivePriority, prio);
+        }
+    }
+    
+    /**
+     * The effective priority is the maximum of all per-source priorities.
+     * 
+     * @return
+     */
+    public double getEffectivePriority() {
+        return effectivePriority;
     }
 
     private PropertyChangeSupport propertyChangeSupport = new PropertyChangeSupport(this);
