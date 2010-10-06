@@ -269,7 +269,7 @@ public class JLutWindowingSlider extends JXMultiThumbSlider<Boolean>{
         this.setMinimumValue(min);
         this.setMaximumValue(max);
         minMaxInitPhase = true;
-        this.resetSlider();
+//        this.resetSlider();
         minMaxInitPhase = false;
     }
 
@@ -309,7 +309,9 @@ public class JLutWindowingSlider extends JXMultiThumbSlider<Boolean>{
     public void setMaximumValue(float max) {
         model.setMaximumValue(max);
         minMaxInitPhase = true;
-        this.resetSlider();
+//        this.resetSlider();
+
+        this.setSliderValues(this.getLowervalue(),this.getUpperValue());
         minMaxInitPhase = false;
     }
 
@@ -320,7 +322,8 @@ public class JLutWindowingSlider extends JXMultiThumbSlider<Boolean>{
     public void setMinimumValue(float min) {
         model.setMinimumValue(min);
         minMaxInitPhase = true;
-        this.resetSlider();
+//        this.resetSlider();
+        this.setSliderValues(this.getLowervalue(),this.getUpperValue());
         minMaxInitPhase = false;
     }
 

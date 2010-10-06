@@ -1,7 +1,11 @@
 package de.sofd.viskit.model;
 
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.io.File;
 import java.util.Comparator;
+import java.util.HashMap;
+import java.util.Map;
 
 import javax.swing.DefaultListModel;
 import javax.swing.ListModel;
@@ -11,9 +15,10 @@ import org.dcm4che2.data.DicomObject;
 import org.dcm4che2.data.Tag;
 
 import de.sofd.util.FloatRange;
+import de.sofd.viskit.model.ImageListViewModelElement.InitializationState;
 
 /**
- * Concrete class that creates a model based on DICOM objects.If the object is a
+ * Concrete class that creates a model based on DICOM objects. If the object is a
  * singleframe DICOM a model element {@link ImageListViewModelElement} will be
  * created. If the object is a multiframe DICOM for each frame a model element
  * {@link ImageListViewModelElement} will be created. The unique key that is
@@ -24,17 +29,23 @@ import de.sofd.util.FloatRange;
  * 
  */
 public class DicomModelFactory extends ModelFactory {
-
+    
     protected static final Logger logger = Logger.getLogger(DicomModelFactory.class);
 
     private boolean supportMultiframes = true;
     private boolean checkFileReadability = true;
     private boolean asyncMode = false;
+    
+    protected Map<Object,DefaultListModel> elementModelMap = new HashMap<Object,DefaultListModel>();
 
     public DicomModelFactory(String cachePath, Comparator<File> comparator) {
         super(cachePath, comparator);
     }
 
+    public DicomModelFactory() {
+        super(null, null);
+    }
+    
     public boolean isSupportMultiframes() {
         return supportMultiframes;
     }
@@ -82,7 +93,6 @@ public class DicomModelFactory extends ModelFactory {
     protected float[] calculatePixelValueRange(ListModel model) {
         float[] minMaxRange = new float[2];
         if (model.getSize() > 0) {
-
             int min = Integer.MAX_VALUE;
             int max = Integer.MIN_VALUE;
             CachingDicomImageListViewModelElement element = (CachingDicomImageListViewModelElement) model
@@ -98,7 +108,7 @@ public class DicomModelFactory extends ModelFactory {
             // iterate through all model elements and find the smallest
             else {
                 logger
-                        .debug("Pixel value range in Series not found, iterate through all model elements to calculate pixel value range for series");
+                        .debug("Pixel value range in series not found, iterate through all model elements to calculate pixel value range for series");
 
                 long startTime = System.currentTimeMillis();
                 for (int i = 0; i < model.getSize(); i++) {
@@ -119,6 +129,7 @@ public class DicomModelFactory extends ModelFactory {
                 logger.debug("[Min,Max] Range Calculation finished! Processing time: "
                         + (System.currentTimeMillis() - startTime) + " ms");
             }
+            
             minMaxRange[0] = min;
             minMaxRange[1] = max;
         } else {
@@ -128,8 +139,47 @@ public class DicomModelFactory extends ModelFactory {
     }
 
     @Override
-    protected void addElementToModel(DefaultListModel model, Object obj) {
+    protected void addElementToModel(DefaultListModel model, Object obj, final String key) {
         DicomImageListViewModelElement element = createDicomImageListViewModelElement(obj);
+        final float[] currentRange = this.keyMinMaxMap.get(key);
+        element.addPropertyChangeListener(new PropertyChangeListener() {
+
+            @Override
+            public void propertyChange(PropertyChangeEvent evt) {
+                if (ImageListViewModelElement.PROP_INITIALIZATIONSTATE.equals(evt.getPropertyName())) {
+                    if(evt.getNewValue().equals(InitializationState.INITIALIZED)) {
+                        // calculate pixel value range of this initialized model element
+                        // and compare it with the actual pixel value range and update the range
+                        CachingDicomImageListViewModelElement element= (CachingDicomImageListViewModelElement)evt.getSource();
+                        DicomObject metadata = element.getDicomImageMetaData();
+
+                        // DICOM object contains pixel value range for complete series
+                        if (metadata.contains(Tag.SmallestPixelValueInSeries) && metadata.contains(Tag.LargestPixelValueInSeries)) {
+                            currentRange[0] = metadata.getInt(Tag.SmallestPixelValueInSeries);
+                            currentRange[1] = metadata.getInt(Tag.LargestPixelValueInSeries);
+                            logger.debug("Pixel value range in series found: " + element);
+                            fireModelPixelValuesRangeChange(key,element,currentRange);
+                        }
+                        else {
+                            logger
+                            .debug("Iterate through all pixels of model element and calculate pixel value range");
+                            FloatRange range = element.getUsedPixelValuesRange();
+                            
+                            float currentMin = currentRange[0];
+                            float currentMax = currentRange[1];
+                            if(range.getMin() < currentMin) {
+                                currentRange[0] = range.getMin();
+                                fireModelPixelValuesRangeChange(key,element,currentRange);
+                            }
+                            if(range.getMax() > currentMax) {
+                                currentRange[1] = range.getMax();
+                                fireModelPixelValuesRangeChange(key,element,currentRange);
+                            }
+                        }
+                    }
+                }
+            }
+        });
         model.addElement(element);
         if (supportMultiframes) {
             int numFrames = element.getTotalFrameNumber();
@@ -154,5 +204,4 @@ public class DicomModelFactory extends ModelFactory {
         felt.setFrameNumber(frameNumber);
         return felt;
     }
-
 }

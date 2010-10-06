@@ -5,9 +5,11 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.Writer;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Comparator;
+import java.util.EventListener;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -20,12 +22,20 @@ import org.apache.log4j.Logger;
 
 /**
  * Abstract class for creating a model {@link DefaultListModel} with model
- * elements {@link ImageListViewModelElement} from a directory or a collection
- * of files and calculate the pixel value range of a model. A model is
+ * elements {@link ImageListViewModelElement} from a directory, a collection
+ * of files or an existing model and calculate the pixel value range of a model. A model is
  * identified by a unique key. The factory enables calculation of pixel value
  * ranges of a model. This calculation may be time consuming. So a cache can be
  * used to store and retrieve the pixel value range of a model. If a comparator
- * is set it will be used for sorting the files in a directory.
+ * is set it will be used for sorting the files in a directory. 
+ * 
+ * TODO: model factory has to be adopted to asynchronous mode:
+ * 
+ * getPixelRange()
+ * writeInCache()
+ * calculatePixelValuesRange() still necessary?
+ * 
+ * perhaps a flag is needed to know that all model elements have been initialized once
  * 
  * @author honglinh
  * 
@@ -38,7 +48,7 @@ public abstract class ModelFactory {
     protected String cacheFile;
     protected Map<String,ListModel> keyModelMap = new LinkedHashMap<String,ListModel>();
     protected Map<String,float[]> keyMinMaxMap = new HashMap<String,float[]>();
-    
+    protected Collection<ModelPixelValuesRangeChangeListener> listener = new ArrayList<ModelPixelValuesRangeChangeListener>();
     protected static final Logger logger = Logger.getLogger(ModelFactory.class);
     
     public ModelFactory(String cachePath, Comparator<File> comparator) {
@@ -75,10 +85,8 @@ public abstract class ModelFactory {
                         String keyValue = lineScanner.next();
 
                         float[] range = new float[2];
-
                         range[0] = Float.valueOf(lineScanner.next());
                         range[1] = Float.valueOf(lineScanner.next());
-
                         keyMinMaxMap.put(keyValue, range);
                         logger.info("Pixel Range Caching Entry found in Cache file: Key=" + keyValue + ", Min="
                                 + range[0] + ", Max= " + range[1]);
@@ -105,7 +113,7 @@ public abstract class ModelFactory {
         Writer output = null;
         try {
             output = new BufferedWriter(new FileWriter(cacheFile,true));
-            output.write(key + "," + range[0] + "," + range[1]+System.getProperty("line.separator"));
+            output.write(key + "," + range[0]+ "," + range[1]+System.getProperty("line.separator"));
             logger.info("Pixel Range Caching Entry added in Cache file: Key="+key+", Min="+range[0]+", Max= "+range[1]);
         } catch (IOException e) {
             e.printStackTrace();
@@ -131,8 +139,9 @@ public abstract class ModelFactory {
      * 
      * @param model
      * @param file
+     * @param key
      */
-    protected abstract void addElementToModel(DefaultListModel model, Object file);
+    protected abstract void addElementToModel(DefaultListModel model, Object file, String key);
     
 
     /**
@@ -165,7 +174,8 @@ public abstract class ModelFactory {
      * @param dir
      */
     public void addModel(String key, File dir) {
-        ListModel model = createModelFromDir(dir);
+        keyMinMaxMap.put(key, new float[]{0,1});
+        ListModel model = createModelFromDir(dir,key);
         keyModelMap.put(key,model);
     }
     
@@ -176,7 +186,8 @@ public abstract class ModelFactory {
      * @param paths
      */
     public void addModel(String key, Collection<?> paths) {
-        ListModel model = createModelFromCreationContextCollection(paths);
+        keyMinMaxMap.put(key, new float[]{0,1});
+        ListModel model = createModelFromCreationContextCollection(paths,key);                
         keyModelMap.put(key,model);
     }
     
@@ -187,35 +198,36 @@ public abstract class ModelFactory {
      * @param model
      */
     public void addModel(String key, ListModel model) {
+        keyMinMaxMap.put(key, new float[]{0,1});
         keyModelMap.put(key,model);
     }
 
-    protected DefaultListModel createModelFromDir(File dir) {
+    protected DefaultListModel createModelFromDir(File dir, String key) {
         DefaultListModel result = new DefaultListModel();
         File[] files = readFilesFromDir(dir);
         for (File f : files) {
-            addElementToModel(result, f);
+            addElementToModel(result, f, key);
         }
         return result;
     }
 
-    protected DefaultListModel createModelFromCreationContextCollection(Collection<?> collection) {
+    protected DefaultListModel createModelFromCreationContextCollection(Collection<?> collection,String key) {
         DefaultListModel result = new DefaultListModel();
         for (Object f : collection) {
-            addElementToModel(result, f);
+            addElementToModel(result, f, key);
         }
         return result;
     }
     
     /**
-     * get the pixel value range for a model (lazy calculation of the range)
+     * get current pixel value range for a model
      * 
      * @param key
      * @return
      */
     public float[] getPixelRange(String key) {
         if(keyMinMaxMap.get(key) == null) {
-            float[] range = calculatePixelValueRange(keyModelMap.get(key));
+            float[]range = calculatePixelValueRange(keyModelMap.get(key));
             keyMinMaxMap.put(key, range);
             
             // write in cache
@@ -258,6 +270,28 @@ public abstract class ModelFactory {
         }
         else {
             this.enableRangeCaching = enableRangeCaching;
+        }
+    }
+    
+    public static interface ModelPixelValuesRangeChangeListener extends EventListener {
+
+        public void pixelvaluesRangeChange(String modelKey,ImageListViewModelElement element, float[] range);
+
+    }
+
+    public void addModelPixelValuesRangeChangeListener(ModelPixelValuesRangeChangeListener l) {
+        listener.add(l);
+    }
+
+    public void removeModelPixelValuesRangeChangeListener(ModelPixelValuesRangeChangeListener l) {
+        listener.remove(l);
+    }
+
+    protected void fireModelPixelValuesRangeChange(String modelKey, ImageListViewModelElement element, float[] range) {
+        logger.debug("Pixel values range changed for model with key:"+modelKey+" new range: ["+range[0]+","+range[1]+"]");
+        logger.debug("Fire model pixel values range change event");
+        for (ModelPixelValuesRangeChangeListener l : listener) {
+            l.pixelvaluesRangeChange(modelKey,element, range);
         }
     }
 }

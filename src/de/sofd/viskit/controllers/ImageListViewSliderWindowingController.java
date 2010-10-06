@@ -11,6 +11,7 @@ import javax.swing.event.ListSelectionListener;
 import org.jdesktop.swingx.multislider.ThumbListener;
 
 import de.sofd.viskit.model.ImageListViewModelElement;
+import de.sofd.viskit.model.ImageListViewModelElement.InitializationState;
 import de.sofd.viskit.ui.JLutWindowingSlider;
 import de.sofd.viskit.ui.imagelist.ImageListView;
 import de.sofd.viskit.ui.imagelist.ImageListViewCell;
@@ -107,7 +108,8 @@ public class ImageListViewSliderWindowingController {
     public void setInitialWindowingController(ImageListViewInitialWindowingController controller) {
         this.initialWindowingController = controller;
     }
-
+    
+    
     /**
      * property change listener to listen to changes of windowing parameters of
      * the selected cell, f.e. mouse windowing
