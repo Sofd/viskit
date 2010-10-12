@@ -147,6 +147,8 @@ public class JListImageListTestApp {
             //JFrame f1 = newSingleListFrame("Viskit ImageList test app window 1", null);
             //JFrame f2 = newSingleListFrame("Viskit ImageList test app window 2", null);
             JFrame f2 = newMultiListFrame("Multi-List frame", null);
+            JFrame f3 = newLWJGLMultiListFrame("LWJGL Multi-List frame",null);
+            
         } else if (isUserFokko()) {
             factory = new DicomModelFactory(System.getProperty("user.home") + File.separator + "viskit-model-cache.txt", new IntuitiveFileNameComparator());
             if (useAsyncMode) {
@@ -208,6 +210,8 @@ public class JListImageListTestApp {
         //debugObjects.put("f", f2);
     }
     
+  
+
     //TODO: move this helper method into ModelFactory?
     protected static void addModelForDir(ModelFactory factory, File dir) throws IOException {
         factory.addModel(dir.getCanonicalPath(), dir);
@@ -706,6 +710,17 @@ public class JListImageListTestApp {
         theFrame.setVisible(true);
         
         return theFrame;
+    }
+
+    /**
+     * creates a new multi frame with LWJGL rendering
+     * @param string
+     * @param object
+     * @return
+     */
+    private JFrame newLWJGLMultiListFrame(String string, Object object) {
+        
+        return null;
     }
 
     private class ListViewPanel extends JPanel {

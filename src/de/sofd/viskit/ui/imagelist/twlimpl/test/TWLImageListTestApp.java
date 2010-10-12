@@ -1,0 +1,348 @@
+package de.sofd.viskit.ui.imagelist.twlimpl.test;
+
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.GraphicsDevice;
+import java.awt.GraphicsEnvironment;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
+import java.io.File;
+import java.io.IOException;
+import java.util.Collection;
+import java.util.LinkedList;
+
+import javax.swing.DefaultListModel;
+import javax.swing.JFrame;
+
+import org.lwjgl.LWJGLException;
+
+import de.matthiasmann.twl.Alignment;
+import de.matthiasmann.twl.BoxLayout;
+import de.matthiasmann.twl.GUI;
+import de.matthiasmann.twl.Label;
+import de.matthiasmann.twl.Widget;
+import de.matthiasmann.twl.BoxLayout.Direction;
+import de.matthiasmann.twl.renderer.lwjgl.LWJGLRenderer;
+import de.matthiasmann.twl.theme.ThemeManager;
+import de.sofd.twlawt.TWLAWTGLCanvas;
+import de.sofd.viskit.model.DicomModelFactory;
+import de.sofd.viskit.model.IntuitiveFileNameComparator;
+import de.sofd.viskit.model.ModelFactory;
+import de.sofd.viskit.ui.imagelist.twlimpl.TWLImageListView;
+
+public class TWLImageListTestApp {
+    
+    public static boolean isUser(String userName) {
+        return userName.equals(System.getProperty("user.name"));
+    }
+    
+    public static boolean isUserFokko() {
+        return isUser("fokko");
+    }
+    
+    public static boolean isUserHonglinh() {
+        return isUser("honglinh");
+    }
+
+    public static boolean isUserOlaf() {
+        return isUser("olaf");
+    }
+    
+    private DicomModelFactory factory = new DicomModelFactory(null,new IntuitiveFileNameComparator());
+    private JFrame mainFrame = null;
+    
+    public TWLImageListTestApp() throws Exception {
+        boolean useAsyncMode = (null != System.getProperty("viskit.testapp.asyncMode"));
+        if (isUserHonglinh()) {
+            factory = new DicomModelFactory("/home/honglinh/Desktop/cache.txt", new IntuitiveFileNameComparator());
+            if (useAsyncMode) {
+                factory.setSupportMultiframes(false);
+                factory.setCheckFileReadability(false);
+                factory.setAsyncMode(true);
+            } else {
+                // when using async mode, also avoid pre-reading of DICOM files to further minimize startup time
+                factory.setSupportMultiframes(false);
+                factory.setCheckFileReadability(false);
+                factory.setAsyncMode(false);
+            }
+        } else if (isUserFokko()) {
+            factory = new DicomModelFactory(System.getProperty("user.home") + File.separator + "viskit-model-cache.txt", new IntuitiveFileNameComparator());
+            if (useAsyncMode) {
+                factory.setSupportMultiframes(false);
+                factory.setCheckFileReadability(false);
+                factory.setAsyncMode(true);
+            } else {
+                // when using async mode, also avoid pre-reading of DICOM files to further minimize startup time
+                factory.setSupportMultiframes(false);
+                factory.setCheckFileReadability(false);
+                factory.setAsyncMode(false);
+            }
+        } else if (isUserOlaf()) {
+            factory = new DicomModelFactory(System.getProperty("user.home") + File.separator + "viskit-model-cache.txt", new IntuitiveFileNameComparator());
+            if (useAsyncMode) {
+                factory.setSupportMultiframes(false);
+                factory.setCheckFileReadability(false);
+                factory.setAsyncMode(true);
+            } else {
+                factory.setSupportMultiframes(false);
+                factory.setCheckFileReadability(false);
+                factory.setAsyncMode(false);
+            }
+            GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
+            GraphicsDevice[] gs = ge.getScreenDevices();
+        } else {
+            factory = new DicomModelFactory(System.getProperty("user.home") + File.separator + "viskit-model-cache.txt", new IntuitiveFileNameComparator());
+            if (useAsyncMode) {
+                factory.setSupportMultiframes(false);
+                factory.setCheckFileReadability(false);
+                factory.setAsyncMode(true);
+            } else {
+                // when using async mode, also avoid pre-reading of DICOM files to further minimize startup time
+                factory.setSupportMultiframes(false);
+                factory.setCheckFileReadability(false);
+                factory.setAsyncMode(false);
+            }
+        }
+        mainFrame = newMultiListFrame("TWL Multi-List Frame");
+    }
+    
+    protected static void addModelForDir(ModelFactory factory, File dir) throws IOException {
+        factory.addModel(dir.getCanonicalPath(), dir);
+        if (isUserOlaf()) {
+            //test error states (file-not-found in this case)
+            DefaultListModel dlm = (DefaultListModel) factory.getModel(dir.getCanonicalPath());
+            //dlm.insertElementAt(new FileBasedDicomImageListViewModelElement(new File("/foo/bar/baz"), false), 1);
+        }
+    }
+    
+    public static void main(String[] args) throws Exception{
+        try {
+            TWLImageListTestApp app = new TWLImageListTestApp();
+            app.show();
+        } catch (LWJGLException e) {
+            e.printStackTrace();
+        }
+    }
+    
+    public JFrame newMultiListFrame(String title) throws Exception {
+        JFrame frame = new JFrame(title);
+        
+        frame.getContentPane().setBackground(Color.GRAY);
+        frame.getContentPane().setLayout(new BorderLayout());
+        
+        final MainTwlCanvas twlCanvas= new MainTwlCanvas();
+        frame.getContentPane().add(twlCanvas, BorderLayout.CENTER);
+        twlCanvas.setVisible(true);
+        
+        frame.setSize(1200,900);
+        frame.addWindowListener(new WindowAdapter() {
+            @Override
+            public void windowClosing(WindowEvent e) {
+                TWLImageListTestApp.this.hide();
+            }
+        });
+        
+        
+        final long t00 = System.currentTimeMillis();
+        
+        if (isUserHonglinh()) {
+            factory.addModel("0", new File("/home/honglinh/br312046/images/cd00906__center10102"));
+            factory.addModel("1", new File("/home/honglinh/br312046/images/cd00908__center10101"));
+            
+//          listModels.add(factory.createModelFromDir(new File("/home/honglinh/Desktop/dicomfiles1")));
+            
+//          listModels.add(getViewerListModelForDirectory(new File("/home/honglinh/Desktop/dicomfiles1")));
+//          listModels.add(getViewerListModelForDirectory(new File("/home/honglinh/Desktop/dicomfiles1")));
+//          listModels.add(factory.createModelFromDir(new File("/home/honglinh/Desktop/multiframedicoms")));
+            //listModels.add(factory.getModel("1"));
+            //listModels.add(factory.getModel("2"));
+        } else if (isUserOlaf()) {
+            ///*
+            addModelForDir(factory, new File("/home/olaf/hieronymusr/br312046/images/cd00906__center10102"));
+            addModelForDir(factory, new File("/home/olaf/hieronymusr/br312046/images/cd00908__center10101"));
+            //addModelForDir(factory, new File("/home/olaf/Downloads/MESA-storage-B_10_11_0/links"));
+
+            //listModels.add(factory.getModel("1"));
+            //listModels.add(factory.getModel("2"));
+            //*/
+            
+            //listModels.add(getViewerListModelForDirectory(new File("/home/olaf/headvolume")));
+            //listModels.add(getViewerListModelForDirectory(new File("/home/olaf/oliverdicom/series1")));
+            //listModels.add(getViewerListModelForDirectory(new File("/home/olaf/oliverdicom/INCISIX")));
+
+            //listModels.add(getViewerListModelForDirectory(new File("/shares/projects/StudyBrowser/data/disk312043/Images/cd833__center4001")));
+//          listModels.add(getViewerListModelForDirectory(new File("/shares/projects/StudyBrowser/data/disk312043/Images/cd865__center4001")));
+          //listModels.add(getViewerListModelForDirectory(new File("/home/olaf/oliverdicom/ARTIFIX")));
+          //listModels.add(getViewerListModelForDirectory(new File("/home/olaf/oliverdicom/BRAINIX")));
+          //listModels.add(getViewerListModelForDirectory(new File("/tmp/cd00926__center10101")));
+          //listModels.add(getViewerListModelForDirectory(new File("/tmp/cd00927__center10103")));
+          //listModels.add(getViewerListModelForDirectory(new File("/home/olaf/gi/Images/cd00900__center10102")));
+          //listModels.add(getViewerListModelForDirectory(new File("/home/olaf/gi/Images/cd00901__center14146")));
+          
+          //listModels.add(getViewerListModelForDirectory(new File("/home/sofd/disk88888/Images/cd88888010__center100")));
+          //listModels.add(getViewerListModelForDirectory(new File("/home/olaf/hieronymusr/br312046/images/cd00900__center10102")));
+          ///*
+          //listModels.add(getViewerListModelForDirectory(new File("/home/olaf/hieronymusr/disk312046/Images/cd00917__center10102")));
+          ///listModels.add(getViewerListModelForDirectory(new File("/home/olaf/hieronymusr/br312046/images/cd00903__center10101")));
+          //listModels.add(getViewerListModelForDirectory(new File("/home/olaf/hieronymusr/br312046/images/cd00904__center10101")));
+          //listModels.add(getViewerListModelForDirectory(new File("/home/olaf/hieronymusr/br312046/images/cd00905__center10101")));
+          ///listModels.add(getViewerListModelForDirectory(new File("/home/olaf/hieronymusr/br312046/images/cd00907__center10102")));
+          //listModels.add(getViewerListModelForDirectory(new File("/home/olaf/gi/resources/DICOM-Testbilder/1578")));
+          //*/
+          
+            //listModels.add(getViewerListModelForDirectory(new File("/home/olaf/hieronymusr/br312046/images/cd00906__center10102")));
+            //listModels.add(getViewerListModelForDirectory(new File("/home/olaf/hieronymusr/br312046/images/cd00908__center10101")));
+
+          //listModels.add(getViewerListModelForDirectory(new File("/home/olaf/hieronymusr/br312046/images/cd00909__center10101")));
+          //*/
+          //listModels.add(getViewerListModelForDirectory(new File("/home/olaf/hieronymusr/br312046/images/cd00907__center10102")));
+          //listModels.add(getViewerListModelForDirectory(new File("/shares/shared/olaf/cd823__center4001")));
+
+          //listModels.add(getViewerListModelForDirectory(new File("/home/olaf/hieronymusr/br312046/images/cd00907__center10102")));
+          //listModels.add(getViewerListModelForDirectory(new File("/shares/shared/olaf/cd823__center4001")));
+          
+//          listModels.add(getViewerListModelForDirectory(new File("/home/olaf/hieronymusr/br312043/images/cd800__center4001")));
+//          listModels.add(getViewerListModelForDirectory(new File("/home/olaf/hieronymusr/br312043/images/cd801__center4001")));
+
+        } else if (isUserFokko()) {
+            // a unique key should be used instead of 1 and 2, f.e. PatientID+StudyInstanceUID+SeriesInstanceUID to identify the series
+            factory.addModel("1", new File("/Users/fokko/disk312046/Images/cd00903__center10101"));
+            factory.addModel("2", new File("/Users/fokko/disk312046/Images/cd00904__center10101"));
+
+            //listModels.add(factory.getModel("1"));
+            //listModels.add(factory.getModel("2"));
+        } else {
+            // a unique key should be used instead of 1 and 2, f.e. PatientID+StudyInstanceUID+SeriesInstanceUID to identify the series
+            factory.addModel("1", new File("/path/to/dcm/dir/1"));
+            factory.addModel("2", new File("/path/to/dcm/dir/2"));
+
+            //listModels.add(factory.getModel("1"));
+            //listModels.add(factory.getModel("2"));
+        }
+        
+        final long t01 = System.currentTimeMillis();
+
+        System.out.println("creation of all models took " + (t01-t00) + " ms.");
+        return frame;
+    }
+    
+    private class MainTwlCanvas extends TWLAWTGLCanvas {
+
+        private static final long serialVersionUID = 9180551822762846051L;
+        protected ThemeManager theme;
+        
+        BoxLayout toolbar;
+
+        public MainTwlCanvas() throws LWJGLException {
+            super();
+        }
+        
+        private void loadTheme() throws IOException {
+            getRenderer().syncViewportSize();
+            System.out.println("width="+getRenderer().getWidth()+" height="+getRenderer().getHeight());
+
+            long startTime = System.nanoTime();
+            // NOTE: this code destroys the old theme manager (including it's cache context)
+            // after loading the new theme with a new cache context.
+            // This allows easy reloading of a theme for development.
+            // If you want fast theme switching without reloading then use the existing
+            // cache context for loading the new theme and don't destroy the old theme.
+            ThemeManager newTheme = ThemeManager.createThemeManager(TWLImageListView.class.getResource("simple.xml"), getRenderer());
+            long duration = System.nanoTime() - startTime;
+            System.out.println("Loaded theme in " + (duration/1000) + " us");
+
+            if(theme != null) {
+                theme.destroy();
+            }
+            theme = newTheme;
+            
+            getGUI().setSize();
+            getGUI().applyTheme(theme);
+            getGUI().setBackground(theme.getImageNoWarning("gui.background"));
+        }
+
+        @Override
+        protected GUI createGUI(LWJGLRenderer renderer) throws Exception {
+            final de.sofd.twl.GridLayout mainPane = new de.sofd.twl.GridLayout(2, 1);
+            mainPane.setTheme(""); // "buttonBox");
+
+            Widget rootWidget = new Widget() {
+                @Override
+                protected void layout() {
+                    int h = /* 10 + */toolbar.getPreferredHeight();
+                    toolbar.setPosition(getInnerX(), getInnerY());
+                    toolbar.setSize(getInnerWidth(), h);
+                    mainPane.setPosition(getInnerX(), getInnerY() + h);
+                    mainPane.setSize(getInnerWidth(), getInnerHeight() - h);
+                }
+
+                @Override
+                protected void paint(GUI gui) {
+                    super.paint(gui);
+                }
+            };
+            rootWidget.setTheme("");
+            toolbar = new BoxLayout(Direction.HORIZONTAL);
+            toolbar.setTheme("panel");
+            toolbar.setAlignment(Alignment.CENTER);
+
+            toolbar.add(new Label("Main Toolbar: ROI / SYNC"));
+
+            rootWidget.add(toolbar);
+            rootWidget.add(mainPane);
+            GUI gui = new GUI(rootWidget, renderer);
+
+            // TODO dynamic list view creation depending on model elements
+            for (int i = 0; i < 2; i++) {
+                // slider, scale mode, windowing stuff etc.
+                final BoxLayout listToolbar = new BoxLayout(Direction.HORIZONTAL);
+                listToolbar.setTheme("panel");
+                listToolbar.setAlignment(Alignment.CENTER);
+                listToolbar.add(new Label("ImageListView Toolbar: Windowing Slider, ScaleMode, lut, w/z"));
+
+                final TWLImageListView listView = new TWLImageListView();
+                
+                listView.setModel(factory.getModel(String.valueOf(i)));
+                listView.setTheme("panel");
+
+                Widget listPanel = new Widget() {
+                    @Override
+                    protected void layout() {
+                        int h = listToolbar.getPreferredHeight();
+                        listToolbar.setPosition(getInnerX(), getInnerY());
+                        listToolbar.setSize(getInnerWidth(), h);
+                        listView.setPosition(getInnerX(), getInnerY() + h);
+                        listView.setSize(getInnerWidth(), getInnerHeight() - h);
+                    }
+                };
+                listPanel.setTheme("");
+                listPanel.add(listToolbar);
+                listPanel.add(listView);
+                mainPane.add(listPanel);
+            }
+            return gui;
+        }
+
+        @Override
+        protected void onGuiCreated() {
+            super.onGuiCreated();
+            try {
+                loadTheme();
+            } catch (Exception e) {
+                throw new RuntimeException(e.getLocalizedMessage(), e);
+            }
+        }
+    }
+    
+    public void hide() {
+        if (mainFrame.isVisible()) {
+            mainFrame.dispose();
+        }
+    }
+    
+    public void show() {
+        if (!mainFrame.isVisible()) {
+            mainFrame.setVisible(true);
+        }
+    }
+}

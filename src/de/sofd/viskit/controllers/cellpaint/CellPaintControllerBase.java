@@ -210,6 +210,10 @@ public class CellPaintControllerBase {
         
     }
     
+    protected void paintLWJGL(ImageListViewCell cell, Map<String,Object> sharedContextData) {
+        
+    }
+    
     public void glDrawableDisposing(GLAutoDrawable glAutoDrawable) {
     }
     
