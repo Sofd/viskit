@@ -4,6 +4,11 @@ import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.GraphicsDevice;
 import java.awt.GraphicsEnvironment;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
+import java.awt.event.MouseMotionListener;
+import java.awt.event.MouseWheelEvent;
+import java.awt.event.MouseWheelListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.File;
@@ -24,6 +29,7 @@ import de.matthiasmann.twl.Widget;
 import de.matthiasmann.twl.BoxLayout.Direction;
 import de.matthiasmann.twl.renderer.lwjgl.LWJGLRenderer;
 import de.matthiasmann.twl.theme.ThemeManager;
+import de.sofd.swing.DefaultBoundedListSelectionModel;
 import de.sofd.twlawt.TWLAWTGLCanvas;
 import de.sofd.viskit.model.DicomModelFactory;
 import de.sofd.viskit.model.IntuitiveFileNameComparator;
@@ -301,7 +307,53 @@ public class TWLImageListTestApp {
                 listToolbar.add(new Label("ImageListView Toolbar: Windowing Slider, ScaleMode, lut, w/z"));
 
                 final TWLImageListView listView = new TWLImageListView();
-                
+                listView.setScaleMode(TWLImageListView.MyScaleMode.newCellGridMode(2, 2));
+                listView.setSelectionModel(new DefaultBoundedListSelectionModel());
+                listView.addCellMouseWheelListener(new MouseWheelListener() {
+
+                    @Override
+                    public void mouseWheelMoved(MouseWheelEvent e) {
+                        System.out.println("Mouse Wheel Event: " + e.getWheelRotation());
+                    }
+
+                });
+                listView.addCellMouseMotionListener(new MouseMotionListener() {
+
+                    @Override
+                    public void mouseDragged(MouseEvent e) {
+                    }
+
+                    @Override
+                    public void mouseMoved(MouseEvent e) {
+                        System.out.println("Mouse Point: " + e.getPoint());
+                    }
+                });
+                listView.addCellMouseListener(new MouseListener() {
+
+                    @Override
+                    public void mouseClicked(MouseEvent e) {
+                        System.out.println("Mouse Click Count: " + e.getClickCount());
+                    }
+
+                    @Override
+                    public void mouseEntered(MouseEvent e) {
+                    }
+
+                    @Override
+                    public void mouseExited(MouseEvent e) {
+                    }
+
+                    @Override
+                    public void mousePressed(MouseEvent e) {
+
+                    }
+
+                    @Override
+                    public void mouseReleased(MouseEvent e) {
+                    }
+
+                });
+
                 listView.setModel(factory.getModel(String.valueOf(i)));
                 listView.setTheme("panel");
 
@@ -332,6 +384,7 @@ public class TWLImageListTestApp {
                 throw new RuntimeException(e.getLocalizedMessage(), e);
             }
         }
+
     }
     
     public void hide() {
@@ -345,4 +398,5 @@ public class TWLImageListTestApp {
             mainFrame.setVisible(true);
         }
     }
+    
 }

@@ -1108,7 +1108,7 @@ public abstract class ImageListViewBaseImpl /*< extends $baseClass >*/ implement
                     break;
                 }
             }
-            if (!eventProcessed) {
+            if (!eventProcessed && rec.listener instanceof MouseListener) {
                 MouseListener l = (MouseListener) rec.listener;
                 switch (e.getID()) {
                 case MouseEvent.MOUSE_CLICKED:

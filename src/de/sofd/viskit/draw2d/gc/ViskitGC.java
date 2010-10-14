@@ -1,9 +1,12 @@
 package de.sofd.viskit.draw2d.gc;
 
-import de.sofd.draw2d.viewer.gc.GC;
 import java.awt.Graphics2D;
 import java.awt.Rectangle;
+
 import javax.media.opengl.GL;
+
+import de.matthiasmann.twl.renderer.Renderer;
+import de.sofd.draw2d.viewer.gc.GC;
 
 /**
  * Draw2d GC implementation for Viskit. Wraps either a Java2D Graphics2D or
@@ -24,23 +27,43 @@ public class ViskitGC extends GC {
 
     protected GL gl;
     protected boolean isGlPreferred = false;
-
+    protected Renderer renderer;
+    protected boolean isLWJGLPreferred = false;
+    
     public ViskitGC(Graphics2D g2d) {
-        this(g2d, null, false);
+        this(g2d, null, null, false,false);
     }
 
     public ViskitGC(GL gl) {
-        this(null, gl, true);
+        this(null, gl, null, true,false);
     }
 
-    public ViskitGC(Graphics2D g2d, GL gl, boolean isGlpreferred) {
+    public ViskitGC(Renderer renderer) {
+        this(null,null,renderer,true,true);
+    }
+    
+    public ViskitGC(Graphics2D g2d, GL gl, Renderer renderer, boolean isGlpreferred, boolean isLWJGLpreferred) {
         super(g2d);
         this.gl = gl;
         this.isGlPreferred = isGlpreferred;
+        this.renderer = renderer;
+        this.isLWJGLPreferred = isLWJGLpreferred;
     }
 
     public GL getGl() {
         return gl;
+    }
+    
+    public Renderer getLWJGLRenderer() {
+        return renderer;
+    }
+
+    public boolean isLWJGLPreferred() {
+        return isLWJGLPreferred;
+    }
+
+    public boolean isLWJGLRendererAvailable() {
+        return (renderer != null);
     }
 
     public boolean isGlAvailable() {

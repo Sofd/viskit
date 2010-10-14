@@ -2,7 +2,17 @@ package de.sofd.viskit.ui.imagelist.twlimpl;
 
 import java.awt.Color;
 import java.awt.Dimension;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
+import java.awt.event.MouseMotionListener;
+import java.awt.event.MouseWheelEvent;
+import java.awt.event.MouseWheelListener;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.EventListener;
+import java.util.List;
+import java.util.NavigableSet;
+import java.util.TreeSet;
 
 import javax.swing.ListSelectionModel;
 
@@ -13,10 +23,16 @@ import de.matthiasmann.twl.GUI;
 import de.matthiasmann.twl.Scrollbar;
 import de.matthiasmann.twl.Widget;
 import de.matthiasmann.twl.Scrollbar.Orientation;
+import de.sofd.lang.Runnable1;
 import de.sofd.twlawt.TwlToAwtMouseEventConverter;
 import de.sofd.util.IdentityHashSet;
+import de.sofd.util.IntRange;
+import de.sofd.util.Misc;
+import de.sofd.viskit.draw2d.gc.ViskitGC;
+import de.sofd.viskit.model.ImageListViewModelElement.InitializationState;
 import de.sofd.viskit.model.NotInitializedException;
 import de.sofd.viskit.ui.imagelist.ImageListViewCell;
+import de.sofd.viskit.ui.imagelist.event.cellpaint.ImageListViewCellPaintEvent;
 import de.sofd.viskit.ui.imagelist.event.cellpaint.ImageListViewCellPaintListener;
 
 /*
@@ -31,6 +47,7 @@ public class TWLImageListView extends TWLImageListViewBase {
     private Widget canvas;
     private Scrollbar scrollBar;
     
+//    private static final SharedContextData sharedContextData = new SharedContextData();
     private final Collection<ImageListViewCellPaintListener> uninitializedCellPaintListeners
     = new IdentityHashSet<ImageListViewCellPaintListener>();
     
@@ -49,18 +66,7 @@ public class TWLImageListView extends TWLImageListViewBase {
         this.add(scrollBar);
     }
     
-//    protected void initializeUninitializedCellPaintListeners() {
-//        forEachCellPaintListenerInZOrder(new Runnable1<ImageListViewCellPaintListener>() {
-//            @Override
-//            public void run(ImageListViewCellPaintListener l) {
-//                if (uninitializedCellPaintListeners.contains(l)) {
-//                    l.glSharedContextDataInitialization(gl, sharedContextData.getAttributes());
-//                    l.glDrawableInitialized(glAutoDrawable);
-//                }
-//            }
-//        });
-//        uninitializedCellPaintListeners.clear();
-//    }
+
     
     @Override
     protected void layout() {
@@ -172,20 +178,25 @@ public class TWLImageListView extends TWLImageListViewBase {
                                 GL11.glScissor(boxMinX + CELL_BORDER_WIDTH, boxMinY + CELL_BORDER_WIDTH, cellWidth, cellHeight);
                                 
                                 // call all CellPaintListeners in the z-order
+                                ViskitGC gc = new ViskitGC(gui.getRenderer());
+                                
                                 try {
+                                    //TODO shared context data adaption for LWJGL context
 //                                    fireCellPaintEvent(new ImageListViewCellPaintEvent(cell, gc, null, sharedContextData.getAttributes()));
+                                    fireCellPaintEvent(new ImageListViewCellPaintEvent(cell, gc, null, null));
                                 } catch (NotInitializedException e) {
                                     // a paint listener indicated that the cell's model element is uninitialized.
                                     // set the element's initializationState accordingly, repaint everything to let paint listeners to draw the right thing
                                     // TODO: clear out the cell before?
-//                                    logger.debug("NotInitializedException drawing " + cell.getDisplayedModelElement(), e);
-//                                    cell.getDisplayedModelElement().setInitializationState(InitializationState.UNINITIALIZED);
+                                    logger.debug("NotInitializedException drawing " + cell.getDisplayedModelElement(), e);
+                                    cell.getDisplayedModelElement().setInitializationState(InitializationState.UNINITIALIZED);
 //                                    fireCellPaintEvent(new ImageListViewCellPaintEvent(cell, gc, null, sharedContextData.getAttributes()));
+                                    fireCellPaintEvent(new ImageListViewCellPaintEvent(cell, gc, null, null));
                                 } catch (Exception e) {
-//                                    logger.error("Exception drawing " + cell.getDisplayedModelElement() + ". Setting the model elt to permanent ERROR state.", e);
+                                    logger.error("Exception drawing " + cell.getDisplayedModelElement() + ". Setting the model elt to permanent ERROR state.", e);
                                     //TODO: support the notion of "temporary" errors, for which we would not change the initializationState?
-//                                    cell.getDisplayedModelElement().setInitializationState(InitializationState.ERROR);
-//                                    cell.getDisplayedModelElement().setErrorInfo(e);
+                                    cell.getDisplayedModelElement().setInitializationState(InitializationState.ERROR);
+                                    cell.getDisplayedModelElement().setErrorInfo(e);
                                 }
                             } catch (Exception e) {
                                 logger.error("error displaying " + cell.getDisplayedModelElement(), e);
@@ -227,9 +238,87 @@ public class TWLImageListView extends TWLImageListViewBase {
         
         @Override
         protected boolean handleEvent(Event evt) {
-            // converts TWL events to AWT events and forwards them
-            // -> see DentApp SliceViewer
-            return false;
+            MouseEvent awtMevt = mouseEvtConv.mouseEventTwlToAwt(evt, this);
+            if (null != awtMevt) {
+                dispatchEventToCanvas(awtMevt);
+                return true; // consume all mouse event b/c otherwise TWL won't send some other events, apparently
+                //return awtMevt.isConsumed() || evt.getType().equals(Event.Type.MOUSE_ENTERED); //always handle MOUSE_ENTERED b/c otherwise TWL assumes the widget doesn't handle any mouse events
+            } else {
+                return false;
+            }
+        }
+    }
+    
+    private List<EventListener> canvasMouseListeners = new ArrayList<EventListener>();
+    
+    protected void addAnyCanvasMouseListener(EventListener listener) {
+        // check if it's been added before already. TODO: this is not really correct, get rid of it?
+        //   (it was added for compatibility with clients that call all three add methods with just
+        //   one listener instance (extending MouseHandler and thus implementing all Mouse*Listener interfaces),
+        //   and expect the listener to be called only once per event.
+        //   Check how standard Swing components handle this)
+        for (EventListener l : canvasMouseListeners) {
+            if (l == listener) {
+                return;
+            }
+        }
+        canvasMouseListeners.add(listener);
+    }
+    
+    protected void dispatchEventToCanvas(MouseEvent evt) {
+        MouseEvent ce = Misc.deepCopy(evt);
+        ce.setSource(this);
+        if (ce instanceof MouseWheelEvent) {
+            fireAnyCellMouseEvent((MouseWheelEvent) ce);
+        } else {
+            fireAnyCellMouseEvent(ce);
+        }
+    }
+    
+    protected void fireAnyCanvasMouseEvent(MouseEvent e) {
+        for (EventListener listener : canvasMouseListeners) {
+            boolean eventProcessed = false;
+            if (listener instanceof MouseWheelListener && e instanceof MouseWheelEvent) {
+                MouseWheelListener l = (MouseWheelListener) listener;
+                l.mouseWheelMoved((MouseWheelEvent) e);
+                eventProcessed = true;
+            }
+            if (!eventProcessed && listener instanceof MouseMotionListener) {
+                MouseMotionListener l = (MouseMotionListener) listener;
+                switch (e.getID()) {
+                case MouseEvent.MOUSE_MOVED:
+                    l.mouseMoved(e);
+                    eventProcessed = true;
+                    break;
+                case MouseEvent.MOUSE_DRAGGED:
+                    l.mouseDragged(e);
+                    eventProcessed = true;
+                    break;
+                }
+            }
+            if (!eventProcessed) {
+                MouseListener l = (MouseListener) listener;
+                switch (e.getID()) {
+                case MouseEvent.MOUSE_CLICKED:
+                    l.mouseClicked(e);
+                    break;
+                case MouseEvent.MOUSE_PRESSED:
+                    l.mousePressed(e);
+                    break;
+                case MouseEvent.MOUSE_RELEASED:
+                    l.mouseReleased(e);
+                    break;
+                case MouseEvent.MOUSE_ENTERED:
+                    l.mouseEntered(e);
+                    break;
+                case MouseEvent.MOUSE_EXITED:
+                    l.mouseExited(e);
+                    break;
+                }
+            }
+            if (e.isConsumed()) {
+                break;
+            }
         }
     }
 
@@ -320,6 +409,70 @@ public class TWLImageListView extends TWLImageListViewBase {
             hash = 29 * hash + this.cellRowCount;
             hash = 29 * hash + this.cellColumnCount;
             return hash;
+        }
+    }
+    
+    @Override
+    public void addCellPaintListener(int zOrder,
+            ImageListViewCellPaintListener listener) {
+        super.addCellPaintListener(zOrder, listener);
+        uninitializedCellPaintListeners.add(listener);
+    }
+    
+    @Override
+    public void removeCellPaintListener(ImageListViewCellPaintListener listener) {
+        super.removeCellPaintListener(listener);
+        uninitializedCellPaintListeners.remove(listener);
+    }
+    
+    protected void initializeUninitializedCellPaintListeners() {
+        forEachCellPaintListenerInZOrder(new Runnable1<ImageListViewCellPaintListener>() {
+            @Override
+            public void run(ImageListViewCellPaintListener l) {
+                if (uninitializedCellPaintListeners.contains(l)) {
+//                    l.glSharedContextDataInitialization(gl, sharedContextData.getAttributes());
+//                    l.glDrawableInitialized(glAutoDrawable);
+                }
+            }
+        });
+        uninitializedCellPaintListeners.clear();
+    }
+    
+    protected IntRange previouslyVisibleRange = null;
+    
+    /**
+     * Determine newly visible and newly invisible model elements (compared to
+     * last call of this method), change their priorities accordingly (newly
+     * invisible ones to 0 (the default), newly visible ones to 10).
+     * <p>
+     * TODO: This is a 100% copy&paste from JGridImageListView
+     */
+    protected void updateElementPriorities() {
+        int firstVisIdx = getFirstVisibleIndex();
+        int lastVisIdx = getLastVisibleIndex();
+        if (getModel() != null) {
+            IntRange newlyVisibleRange = null;
+            int lastVisModelIdx = Math.min(lastVisIdx, getModel().getSize() - 1);
+            if (lastVisModelIdx >= firstVisIdx) {
+                newlyVisibleRange = new IntRange(firstVisIdx, lastVisModelIdx);
+                IntRange[] newlyInvisibleRanges = IntRange.subtract(previouslyVisibleRange, newlyVisibleRange);
+                IntRange[] newlyVisibleRanges =   IntRange.subtract(newlyVisibleRange, previouslyVisibleRange);
+                for (IntRange r : newlyInvisibleRanges) {
+                    for (int i = r.getMin(); i <= r.getMax(); i++) {
+                        logger.debug("setting to prio  0: index " + i);
+                        getElementAt(i).setPriority(this, 0);
+                    }
+                }
+                for (IntRange r : newlyVisibleRanges) {
+                    for (int i = r.getMin(); i <= r.getMax(); i++) {
+                        logger.debug("setting to prio 10: index " + i);
+                        getElementAt(i).setPriority(this, 10);
+                    }
+                }
+            }
+            previouslyVisibleRange = newlyVisibleRange;
+        } else {
+            previouslyVisibleRange = null;
         }
     }
 }
