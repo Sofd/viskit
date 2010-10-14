@@ -19,6 +19,7 @@ import javax.media.opengl.GLAutoDrawable;
 
 import org.dcm4che2.data.DicomObject;
 import org.dcm4che2.data.Tag;
+import org.lwjgl.opengl.GL11;
 
 import com.sun.opengl.util.texture.TextureCoords;
 
@@ -113,6 +114,26 @@ public class ImageListViewImagePaintController extends CellPaintControllerBase {
             rescaleShader.addProgramUniform("grayscaleRgbTex");
         } catch (Exception e) {
             throw new RuntimeException("couldn't initialize GL shader: " + e.getLocalizedMessage(), e);
+        }
+    }
+    
+    @Override
+    protected void paintLWJGL(ImageListViewCell cell, Map<String,Object> sharedContextData) {
+        Dimension cellSize = cell.getLatestSize();
+        GL11.glPushMatrix();
+        try {
+//            GL11.glLoadIdentity();
+            GL11.glTranslated(cellSize.getWidth() / 2, cellSize.getHeight() / 2, 0);
+            GL11.glTranslated(cell.getCenterOffset().getX(), cell.getCenterOffset().getY(), 0);
+            GL11.glScaled(cell.getScale(), cell.getScale(), 1);
+            GL11.glPointSize(10);
+            GL11.glBegin(GL11.GL_POINTS);
+            GL11.glColor3f(0, 0, 1);
+            GL11.glVertex2f(0, 0);
+            GL11.glEnd();
+        }
+        finally {
+            GL11.glPopMatrix();
         }
     }
 

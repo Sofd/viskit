@@ -184,8 +184,12 @@ public class CellPaintControllerBase {
         if (e.getGc().isGraphics2DAvailable() && ! e.getGc().isGlPreferred()) {
             // paint using Java2D
             paintJ2D(cell, (Graphics2D) e.getGc().getGraphics2D().create());
-        } else {
-           // paint using OpenGL
+        } else if (e.getGc().isLWJGLRendererAvailable() && e.getGc().isLWJGLPreferred()) {
+            // paint using OpenGL (LWJGL)+
+            paintLWJGL(cell, e.getSharedContextData());
+        }
+        else {
+           // paint using OpenGL (JOGL)
            paintGL(cell, e.getGc().getGl().getGL2(), e.getSharedContextData());
         }
     }

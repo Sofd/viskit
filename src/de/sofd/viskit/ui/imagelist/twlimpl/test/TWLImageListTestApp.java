@@ -19,6 +19,7 @@ import java.util.LinkedList;
 import javax.swing.DefaultListModel;
 import javax.swing.JFrame;
 
+import org.apache.log4j.BasicConfigurator;
 import org.lwjgl.LWJGLException;
 
 import de.matthiasmann.twl.Alignment;
@@ -31,9 +32,12 @@ import de.matthiasmann.twl.renderer.lwjgl.LWJGLRenderer;
 import de.matthiasmann.twl.theme.ThemeManager;
 import de.sofd.swing.DefaultBoundedListSelectionModel;
 import de.sofd.twlawt.TWLAWTGLCanvas;
+import de.sofd.viskit.controllers.cellpaint.ImageListViewImagePaintController;
 import de.sofd.viskit.model.DicomModelFactory;
+import de.sofd.viskit.model.ImageListViewModelElement;
 import de.sofd.viskit.model.IntuitiveFileNameComparator;
 import de.sofd.viskit.model.ModelFactory;
+import de.sofd.viskit.ui.imagelist.ImageListViewCell;
 import de.sofd.viskit.ui.imagelist.twlimpl.TWLImageListView;
 
 public class TWLImageListTestApp {
@@ -60,7 +64,7 @@ public class TWLImageListTestApp {
     public TWLImageListTestApp() throws Exception {
         boolean useAsyncMode = (null != System.getProperty("viskit.testapp.asyncMode"));
         if (isUserHonglinh()) {
-            factory = new DicomModelFactory("/home/honglinh/Desktop/cache.txt", new IntuitiveFileNameComparator());
+            factory = new DicomModelFactory(null, new IntuitiveFileNameComparator());
             if (useAsyncMode) {
                 factory.setSupportMultiframes(false);
                 factory.setCheckFileReadability(false);
@@ -123,6 +127,7 @@ public class TWLImageListTestApp {
     
     public static void main(String[] args) throws Exception{
         try {
+            BasicConfigurator.configure();
             TWLImageListTestApp app = new TWLImageListTestApp();
             app.show();
         } catch (LWJGLException e) {
@@ -333,6 +338,9 @@ public class TWLImageListTestApp {
                     @Override
                     public void mouseClicked(MouseEvent e) {
                         System.out.println("Mouse Click Count: " + e.getClickCount());
+                        ImageListViewCell cell = (ImageListViewCell)e.getSource();
+                        ImageListViewModelElement modelElement = cell.getDisplayedModelElement();
+                        System.out.println(modelElement.getImageKey());
                     }
 
                     @Override
@@ -345,7 +353,6 @@ public class TWLImageListTestApp {
 
                     @Override
                     public void mousePressed(MouseEvent e) {
-
                     }
 
                     @Override
@@ -353,10 +360,12 @@ public class TWLImageListTestApp {
                     }
 
                 });
-
                 listView.setModel(factory.getModel(String.valueOf(i)));
                 listView.setTheme("panel");
 
+                // apply controller to image list view
+                new ImageListViewImagePaintController(listView).setEnabled(true);
+                
                 Widget listPanel = new Widget() {
                     @Override
                     protected void layout() {
@@ -398,5 +407,4 @@ public class TWLImageListTestApp {
             mainFrame.setVisible(true);
         }
     }
-    
 }
