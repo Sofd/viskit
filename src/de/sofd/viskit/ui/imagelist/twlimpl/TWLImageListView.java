@@ -249,22 +249,6 @@ public class TWLImageListView extends TWLImageListViewBase {
         }
     }
     
-    private List<EventListener> canvasMouseListeners = new ArrayList<EventListener>();
-    
-    protected void addAnyCanvasMouseListener(EventListener listener) {
-        // check if it's been added before already. TODO: this is not really correct, get rid of it?
-        //   (it was added for compatibility with clients that call all three add methods with just
-        //   one listener instance (extending MouseHandler and thus implementing all Mouse*Listener interfaces),
-        //   and expect the listener to be called only once per event.
-        //   Check how standard Swing components handle this)
-        for (EventListener l : canvasMouseListeners) {
-            if (l == listener) {
-                return;
-            }
-        }
-        canvasMouseListeners.add(listener);
-    }
-    
     protected void dispatchEventToCanvas(MouseEvent evt) {
         MouseEvent ce = Misc.deepCopy(evt);
         ce.setSource(this);
@@ -274,53 +258,7 @@ public class TWLImageListView extends TWLImageListViewBase {
             fireAnyCellMouseEvent(ce);
         }
     }
-    
-    protected void fireAnyCanvasMouseEvent(MouseEvent e) {
-        for (EventListener listener : canvasMouseListeners) {
-            boolean eventProcessed = false;
-            if (listener instanceof MouseWheelListener && e instanceof MouseWheelEvent) {
-                MouseWheelListener l = (MouseWheelListener) listener;
-                l.mouseWheelMoved((MouseWheelEvent) e);
-                eventProcessed = true;
-            }
-            if (!eventProcessed && listener instanceof MouseMotionListener) {
-                MouseMotionListener l = (MouseMotionListener) listener;
-                switch (e.getID()) {
-                case MouseEvent.MOUSE_MOVED:
-                    l.mouseMoved(e);
-                    eventProcessed = true;
-                    break;
-                case MouseEvent.MOUSE_DRAGGED:
-                    l.mouseDragged(e);
-                    eventProcessed = true;
-                    break;
-                }
-            }
-            if (!eventProcessed) {
-                MouseListener l = (MouseListener) listener;
-                switch (e.getID()) {
-                case MouseEvent.MOUSE_CLICKED:
-                    l.mouseClicked(e);
-                    break;
-                case MouseEvent.MOUSE_PRESSED:
-                    l.mousePressed(e);
-                    break;
-                case MouseEvent.MOUSE_RELEASED:
-                    l.mouseReleased(e);
-                    break;
-                case MouseEvent.MOUSE_ENTERED:
-                    l.mouseEntered(e);
-                    break;
-                case MouseEvent.MOUSE_EXITED:
-                    l.mouseExited(e);
-                    break;
-                }
-            }
-            if (e.isConsumed()) {
-                break;
-            }
-        }
-    }
+
 
     @Override
     public void ensureIndexIsVisible(int idx) {
