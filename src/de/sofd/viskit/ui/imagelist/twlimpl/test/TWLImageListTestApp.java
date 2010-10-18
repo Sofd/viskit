@@ -18,6 +18,8 @@ import java.util.LinkedList;
 
 import javax.swing.DefaultListModel;
 import javax.swing.JFrame;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
 
 import org.apache.log4j.BasicConfigurator;
 import org.lwjgl.LWJGLException;
@@ -363,6 +365,15 @@ public class TWLImageListTestApp {
                 listView.setModel(factory.getModel(String.valueOf(i)));
                 listView.setTheme("panel");
 
+                
+                listView.addListSelectionListener(new ListSelectionListener() {
+
+                    @Override
+                    public void valueChanged(ListSelectionEvent evt) {
+                        System.out.println("SelectionChanged => {" + evt.getFirstIndex() + "," + evt.getLastIndex() + "} in " + evt.getSource());
+                    }
+                });
+                listView.getSelectionModel().setSelectionInterval(0, 0);
                 // apply controller to image list view
                 new ImageListViewImagePaintController(listView).setEnabled(true);
                 

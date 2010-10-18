@@ -3,21 +3,17 @@ package de.sofd.viskit.ui.imagelist.twlimpl;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Point;
-import java.awt.event.ActionEvent;
-import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelEvent;
+import java.util.ArrayList;
 import java.util.Collection;
 
-import javax.swing.AbstractAction;
-import javax.swing.ActionMap;
 import javax.swing.BoundedRangeModel;
-import javax.swing.InputMap;
-import javax.swing.JComponent;
-import javax.swing.KeyStroke;
 import javax.swing.ListModel;
 import javax.swing.ListSelectionModel;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 import javax.swing.event.ListDataEvent;
 
 import org.lwjgl.opengl.GL11;
@@ -65,8 +61,11 @@ public class TWLImageListView extends TWLImageListViewBase {
         
         // adds the scrollbar -> boundedRangeModel?
         scrollBar =  new Scrollbar(Orientation.VERTICAL);
-        scrollBar.setMinMaxValue(0, 10000);
+        scrollBar.addCallback(scrollBarChangeListener);
         this.add(scrollBar);
+        
+        updateScrollbar();
+        setupInternalUiInteractions();
     }
     
 
@@ -163,7 +162,7 @@ public class TWLImageListView extends TWLImageListViewBase {
                             // draw selection box
                             ListSelectionModel sm = getSelectionModel();
                             //FIXME draw selection box around the selected cell, addCellMouseListener and react on mouse click events (cell selection)
-//                            if (sm != null && sm.isSelectedIndex(iCell)) {
+                            if (sm != null && sm.isSelectedIndex(iCell)) {
                                 GL11.glColor3f(1, 0, 0);
                                 GL11.glBegin(GL11.GL_LINE_LOOP);                                
                                 GL11.glVertex2f(- CELL_BORDER_WIDTH + 1, - CELL_BORDER_WIDTH);
@@ -171,7 +170,7 @@ public class TWLImageListView extends TWLImageListViewBase {
                                 GL11.glVertex2f(cellWidth + CELL_BORDER_WIDTH,  cellHeight + CELL_BORDER_WIDTH);
                                 GL11.glVertex2f(- CELL_BORDER_WIDTH + 1,  cellHeight + CELL_BORDER_WIDTH);                            
                                 GL11.glEnd();
-//                            }
+                            }
                             
                             cell.setLatestSize(new Dimension(cellWidth, cellHeight));
             
@@ -417,22 +416,50 @@ public class TWLImageListView extends TWLImageListViewBase {
 
     @Override
     public void ensureIndexIsVisible(int idx) {
-
+        if (null == getModel()) {
+            return;
+        }
+        if (idx >= 0 && idx < getModel().getSize()) {
+            int rowCount = getScaleMode().getCellRowCount();
+            int columnCount = getScaleMode().getCellColumnCount();
+            int displayedCount = rowCount * columnCount;
+            int lastDispIdx = getFirstVisibleIndex() + displayedCount - 1;
+            int newFirstDispIdx = -1;
+            // TODO: the following always sets firstDispIdx to a multiple of
+            //   columnCount. Instead, it should take the previous firstDispIdx
+            //   into account correctly
+            if (idx < getFirstVisibleIndex()) {
+                newFirstDispIdx = idx / columnCount * columnCount;
+            } else if (idx > lastDispIdx) {
+                int rowStartIdx = idx / columnCount * columnCount;
+                newFirstDispIdx = rowStartIdx - (rowCount-1) * columnCount;
+            }
+            if (newFirstDispIdx != -1) {
+                setFirstVisibleIndex(newFirstDispIdx);
+            }
+        }
     }
 
-    @Override
-    public int getLastVisibleIndex() {
-        return 0;
-    }
 
+
+    protected static Collection<ScaleMode> supportedScaleModes;
+    static {
+        supportedScaleModes = new ArrayList<ScaleMode>();
+        supportedScaleModes.add(MyScaleMode.newCellGridMode(1, 1));
+        supportedScaleModes.add(MyScaleMode.newCellGridMode(2, 2));
+        supportedScaleModes.add(MyScaleMode.newCellGridMode(3, 3));
+        supportedScaleModes.add(MyScaleMode.newCellGridMode(4, 4));
+        supportedScaleModes.add(MyScaleMode.newCellGridMode(5, 5));
+    }
+    
     @Override
     public Collection<ScaleMode> getSupportedScaleModes() {
-        return null;
+        return supportedScaleModes;
     }
 
     @Override
     public boolean isUiInitialized() {
-        return false;
+        return true;
     }
 
     @Override
@@ -506,6 +533,24 @@ public class TWLImageListView extends TWLImageListViewBase {
         }
     }
     
+
+    @Override
+    protected void doSetScaleMode(ScaleMode oldScaleMode, ScaleMode newScaleMode) {
+//        updateScrollbar();
+        updateElementPriorities();
+    }
+
+    @Override
+    public int getCellBorderWidth() {
+        return CELL_BORDER_WIDTH;
+    }
+    
+    @Override
+    public Dimension getCurrentCellSize(ImageListViewCell cell) {
+        return new Dimension(canvas.getInnerWidth() / getScaleMode().getCellColumnCount(),
+                             canvas.getInnerHeight()/ getScaleMode().getCellRowCount());
+    }
+    
     @Override
     public void addCellPaintListener(int zOrder,
             ImageListViewCellPaintListener listener) {
@@ -573,7 +618,7 @@ public class TWLImageListView extends TWLImageListViewBase {
     @Override
     public void setModel(ListModel model) {
         super.setModel(model);
-//        updateScrollbar();
+        updateScrollbar();
         updateElementPriorities();
     }
 
@@ -599,42 +644,101 @@ public class TWLImageListView extends TWLImageListViewBase {
     public void setFirstVisibleIndex(int newValue) {
         super.setFirstVisibleIndex(newValue);
         updateElementPriorities();
-//        updateScrollbar();
+        updateScrollbar();
     }
     
-   
+    @Override
+    public int getLastVisibleIndex() {
+        return getFirstVisibleIndex() + getScaleMode().getCellColumnCount() * getScaleMode().getCellRowCount() - 1;
+    }
     
-//    private void updateScrollbar() {
-//        if (null == scrollBar) {
-//            return;
+  
+    
+    private void updateScrollbar() {
+        if(null == scrollBar) {
+            return;
+        }
+        if(null == getModel() || getModel().getSize() == 0) {
+            scrollBar.setMinMaxValue(0, 0);
+            scrollBar.setEnabled(false);
+            return;
+        }
+        if(!scrollBar.isEnabled()) {
+            scrollBar.setEnabled(true);
+        }
+        int size = getModel().getSize();
+        int firstDispIdx = getFirstVisibleIndex();
+        int rowCount = getScaleMode().getCellRowCount();
+        int columnCount = getScaleMode().getCellColumnCount();
+        int displayedCount = rowCount * columnCount;
+        int lastDispIdx = firstDispIdx + displayedCount - 1;
+        if (lastDispIdx >= size) {
+            lastDispIdx = size - 1;
+        }
+        scrollBar.setMinMaxValue(0, size-1);
+        scrollBar.setValue(firstDispIdx);
+        scrollBar.setStepSize(columnCount);
+        scrollBar.setPageSize(displayedCount);
+    }    
+
+    private Runnable scrollBarChangeListener = new Runnable() {
+        private boolean inCall = false;
+        @Override
+        public void run() {
+            if (inCall) { return; }
+            inCall = true;
+            try {
+                System.out.println("Value of Scrollbar:"+scrollBar.getValue());
+                setFirstVisibleIndex(scrollBar.getValue());
+            } finally {
+                inCall = false;
+            }
+        }
+    };
+    
+    protected void setupInternalUiInteractions() {
+        this.addCellMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                if (null == getSelectionModel() || null == getModel()) {
+                    return;
+                }
+                if (e.getButton() != MouseEvent.BUTTON1) {
+                    return;
+                }
+                ImageListViewCell sourceCell = (ImageListViewCell) e.getSource();
+                int clickedModelIndex = getIndexOf(sourceCell);
+                if (clickedModelIndex != -1) {
+                    if ((e.getModifiersEx() & MouseEvent.CTRL_DOWN_MASK) == 0) {
+                        getSelectionModel().setSelectionInterval(clickedModelIndex, clickedModelIndex);
+                    } else {
+                        getSelectionModel().addSelectionInterval(clickedModelIndex, clickedModelIndex);
+                    }
+                }
+            }
+        });
+
+//        InputMap inputMap = this.getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
+//        ActionMap actionMap = this.getActionMap();
+//        if (inputMap != null && actionMap != null) {
+//            inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_UP, 0), "up");
+//            actionMap.put("up", new AbstractAction() {
+//                @Override
+//                public void actionPerformed(ActionEvent e) {
+//                    shiftSelectionBy(-getScaleMode().getCellColumnCount());
+//                }
+//            });
+//            inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_DOWN, 0), "down");
+//            actionMap.put("down", new AbstractAction() {
+//                @Override
+//                public void actionPerformed(ActionEvent e) {
+//                    shiftSelectionBy(getScaleMode().getCellColumnCount());
+//                }
+//            });
+//            inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_LEFT, 0), "left");
+//            actionMap.put("left", new SelectionShiftAction(-1));
+//            inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_RIGHT, 0), "right");
+//            actionMap.put("right", new SelectionShiftAction(1));
 //        }
-//        if (null == getModel() || getModel().getSize() == 0) {
-//            internalScrollbarValueIsAdjusting = true;
-//            scrollBar.getModel().setRangeProperties(0, 0, 0, 0, false);
-//            internalScrollbarValueIsAdjusting = false;
-//            scrollBar.setEnabled(false);
-//            return;
-//        }
-//        if (! scrollBar.isEnabled()) {
-//            scrollBar.setEnabled(true);
-//        }
-//        int size = getModel().getSize();
-//        int firstDispIdx = getFirstVisibleIndex();
-//        int rowCount = getScaleMode().getCellRowCount();
-//        int columnCount = getScaleMode().getCellColumnCount();
-//        int displayedCount = rowCount * columnCount;
-//        int lastDispIdx = firstDispIdx + displayedCount - 1;
-//        if (lastDispIdx >= size) {
-//            lastDispIdx = size - 1;
-//        }
-//        BoundedRangeModel scrollModel = scrollBar.getModel();
-//        internalScrollbarValueIsAdjusting = true;
-//        scrollModel.setMinimum(0);
-//        scrollModel.setMaximum(size - 1);
-//        scrollModel.setValue(firstDispIdx);
-//        scrollModel.setExtent(displayedCount - 1);
-//        internalScrollbarValueIsAdjusting = false;
-//        scrollBar.setUnitIncrement(columnCount);
-//        scrollBar.setBlockIncrement(displayedCount);
-//    }
+    }
 }
