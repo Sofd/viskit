@@ -105,7 +105,7 @@ public class DicomModelFactory extends ModelFactory {
                     // TODO if this model element is a frame calculation just
                     // for the first frame
                     element = (CachingDicomImageListViewModelElement) model.getElementAt(i);
-                    FloatRange range = element.getUsedPixelValuesRange();
+                    FloatRange range = element.getImage().getUsedPixelValuesRange();
                     float currentMin = range.getMin();
                     float currentMax = range.getMax();
 

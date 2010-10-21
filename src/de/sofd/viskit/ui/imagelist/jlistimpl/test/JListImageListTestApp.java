@@ -374,7 +374,7 @@ public class JListImageListTestApp {
                 ImageListViewModelElement elt = viewer.getSelectedValue();
                 if (null != elt) {
                     ImageListViewCell cell = viewer.getCellForElement(elt);
-                    FloatRange usedRange = cell.getDisplayedModelElement().getUsedPixelValuesRange();
+                    FloatRange usedRange = cell.getDisplayedModelElement().getImage().getUsedPixelValuesRange();
                     cell.setWindowWidth((int) usedRange.getDelta());
                     cell.setWindowLocation((int) (usedRange.getMin() + usedRange.getMax()) / 2);
                 }
@@ -750,8 +750,8 @@ public class JListImageListTestApp {
                 //listView = newJGLImageListView();
                 listView = newJGridImageListView();
             } else if (isUserOlaf()) {
-                listView = newJGLImageListView();
-                //listView = newJGridImageListView();
+                //listView = newJGLImageListView();
+                listView = newJGridImageListView();
             } else {
                 //listView = newJGLImageListView();
                 listView = newJGridImageListView();
@@ -772,7 +772,7 @@ public class JListImageListTestApp {
                                     ww = delt.getDicomImageMetaData().getDouble(Tag.WindowWidth);    
                                 }
                                 else {
-                                    FloatRange pixelValueRange = delt.getUsedPixelValuesRange();
+                                    FloatRange pixelValueRange = delt.getImage().getUsedPixelValuesRange();
                                     wl = pixelValueRange.getMin()+pixelValueRange.getDelta()/2;
                                     ww = pixelValueRange.getDelta();
                                 }
@@ -816,7 +816,7 @@ public class JListImageListTestApp {
                             "SL: " + dicomImageMetaData.getString(Tag.SliceLocation),
                             "wl/ww: " + cell.getWindowLocation() + "/" + cell.getWindowWidth(),
                             "lower/upper: " + (cell.getWindowLocation() - cell.getWindowWidth()/2) + "/" + (cell.getWindowLocation() + cell.getWindowWidth()/2),
-                            "pxValuesRange: " + elt.getUsedPixelValuesRange(),
+                            "pxValuesRange: " + elt.getImage().getUsedPixelValuesRange(),
                             "Zoom: " + cell.getScale(),
                             "Slice orientation: " + DicomUtil.getSliceOrientation(dicomImageMetaData)
                     };
@@ -958,9 +958,9 @@ public class JListImageListTestApp {
                     ImageListViewModelElement elt = listView.getSelectedValue();
                     if (null != elt) {
                         ImageListViewCell cell = listView.getCellForElement(elt);
-                        FloatRange usedRange = cell.getDisplayedModelElement().getUsedPixelValuesRange();
-//                        cell.setWindowWidth((int) usedRange.getDelta());
-//                        cell.setWindowLocation((int) (usedRange.getMin() + usedRange.getMax()) / 2);
+                        FloatRange usedRange = cell.getDisplayedModelElement().getImage().getUsedPixelValuesRange();
+                        cell.setWindowWidth((int) usedRange.getDelta());
+                        cell.setWindowLocation((int) (usedRange.getMin() + usedRange.getMax()) / 2);
                         slider.setSliderValues(usedRange.getMin(), usedRange.getMax());
                     }
                 }

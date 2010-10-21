@@ -17,6 +17,7 @@ import de.sofd.viskit.ui.imagelist.ImageListView;
 public interface ImageListViewModelElement {
 
     public static final String PROP_INITIALIZATIONSTATE = "initializationState";
+    public static final String PROP_IMAGE = "image";
 
     // TODO: make the other properties bean properties as well
 
@@ -24,9 +25,13 @@ public interface ImageListViewModelElement {
      * Unique, time-constant object identifying this model element
      */
     Object getKey();
-    
+
     /**
      * The current image of this model element.
+     * <p>
+     * The image may change during the lifetime of the model element, for
+     * example if the model element represents some kind of multi-frame image
+     * collection.
      * <p>
      * The images and its getter methods will generally be implemented using a
      * "lazy initialization" scheme, i.e. data is retrieved or computed only
@@ -59,10 +64,6 @@ public interface ImageListViewModelElement {
      * them.
      */
     //ViskitImage getProxyImage();
-
-    FloatRange getPixelValuesRange();
-
-    FloatRange getUsedPixelValuesRange();
 
     /**
      * 

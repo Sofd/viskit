@@ -1,6 +1,13 @@
 package de.sofd.viskit.image;
 
+import java.awt.color.ColorSpace;
 import java.awt.image.BufferedImage;
+import java.nio.IntBuffer;
+import java.nio.ShortBuffer;
+
+import de.sofd.util.FloatRange;
+import de.sofd.util.Histogram;
+import de.sofd.util.IntRange;
 
 
 /**
@@ -92,5 +99,33 @@ public interface ViskitImage {
      */
     Object getImageKey();
 
-    //TODO: declare getHistogram(), get*PixelValuesRange in here as well
+    /**
+     * If {@link #hasBufferedImage()}, tell whether or not the pixel samples in the buffered
+     * image should be interpreted as signed integers. Needed for histogram computation etc.
+     * We didn't find a way to find this out from the BufferedImage object itself, hence this
+     * method. This is a hack, obviously.
+     * 
+     * @return 
+     */
+    public boolean isBufferedImageSigned();
+
+    /**
+     * 
+     * @return maximum range of values that pixels in this image may attain
+     *         (defined by the image format, i.e. the pixel type of the image)
+     */
+    public FloatRange getMaximumPixelValuesRange();
+
+    /**
+     * 
+     * @return actual range of values that pixels in this image attain.
+     */
+    public FloatRange getUsedPixelValuesRange();
+
+    /**
+     * 
+     * @return histogram of this image
+     */
+    public Histogram getHistogram();
+
 }

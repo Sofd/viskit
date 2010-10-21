@@ -26,7 +26,7 @@ public class WindowingUtil {
             cell.setWindowWidth((int)(histogram.getStandardDeviation()*6));
             cell.setWindowLocation((int)histogram.getExpectedValue());
             System.out.println("histogram : " + histogram.toString());*/
-            FloatRange usedRange = elt.getUsedPixelValuesRange();
+            FloatRange usedRange = elt.getImage().getUsedPixelValuesRange();
             cell.setWindowWidth((int) usedRange.getDelta());
             cell.setWindowLocation((int) (usedRange.getMin() + usedRange.getMax()) / 2);
         } catch (Exception e) {

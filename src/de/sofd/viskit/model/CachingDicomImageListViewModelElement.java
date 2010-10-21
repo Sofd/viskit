@@ -1,8 +1,6 @@
 package de.sofd.viskit.model;
 
-import java.awt.color.ColorSpace;
 import java.awt.image.BufferedImage;
-import java.awt.image.Raster;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -28,8 +26,6 @@ import org.dcm4che2.io.DicomOutputStream;
 import org.dcm4che2.media.FileMetaInformation;
 
 import de.sofd.util.FloatRange;
-import de.sofd.util.Histogram;
-import de.sofd.util.IntRange;
 import de.sofd.util.NumericPriorityMap;
 import de.sofd.util.concurrent.NumericPriorityThreadPoolExecutor;
 import de.sofd.util.concurrent.PrioritizedTask;
@@ -277,6 +273,8 @@ public abstract class CachingDicomImageListViewModelElement extends AbstractImag
      */
     protected class MyViskitImageImpl extends ViskitImageImpl {
 
+        protected FloatRange maxPixelValuesRange, usedPixelValuesRange;
+        
         public MyViskitImageImpl() {
             super(null, (RawImage)null);  //we override all data getters and setters and don't use the superclass's fields
         }
@@ -326,6 +324,70 @@ public abstract class CachingDicomImageListViewModelElement extends AbstractImag
             return getDicomImageMetaData().getInt(Tag.Rows);
         }
 
+        @Override
+        public FloatRange getMaximumPixelValuesRange() {
+            if (null == maxPixelValuesRange) {
+                setMaximumPixelValuesRange();
+            }
+            return maxPixelValuesRange;
+        }
+
+        protected void setMaximumPixelValuesRange() {
+            maxPixelValuesRange = new FloatRange(200, 800);
+
+            int pixelType = getPixelType(getDicomImageMetaData());
+
+            // TODO: maybe use static multidimensional tables instead of nested switch statements
+            switch (pixelType) {
+                case RawImage.PIXEL_TYPE_UNSIGNED_BYTE:
+                    maxPixelValuesRange= new FloatRange(0, 255);
+                    break;
+                case RawImage.PIXEL_TYPE_UNSIGNED_12BIT:
+                    maxPixelValuesRange= new FloatRange(0, 4095);
+                    break;
+                case RawImage.PIXEL_TYPE_UNSIGNED_16BIT:
+                    maxPixelValuesRange= new FloatRange(0, 65535);
+                    break;
+                case RawImage.PIXEL_TYPE_SIGNED_12BIT:
+                    maxPixelValuesRange= new FloatRange(-2048, 2047);
+                    break;
+                case RawImage.PIXEL_TYPE_SIGNED_16BIT:
+                    maxPixelValuesRange= new FloatRange(-32768, 32767);
+                    break;
+            }
+        }
+
+        @Override
+        public FloatRange getUsedPixelValuesRange() {
+            if (null == usedPixelValuesRange) {
+                setUsedPixelValuesRange();
+            }
+            return usedPixelValuesRange;
+        }
+
+        protected void setUsedPixelValuesRange() {
+            FloatRange range = super.getUsedPixelValuesRange();
+            
+            //correct for RescaleSlope/-Intercept Tags
+            float min = range.getMin();
+            float max = range.getMax();
+            DicomObject metadata = getDicomImageMetaData();
+            if (metadata.contains(Tag.RescaleSlope) && metadata.contains(Tag.RescaleIntercept)) {
+                float rscSlope = metadata.getFloat(Tag.RescaleSlope);
+                float rscIntercept = metadata.getFloat(Tag.RescaleIntercept);
+                min = (int) (rscSlope * min + rscIntercept);
+                max = (int) (rscSlope * max + rscIntercept);
+            }
+            
+            usedPixelValuesRange = new FloatRange(min, max);
+        }
+        
+        @Override
+        public boolean isBufferedImageSigned() {
+            DicomObject metadata = getDicomImageMetaData();
+            return (1 == metadata.getInt(Tag.PixelRepresentation));
+        }
+
     }
 
     // TODO: frameNumber as c'tor parameter (we can't support later setFrameNumber() calls anyway b/c the keys would change)
@@ -338,6 +400,7 @@ public abstract class CachingDicomImageListViewModelElement extends AbstractImag
      * 
      * @param frame
      */
+    @Override
     public void setFrameNumber(int frame) {
          int numFrames = getTotalFrameNumber(); 
          if(frame < 0 || frame >= numFrames) {
@@ -466,58 +529,6 @@ public abstract class CachingDicomImageListViewModelElement extends AbstractImag
         }
     }
 
-    protected FloatRange pixelValuesRange, usedPixelValuesRange;
-    
-    protected Histogram histogram;
-
-    protected FloatRange getFloatRange(BufferedImage bimg, float min, float max, boolean isSigned) {
-        Raster raster = bimg.getRaster();
-        if (raster.getNumBands() != 1) {
-            throw new IllegalArgumentException("source image must be grayscales");
-        }
-
-        for (int x = 0; x < bimg.getWidth(); x++) {
-            for (int y = 0; y < bimg.getHeight(); y++) {
-                int val = raster.getSample(x, y, 0);
-                if (isSigned) {
-                    val = (int)(short)val;  // will only work for 16-bit signed...
-                }
-
-                if (val < min) { min = val; }
-                if (val > max) { max = val; }
-            }
-        }
-
-        return new FloatRange(min, max);
-    }
-
-    protected FloatRange getMaximumPixelRange() {
-        FloatRange range = new FloatRange(200, 800);
-
-        int pixelType = getPixelType(getDicomImageMetaData());
-
-        // TODO: maybe use static multidimensional tables instead of nested switch statements
-        switch (pixelType) {
-            case RawImage.PIXEL_TYPE_UNSIGNED_BYTE:
-                range = new FloatRange(0, 255);
-                break;
-            case RawImage.PIXEL_TYPE_UNSIGNED_12BIT:
-                range = new FloatRange(0, 4095);
-                break;
-            case RawImage.PIXEL_TYPE_UNSIGNED_16BIT:
-                range = new FloatRange(0, 65535);
-                break;
-            case RawImage.PIXEL_TYPE_SIGNED_12BIT:
-                range = new FloatRange(-2048, 2047);
-                break;
-            case RawImage.PIXEL_TYPE_SIGNED_16BIT:
-                range = new FloatRange(-32768, 32767);
-                break;
-        }
-
-        return range;
-    }
-
     @Override
     public DicomObject getDicomObject() {
         DicomObject result = dcmObjectCache.get(getKey());
@@ -578,39 +589,6 @@ public abstract class CachingDicomImageListViewModelElement extends AbstractImag
         return result;
     }
 
-    //TODO: move this to ViskitImage as well
-    @Override
-    public Histogram getHistogram() {
-        if (this.histogram != null)
-            return this.histogram;
-        
-        //init max range
-        FloatRange range = getMaximumPixelRange();
-        int min = (int)range.getMin();
-        int max = (int)range.getMax();
-
-        if (!hasRawImage() || !isRawImagePreferable()) {
-            BufferedImage bimg = getBufferedImage();
-            return new Histogram(bimg.getRaster(), new IntRange(min, max));
-        }
-            
-        RawImage img = getRawImage();
-
-        if (img.getPixelType() != RawImage.PIXEL_TYPE_UNSIGNED_16BIT) {
-            //unsigned 8 bit or 12 bit or signed
-            ShortBuffer buf = (ShortBuffer) img.getPixelData();
-            return new Histogram(buf, new IntRange(min, max));
-        }
-
-        //unsigned 16 bit
-        IntBuffer buf = (IntBuffer) img.getPixelData();
-        this.histogram = new Histogram(buf, new IntRange(min, max));
-        
-        return this.histogram;
-    }
-
-    //TODO: move the following methods into a inner-class ViskitImage implementation, which is returned by the overridden getImage() then?
-    
     protected BufferedImage getBufferedImage() {
         BufferedImage result = imageCache.get(getImageKey());
         if (result == null) {
@@ -704,91 +682,6 @@ public abstract class CachingDicomImageListViewModelElement extends AbstractImag
         int height = imgMetadata.getInt(Tag.Rows);
         
         return new RawImageImpl(width, height, pixelFormat, pixelType, null);
-    }
-
-    @Override
-    public FloatRange getPixelValuesRange() {
-        if (null == pixelValuesRange) {
-            setPixelValuesRange();
-        }
-        return pixelValuesRange;
-    }
-
-    protected void setPixelValuesRange() {
-        pixelValuesRange = getMaximumPixelRange();
-    }
-
-    @Override
-    public FloatRange getUsedPixelValuesRange() {
-        if (null == usedPixelValuesRange) {
-            setUsedPixelValuesRange();
-        }
-        return usedPixelValuesRange;
-    }
-
-    protected void setUsedPixelValuesRange() {
-        DicomObject metadata = getDicomImageMetaData();
-
-        boolean isSigned = (1 == metadata.getInt(Tag.PixelRepresentation));
-
-        //init max range
-        FloatRange range = getMaximumPixelRange();
-        float min = range.getMin();
-        float max = range.getMax();
-
-        if (metadata.contains(Tag.SmallestImagePixelValue) && metadata.contains(Tag.LargestImagePixelValue)) {
-            min = metadata.getInt(Tag.SmallestImagePixelValue);
-            max = metadata.getInt(Tag.LargestImagePixelValue);
-        } else if (hasRawImage() && isRawImagePreferable()) {
-            min = range.getMax();
-            max = range.getMin();
-            
-            RawImage img = getRawImage();
-            int pxCount = (img.getPixelFormat() == RawImage.PIXEL_FORMAT_RGB ? 3 : 1) * img.getWidth() * img.getHeight();
-
-            if (img.getPixelType() != RawImage.PIXEL_TYPE_UNSIGNED_16BIT) {
-                //unsigned 8 bit or 12 bit or signed
-                ShortBuffer buf = (ShortBuffer) img.getPixelData();
-                for (int i = 0; i < pxCount; i++) {
-                    short val = buf.get(i);
-                    if (val < min) { min = val; }
-                    if (val > max) { max = val; }
-                }
-            } else {
-                min = range.getMax();
-                max = range.getMin();
-                
-                //unsigned 16 bit
-                IntBuffer buf = (IntBuffer) img.getPixelData();
-                for (int i = 0; i < pxCount; i++) {
-                    int val = buf.get(i);
-                    if (val < min) { min = val; }
-                    if (val > max) { max = val; }
-                }
-            }
-        } else {
-            BufferedImage bimg = getBufferedImage();
-
-            if (bimg.getColorModel().getColorSpace().getType() == ColorSpace.TYPE_GRAY) {
-
-                min = range.getMax();
-                max = range.getMin();
-                FloatRange range2 = getFloatRange(bimg, min, max, isSigned);
-                min = range2.getMin();
-                max = range2.getMax();
-            }
-            /*min = 200;
-            max = 800;*/
-        }
-
-        if (metadata.contains(Tag.RescaleSlope) && metadata.contains(Tag.RescaleIntercept)) {
-            float rscSlope = metadata.getFloat(Tag.RescaleSlope);
-            float rscIntercept = metadata.getFloat(Tag.RescaleIntercept);
-            min = (int) (rscSlope * min + rscIntercept);
-            max = (int) (rscSlope * max + rscIntercept);
-        }
-        
-        usedPixelValuesRange = new FloatRange(min, max);
     }
 
     protected int getPixelFormat(DicomObject dicomObject) {

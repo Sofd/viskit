@@ -181,7 +181,7 @@ public class ImageListViewInitialWindowingController {
      * @param cell
      */
     protected void initializeCell(final ImageListViewCell cell) {
-        final FloatRange usedRange = cell.getDisplayedModelElement().getUsedPixelValuesRange();
+        final FloatRange usedRange = cell.getDisplayedModelElement().getImage().getUsedPixelValuesRange();
         ImageListViewWindowingApplyToAllController.runWithAllControllersInhibited(new Runnable() {
             @Override
             public void run() {

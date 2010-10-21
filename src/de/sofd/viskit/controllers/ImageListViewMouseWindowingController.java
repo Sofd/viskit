@@ -114,7 +114,7 @@ public class ImageListViewMouseWindowingController {
             if (e.getButton() == WINDOWING_MOUSE_BUTTON || (e.getModifiers() & WINDOWING_MOUSE_MASK) != 0) {
                 final ImageListViewCell sourceCell = (ImageListViewCell) e.getSource();
                 if (sourceCell != null && sourceCell == currentCell) {
-                    FloatRange usedPxRange = sourceCell.getDisplayedModelElement().getUsedPixelValuesRange();
+                    FloatRange usedPxRange = sourceCell.getDisplayedModelElement().getImage().getUsedPixelValuesRange();
                     final int mouseIncrement = 1 + (int)(usedPxRange.getDelta() / 300);
                     // TODO: floating-point mouseIncrements would be better...
                     // TODO: account for cell size as well maybe? (bigger mouse increment when the cell is small)
