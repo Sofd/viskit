@@ -11,8 +11,12 @@ import de.sofd.util.*;
 import de.sofd.viskit.image3D.jogl.control.*;
 import de.sofd.viskit.image3D.jogl.model.*;
 import de.sofd.viskit.image3D.model.*;
+import de.sofd.viskit.image3D.util.Shader;
+import de.sofd.viskit.image3D.util.ShaderManager;
 
 public class VolumeRenderFrameBuffer extends FrameBuffer {
+    protected ShaderManager shaderManager;
+    
     protected Cube theCube;
     protected GLU glu;
     protected VolumeObject volumeObject;
@@ -33,6 +37,7 @@ public class VolumeRenderFrameBuffer extends FrameBuffer {
         super(size);
         this.volumeObject = volumeObject;
         this.volumeInputController = volumeInputController;
+        this.shaderManager = ShaderManager.getInstance();
     }
 
     protected void attachBackFaceTexture(GL2 gl) {
@@ -200,7 +205,7 @@ public class VolumeRenderFrameBuffer extends FrameBuffer {
 
         attachBackFaceTexture(gl);
         
-        GLShader renderShader = (renderFinal ? ShaderManager.get("volViewFinal") : ShaderManager.get("volView"));
+        Shader renderShader = (renderFinal ? shaderManager.get("volViewFinal") : shaderManager.get("volView"));
 
         gl.glClear(GL_COLOR_BUFFER_BIT);
         volumeInputController.setupCamera(gl);
@@ -212,9 +217,9 @@ public class VolumeRenderFrameBuffer extends FrameBuffer {
         gl.glDepthMask(false);
         gl.glDisable(GL_DEPTH_TEST);
         
-        ShaderManager.bind("tc2col");
+        shaderManager.bind("tc2col");
         theCube.show(volumeObject.getConstraint());
-        ShaderManager.unbind("tc2col");
+        shaderManager.unbind("tc2col");
 
         gl.glDisable(GL_CULL_FACE);
 
@@ -240,7 +245,7 @@ public class VolumeRenderFrameBuffer extends FrameBuffer {
 
          gl.glActiveTexture( GL_TEXTURE2 );
          volumeObject.getWindowing().bindTexture( gl );
-         ShaderManager.get( "volView" ).bindUniform( "winTex", 2 );
+         shaderManager.get( "volView" ).bindUniform( "winTex", 2 );
 
         gl.glActiveTexture(GL_TEXTURE1);
         gl.glBindTexture(GL_TEXTURE_2D, theBackFaceTex);
@@ -253,7 +258,7 @@ public class VolumeRenderFrameBuffer extends FrameBuffer {
         if (useGradient && !renderFinal) {
             gl.glActiveTexture(GL_TEXTURE5);
             gl.glBindTexture(GL_TEXTURE_3D, volumeObject.getGradientTex());
-            ShaderManager.get("volView").bindUniform("gradientTex", 5);
+            shaderManager.get("volView").bindUniform("gradientTex", 5);
         }
 
         renderShader.bindUniform("screenWidth", size.getWidth());

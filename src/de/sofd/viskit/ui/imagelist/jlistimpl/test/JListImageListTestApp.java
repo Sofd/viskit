@@ -528,13 +528,8 @@ public class JListImageListTestApp {
         toolbar.setFloatable(false);
         
         if (isUserHonglinh()) {
-            Collection<File> fileCollection = new LinkedList<File>();
-            fileCollection.add(new File("/home/honglinh/Desktop/multiframedicoms/multiframedicom.dcm"));
-            fileCollection.add(new File("/home/honglinh/Desktop/multiframedicoms/multiframedicom2.dcm"));
-
-            // a unique key should be used instead of 1 and 2, f.e. PatientID+StudyInstanceUID+SeriesInstanceUID to identify the series
-            factory.addModel("1", fileCollection);
-            factory.addModel("2", new File("/home/honglinh/cd857__center4001"));
+            factory.addModel("0", new File("/home/honglinh/br312046/images/cd00906__center10102"));
+            factory.addModel("1", new File("/home/honglinh/br312046/images/cd00908__center10101"));
             
 //          listModels.add(factory.createModelFromDir(new File("/home/honglinh/Desktop/dicomfiles1")));
             

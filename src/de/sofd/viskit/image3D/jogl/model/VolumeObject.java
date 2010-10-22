@@ -14,6 +14,7 @@ import org.dcm4che2.data.Tag;
 import de.sofd.util.*;
 import de.sofd.viskit.image3D.jogl.util.*;
 import de.sofd.viskit.image3D.model.*;
+import de.sofd.viskit.image3D.util.Shader;
 import de.sofd.viskit.model.*;
 
 import vtk.*;
@@ -154,14 +155,14 @@ public class VolumeObject {
 
     }
 
-    public void createConvolutionTexture(GL2 gl, GLShader shader) throws Exception {
+    public void createConvolutionTexture(GL2 gl, Shader shader) throws Exception {
 
         convolutionVolumeBuffer = new ConvolutionVolumeBuffer(new IntDimension3D(imageDim.getWidth(), imageDim.getHeight(), getNrOfImages()), shader, this);
         convolutionVolumeBuffer.createTexture(gl, GL_LUMINANCE16F, GL_LUMINANCE);
         convolutionVolumeBuffer.createFBO(gl);
     }
 
-    public void createGradientTexture(GL2 gl, GLShader shader) throws Exception {
+    public void createGradientTexture(GL2 gl, Shader shader) throws Exception {
 
         gradientVolumeBuffer = new GradientVolumeBuffer(new IntDimension3D(imageDim.getWidth(), imageDim.getHeight(), getNrOfImages()), shader, this);
         gradientVolumeBuffer.createTexture(gl, GL_RGBA32F, GL_RGBA);

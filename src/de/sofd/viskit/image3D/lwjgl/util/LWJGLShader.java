@@ -22,7 +22,7 @@ import org.lwjgl.opengl.GL20;
  * @author oliver
  * @author olaf -- minimum-effort port to LWJGL (w/o ARB shaders)
  */
-public class GLShader extends Shader
+public class LWJGLShader extends de.sofd.viskit.image3D.util.Shader
 {
 
     protected boolean useGeomShader;
@@ -36,12 +36,12 @@ public class GLShader extends Shader
     
     protected HashMap<String, Integer> uniformMap = new HashMap<String, Integer>();
 
-    public GLShader(String fname) throws Exception
+    public LWJGLShader(String fname) throws Exception
     {
         this(fname, false, -1, -1, -1 );
     }
 
-    public GLShader(String shaderName, boolean useGeomShader,
+    public LWJGLShader(String shaderName, boolean useGeomShader,
             int inputGeom, int outputGeom, int vertOut) throws Exception
     {
         super(shaderName);

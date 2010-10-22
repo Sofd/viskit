@@ -24,12 +24,15 @@ public class GPUVolumeView extends GLCanvas implements GLEventListener {
     protected static GLCapabilities caps;
     protected static GLUgl2 glu;
     protected static GLUT glut;
+    
+    protected static ShaderManager shaderManager;
 
     protected static final Logger logger = Logger.getLogger(GPUVolumeView.class);
 
     static {
         caps = new GLCapabilities(GLProfile.get(GLProfile.GL2));
         caps.setAlphaBits(8);
+        shaderManager = ShaderManager.getInstance();
 
     }
 
@@ -74,7 +77,7 @@ public class GPUVolumeView extends GLCanvas implements GLEventListener {
     }
 
     private void addUniforms(String key, String[] uniforms) {
-        GLShader sh = ShaderManager.get(key);
+        Shader sh = shaderManager.get(key);
 
         for (String uniform : uniforms)
             sh.addProgramUniform(uniform);
@@ -105,7 +108,7 @@ public class GPUVolumeView extends GLCanvas implements GLEventListener {
 
             renderFbo.cleanUp(gl);
             volumeObject.cleanUp(gl);
-            ShaderManager.cleanUp(gl);
+            shaderManager.cleanUp();
             cleanup = false;
             return;
         }
@@ -206,6 +209,8 @@ public class GPUVolumeView extends GLCanvas implements GLEventListener {
         drawable.getChosenGLCapabilities().setAlphaBits(8);
 
         GL2 gl = drawable.getGL().getGL2();
+        
+        ShaderManager.initializeManager(new JGLShaderFactory(gl));
 
         glu = new GLUgl2();
         glut = new GLUT();
@@ -220,20 +225,20 @@ public class GPUVolumeView extends GLCanvas implements GLEventListener {
         gl.glShadeModel(GL_SMOOTH);
         gl.glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
 
-        ShaderManager.init("shader");
+        shaderManager.init("shader");
 
         try {
-            ShaderManager.read(gl, "tc2col");
-            ShaderManager.read(gl, "volView");
-            ShaderManager.read(gl, "volViewFinal");
+            shaderManager.read("tc2col");
+            shaderManager.read("volView");
+            shaderManager.read("volViewFinal");
 
             if (volumeObject.getVolumeConfig().getSmoothingConfig().isEnabled())
-                ShaderManager.read(gl, "convolution");
+                shaderManager.read("convolution");
 
             if (renderFbo.isUseGradient())
-                ShaderManager.read(gl, "gradient");
+                shaderManager.read("gradient");
 
-            ShaderManager.read(gl, "transferIntegration");
+            shaderManager.read("transferIntegration");
 
             addUniforms("volView", new String[] { "screenWidth", "screenHeight", "sliceStep", "alpha", "volTex", "backTex", "transferTex", "winTex", "ambient",
                     "diffuse", "specExp", "useLighting", "gradientLimit", "eyePos", "lightPos", "xMin", "xMax", "yMin", "yMax", "zMin", "zMax", "nDiff",
@@ -244,7 +249,7 @@ public class GPUVolumeView extends GLCanvas implements GLEventListener {
                     "nDiff", "xStep", "yStep", "zStep" });
 
             if (renderFbo.isUseGradient())
-                ShaderManager.get("volView").addProgramUniform("gradientTex");
+                shaderManager.get("volView").addProgramUniform("gradientTex");
 
             if (sharedContext == null) {
                 volumeObject.loadTexture(gl);
@@ -253,10 +258,10 @@ public class GPUVolumeView extends GLCanvas implements GLEventListener {
             }
 
             if (volumeObject.getVolumeConfig().getSmoothingConfig().isEnabled())
-                volumeObject.createConvolutionTexture(gl, ShaderManager.get("convolution"));
+                volumeObject.createConvolutionTexture(gl, shaderManager.get("convolution"));
 
             if (renderFbo.isUseGradient())
-                volumeObject.createGradientTexture(gl, ShaderManager.get("gradient"));
+                volumeObject.createGradientTexture(gl, shaderManager.get("gradient"));
 
             volumeObject.getTransferFunction().createIntegrationFbo(gl);
 

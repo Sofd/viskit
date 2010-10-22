@@ -34,6 +34,7 @@ import de.matthiasmann.twl.renderer.lwjgl.LWJGLRenderer;
 import de.matthiasmann.twl.theme.ThemeManager;
 import de.sofd.swing.DefaultBoundedListSelectionModel;
 import de.sofd.twlawt.TWLAWTGLCanvas;
+import de.sofd.viskit.controllers.ImageListViewMouseZoomPanController;
 import de.sofd.viskit.controllers.cellpaint.ImageListViewImagePaintController;
 import de.sofd.viskit.model.DicomModelFactory;
 import de.sofd.viskit.model.ImageListViewModelElement;
@@ -376,6 +377,7 @@ public class TWLImageListTestApp {
                 listView.getSelectionModel().setSelectionInterval(0, 0);
                 // apply controller to image list view
                 new ImageListViewImagePaintController(listView).setEnabled(true);
+                new ImageListViewMouseZoomPanController(listView);
                 
                 Widget listPanel = new Widget() {
                     @Override

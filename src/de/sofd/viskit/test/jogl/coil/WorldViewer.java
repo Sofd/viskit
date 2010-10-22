@@ -4,8 +4,10 @@ import de.sofd.lang.Runnable1;
 import de.sofd.math.LinAlg;
 import de.sofd.util.DynScope;
 import de.sofd.util.IdentityHashSet;
-import de.sofd.viskit.image3D.jogl.util.GLShader;
-import de.sofd.viskit.image3D.jogl.util.ShaderManager;
+import de.sofd.viskit.image3D.jogl.util.JGLShader;
+import de.sofd.viskit.image3D.util.Shader;
+import de.sofd.viskit.image3D.util.ShaderManager;
+
 import java.awt.Component;
 import java.awt.GridLayout;
 import java.awt.Point;
@@ -38,17 +40,23 @@ import static de.sofd.viskit.test.jogl.coil.Constants.*;
  * @author olaf
  */
 public class WorldViewer extends JPanel {
+    
+
+    private static ShaderManager shaderManager;
 
     static {
         System.setProperty("sun.awt.noerasebackground", "true");
         JPopupMenu.setDefaultLightWeightPopupEnabled(false);
         ToolTipManager.sharedInstance().setLightWeightPopupEnabled(false);
-        ShaderManager.init("shader");
+        shaderManager = ShaderManager.getInstance();
+        shaderManager.init("shader");
     }
 
     private static final Set<WorldViewer> instances = new IdentityHashSet<WorldViewer>();
 
     private static final SharedContextData sharedContextData = new SharedContextData();
+    
+    
 
     private final World viewedWorld;
 
@@ -60,7 +68,7 @@ public class WorldViewer extends JPanel {
 
     private static Collection<Runnable1<WorldViewer>> glCanvasCreatedCallbacks = new ArrayList<Runnable1<WorldViewer>>();
 
-    private GLShader shader;
+    private Shader shader;
 
     public static void addGlCanvasCreatedCallback(Runnable1<WorldViewer> callback) {
         glCanvasCreatedCallbacks.add(callback);
@@ -74,6 +82,7 @@ public class WorldViewer extends JPanel {
             createGlCanvas();
         }
         instances.add(this);
+
     }
 
     private void createGlCanvas() {
@@ -247,8 +256,8 @@ public class WorldViewer extends JPanel {
             // i.e. they aren't via context sharing, which is why this can't be handled in a
             // a SharedContextData.ContextInitCallback called above)
             try {
-                ShaderManager.read(gl, "coiltest");
-                shader = ShaderManager.get("coiltest");
+                shaderManager.read("coiltest");
+                shader = shaderManager.get("coiltest");
                 shader.addProgramUniform("tex");
             } catch (Exception e) {
                 System.err.println("FATAL");

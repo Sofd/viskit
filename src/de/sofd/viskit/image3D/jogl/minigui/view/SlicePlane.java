@@ -11,6 +11,7 @@ import javax.media.opengl.*;
 import de.sofd.viskit.image3D.jogl.model.*;
 import de.sofd.viskit.image3D.jogl.util.*;
 import de.sofd.viskit.image3D.model.*;
+import de.sofd.viskit.image3D.util.ShaderManager;
 
 public abstract class SlicePlane extends Component
 {
@@ -26,6 +27,8 @@ public abstract class SlicePlane extends Component
     protected ImagePlaneType type;
 
     protected VolumeObject volumeObject;
+    
+    protected ShaderManager shaderManager;
     
     public SlicePlane( int x, int y, int width, int height, ImageAxis axis, ImagePlaneType type,
             VolumeObject volumeObject, CutterPlane cutter ) throws IOException
@@ -46,6 +49,8 @@ public abstract class SlicePlane extends Component
         reticle.setColor( 1.0f, 1.0f, 1.0f, 1.0f );
         
         cutter.resize( texBounds.getX(), texBounds.getY(), texBounds.getWidth(), texBounds.getHeight() );
+        
+        this.shaderManager = ShaderManager.getInstance();
     }
 
     public ImageAxis getAxis()
@@ -170,19 +175,19 @@ public abstract class SlicePlane extends Component
         gl.glMatrixMode( GL_MODELVIEW );
         gl.glLoadIdentity();
         
-        ShaderManager.bind("sliceView");
+        shaderManager.bind("sliceView");
 
         gl.glActiveTexture(GL_TEXTURE2);
         gl.glBindTexture( GL_TEXTURE_3D, volumeObject.getTexId() );
-        ShaderManager.get("sliceView").bindUniform("volTex", 2);
+        shaderManager.get("sliceView").bindUniform("volTex", 2);
         
         gl.glActiveTexture(GL_TEXTURE1);
         volumeObject.getWindowing().bindTexture( gl );
-        ShaderManager.get("sliceView").bindUniform("winTex", 1);
+        shaderManager.get("sliceView").bindUniform("winTex", 1);
         
         gl.glActiveTexture( GL_TEXTURE3 );
         volumeObject.getTransferFunction().bindTexture( gl );
-        ShaderManager.get( "sliceView" ).bindUniform( "transferTex",3 );
+        shaderManager.get( "sliceView" ).bindUniform( "transferTex",3 );
         
         gl.glEnable( GL_BLEND );
         gl.glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA );
@@ -191,7 +196,7 @@ public abstract class SlicePlane extends Component
         GLUtil.texQuad3DCentered( gl, texBounds.getX(), texBounds.getY(), texBounds.getWidth(), texBounds.getHeight(),
                 1, 1, tz );
         
-        ShaderManager.unbind("sliceView");
+        shaderManager.unbind("sliceView");
         
         gl.glActiveTexture(GL_TEXTURE0);
         

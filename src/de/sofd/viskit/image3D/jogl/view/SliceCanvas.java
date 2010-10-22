@@ -30,6 +30,8 @@ public class SliceCanvas extends GLCanvas implements GLEventListener
     
     protected static GLUgl2 glu;
     protected static GLUT glut;
+    
+    protected static ShaderManager shaderManager;
 
     static final Logger logger = Logger.getLogger( SliceCanvas.class );
 
@@ -37,6 +39,7 @@ public class SliceCanvas extends GLCanvas implements GLEventListener
     {
         caps = new GLCapabilities( GLProfile.get( GLProfile.GL2 ) );
         caps.setAlphaBits( 8 );
+        shaderManager = ShaderManager.getInstance();
     }
 
     protected Animator animator;
@@ -164,7 +167,9 @@ public class SliceCanvas extends GLCanvas implements GLEventListener
             drawable.getChosenGLCapabilities().setAlphaBits( 8 );
     
             GL2 gl = drawable.getGL().getGL2();
-    
+            
+            ShaderManager.initializeManager(new JGLShaderFactory(gl));
+            
             logger.info( "GL_VENDOR: " + gl.glGetString( GL_VENDOR ) );
             logger.info( "GL_RENDERER: " + gl.glGetString( GL_RENDERER ) );
             logger.info( "GL_VERSION: " + gl.glGetString( GL_VERSION ) );
@@ -189,13 +194,13 @@ public class SliceCanvas extends GLCanvas implements GLEventListener
             this.addMouseListener( sliceViewController );
             this.addMouseMotionListener( sliceViewController );
             
-            ShaderManager.init("shader");
+            shaderManager.init("shader");
             
-            ShaderManager.read(gl, "sliceView");
+            shaderManager.read("sliceView");
                                     
-            ShaderManager.get("sliceView").addProgramUniform("volTex");
-            ShaderManager.get("sliceView").addProgramUniform("winTex");
-            ShaderManager.get("sliceView").addProgramUniform( "transferTex" );
+            shaderManager.get("sliceView").addProgramUniform("volTex");
+            shaderManager.get("sliceView").addProgramUniform("winTex");
+            shaderManager.get("sliceView").addProgramUniform( "transferTex" );
     
             volumeObject.loadTexture( gl );
             volumeObject.getWindowing().createTexture( gl );

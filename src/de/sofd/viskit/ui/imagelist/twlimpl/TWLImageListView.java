@@ -9,11 +9,8 @@ import java.awt.event.MouseWheelEvent;
 import java.util.ArrayList;
 import java.util.Collection;
 
-import javax.swing.BoundedRangeModel;
 import javax.swing.ListModel;
 import javax.swing.ListSelectionModel;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
 import javax.swing.event.ListDataEvent;
 
 import org.lwjgl.opengl.GL11;
@@ -152,16 +149,15 @@ public class TWLImageListView extends TWLImageListViewBase {
                         GL11.glPushMatrix();
                         try {
                             GL11.glLoadIdentity();
-                            
-                            // transform to cell coordinate system: (0,0) = top-left corner, y axis pointing downwards
+                                                        
+                            // transform to cell coordinate system: (0,0) = top-left corner
                             GL11.glTranslated(- viewWidth / 2  + boxMinX + CELL_BORDER_WIDTH,
                                             - viewHeight/ 2 + boxMinY + boxHeight - CELL_BORDER_WIDTH - 1,
                                             0);
-                            GL11.glScalef(1, -1, 1);
+                            GL11.glScalef(1, -1, 1); // y axis pointing downwards     
         
                             // draw selection box
                             ListSelectionModel sm = getSelectionModel();
-                            //FIXME draw selection box around the selected cell, addCellMouseListener and react on mouse click events (cell selection)
                             if (sm != null && sm.isSelectedIndex(iCell)) {
                                 GL11.glColor3f(1, 0, 0);
                                 GL11.glBegin(GL11.GL_LINE_LOOP);                                
@@ -173,11 +169,15 @@ public class TWLImageListView extends TWLImageListViewBase {
                             }
                             
                             cell.setLatestSize(new Dimension(cellWidth, cellHeight));
-            
+
                             // clip
                             GL11.glEnable(GL11.GL_SCISSOR_TEST);
                             try {
-                                GL11.glScissor(boxMinX + CELL_BORDER_WIDTH, boxMinY + CELL_BORDER_WIDTH, cellWidth, cellHeight);
+                                // in window coordinates
+                                // TODO calculate borders
+//                                GL11.glScissor(boxMinX + CELL_BORDER_WIDTH, boxMinY + CELL_BORDER_WIDTH, cellWidth, cellHeight);
+                                
+                                GL11.glScissor(boxMinX + CELL_BORDER_WIDTH+this.getX(), boxMinY + CELL_BORDER_WIDTH+2, cellWidth, cellHeight);
                                 
                                 // call all CellPaintListeners in the z-order
                                 ViskitGC gc = new ViskitGC(gui.getRenderer());

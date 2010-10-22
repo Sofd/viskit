@@ -6,17 +6,20 @@ import javax.media.opengl.*;
 
 import org.apache.log4j.*;
 
-public class ARBShader extends Shader
+public class JGLARBShader extends JGLShader
 {
 
-    static final Logger logger = Logger.getLogger(ARBShader.class);
+    protected GL2 gl;
+    
+    static final Logger logger = Logger.getLogger(JGLARBShader.class);
     
     protected int ids[] = new int[2];
                
-    public ARBShader(GL2 gl, String shaderName) throws Exception
+    public JGLARBShader(GL2 gl, String shaderName) throws Exception
     {
-        super(gl, shaderName);
+        super(gl,shaderName);
         
+        this.gl = gl;
         setupShader();
     }
 
@@ -30,7 +33,7 @@ public class ARBShader extends Shader
     }
     
     @Override
-    public void cleanUp( GL2 gl ) {
+    public void cleanUp( ) {
         gl.glDeleteProgramsARB(2, ids, 0);
     }
 
@@ -101,5 +104,41 @@ public class ARBShader extends Shader
         gl.glDisable( GL_FRAGMENT_PROGRAM_ARB );
         gl.glBindProgramARB( GL_VERTEX_PROGRAM_ARB, 0 );
         gl.glBindProgramARB( GL_FRAGMENT_PROGRAM_ARB, 0 );
+    }
+
+    // TODO check if inherited methods from JGLShader shall be overriden here
+    @Override
+    public void addProgramUniform(String name) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void bindUniform(String name, boolean value) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void bindUniform(String name, float value) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void bindUniform(String name, float[] value) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void bindUniform(String name, int value) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public int getProgram() {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void setProgram(int program) {
+        throw new UnsupportedOperationException();
     }
 }

@@ -11,12 +11,15 @@ import java.awt.image.BufferedImageOp;
 import java.awt.image.Raster;
 import java.awt.image.RescaleOp;
 import java.awt.image.WritableRaster;
+import java.nio.IntBuffer;
 import java.nio.ShortBuffer;
 import java.util.Map;
 
 import javax.media.opengl.GL2;
 import javax.media.opengl.GLAutoDrawable;
+import javax.media.opengl.GLException;
 
+import org.apache.log4j.Logger;
 import org.dcm4che2.data.DicomObject;
 import org.dcm4che2.data.Tag;
 import org.lwjgl.opengl.GL11;
@@ -25,17 +28,14 @@ import com.sun.opengl.util.texture.TextureCoords;
 
 import de.sofd.math.LinAlg;
 import de.sofd.util.FloatRange;
-import de.sofd.viskit.image3D.jogl.util.GLShader;
-import de.sofd.viskit.image3D.jogl.util.ShaderManager;
+import de.sofd.viskit.image3D.util.Shader;
+import de.sofd.viskit.image3D.util.ShaderManager;
 import de.sofd.viskit.model.DicomImageListViewModelElement;
 import de.sofd.viskit.model.ImageListViewModelElement;
 import de.sofd.viskit.model.LookupTable;
 import de.sofd.viskit.model.RawImage;
 import de.sofd.viskit.ui.imagelist.ImageListView;
 import de.sofd.viskit.ui.imagelist.ImageListViewCell;
-import java.nio.IntBuffer;
-import javax.media.opengl.GLException;
-import org.apache.log4j.Logger;
 
 /**
  * Cell-painting controller that paints the image of the cell's model element
@@ -46,12 +46,15 @@ import org.apache.log4j.Logger;
 public class ImageListViewImagePaintController extends CellPaintControllerBase {
 
     static final Logger logger = Logger.getLogger(ImageListViewImagePaintController.class);
-
+    
+    private static ShaderManager shaderManager = ShaderManager.getInstance();
+    
     static {
-        ShaderManager.init("shader");
+        shaderManager.init("shader");
     }
 
-    private GLShader rescaleShader;
+
+    private Shader rescaleShader;
     
     public ImageListViewImagePaintController() {
         this(null, ImageListView.PAINT_ZORDER_IMAGE);
@@ -91,7 +94,7 @@ public class ImageListViewImagePaintController extends CellPaintControllerBase {
         }
     }
     
-    ///////////// OpenGL rendering
+    ///////////// OpenGL rendering with JOGL
     
     @Override
     protected void glDrawableInitialized(GLAutoDrawable glAutoDrawable) {
@@ -100,8 +103,9 @@ public class ImageListViewImagePaintController extends CellPaintControllerBase {
     
     protected void initializeGLShader(GL2 gl) {
         try {
-            ShaderManager.read(gl, "rescaleop");
-            rescaleShader = ShaderManager.get("rescaleop");
+            
+            shaderManager.read("rescaleop");
+            rescaleShader = shaderManager.get("rescaleop");
             rescaleShader.addProgramUniform("preScale");
             rescaleShader.addProgramUniform("preOffset");
             rescaleShader.addProgramUniform("scale");
@@ -123,13 +127,18 @@ public class ImageListViewImagePaintController extends CellPaintControllerBase {
         GL11.glPushMatrix();
         try {
 //            GL11.glLoadIdentity();
+            
+            GL11.glPointSize(10);
             GL11.glTranslated(cellSize.getWidth() / 2, cellSize.getHeight() / 2, 0);
             GL11.glTranslated(cell.getCenterOffset().getX(), cell.getCenterOffset().getY(), 0);
             GL11.glScaled(cell.getScale(), cell.getScale(), 1);
-            GL11.glPointSize(10);
-            GL11.glBegin(GL11.GL_POINTS);
+
+            GL11.glBegin(GL11.GL_QUADS);
             GL11.glColor3f(0, 0, 1);
-            GL11.glVertex2f(0, 0);
+            GL11.glVertex2f(-5, -5);
+            GL11.glVertex2f(5, -5);
+            GL11.glVertex2f(5, 5);
+            GL11.glVertex2f(-5, 5);
             GL11.glEnd();
         }
         finally {
