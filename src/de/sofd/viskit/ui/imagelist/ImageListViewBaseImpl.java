@@ -195,7 +195,7 @@ public abstract class ImageListViewBaseImpl /*< extends $baseClass >*/ implement
                 ImageListViewModelElement elt = (ImageListViewModelElement) getModel().getElementAt(i);
                 if (! cellsByElementMap.containsKey(elt)) {
                     elt.addPropertyChangeListener(modelElementPropertyChangeEventForwarder);
-                    ImageListViewCell cell = createCell(elt);
+                    ImageListViewCell cell = createCell(elt, -1);
                     cellsByElementMap.put(elt, cell);
                     newElements = true;
                 }
@@ -213,7 +213,7 @@ public abstract class ImageListViewBaseImpl /*< extends $baseClass >*/ implement
                     throw new IllegalStateException("JImageListView doesn't support adding the same model element (" + elt + ") more than once");
                 }
                 elt.addPropertyChangeListener(modelElementPropertyChangeEventForwarder);
-                ImageListViewCell cell = createCell(elt);
+                ImageListViewCell cell = createCell(elt, -1);
                 cellsByElementMap.put(elt, cell);
             }
             ImageListViewBaseImpl.this.modelIntervalAdded(e);
@@ -380,10 +380,21 @@ public abstract class ImageListViewBaseImpl /*< extends $baseClass >*/ implement
      * override {@link #doCreateCell(de.sofd.viskit.ui.imagelist.ImageListViewModelElement) } instead.
      *
      * @param modelElement
+     *            model element to create the cell for
+     * @param index
+     *            index of the element in the list, or -1 if unknown. The method
+     *            may make use of this for initializing stuff or whatever
      * @return
      */
-    protected ImageListViewCell createCell(ImageListViewModelElement modelElement) {
+    protected ImageListViewCell createCell(ImageListViewModelElement modelElement, int index) {
         ImageListViewCell cell = doCreateCell(modelElement);
+        if (index != -1) {
+            //intialize these mappings so the repaint that's indirectly triggered
+            //by ensureCellRepaintsOnRoiDrawingViewerChanges() below doesn't too long
+            //in refreshCell(cell) in JGridILV. Fixes ticket #43.
+            cellToIndexMap.put(cell, index);
+            cellsByElementMap.put(modelElement, cell);
+        }
         cell.addPropertyChangeListener(cellPropertyChangeEventForwarder);
         fireImageListViewEvent(new ImageListViewCellAddEvent(this, cell));
         ensureCellRepaintsOnRoiDrawingViewerChanges(cell);
@@ -483,7 +494,7 @@ public abstract class ImageListViewBaseImpl /*< extends $baseClass >*/ implement
         for (int i = 0; i < getModel().getSize(); i++) {
             ImageListViewModelElement elt = (ImageListViewModelElement) getModel().getElementAt(i);
             elt.addPropertyChangeListener(modelElementPropertyChangeEventForwarder);
-            ImageListViewCell cell = createCell(elt);
+            ImageListViewCell cell = createCell(elt, i);
             cellsByElementMap.put(elt, cell);
         }
     }
