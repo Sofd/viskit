@@ -10,14 +10,18 @@ import org.dcm4che2.data.Tag;
 import de.sofd.util.FloatRange;
 import de.sofd.viskit.util.ImageUtil;
 
-
-public abstract class ViskitDicomImageBase extends ViskitImageImpl {
+/**
+ * Base class for ViskitImages that represent a DICOM image/frame. Subclasses
+ * must implement at least {@link #getDicomObject()}.
+ * 
+ * @author Olaf Klischat
+ */
+public abstract class ViskitDicomImageBase extends ViskitImageBase {
 
     final int frameNumber;
     protected FloatRange maxPixelValuesRange, usedPixelValuesRange;
     
     public ViskitDicomImageBase(int frameNumber) {
-        super(null, (RawImage)null); //we don't use the supperclass's fields. TODO: introduce common base class without fields
         this.frameNumber = frameNumber;
     }
     

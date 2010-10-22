@@ -90,6 +90,8 @@ public interface ViskitImage {
      * equals()/hashCode() throughout the lifetime of <i>this</i>. This method
      * will be called often, so it should operate quickly. It should not call
      * getImage() or getRawImage() if those may take long to execute.
+     * <p>
+     * TODO: This method is somewhat isomorphic to hashCode(); get rid of it?
      * 
      * @return
      */
