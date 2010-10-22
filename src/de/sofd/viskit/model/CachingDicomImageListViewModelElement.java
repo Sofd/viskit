@@ -47,16 +47,13 @@ import de.sofd.viskit.util.ImageUtil;
  * accordingly. Asynchronous mode should generally be used in elements that
  * may be loaded from a slow or high-latency backing store.
  * 
- * TODO: Optional caching of #getRawImage()?
- * 
  * @author olaf
  */
 public abstract class CachingDicomImageListViewModelElement extends AbstractImageListViewModelElement implements DicomImageListViewModelElement {
 
-    protected int frameNumber = 0;
     protected int totalFrameNumber = -1;
 
-    protected ViskitImage image = new MyViskitImageImpl(frameNumber); //TODO: must change when the frameNumber changes
+    protected MyViskitImageImpl image = new MyViskitImageImpl(0);
 
     private final NumericPriorityMap<Object, DicomObject> dcmObjectCache;
 
@@ -261,8 +258,8 @@ public abstract class CachingDicomImageListViewModelElement extends AbstractImag
     }
 
     /**
-     * The ViskitImage handed out by {@link #getImage()}. Delegates its calls to
-     * the corresponding (non-public) methods of the model element.
+     * Class of the images handed out by {@link #getImage()}. Represents a
+     * specific frame of this.getDicomObject().
      * 
      * @author olaf
      */
@@ -294,9 +291,6 @@ public abstract class CachingDicomImageListViewModelElement extends AbstractImag
 
     }
 
-    // TODO: frameNumber as c'tor parameter (we can't support later setFrameNumber() calls anyway b/c the keys would change)
-    // TODO: multiframe stuff is broken atm. due to ongoing refactoring
-    
     /**
      * set the frame number this model element represents in case of a multiframe DICOM object. Initially the first
      * frame is displayed (default). This is also the case if the DICOM object
@@ -310,12 +304,15 @@ public abstract class CachingDicomImageListViewModelElement extends AbstractImag
          if(frame < 0 || frame >= numFrames) {
              throw new IllegalArgumentException("the frame number must be at least 0 and must not exceed "+(numFrames-1) + " (# frames in this DICOM object)");
          }
-         this.frameNumber = frame;
+         MyViskitImageImpl oldImg = image;
+         image = new MyViskitImageImpl(frame);
+         firePropertyChange(PROP_IMAGE, oldImg, image);
+         //TODO: cache old image objects? (the pixel data is already cached in the dicom object cache though)
     }
    
     @Override
     public int getFrameNumber() {
-        return this.frameNumber;
+        return image.getFrameNumber();
     }
    
     @Override
@@ -373,7 +370,7 @@ public abstract class CachingDicomImageListViewModelElement extends AbstractImag
     }
 
     protected Object getImageKey() {
-        return getKey() + "#" + frameNumber;
+        return getKey() + "#" + getFrameNumber();
     }
 
     /**

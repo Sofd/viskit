@@ -11,8 +11,10 @@ import de.sofd.util.FloatRange;
 import de.sofd.viskit.util.ImageUtil;
 
 /**
- * Base class for ViskitImages that represent a DICOM image/frame. Subclasses
- * must implement at least {@link #getDicomObject()}.
+ * Base class for ViskitImages that represent a frame of a DICOM object. The
+ * DICOM object is obtained via {@link #getDicomObject()}, which is the least
+ * subclasses must implement. The number of the frame is provided to the
+ * constructor.
  * 
  * @author Olaf Klischat
  */
@@ -57,6 +59,7 @@ public abstract class ViskitDicomImageBase extends ViskitImageBase {
     
     @Override
     public RawImage getRawImage() {
+        //TODO: lazily cache the return value in a member (the real mem consumption is in the DicomObject anyway)
         RawImageImpl result = (RawImageImpl) getProxyRawImage();
 
         DicomObject dicomObject = getDicomObject();
@@ -84,7 +87,7 @@ public abstract class ViskitDicomImageBase extends ViskitImageBase {
     public RawImage getProxyRawImage() {
         RawImageImpl result = maybeGetProxyRawImage();
         if (null == result) {
-            throw new IllegalStateException("this model element can't provide a raw image");
+            throw new IllegalStateException("this DICOM object can't provide a raw image");
         }
         return result;
     }

@@ -248,7 +248,7 @@ public class FileBasedDicomImageListViewModelElement extends CachingDicomImageLi
                 }
                 try {
                     reader.setInput(in);
-                    return reader.read(frameNumber);
+                    return reader.read(getFrameNumber());
                 } finally {
                     in.close();
                 }

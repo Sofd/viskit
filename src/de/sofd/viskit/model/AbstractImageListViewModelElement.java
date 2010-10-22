@@ -1,5 +1,6 @@
 package de.sofd.viskit.model;
 
+import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.util.Collection;
@@ -73,7 +74,7 @@ public abstract class AbstractImageListViewModelElement implements ImageListView
     public void setInitializationState(InitializationState initializationState) {
         InitializationState oldValue = getInitializationState();
         this.initializationState = initializationState;
-        propertyChangeSupport.firePropertyChange(PROP_INITIALIZATIONSTATE, oldValue, this.initializationState);
+        firePropertyChange(PROP_INITIALIZATIONSTATE, oldValue, this.initializationState);
     }
     
     @Override
@@ -103,7 +104,7 @@ public abstract class AbstractImageListViewModelElement implements ImageListView
         return effectivePriority;
     }
 
-    private PropertyChangeSupport propertyChangeSupport = new PropertyChangeSupport(this);
+    protected final PropertyChangeSupport propertyChangeSupport = new PropertyChangeSupport(this);
 
     /**
      * Add PropertyChangeListener.
@@ -123,6 +124,28 @@ public abstract class AbstractImageListViewModelElement implements ImageListView
     @Override
     public void removePropertyChangeListener(PropertyChangeListener listener) {
         propertyChangeSupport.removePropertyChangeListener(listener);
+    }
+
+    protected void firePropertyChange(PropertyChangeEvent evt) {
+        propertyChangeSupport.firePropertyChange(evt);
+    }
+
+    protected void firePropertyChange(String propertyName, boolean oldValue,
+            boolean newValue) {
+        propertyChangeSupport.firePropertyChange(propertyName, oldValue,
+                newValue);
+    }
+
+    protected void firePropertyChange(String propertyName, int oldValue,
+            int newValue) {
+        propertyChangeSupport.firePropertyChange(propertyName, oldValue,
+                newValue);
+    }
+
+    protected void firePropertyChange(String propertyName, Object oldValue,
+            Object newValue) {
+        propertyChangeSupport.firePropertyChange(propertyName, oldValue,
+                newValue);
     }
 
 }
