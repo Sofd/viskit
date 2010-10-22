@@ -23,6 +23,8 @@ import org.apache.log4j.Logger;
 import org.dcm4che2.data.DicomObject;
 import org.dcm4che2.data.Tag;
 import org.lwjgl.opengl.GL11;
+import org.lwjgl.opengl.GL12;
+import org.lwjgl.opengl.GL13;
 
 import com.sun.opengl.util.texture.TextureCoords;
 
@@ -49,10 +51,12 @@ public class ImageListViewImagePaintController extends CellPaintControllerBase {
     
     private static ShaderManager shaderManager = ShaderManager.getInstance();
     
+    
+    private boolean isInitialized = false;
+    
     static {
         shaderManager.init("shader");
     }
-
 
     private Shader rescaleShader;
     
@@ -121,27 +125,158 @@ public class ImageListViewImagePaintController extends CellPaintControllerBase {
         }
     }
     
+    //TODO one initialize shader method for both OPEN GL libraries (JOGL + LWJGL)
+    protected void initializeGLShader() {
+        try {
+            
+            shaderManager.read("rescaleop");
+            rescaleShader = shaderManager.get("rescaleop");
+            rescaleShader.addProgramUniform("preScale");
+            rescaleShader.addProgramUniform("preOffset");
+            rescaleShader.addProgramUniform("scale");
+            rescaleShader.addProgramUniform("offset");
+            rescaleShader.addProgramUniform("tex");
+            rescaleShader.addProgramUniform("lutTex");
+            rescaleShader.addProgramUniform("useLut");
+            rescaleShader.addProgramUniform("useLutAlphaBlending");
+            rescaleShader.addProgramUniform("useGrayscaleRGBOutput");
+            rescaleShader.addProgramUniform("grayscaleRgbTex");
+        } catch (Exception e) {
+            throw new RuntimeException("couldn't initialize GL shader: " + e.getLocalizedMessage(), e);
+        }
+    }
+    
+    
     @Override
     protected void paintLWJGL(ImageListViewCell cell, Map<String,Object> sharedContextData) {
+        // TODO shader initialization by firing events like {@link ImageListViewCellPaintListener#glDrawableInitialized(GLAutoDrawable}
+        if(!isInitialized) {
+            initializeGLShader();
+            isInitialized = true;
+        }
+        
+        GL11.glClear(GL11.GL_COLOR_BUFFER_BIT);    
+        // test painting
+//        Dimension cellSize = cell.getLatestSize();
+//        GL11.glPushMatrix();
+//        try {
+//            GL11.glPointSize(10);
+//            GL11.glTranslated(cellSize.getWidth() / 2, cellSize.getHeight() / 2, 0);
+//            GL11.glTranslated(cell.getCenterOffset().getX(), cell.getCenterOffset().getY(), 0);
+//            GL11.glScaled(cell.getScale(), cell.getScale(), 1);
+//
+//            GL11.glBegin(GL11.GL_QUADS);
+//            GL11.glColor3f(0, 0, 1);
+//            GL11.glVertex2f(-5, -5);
+//            GL11.glVertex2f(5, -5);
+//            GL11.glVertex2f(5, 5);
+//            GL11.glVertex2f(-5, 5);
+//            GL11.glEnd();
+//        }
+//        finally {
+//            GL11.glPopMatrix();
+//        }
         Dimension cellSize = cell.getLatestSize();
         GL11.glPushMatrix();
         try {
-//            GL11.glLoadIdentity();
-            
-            GL11.glPointSize(10);
+
+            //gl.glLoadIdentity();
             GL11.glTranslated(cellSize.getWidth() / 2, cellSize.getHeight() / 2, 0);
             GL11.glTranslated(cell.getCenterOffset().getX(), cell.getCenterOffset().getY(), 0);
             GL11.glScaled(cell.getScale(), cell.getScale(), 1);
-
+            LWJGLImageTextureManager.TextureRef texRef = LWJGLImageTextureManager.bindImageTexture(GL13.GL_TEXTURE1, sharedContextData, cell.getDisplayedModelElement()/*, cell.isOutputGrayscaleRGBs()*/);
+            LookupTable lut = cell.getLookupTable();
+            try {
+                rescaleShader.bind();  // TODO: rescaleShader's internal gl may be outdated here...? (but shaders are shared betw. contexts, so if it's outdated, we'll have other problems as well...)
+            } catch (Exception e) {
+                // TODO: this is a total hack to "resolve" the above. It should not really be done; there is no guarantee
+                // the exception is raised anyway
+                logger.error("binding the rescale GL shader failed, trying to compile it anew", e);
+                initializeGLShader();
+            }
+            rescaleShader.bindUniform("tex", 1);
+//            if (cell.isOutputGrayscaleRGBs()) {
+//                GrayscaleRGBLookupTextureManager.bindGrayscaleRGBLutTexture(gl, GL2.GL_TEXTURE3, sharedContextData, cell.getDisplayedModelElement());
+//                rescaleShader.bindUniform("grayscaleRgbTex", 3);
+//                rescaleShader.bindUniform("useGrayscaleRGBOutput", true);
+//                rescaleShader.bindUniform("useLut", false);
+//                rescaleShader.bindUniform("useLutAlphaBlending", false);
+//            } else if (lut != null) {
+//                LookupTableTextureManager.bindLutTexture(gl, GL2.GL_TEXTURE2, sharedContextData, cell.getLookupTable());
+//                rescaleShader.bindUniform("lutTex", 2);
+//                rescaleShader.bindUniform("useLut", true);
+//                switch (cell.getCompositingMode()) {
+//                case CM_BLEND:
+//                    rescaleShader.bindUniform("useLutAlphaBlending", true);
+//                    break;
+//                default:
+//                    rescaleShader.bindUniform("useLutAlphaBlending", false);
+//                }
+//                rescaleShader.bindUniform("useGrayscaleRGBOutput", false);
+//            } else {
+                rescaleShader.bindUniform("useLut", false);
+                rescaleShader.bindUniform("useLutAlphaBlending", false);
+                rescaleShader.bindUniform("useGrayscaleRGBOutput", false);
+//            }
+            rescaleShader.bindUniform("preScale", texRef.getPreScale());
+            rescaleShader.bindUniform("preOffset", texRef.getPreOffset());
+            {
+                FloatRange pxValuesRange = cell.getDisplayedModelElement().getPixelValuesRange();
+                float minGrayvalue = pxValuesRange.getMin();
+                float nGrayvalues = pxValuesRange.getDelta();
+                float wl = (cell.getWindowLocation() - minGrayvalue) / nGrayvalues;
+                float ww = cell.getWindowWidth() / nGrayvalues;
+                float scale = 1F/ww;
+                float offset = (ww/2-wl)*scale;
+                // HACK HACK: Apply DICOM rescale slope/intercept values if present. TODO: DICOM-specific code doesn't belong here?
+                // TODO: this will cause the "optimal windowing" parameters as calculated by e.g. ImageListViewInitialWindowingController
+                // to produce wrongly windowed images. Happens e.g. with the Charite dental images.
+                ImageListViewModelElement elt = cell.getDisplayedModelElement();
+                if (elt instanceof DicomImageListViewModelElement) {
+                    try {
+                        DicomImageListViewModelElement delt = (DicomImageListViewModelElement) elt;
+                        if (delt.getDicomImageMetaData().contains(Tag.RescaleSlope) && delt.getDicomImageMetaData().contains(Tag.RescaleIntercept)) {
+                            float rscSlope = delt.getDicomImageMetaData().getFloat(Tag.RescaleSlope);
+                            float rscIntercept = delt.getDicomImageMetaData().getFloat(Tag.RescaleIntercept) / nGrayvalues;
+                            offset = scale * rscIntercept + offset;
+                            scale = scale * rscSlope;
+                        }
+                    } catch (Exception e) {
+                        //ignore -- no error, use default preScale/preOffset
+                    }
+                }
+                rescaleShader.bindUniform("scale", scale);
+                rescaleShader.bindUniform("offset", offset);
+            }
+            // TODO: (GL_TEXTURE_ENV is ignored because a frag shader is active) make the compositing mode configurable (replace/combine)
+            GL11.glTexEnvi(GL11.GL_TEXTURE_ENV, GL11.GL_TEXTURE_ENV_MODE, GL11.GL_REPLACE);
+//            TextureCoords coords = texRef.getCoords();
+            GL11.glColor3f(0, 1, 0);
+            float w2 = (float) getOriginalImageWidth(cell) / 2, h2 = (float) getOriginalImageHeight(cell) / 2;
             GL11.glBegin(GL11.GL_QUADS);
-            GL11.glColor3f(0, 0, 1);
-            GL11.glVertex2f(-5, -5);
-            GL11.glVertex2f(5, -5);
-            GL11.glVertex2f(5, 5);
-            GL11.glVertex2f(-5, 5);
+            // TODO: wrong orientation here? check visually!
+            GL11.glTexCoord2f(0, 1);
+            GL11.glVertex2f(-w2, h2);
+            GL11.glTexCoord2f(1, 1);
+            GL11.glVertex2f( w2,  h2);
+            GL11.glTexCoord2f(1, 0);
+            GL11.glVertex2f( w2, -h2);
+            GL11.glTexCoord2f(0, 0);
+            GL11.glVertex2f(-w2, -h2);
+          
+//            GL11.glTexCoord2f(coords.left(), coords.top());
+//            GL11.glVertex2f(-w2, h2);
+//            GL11.glTexCoord2f(coords.right(), coords.top());
+//            GL11.glVertex2f( w2,  h2);
+//            GL11.glTexCoord2f(coords.right(), coords.bottom());
+//            GL11.glVertex2f( w2, -h2);
+//            GL11.glTexCoord2f(coords.left(), coords.bottom());
+//            GL11.glVertex2f(-w2, -h2);
+            
             GL11.glEnd();
-        }
-        finally {
+            LWJGLImageTextureManager.unbindCurrentImageTexture();
+            rescaleShader.unbind();
+        } finally {
             GL11.glPopMatrix();
         }
     }

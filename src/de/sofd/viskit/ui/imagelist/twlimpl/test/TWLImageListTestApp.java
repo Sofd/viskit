@@ -26,14 +26,20 @@ import org.lwjgl.LWJGLException;
 
 import de.matthiasmann.twl.Alignment;
 import de.matthiasmann.twl.BoxLayout;
+import de.matthiasmann.twl.ComboBox;
 import de.matthiasmann.twl.GUI;
 import de.matthiasmann.twl.Label;
 import de.matthiasmann.twl.Widget;
 import de.matthiasmann.twl.BoxLayout.Direction;
+import de.matthiasmann.twl.model.ListModel;
+import de.matthiasmann.twl.model.SimpleChangableListModel;
 import de.matthiasmann.twl.renderer.lwjgl.LWJGLRenderer;
 import de.matthiasmann.twl.theme.ThemeManager;
 import de.sofd.swing.DefaultBoundedListSelectionModel;
 import de.sofd.twlawt.TWLAWTGLCanvas;
+import de.sofd.viskit.controllers.ImageListViewInitialZoomPanController;
+import de.sofd.viskit.controllers.ImageListViewMouseMeasurementController;
+import de.sofd.viskit.controllers.ImageListViewMouseWindowingController;
 import de.sofd.viskit.controllers.ImageListViewMouseZoomPanController;
 import de.sofd.viskit.controllers.cellpaint.ImageListViewImagePaintController;
 import de.sofd.viskit.model.DicomModelFactory;
@@ -41,7 +47,9 @@ import de.sofd.viskit.model.ImageListViewModelElement;
 import de.sofd.viskit.model.IntuitiveFileNameComparator;
 import de.sofd.viskit.model.ModelFactory;
 import de.sofd.viskit.ui.imagelist.ImageListViewCell;
+import de.sofd.viskit.ui.imagelist.ImageListView.ScaleMode;
 import de.sofd.viskit.ui.imagelist.twlimpl.TWLImageListView;
+import de.sofd.viskit.ui.imagelist.twlimpl.TWLImageListView.MyScaleMode;
 
 public class TWLImageListTestApp {
     
@@ -306,14 +314,13 @@ public class TWLImageListTestApp {
             rootWidget.add(mainPane);
             GUI gui = new GUI(rootWidget, renderer);
 
-            // TODO dynamic list view creation depending on model elements
-            for (int i = 0; i < 2; i++) {
+            for (int i = 0; i < factory.getModelsCount(); i++) {
                 // slider, scale mode, windowing stuff etc.
                 final BoxLayout listToolbar = new BoxLayout(Direction.HORIZONTAL);
                 listToolbar.setTheme("panel");
                 listToolbar.setAlignment(Alignment.CENTER);
-                listToolbar.add(new Label("ImageListView Toolbar: Windowing Slider, ScaleMode, lut, w/z"));
-
+                listToolbar.add(new Label("ScaleMode: "));
+                
                 final TWLImageListView listView = new TWLImageListView();
                 listView.setScaleMode(TWLImageListView.MyScaleMode.newCellGridMode(2, 2));
                 listView.setSelectionModel(new DefaultBoundedListSelectionModel());
@@ -365,8 +372,6 @@ public class TWLImageListTestApp {
                 });
                 listView.setModel(factory.getModel(String.valueOf(i)));
                 listView.setTheme("panel");
-
-                
                 listView.addListSelectionListener(new ListSelectionListener() {
 
                     @Override
@@ -378,6 +383,12 @@ public class TWLImageListTestApp {
                 // apply controller to image list view
                 new ImageListViewImagePaintController(listView).setEnabled(true);
                 new ImageListViewMouseZoomPanController(listView);
+                new ImageListViewMouseWindowingController(listView);
+                
+//                ListModel<ScaleMode> scaleModeModel = new SimpleChangableListModel<ScaleMode>(listView.getSupportedScaleModes());
+//                ComboBox<ScaleMode> scaleModeBox = new ComboBox<ScaleMode>();
+//                scaleModeBox.setModel(scaleModeModel);
+//                listToolbar.add(scaleModeBox);
                 
                 Widget listPanel = new Widget() {
                     @Override
@@ -406,7 +417,6 @@ public class TWLImageListTestApp {
                 throw new RuntimeException(e.getLocalizedMessage(), e);
             }
         }
-
     }
     
     public void hide() {

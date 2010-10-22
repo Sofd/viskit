@@ -549,6 +549,7 @@
         <theme name="button" ref="button" allowWildcard="true"/>
         <theme name="togglebutton" ref="togglebutton" allowWildcard="true"/>
         <theme name="checkbox" ref="checkbox" allowWildcard="true"/>
+        <theme name="combobox" ref="combobox" allowWildcard="true"/>
         <theme name="hslider" ref="hslider" allowWildcard="true"/>
         <theme name="vscrollbar" ref ="vscrollbar" allowWildcard="true"/>
     </theme>

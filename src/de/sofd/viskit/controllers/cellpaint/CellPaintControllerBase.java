@@ -210,6 +210,10 @@ public class CellPaintControllerBase {
         
     }
     
+    public void glDrawableDisposing(GLAutoDrawable glAutoDrawable) {
+    }
+    
+    
     protected void paintGL(ImageListViewCell cell, GL2 gl, Map<String, Object> sharedContextData) {
         
     }
@@ -218,8 +222,6 @@ public class CellPaintControllerBase {
         
     }
     
-    public void glDrawableDisposing(GLAutoDrawable glAutoDrawable) {
-    }
     
     protected final PropertyChangeSupport propertyChangeSupport = new PropertyChangeSupport(this);
 

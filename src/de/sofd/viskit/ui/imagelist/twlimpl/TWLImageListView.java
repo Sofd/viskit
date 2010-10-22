@@ -26,6 +26,8 @@ import de.sofd.util.IdentityHashSet;
 import de.sofd.util.IntRange;
 import de.sofd.util.Misc;
 import de.sofd.viskit.draw2d.gc.ViskitGC;
+import de.sofd.viskit.image3D.lwjgl.util.LWJGLShaderFactory;
+import de.sofd.viskit.image3D.util.ShaderManager;
 import de.sofd.viskit.model.NotInitializedException;
 import de.sofd.viskit.model.ImageListViewModelElement.InitializationState;
 import de.sofd.viskit.ui.imagelist.ImageListViewCell;
@@ -47,7 +49,9 @@ public class TWLImageListView extends TWLImageListViewBase {
     private final Collection<ImageListViewCellPaintListener> uninitializedCellPaintListeners
     = new IdentityHashSet<ImageListViewCellPaintListener>();
     
-    public TWLImageListView() {
+    public TWLImageListView() {        
+        ShaderManager.initializeManager(new LWJGLShaderFactory());
+        
         setScaleMode(new MyScaleMode(2, 2));        
         // adds the canvas
         setTheme("");
@@ -64,8 +68,6 @@ public class TWLImageListView extends TWLImageListViewBase {
         updateScrollbar();
         setupInternalUiInteractions();
     }
-    
-
     
     @Override
     protected void layout() {
@@ -107,6 +109,7 @@ public class TWLImageListView extends TWLImageListViewBase {
                 
         @Override
         protected void paintWidget(GUI gui) {
+            
             GL11.glPushAttrib(GL11.GL_CURRENT_BIT|GL11.GL_LIGHTING_BIT|GL11.GL_HINT_BIT|GL11.GL_POLYGON_BIT|GL11.GL_ENABLE_BIT|GL11.GL_VIEWPORT_BIT|GL11.GL_TRANSFORM_BIT);
             initializeUninitializedCellPaintListeners();
             GL11.glMatrixMode(GL11.GL_PROJECTION);
@@ -167,16 +170,14 @@ public class TWLImageListView extends TWLImageListViewBase {
                                 GL11.glVertex2f(- CELL_BORDER_WIDTH + 1,  cellHeight + CELL_BORDER_WIDTH);                            
                                 GL11.glEnd();
                             }
-                            
                             cell.setLatestSize(new Dimension(cellWidth, cellHeight));
 
                             // clip
                             GL11.glEnable(GL11.GL_SCISSOR_TEST);
                             try {
                                 // in window coordinates
-                                // TODO calculate borders
+                                // TODO calculate absolute y coords
 //                                GL11.glScissor(boxMinX + CELL_BORDER_WIDTH, boxMinY + CELL_BORDER_WIDTH, cellWidth, cellHeight);
-                                
                                 GL11.glScissor(boxMinX + CELL_BORDER_WIDTH+this.getX(), boxMinY + CELL_BORDER_WIDTH+2, cellWidth, cellHeight);
                                 
                                 // call all CellPaintListeners in the z-order
