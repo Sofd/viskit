@@ -1,15 +1,30 @@
 package de.sofd.viskit.util;
 
 import java.awt.Color;
-import java.nio.*;
-import java.util.*;
+import java.awt.image.BufferedImage;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.nio.FloatBuffer;
+import java.nio.IntBuffer;
+import java.nio.ShortBuffer;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Iterator;
 
-import org.dcm4che2.data.*;
+import javax.imageio.ImageIO;
+import javax.imageio.ImageReader;
+import javax.imageio.stream.ImageInputStream;
 
-import com.sun.opengl.util.*;
+import org.dcm4che2.data.DicomObject;
+import org.dcm4che2.data.Tag;
+import org.dcm4che2.data.UID;
+import org.dcm4che2.io.DicomOutputStream;
+import org.dcm4che2.media.FileMetaInformation;
 
-import de.sofd.util.*;
-import de.sofd.viskit.model.*;
+import com.sun.opengl.util.BufferUtil;
+
+import de.sofd.util.ShortRange;
+import de.sofd.viskit.model.ITransferFunction;
 
 public class ImageUtil {
     protected static float clamp(double value, double min, double max) {
@@ -305,4 +320,45 @@ public class ImageUtil {
 
         return new ShortRange(min, max);
     }
+
+    public static BufferedImage extractBufferedImageFromDicom(DicomObject dcmObj, int frameNumber) {
+        ByteArrayOutputStream bos = new ByteArrayOutputStream(200000);
+        DicomOutputStream dos = new DicomOutputStream(bos);
+
+        try {
+            String tsuid = dcmObj.getString(Tag.TransferSyntaxUID);
+            if (null == tsuid) {
+                tsuid = UID.ImplicitVRLittleEndian;
+            }
+
+            FileMetaInformation fmi = new FileMetaInformation(dcmObj);
+            fmi = new FileMetaInformation(fmi.getMediaStorageSOPClassUID(), fmi.getMediaStorageSOPInstanceUID(), tsuid);
+
+            dos.writeFileMetaInformation(fmi.getDicomObject());
+            dos.writeDataset(dcmObj, tsuid);
+            dos.close();
+
+            Iterator<?> it = ImageIO.getImageReadersByFormatName("RAWDICOM");
+            if (!it.hasNext()) {
+                throw new IllegalStateException("The raw DICOM image I/O filter must be available to read images.");
+            }
+
+            ImageReader reader = (ImageReader) it.next();
+            ImageInputStream in = ImageIO.createImageInputStream(new ByteArrayInputStream(bos.toByteArray()));
+            if (null == in) {
+                throw new IllegalStateException("The raw DICOM image I/O filter must be available to read images.");
+            }
+            try {
+                reader.setInput(in);
+                BufferedImage bimg = reader.read(frameNumber);
+                return bimg;
+            } finally {
+                in.close();
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new IllegalStateException("error trying to extract image from DICOM object", e);
+        }
+    }
+
 }

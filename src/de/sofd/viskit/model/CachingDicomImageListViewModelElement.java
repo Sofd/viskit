@@ -4,10 +4,7 @@ import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.nio.IntBuffer;
-import java.nio.ShortBuffer;
 import java.util.Collections;
-import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
 
@@ -25,15 +22,13 @@ import org.dcm4che2.imageioimpl.plugins.dcm.DicomImageReaderSpi;
 import org.dcm4che2.io.DicomOutputStream;
 import org.dcm4che2.media.FileMetaInformation;
 
-import de.sofd.util.FloatRange;
 import de.sofd.util.NumericPriorityMap;
 import de.sofd.util.concurrent.NumericPriorityThreadPoolExecutor;
 import de.sofd.util.concurrent.PrioritizedTask;
-import de.sofd.viskit.image.RawImage;
-import de.sofd.viskit.image.RawImageImpl;
+import de.sofd.viskit.image.ViskitDicomImageBase;
 import de.sofd.viskit.image.ViskitImage;
-import de.sofd.viskit.image.ViskitImageImpl;
 import de.sofd.viskit.test.windowing.RawDicomImageReader;
+import de.sofd.viskit.util.ImageUtil;
 
 /**
  * Implements getDicomObject(), getImage() as caching delegators to the
@@ -61,7 +56,7 @@ public abstract class CachingDicomImageListViewModelElement extends AbstractImag
     protected int frameNumber = 0;
     protected int totalFrameNumber = -1;
 
-    protected ViskitImage image = new MyViskitImageImpl(); //TODO: must change when the frameNumber changes
+    protected ViskitImage image = new MyViskitImageImpl(frameNumber); //TODO: must change when the frameNumber changes
 
     private final NumericPriorityMap<Object, DicomObject> dcmObjectCache;
 
@@ -271,12 +266,20 @@ public abstract class CachingDicomImageListViewModelElement extends AbstractImag
      * 
      * @author olaf
      */
-    protected class MyViskitImageImpl extends ViskitImageImpl {
+    protected class MyViskitImageImpl extends ViskitDicomImageBase {
 
-        protected FloatRange maxPixelValuesRange, usedPixelValuesRange;
+        public MyViskitImageImpl(int frameNumber) {
+            super(frameNumber);
+        }
         
-        public MyViskitImageImpl() {
-            super(null, (RawImage)null);  //we override all data getters and setters and don't use the superclass's fields
+        @Override
+        public DicomObject getDicomObject() {
+            return CachingDicomImageListViewModelElement.this.getDicomObject();
+        }
+        
+        @Override
+        public DicomObject getDicomImageMetaData() {
+            return CachingDicomImageListViewModelElement.this.getDicomImageMetaData();
         }
         
         @Override
@@ -287,105 +290,6 @@ public abstract class CachingDicomImageListViewModelElement extends AbstractImag
         @Override
         public Object getImageKey() {
             return CachingDicomImageListViewModelElement.this.getImageKey();
-        }
-
-        @Override
-        public RawImage getRawImage() {
-            return CachingDicomImageListViewModelElement.this.getRawImage();
-        }
-
-        @Override
-        public boolean hasBufferedImage() {
-            return !hasRawImage();
-        }
-
-        @Override
-        public boolean hasRawImage() {
-            return CachingDicomImageListViewModelElement.this.hasRawImage();
-        }
-
-        @Override
-        public RawImage getProxyRawImage() {
-            return CachingDicomImageListViewModelElement.this.getProxyRawImage();
-        }
-        
-        @Override
-        public boolean isRawImagePreferable() {
-            return CachingDicomImageListViewModelElement.this.isRawImagePreferable();
-        }
-        
-        @Override
-        public int getWidth() {
-            return getDicomImageMetaData().getInt(Tag.Columns);
-        }
-        
-        @Override
-        public int getHeight() {
-            return getDicomImageMetaData().getInt(Tag.Rows);
-        }
-
-        @Override
-        public FloatRange getMaximumPixelValuesRange() {
-            if (null == maxPixelValuesRange) {
-                setMaximumPixelValuesRange();
-            }
-            return maxPixelValuesRange;
-        }
-
-        protected void setMaximumPixelValuesRange() {
-            maxPixelValuesRange = new FloatRange(200, 800);
-
-            int pixelType = getPixelType(getDicomImageMetaData());
-
-            // TODO: maybe use static multidimensional tables instead of nested switch statements
-            switch (pixelType) {
-                case RawImage.PIXEL_TYPE_UNSIGNED_BYTE:
-                    maxPixelValuesRange= new FloatRange(0, 255);
-                    break;
-                case RawImage.PIXEL_TYPE_UNSIGNED_12BIT:
-                    maxPixelValuesRange= new FloatRange(0, 4095);
-                    break;
-                case RawImage.PIXEL_TYPE_UNSIGNED_16BIT:
-                    maxPixelValuesRange= new FloatRange(0, 65535);
-                    break;
-                case RawImage.PIXEL_TYPE_SIGNED_12BIT:
-                    maxPixelValuesRange= new FloatRange(-2048, 2047);
-                    break;
-                case RawImage.PIXEL_TYPE_SIGNED_16BIT:
-                    maxPixelValuesRange= new FloatRange(-32768, 32767);
-                    break;
-            }
-        }
-
-        @Override
-        public FloatRange getUsedPixelValuesRange() {
-            if (null == usedPixelValuesRange) {
-                setUsedPixelValuesRange();
-            }
-            return usedPixelValuesRange;
-        }
-
-        protected void setUsedPixelValuesRange() {
-            FloatRange range = super.getUsedPixelValuesRange();
-            
-            //correct for RescaleSlope/-Intercept Tags
-            float min = range.getMin();
-            float max = range.getMax();
-            DicomObject metadata = getDicomImageMetaData();
-            if (metadata.contains(Tag.RescaleSlope) && metadata.contains(Tag.RescaleIntercept)) {
-                float rscSlope = metadata.getFloat(Tag.RescaleSlope);
-                float rscIntercept = metadata.getFloat(Tag.RescaleIntercept);
-                min = (int) (rscSlope * min + rscIntercept);
-                max = (int) (rscSlope * max + rscIntercept);
-            }
-            
-            usedPixelValuesRange = new FloatRange(min, max);
-        }
-        
-        @Override
-        public boolean isBufferedImageSigned() {
-            DicomObject metadata = getDicomImageMetaData();
-            return (1 == metadata.getInt(Tag.PixelRepresentation));
         }
 
     }
@@ -487,46 +391,7 @@ public abstract class CachingDicomImageListViewModelElement extends AbstractImag
      * @return
      */
     protected BufferedImage getBackendImage() {
-        DicomObject dcmObj = getBackendDicomObject();
-
-        // extract the BufferedImage from the received imageDicomObject
-        ByteArrayOutputStream bos = new ByteArrayOutputStream(200000);
-        DicomOutputStream dos = new DicomOutputStream(bos);
-
-        try {
-            String tsuid = dcmObj.getString(Tag.TransferSyntaxUID);
-            if (null == tsuid) {
-                tsuid = UID.ImplicitVRLittleEndian;
-            }
-
-            FileMetaInformation fmi = new FileMetaInformation(dcmObj);
-            fmi = new FileMetaInformation(fmi.getMediaStorageSOPClassUID(), fmi.getMediaStorageSOPInstanceUID(), tsuid);
-
-            dos.writeFileMetaInformation(fmi.getDicomObject());
-            dos.writeDataset(dcmObj, tsuid);
-            dos.close();
-
-            Iterator<?> it = ImageIO.getImageReadersByFormatName("RAWDICOM");
-            if (!it.hasNext()) {
-                throw new IllegalStateException("The raw DICOM image I/O filter must be available to read images.");
-            }
-
-            ImageReader reader = (ImageReader) it.next();
-            ImageInputStream in = ImageIO.createImageInputStream(new ByteArrayInputStream(bos.toByteArray()));
-            if (null == in) {
-                throw new IllegalStateException("The raw DICOM image I/O filter must be available to read images.");
-            }
-            try {
-                reader.setInput(in);
-                BufferedImage bimg = reader.read(0);
-                return bimg;
-            } finally {
-                in.close();
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-            throw new IllegalStateException("error trying to extract image from DICOM object", e);
-        }
+        return ImageUtil.extractBufferedImageFromDicom(getBackendDicomObject(), getFrameNumber());
     }
 
     @Override
@@ -616,124 +481,6 @@ public abstract class CachingDicomImageListViewModelElement extends AbstractImag
         return result;
     }
 
-    protected boolean hasRawImage() {
-        return null != maybeGetProxyRawImage();
-    }
-
-    protected boolean isRawImagePreferable() {
-        return hasRawImage();
-    }
-    
-    protected RawImage getRawImage() {
-        RawImageImpl result = (RawImageImpl) getProxyRawImage();
-
-        DicomObject dicomObject = getDicomObject();
-        int height = dicomObject.getInt(Tag.Columns);
-        int width = dicomObject.getInt(Tag.Rows);
-
-        if (result.getPixelType() != RawImage.PIXEL_TYPE_UNSIGNED_16BIT) {
-            //signed
-            short[] shorts = dicomObject.getShorts(Tag.PixelData);
-            
-            ShortBuffer tmp = ShortBuffer.wrap(shorts);
-            tmp.position(height*width*frameNumber);
-            result.setPixelData(tmp.slice());
-        } else {
-            //unsigned int
-            int[] ints = dicomObject.getInts(Tag.PixelData);
-            IntBuffer tmp = IntBuffer.wrap(ints);
-            tmp.position(height*width*frameNumber);
-            result.setPixelData(tmp.slice());
-        }
-        return result;
-    }
-    
-
-    protected RawImage getProxyRawImage() {
-        RawImageImpl result = maybeGetProxyRawImage();
-        if (null == result) {
-            throw new IllegalStateException("this model element can't provide a raw image");
-        }
-        return result;
-    }
-
-    protected RawImageImpl maybeGetProxyRawImage() {
-        DicomObject imgMetadata = getDicomImageMetaData();
-        
-        String transferSyntaxUID = imgMetadata.getString(Tag.TransferSyntaxUID);
-        //logger.debug(getImageKey());
-        //logger.debug("transferSyntaxUID : " + transferSyntaxUID);
-        
-        //jpeg or rle compressed
-        if (transferSyntaxUID != null && 
-                (transferSyntaxUID.startsWith("1.2.840.10008.1.2.4") ||
-                 transferSyntaxUID.startsWith("1.2.840.10008.1.2.5")))
-            return null;
-        
-        int pixelType = getPixelType(imgMetadata);
-        if (pixelType == RawImage.PIXEL_TYPE_NOT_SUPPORTED)
-            return null;
-
-        int pixelFormat = getPixelFormat(imgMetadata);
-        if (pixelFormat == RawImage.PIXEL_FORMAT_NOT_SUPPORTED)
-            return null;
-
-        int width = imgMetadata.getInt(Tag.Columns);
-        int height = imgMetadata.getInt(Tag.Rows);
-        
-        return new RawImageImpl(width, height, pixelFormat, pixelType, null);
-    }
-
-    protected int getPixelFormat(DicomObject dicomObject) {
-        int bitsAllocated = dicomObject.getInt(Tag.BitsAllocated);
-
-        int pixelFormat = (bitsAllocated == 16 ? RawImage.PIXEL_FORMAT_LUMINANCE : RawImage.PIXEL_FORMAT_NOT_SUPPORTED);
-
-        return pixelFormat;
-    }
-
-    protected int getPixelType(DicomObject dicomObject) {
-        int bitsAllocated = dicomObject.getInt(Tag.BitsAllocated);
-        if (bitsAllocated <= 0) {
-            return RawImage.PIXEL_TYPE_NOT_SUPPORTED;
-        }
-
-        int bitsStored = dicomObject.getInt(Tag.BitsStored);
-        if (bitsStored <= 0) {
-            return RawImage.PIXEL_TYPE_NOT_SUPPORTED;
-        }
-        boolean isSigned = (1 == dicomObject.getInt(Tag.PixelRepresentation));
-        // TODO: return RawImage.PIXEL_TYPE_NOT_SUPPORTED; if compressed
-        // TODO: support for RGB (at least don't misinterpret it as luminance)
-        // TODO: account for endianness (Tag.HighBit)
-        int pixelType;
-        // TODO: maybe use static multidimensional tables instead of nested switch statements
-
-        switch (bitsAllocated) {
-            case 8:
-                if (bitsStored == 8 && !isSigned)
-                    return RawImage.PIXEL_TYPE_UNSIGNED_BYTE;
-                
-                return RawImage.PIXEL_TYPE_NOT_SUPPORTED;
-            case 16:
-                switch (bitsStored) {
-                    case 12:
-                        pixelType = (isSigned ? RawImage.PIXEL_TYPE_SIGNED_12BIT : RawImage.PIXEL_TYPE_UNSIGNED_12BIT);
-                        break;
-                    case 16:
-                        pixelType = (isSigned ? RawImage.PIXEL_TYPE_SIGNED_16BIT : RawImage.PIXEL_TYPE_UNSIGNED_16BIT);
-                        break;
-                    default:
-                        return RawImage.PIXEL_TYPE_NOT_SUPPORTED;
-                }
-                break;
-            default:
-                return RawImage.PIXEL_TYPE_NOT_SUPPORTED;
-        }
-
-        return pixelType;
-    }
-    
     @Override
     public void setPriority(Object source, double value) {
         super.setPriority(source, value);

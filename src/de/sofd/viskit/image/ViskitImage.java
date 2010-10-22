@@ -1,13 +1,9 @@
 package de.sofd.viskit.image;
 
-import java.awt.color.ColorSpace;
 import java.awt.image.BufferedImage;
-import java.nio.IntBuffer;
-import java.nio.ShortBuffer;
 
 import de.sofd.util.FloatRange;
 import de.sofd.util.Histogram;
-import de.sofd.util.IntRange;
 
 
 /**
