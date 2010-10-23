@@ -206,6 +206,10 @@ public class FileBasedDicomImageListViewModelElement extends CachingDicomImageLi
     
     @Override
     protected DicomObject getBackendDicomObject() {
+//        try {
+//            Thread.sleep(300);
+//        } catch (InterruptedException e1) {
+//        }
         checkInitialized();
         try {
             DicomInputStream din = new DicomInputStream(url.openStream());

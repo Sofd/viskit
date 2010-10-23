@@ -84,6 +84,7 @@ import de.sofd.viskit.model.IntuitiveFileNameComparator;
 import de.sofd.viskit.model.LookupTable;
 import de.sofd.viskit.model.LookupTables;
 import de.sofd.viskit.model.ModelFactory;
+import de.sofd.viskit.model.ModelFactory.ModelPixelValuesRangeChangeListener;
 import de.sofd.viskit.ui.JLutWindowingSlider;
 import de.sofd.viskit.ui.LookupTableCellRenderer;
 import de.sofd.viskit.ui.RoiToolPanel;
@@ -127,16 +128,26 @@ public class JListImageListTestApp {
         return isUser("olaf");
     }
     
+    private Map<String,ListViewPanel> keyListViewMap = new HashMap<String,ListViewPanel>();
     private DicomModelFactory factory;
     
     public JListImageListTestApp() throws Exception {
         boolean useAsyncMode = (null != System.getProperty("viskit.testapp.asyncMode"));
         if (isUserHonglinh()) {
-            factory = new DicomModelFactory("/home/honglinh/Desktop/cache.txt", new IntuitiveFileNameComparator());
+//            factory = new DicomModelFactory("/home/honglinh/Desktop/cache.txt", new IntuitiveFileNameComparator());
+            factory = new DicomModelFactory(null, new IntuitiveFileNameComparator());
+            factory.addModelPixelValuesRangeChangeListener(new ModelPixelValuesRangeChangeListener() {
+
+                @Override
+                public void pixelvaluesRangeChange(String modelKey, ImageListViewModelElement element, float[] range) {
+                    ListViewPanel lvp = keyListViewMap.get(modelKey);
+                    lvp.setPixelValueRange(range);
+                }
+            });
             if (useAsyncMode) {
-                factory.setSupportMultiframes(true);
-                factory.setCheckFileReadability(true);
-                factory.setAsyncMode(false);
+                factory.setSupportMultiframes(false);
+                factory.setCheckFileReadability(false);
+                factory.setAsyncMode(true);
             } else {
                 // when using async mode, also avoid pre-reading of DICOM files to further minimize startup time
                 factory.setSupportMultiframes(false);
@@ -547,12 +558,13 @@ public class JListImageListTestApp {
         
         if (isUserHonglinh()) {
             Collection<File> fileCollection = new LinkedList<File>();
-            fileCollection.add(new File("/home/honglinh/Desktop/multiframedicoms/multiframedicom.dcm"));
-            fileCollection.add(new File("/home/honglinh/Desktop/multiframedicoms/multiframedicom2.dcm"));
+//            fileCollection.add(new File("/home/honglinh/Desktop/multiframedicoms/multiframedicom.dcm"));
+//            fileCollection.add(new File("/home/honglinh/Desktop/multiframedicoms/multiframedicom2.dcm"));
 
             // a unique key should be used instead of 1 and 2, f.e. PatientID+StudyInstanceUID+SeriesInstanceUID to identify the series
-            factory.addModel("1", fileCollection);
-            factory.addModel("2", new File("/home/honglinh/cd857__center4001"));
+//            factory.addModel("1", fileCollection);
+            factory.addModel("1", new File("/home/honglinh/br312046/images/cd00908__center10101"));
+            factory.addModel("2", new File("/home/honglinh/br312046/images/cd00906__center10102"));
             
 //          listModels.add(factory.createModelFromDir(new File("/home/honglinh/Desktop/dicomfiles1")));
             
@@ -654,6 +666,10 @@ public class JListImageListTestApp {
             lnum++;
             final long t0 = System.currentTimeMillis();
             final ListViewPanel lvp = new ListViewPanel();
+            
+            keyListViewMap.put(modelKey, lvp);
+            
+            
             debugObjects.put("lvp" + lnum, lvp);
             debugObjects.put("lv" + lnum, lvp.getListView());
             if (!isUserOlaf()) {
@@ -799,8 +815,8 @@ public class JListImageListTestApp {
             new ImageListViewRoiInputEventController(listView);
             new ImageListViewImagePaintController(listView).setEnabled(true);
             slider = new JLutWindowingSlider();
-            if (! isUserOlaf()) {
-                new ImageListViewSliderWindowingController(listView,initWindowingController,slider);
+            if (!isUserOlaf()) {
+                new ImageListViewSliderWindowingController(listView, initWindowingController, slider);
             }
             
             ImageListViewSelectionScrollSyncController sssc = new ImageListViewSelectionScrollSyncController(listView);
