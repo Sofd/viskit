@@ -56,6 +56,7 @@ import de.sofd.util.FloatRange;
 import de.sofd.viskit.controllers.GenericILVCellPropertySyncController;
 import de.sofd.viskit.controllers.ImageListViewInitialWindowingController;
 import de.sofd.viskit.controllers.ImageListViewInitialZoomPanController;
+import de.sofd.viskit.controllers.ImageListViewMouseFrameNaviController;
 import de.sofd.viskit.controllers.ImageListViewMouseMeasurementController;
 import de.sofd.viskit.controllers.ImageListViewMouseWindowingController;
 import de.sofd.viskit.controllers.ImageListViewMouseZoomPanController;
@@ -563,7 +564,10 @@ public class JListImageListTestApp {
         } else if (isUserOlaf()) {
             ///*
             addModelForDir(factory, new File("/home/olaf/hieronymusr/br312046/images/cd00906__center10102"));
-            addModelForDir(factory, new File("/home/olaf/hieronymusr/br312046/images/cd00908__center10101"));
+            //addModelForDir(factory, new File("/home/olaf/hieronymusr/br312046/images/cd00908__center10101"));
+            //addModelForDir(factory, new File("/shares/projects/StudyBrowser/data/disk312043/Images/cd833__center4001"));
+            //addModelForDirTree(factory, new File("/home/olaf/hieronymusr/disk312046/Images"));
+            addModelForDir(factory, new File("/home/olaf/gi/resources/DICOM-Testbilder/multiframe"));
             
             //addModelForDir(factory, new File("/home/olaf/Downloads/MESA-storage-B_10_11_0/links"));
 
@@ -791,6 +795,7 @@ public class JListImageListTestApp {
             initZoomPanController.setEnabled(true);
             new ImageListViewMouseWindowingController(listView);
             new ImageListViewMouseZoomPanController(listView);
+            new ImageListViewMouseFrameNaviController(listView);
             new ImageListViewRoiInputEventController(listView);
             new ImageListViewImagePaintController(listView).setEnabled(true);
             slider = new JLutWindowingSlider();

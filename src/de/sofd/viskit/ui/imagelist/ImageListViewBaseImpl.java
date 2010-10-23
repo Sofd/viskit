@@ -468,12 +468,22 @@ public abstract class ImageListViewBaseImpl /*< extends $baseClass >*/ implement
     private PropertyChangeListener modelElementPropertyChangeEventForwarder = new PropertyChangeListener() {
         @Override
         public void propertyChange(PropertyChangeEvent evt) {
-            if (ImageListViewModelElement.PROP_INITIALIZATIONSTATE.equals(evt.getPropertyName())) {
-                refreshCellForElement((ImageListViewModelElement)evt.getSource());
-            }
+            onModelElementPropertyChange(evt);
             ImageListViewBaseImpl.this.fireModelElementPropertyChangeEvent(evt);
         }
     };
+
+    /**
+     * Default internal callback that's invoked for any PropertyChangeEvent on
+     * any model element in the list. Default implementation refreshed the
+     * element/cell. Subclasses may override, possibly calling super, to
+     * implement their own handling for this.
+     * 
+     * @param evt
+     */
+    protected void onModelElementPropertyChange(PropertyChangeEvent evt) {
+        refreshCellForElement((ImageListViewModelElement)evt.getSource());
+    }
 
     @Override
     public ImageListViewCell getCellFor(ImageListViewModelElement modelElement) {

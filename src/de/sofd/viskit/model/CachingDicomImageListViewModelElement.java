@@ -51,6 +51,15 @@ import de.sofd.viskit.util.ImageUtil;
  */
 public abstract class CachingDicomImageListViewModelElement extends AbstractImageListViewModelElement implements DicomImageListViewModelElement {
 
+    //TODO: displaying the same DICOM in multiple cells (e.g. a different frame in each), even in other lists, is probably broken atm.
+    // with respect to:
+    // - background-loading the DICOM object only once in async mode (as long as it isn't cached)
+    //
+    // displaying it multiple times in the same list is probably even more (like, totally) broken
+    
+    //TODO: think again about having the "current frame number" in the cell rather than in the model element
+    //      (and thus, possibly, doing away with the getImage() method altogether)
+    
     protected int totalFrameNumber = -1;
 
     protected MyViskitImageImpl image = new MyViskitImageImpl(0);
@@ -257,6 +266,11 @@ public abstract class CachingDicomImageListViewModelElement extends AbstractImag
         return image;
     }
 
+    @Override
+    public ViskitImage getFrameImage(int num) {
+        return new MyViskitImageImpl(num);
+    }
+    
     /**
      * Class of the images handed out by {@link #getImage()}. Represents a
      * specific frame of this.getDicomObject().
@@ -300,6 +314,9 @@ public abstract class CachingDicomImageListViewModelElement extends AbstractImag
      */
     @Override
     public void setFrameNumber(int frame) {
+        if (frame == getFrameNumber()) {
+            return;
+        }
          int numFrames = getTotalFrameNumber(); 
          if(frame < 0 || frame >= numFrames) {
              throw new IllegalArgumentException("the frame number must be at least 0 and must not exceed "+(numFrames-1) + " (# frames in this DICOM object)");

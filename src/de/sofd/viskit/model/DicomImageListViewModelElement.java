@@ -3,6 +3,7 @@ package de.sofd.viskit.model;
 import org.dcm4che2.data.DicomObject;
 
 import de.sofd.util.Histogram;
+import de.sofd.viskit.image.ViskitImage;
 
 /**
  * Base interface for ImageListViewModelElements that wrap a DicomObject. The
@@ -52,5 +53,7 @@ public interface DicomImageListViewModelElement extends ImageListViewModelElemen
      *         always returns 1.
      */
     public int getTotalFrameNumber();
+    
+    public ViskitImage getFrameImage(int num);
 
 }
