@@ -133,7 +133,7 @@ public class JListImageListTestApp {
     public JListImageListTestApp() throws Exception {
         boolean useAsyncMode = (null != System.getProperty("viskit.testapp.asyncMode"));
         if (isUserHonglinh()) {
-            factory = new DicomModelFactory("/home/honglinh/Desktop/cache.txt", new IntuitiveFileNameComparator());
+            factory = new DicomModelFactory(null, new IntuitiveFileNameComparator());
             if (useAsyncMode) {
                 factory.setSupportMultiframes(true);
                 factory.setCheckFileReadability(true);

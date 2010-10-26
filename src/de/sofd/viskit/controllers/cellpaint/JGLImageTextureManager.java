@@ -1,15 +1,11 @@
 package de.sofd.viskit.controllers.cellpaint;
 
-import java.util.LinkedHashMap;
 import java.util.Map;
 
 import javax.media.opengl.GL;
 import javax.media.opengl.GL2;
 
-import org.apache.log4j.Logger;
-
 import com.sun.opengl.util.texture.Texture;
-import com.sun.opengl.util.texture.TextureCoords;
 import com.sun.opengl.util.texture.TextureData;
 import com.sun.opengl.util.texture.awt.AWTTextureIO;
 
@@ -17,123 +13,30 @@ import de.sofd.viskit.model.ImageListViewModelElement;
 import de.sofd.viskit.model.RawImage;
 
 /**
+ * 
+ * @author honglinh
  *
- * @author olaf
  */
-public class ImageTextureManager {
+public class JGLImageTextureManager extends ImageTextureManager {
+    
+    private static final ImageTextureManager texManager = new JGLImageTextureManager();
 
-    protected static final Logger logger = Logger.getLogger(ImageTextureManager.class);
-
-    public static class TextureRef {
-        private final int texId;
-        private final TextureCoords coords;
-        private final int memorySize;
-        private final float preScale;
-        private final float preOffset;
-
-        public TextureRef(int texId, TextureCoords coords, int memorySize, float preScale, float preOffset) {
-            this.texId = texId;
-            this.coords = coords;
-            this.memorySize = memorySize;
-            this.preScale = preScale;
-            this.preOffset = preOffset;
-        }
-
-        public int getTexId() {
-            return texId;
-        }
-
-        public TextureCoords getCoords() {
-            return coords;
-        }
-
-        public int getMemorySize() {
-            return memorySize;
-        }
-
-        /**
-         * preScale/preOffset: linear transformation to be applied to texel
-         * values by the shader to normalize to [0..1] range. preScale * (texel
-         * value) + preOffset must transform all texel values to that range
-         */
-        public float getPreScale() {
-            return preScale;
-        }
+    private JGLImageTextureManager() {
+    }
+    
+    public static ImageTextureManager getInstance() {
+        return texManager;
+    }
+    
+    private boolean flipVertically = false;
+    
+    @Override
+    public TextureRef bindImageTexture(Object glContext, int texUnit, Map<String, Object> sharedContextData, ImageListViewModelElement elt) {
+        GL2 gl = getGL2(glContext);
         
-        public float getPreOffset() {
-            return preOffset;
-        }
-    }
-
-    private static class TextureRefStore {
-        private long totalMemConsumption = 0;
-        private final long maxMemConsumption;
-
-        private final LinkedHashMap<Object, TextureRef> texRefsByImageKey = new LinkedHashMap<Object, TextureRef>(256, 0.75F, true);
-
-        public TextureRefStore(long maxMemConsumption) {
-            this.maxMemConsumption = maxMemConsumption;
-        }
-
-        public boolean containsTextureFor(ImageListViewModelElement elt) {
-            return texRefsByImageKey.containsKey(elt.getImageKey());
-        }
-
-        public TextureRef getTexRef(ImageListViewModelElement elt) {
-            return texRefsByImageKey.get(elt.getImageKey());
-        }
-
-        public TextureRef getTexRef(Object imageKey) {
-            return texRefsByImageKey.get(imageKey);
-        }
-
-        public void putTexRef(ImageListViewModelElement elt, TextureRef texRef, GL gl) {
-            texRefsByImageKey.put(elt.getImageKey(), texRef);
-            totalMemConsumption += texRef.getMemorySize();
-            freeExcessTextureMemory(gl);
-        }
-
-        public void freeExcessTextureMemory(GL gl) {
-            while ((totalMemConsumption > maxMemConsumption) && (texRefsByImageKey.size() > 1)) {
-                // ^^^ ensure size >= 1 to always keep at least the latest texture in, even if it alone exceeds maxMemConsumption
-                //   (if that one wasn't loaded, we couldn't render it)
-                Map.Entry<Object, TextureRef> oldestEntry = texRefsByImageKey.entrySet().iterator().next();
-                logger.debug("deleting texture to free up memory: " + oldestEntry.getKey());
-                TextureRef oldestTexRef = oldestEntry.getValue();
-                gl.glDeleteTextures(1, new int[]{oldestTexRef.getTexId()}, 0);
-                totalMemConsumption -= oldestTexRef.getMemorySize();
-                texRefsByImageKey.remove(oldestEntry.getKey());
-            }
-        }
-
-        public long getTotalMemConsumption() {
-            return totalMemConsumption;
-        }
-
-    }
-
-    private static final String TEX_STORE = "texturesStore";
-
-    public static TextureRef bindImageTexture(GL2 gl, int texUnit, Map<String, Object> sharedContextData, ImageListViewModelElement elt/*, boolean outputGrayscaleRGBs*/) {
         TextureRefStore texRefStore = (TextureRefStore) sharedContextData.get(TEX_STORE);
         if (null == texRefStore) {
-            System.out.println("CREATING NEW TextureRefStore");
-            int texMemInMB;
-            String memPropVal = System.getProperty(ImageTextureManager.class.getName() + ".texmem_mb");
-            if (memPropVal != null) {
-                try {
-                    texMemInMB = Integer.parseInt(memPropVal);
-                    if (texMemInMB < 2) {
-                        texMemInMB = 256;
-                    }
-                } catch (NumberFormatException e) {
-                    texMemInMB = 256;
-                }
-            } else {
-                texMemInMB = 256;
-            }
-            texRefStore = new TextureRefStore(texMemInMB*1024*1024);  // <<== configure max. GL texture memory consumption here (for now)
-            sharedContextData.put(TEX_STORE, texRefStore);
+            texRefStore = createRefStore(sharedContextData);
         }
         TextureRef texRef = texRefStore.getTexRef(elt);
         
@@ -163,7 +66,7 @@ public class ImageTextureManager {
                                           GL.GL_SHORT, // int pixelType,
                                           false, // boolean mipmap,
                                           false, // boolean dataIsCompressed,
-                                          false, // boolean mustFlipVertically,  // TODO: correct?
+                                          flipVertically, // boolean mustFlipVertically,  // TODO: correct?
                                           rawImg.getPixelData(), // Buffer buffer,
                                           null // Flusher flusher);
                                           );
@@ -228,11 +131,11 @@ public class ImageTextureManager {
                 imageTexture = new Texture(imageTextureData);
             }
             texRef = new TextureRef(imageTexture.getTextureObject(),
-                                    imageTexture.getImageTexCoords(),
                                     imageTexture.getEstimatedMemorySize(),
                                     preScale,
-                                    preOffset);
-            texRefStore.putTexRef(elt, texRef, gl);
+                                    preOffset,
+                                    flipVertically); // flip vertically 
+            texRefStore.putTexRef(elt, texRef);
             logger.debug("GL texture memory consumption now (est.): " + (texRefStore.getTotalMemConsumption()/1024/1024) + " MB");
         }
         gl.glEnable(GL.GL_TEXTURE_2D);
@@ -243,7 +146,24 @@ public class ImageTextureManager {
         return texRef;
     }
 
-    public static void unbindCurrentImageTexture(GL2 gl) {
+    @Override
+    protected void glDeleteTextures(Object glContext, int n, int[] textures, int textures_offset) {
+        GL2 gl = getGL2(glContext);
+        gl.glDeleteTextures(1, textures, textures_offset);
+    }
+
+    @Override
+    public void unbindCurrentImageTexture(Object glContext) {
+        GL2 gl = getGL2(glContext);
         gl.glBindTexture(GL.GL_TEXTURE_2D, 0);
+    }
+    
+    private GL2 getGL2(Object glContext) {
+        GL2 gl = null;
+        if(glContext instanceof GL2) {
+            gl = (GL2) glContext;
+        }
+        else throw new IllegalStateException("No GL2 Context passed!");
+        return gl;
     }
 }

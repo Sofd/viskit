@@ -6,13 +6,17 @@ import java.awt.Point;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelEvent;
+import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
 
 import javax.swing.ListModel;
 import javax.swing.ListSelectionModel;
 import javax.swing.event.ListDataEvent;
 
+import org.dcm4che2.data.Tag;
 import org.lwjgl.opengl.GL11;
 
 import de.matthiasmann.twl.Event;
@@ -28,13 +32,16 @@ import de.sofd.util.Misc;
 import de.sofd.viskit.draw2d.gc.ViskitGC;
 import de.sofd.viskit.image3D.lwjgl.util.LWJGLShaderFactory;
 import de.sofd.viskit.image3D.util.ShaderManager;
+import de.sofd.viskit.model.DicomImageListViewModelElement;
+import de.sofd.viskit.model.ImageListViewModelElement;
 import de.sofd.viskit.model.NotInitializedException;
 import de.sofd.viskit.model.ImageListViewModelElement.InitializationState;
+import de.sofd.viskit.test.jogl.coil.SharedContextData;
 import de.sofd.viskit.ui.imagelist.ImageListViewCell;
 import de.sofd.viskit.ui.imagelist.event.cellpaint.ImageListViewCellPaintEvent;
 import de.sofd.viskit.ui.imagelist.event.cellpaint.ImageListViewCellPaintListener;
 
-/*
+/**
  * 
  * @author honglinh
  *
@@ -46,6 +53,10 @@ public class TWLImageListView extends TWLImageListViewBase {
     private Scrollbar scrollBar;
     
 //    private static final SharedContextData sharedContextData = new SharedContextData();
+    
+    // fake context data
+    private final Map<String, Object> sharedContextData = new HashMap<String, Object>();
+    
     private final Collection<ImageListViewCellPaintListener> uninitializedCellPaintListeners
     = new IdentityHashSet<ImageListViewCellPaintListener>();
     
@@ -60,7 +71,6 @@ public class TWLImageListView extends TWLImageListViewBase {
         canvas.setTheme("");
         this.add(canvas);
         
-        // adds the scrollbar -> boundedRangeModel?
         scrollBar =  new Scrollbar(Orientation.VERTICAL);
         scrollBar.addCallback(scrollBarChangeListener);
         this.add(scrollBar);
@@ -109,8 +119,7 @@ public class TWLImageListView extends TWLImageListViewBase {
                 
         @Override
         protected void paintWidget(GUI gui) {
-            
-            GL11.glPushAttrib(GL11.GL_CURRENT_BIT|GL11.GL_LIGHTING_BIT|GL11.GL_HINT_BIT|GL11.GL_POLYGON_BIT|GL11.GL_ENABLE_BIT|GL11.GL_VIEWPORT_BIT|GL11.GL_TRANSFORM_BIT);
+            GL11.glPushAttrib(GL11.GL_ALL_ATTRIB_BITS);            
             initializeUninitializedCellPaintListeners();
             GL11.glMatrixMode(GL11.GL_PROJECTION);
             GL11.glPushMatrix();
@@ -175,10 +184,9 @@ public class TWLImageListView extends TWLImageListViewBase {
                             // clip
                             GL11.glEnable(GL11.GL_SCISSOR_TEST);
                             try {
-                                // in window coordinates
-                                // TODO calculate absolute y coords
-//                                GL11.glScissor(boxMinX + CELL_BORDER_WIDTH, boxMinY + CELL_BORDER_WIDTH, cellWidth, cellHeight);
-                                GL11.glScissor(boxMinX + CELL_BORDER_WIDTH+this.getX(), boxMinY + CELL_BORDER_WIDTH+2, cellWidth, cellHeight);
+                                // in window coordinates                            
+                                int absYPos = gui.getRootWidget().getHeight()-(this.getY()+this.getHeight());
+                                GL11.glScissor(boxMinX + CELL_BORDER_WIDTH+this.getX(), absYPos+boxMinY + CELL_BORDER_WIDTH, cellWidth, cellHeight);
                                 
                                 // call all CellPaintListeners in the z-order
                                 ViskitGC gc = new ViskitGC(gui.getRenderer());
@@ -186,7 +194,7 @@ public class TWLImageListView extends TWLImageListViewBase {
                                 try {
                                     //TODO shared context data adaption for LWJGL context
 //                                    fireCellPaintEvent(new ImageListViewCellPaintEvent(cell, gc, null, sharedContextData.getAttributes()));
-                                    fireCellPaintEvent(new ImageListViewCellPaintEvent(cell, gc, null, null));
+                                    fireCellPaintEvent(new ImageListViewCellPaintEvent(cell, gc, null, sharedContextData));
                                 } catch (NotInitializedException e) {
                                     // a paint listener indicated that the cell's model element is uninitialized.
                                     // set the element's initializationState accordingly, repaint everything to let paint listeners to draw the right thing
@@ -194,7 +202,7 @@ public class TWLImageListView extends TWLImageListViewBase {
                                     logger.debug("NotInitializedException drawing " + cell.getDisplayedModelElement(), e);
                                     cell.getDisplayedModelElement().setInitializationState(InitializationState.UNINITIALIZED);
 //                                    fireCellPaintEvent(new ImageListViewCellPaintEvent(cell, gc, null, sharedContextData.getAttributes()));
-                                    fireCellPaintEvent(new ImageListViewCellPaintEvent(cell, gc, null, null));
+                                    fireCellPaintEvent(new ImageListViewCellPaintEvent(cell, gc, null, sharedContextData));
                                 } catch (Exception e) {
                                     logger.error("Exception drawing " + cell.getDisplayedModelElement() + ". Setting the model elt to permanent ERROR state.", e);
                                     //TODO: support the notion of "temporary" errors, for which we would not change the initializationState?
@@ -218,29 +226,14 @@ public class TWLImageListView extends TWLImageListViewBase {
                 GL11.glMatrixMode(GL11.GL_PROJECTION);
                 GL11.glPopMatrix();
                 GL11.glPopAttrib();
-
-                // back in TWL's transformation -- paint our border
-//                GL11.glPushAttrib(GL11.GL_CURRENT_BIT | GL11.GL_LIGHTING_BIT | GL11.GL_LINE_BIT | GL11.GL_HINT_BIT | GL11.GL_POLYGON_BIT | GL11.GL_ENABLE_BIT | GL11.GL_VIEWPORT_BIT | GL11.GL_TRANSFORM_BIT);
-//                GL11.glMatrixMode(GL11.GL_MODELVIEW);
-//                GL11.glDisable(GL11.GL_TEXTURE_2D);
-//                GL11.glDisable(GL11.GL_LINE_SMOOTH);
-//                GL11.glHint(GL11.GL_LINE_SMOOTH_HINT, GL11.GL_FASTEST);
-//                GL11.glLineWidth(2);
-//                GL11.glPolygonMode(GL11.GL_FRONT_AND_BACK, GL11.GL_LINE);
-//                GL11.glShadeModel(GL11.GL_FLAT);
-//                GL11.glColor3f((float) 0 / 255F, (float) 0 / 255F, (float) 0 / 255F);
-//                GL11.glBegin(GL11.GL_QUADS);
-//                GL11.glVertex2f(getInnerX() + 1, getInnerY() + 1);
-//                GL11.glVertex2f(getInnerX() + getInnerWidth() - 1, getInnerY() + 1);
-//                GL11.glVertex2f(getInnerX() + getInnerWidth() - 1, getInnerY() + getInnerHeight() - 1);
-//                GL11.glVertex2f(getInnerX() + 1, getInnerY() + getInnerHeight() - 1);
-//                GL11.glEnd();
-//                GL11.glPopAttrib();
             }
         }
         
         @Override
         protected boolean handleEvent(Event evt) {
+            if(!evt.isMouseEvent()) {
+                return false;
+            }
             MouseEvent awtMevt = mouseEvtConv.mouseEventTwlToAwt(evt, this);
             if (null != awtMevt) {
                 dispatchEventToCell(awtMevt);
@@ -537,7 +530,7 @@ public class TWLImageListView extends TWLImageListViewBase {
 
     @Override
     protected void doSetScaleMode(ScaleMode oldScaleMode, ScaleMode newScaleMode) {
-//        updateScrollbar();
+        updateScrollbar();
         updateElementPriorities();
     }
 
@@ -653,8 +646,6 @@ public class TWLImageListView extends TWLImageListViewBase {
         return getFirstVisibleIndex() + getScaleMode().getCellColumnCount() * getScaleMode().getCellRowCount() - 1;
     }
     
-  
-    
     private void updateScrollbar() {
         if(null == scrollBar) {
             return;
@@ -681,6 +672,23 @@ public class TWLImageListView extends TWLImageListViewBase {
         scrollBar.setStepSize(columnCount);
         scrollBar.setPageSize(displayedCount);
     }    
+    
+    @Override
+    public Dimension getUnscaledPreferredCellDisplayAreaSize(ImageListViewCell cell) {
+        int w, h;
+        ImageListViewModelElement elt = cell.getDisplayedModelElement();
+        if (elt instanceof DicomImageListViewModelElement) {
+            // performance optimization for this case -- read the values from DICOM metadata instead of getting the image
+            DicomImageListViewModelElement dicomElt = (DicomImageListViewModelElement) elt;
+            w = dicomElt.getDicomImageMetaData().getInt(Tag.Columns);
+            h = dicomElt.getDicomImageMetaData().getInt(Tag.Rows);
+        } else {
+            BufferedImage img = elt.getImage();
+            w = img.getWidth();
+            h = img.getHeight();
+        }
+        return new Dimension(w, h);
+    }
 
     private Runnable scrollBarChangeListener = new Runnable() {
         private boolean inCall = false;

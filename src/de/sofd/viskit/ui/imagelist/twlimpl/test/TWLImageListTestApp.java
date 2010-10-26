@@ -27,6 +27,7 @@ import org.lwjgl.LWJGLException;
 import de.matthiasmann.twl.Alignment;
 import de.matthiasmann.twl.BoxLayout;
 import de.matthiasmann.twl.ComboBox;
+import de.matthiasmann.twl.Event;
 import de.matthiasmann.twl.GUI;
 import de.matthiasmann.twl.Label;
 import de.matthiasmann.twl.Widget;
@@ -384,11 +385,32 @@ public class TWLImageListTestApp {
                 new ImageListViewImagePaintController(listView).setEnabled(true);
                 new ImageListViewMouseZoomPanController(listView);
                 new ImageListViewMouseWindowingController(listView);
+//                final ImageListViewInitialZoomPanController initZoomPanController = new ImageListViewInitialZoomPanController(listView);
+//                initZoomPanController.setEnabled(true);
                 
-//                ListModel<ScaleMode> scaleModeModel = new SimpleChangableListModel<ScaleMode>(listView.getSupportedScaleModes());
-//                ComboBox<ScaleMode> scaleModeBox = new ComboBox<ScaleMode>();
-//                scaleModeBox.setModel(scaleModeModel);
-//                listToolbar.add(scaleModeBox);
+                final ListModel<ScaleMode> scaleModeModel = new SimpleChangableListModel<ScaleMode>(listView.getSupportedScaleModes());
+
+                ComboBox<ScaleMode> scaleModeBox = new ComboBox<ScaleMode>(scaleModeModel) {
+                    @Override
+                    protected boolean handleEvent(Event evt) {
+                        super.handleEvent(evt);
+                        System.out.println("Handle Event");
+                        return true;
+                    }
+                    
+                    @Override
+                    protected void listBoxSelectionChanged(boolean close) {
+                        super.listBoxSelectionChanged(close);
+                        int selectedScaleMode = this.getSelected();
+                        ScaleMode scaleMode = scaleModeModel.getEntry(selectedScaleMode);
+                        listView.setScaleMode(scaleMode);
+                    }
+                    
+                };
+                scaleModeBox.setSelected(1);
+                listToolbar.add(scaleModeBox);
+
+
                 
                 Widget listPanel = new Widget() {
                     @Override
