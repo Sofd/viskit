@@ -26,11 +26,18 @@ import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL12;
 import org.lwjgl.opengl.GL13;
 
-import com.sun.opengl.util.texture.TextureCoords;
-
 import de.sofd.math.LinAlg;
 import de.sofd.util.FloatRange;
-import de.sofd.viskit.controllers.cellpaint.ImageTextureManager.TextureRef;
+import de.sofd.viskit.controllers.cellpaint.texturemanager.GrayscaleRGBLookupTextureManager;
+import de.sofd.viskit.controllers.cellpaint.texturemanager.ImageTextureManager;
+import de.sofd.viskit.controllers.cellpaint.texturemanager.JGLGrayscaleRGBLookupTableTextureManager;
+import de.sofd.viskit.controllers.cellpaint.texturemanager.JGLImageTextureManager;
+import de.sofd.viskit.controllers.cellpaint.texturemanager.JGLLookupTableTextureManager;
+import de.sofd.viskit.controllers.cellpaint.texturemanager.LookupTableTextureManager;
+import de.sofd.viskit.controllers.cellpaint.texturemanager.LWJGLGrayscaleRGBLookupTableTextureManager;
+import de.sofd.viskit.controllers.cellpaint.texturemanager.LWJGLImageTextureManager;
+import de.sofd.viskit.controllers.cellpaint.texturemanager.LWJGLLookupTableTextureManager;
+import de.sofd.viskit.controllers.cellpaint.texturemanager.ImageTextureManager.TextureRef;
 import de.sofd.viskit.image3D.util.Shader;
 import de.sofd.viskit.image3D.util.ShaderManager;
 import de.sofd.viskit.model.DicomImageListViewModelElement;
@@ -53,6 +60,8 @@ public class ImageListViewImagePaintController extends CellPaintControllerBase {
     private static ShaderManager shaderManager = ShaderManager.getInstance();
     private Shader rescaleShader;
     private ImageTextureManager texManager;    
+    private LookupTableTextureManager lutTexManager;
+    private GrayscaleRGBLookupTextureManager grayScaleTexManager;
     
     private boolean isInitialized = false;
     
@@ -104,6 +113,9 @@ public class ImageListViewImagePaintController extends CellPaintControllerBase {
     
     @Override
     protected void glDrawableInitialized(GLAutoDrawable glAutoDrawable) {
+        texManager = JGLImageTextureManager.getInstance();
+        lutTexManager = JGLLookupTableTextureManager.getInstance();
+        grayScaleTexManager = JGLGrayscaleRGBLookupTableTextureManager.getInstance();
         initializeGLShader();
     }
     
@@ -130,43 +142,20 @@ public class ImageListViewImagePaintController extends CellPaintControllerBase {
     @Override
     protected void paintLWJGL(ImageListViewCell cell, Map<String,Object> sharedContextData) {
         // TODO shader initialization by firing events like {@link ImageListViewCellPaintListener#glDrawableInitialized(GLAutoDrawable}
-        if(texManager == null) {
-            texManager = LWJGLImageTextureManager.getInstance();
-        }
-        
         if(!isInitialized) {
             initializeGLShader();
+            texManager = LWJGLImageTextureManager.getInstance();
+            lutTexManager = LWJGLLookupTableTextureManager.getInstance();
+            grayScaleTexManager = LWJGLGrayscaleRGBLookupTableTextureManager.getInstance();
             isInitialized = true;
         }
-        // test painting
-//        Dimension cellSize = cell.getLatestSize();
-//        GL11.glPushMatrix();
-//        try {
-//            GL11.glPointSize(10);
-//            GL11.glTranslated(cellSize.getWidth() / 2, cellSize.getHeight() / 2, 0);
-//            GL11.glTranslated(cell.getCenterOffset().getX(), cell.getCenterOffset().getY(), 0);
-//            GL11.glScaled(cell.getScale(), cell.getScale(), 1);
-//
-//            GL11.glBegin(GL11.GL_QUADS);
-//            GL11.glColor3f(0, 0, 1);
-//            GL11.glVertex2f(-5, -5);
-//            GL11.glVertex2f(5, -5);
-//            GL11.glVertex2f(5, 5);
-//            GL11.glVertex2f(-5, 5);
-//            GL11.glEnd();
-//        }
-//        finally {
-//            GL11.glPopMatrix();
-//        }
         Dimension cellSize = cell.getLatestSize();
         GL11.glPushMatrix();
         GL11.glClear(GL11.GL_COLOR_BUFFER_BIT);    
         try {
             GL11.glTranslated(cellSize.getWidth() / 2, cellSize.getHeight() / 2, 0);
             GL11.glTranslated(cell.getCenterOffset().getX(), cell.getCenterOffset().getY(), 0);
-            GL11.glScaled(cell.getScale(), cell.getScale(), 1);
-//            LWJGLImageTextureManager.TextureRef texRef = LWJGLImageTextureManager.bindImageTexture(GL13.GL_TEXTURE1, sharedContextData, cell.getDisplayedModelElement()/*, cell.isOutputGrayscaleRGBs()*/);
-            
+            GL11.glScaled(cell.getScale(), cell.getScale(), 1);          
             TextureRef texRef = texManager.bindImageTexture(null, GL13.GL_TEXTURE1, sharedContextData, cell.getDisplayedModelElement());
             
             LookupTable lut = cell.getLookupTable();
@@ -179,29 +168,29 @@ public class ImageListViewImagePaintController extends CellPaintControllerBase {
                 initializeGLShader();
             }
             rescaleShader.bindUniform("tex", 1);
-//            if (cell.isOutputGrayscaleRGBs()) {
-//                GrayscaleRGBLookupTextureManager.bindGrayscaleRGBLutTexture(gl, GL2.GL_TEXTURE3, sharedContextData, cell.getDisplayedModelElement());
-//                rescaleShader.bindUniform("grayscaleRgbTex", 3);
-//                rescaleShader.bindUniform("useGrayscaleRGBOutput", true);
-//                rescaleShader.bindUniform("useLut", false);
-//                rescaleShader.bindUniform("useLutAlphaBlending", false);
-//            } else if (lut != null) {
-//                LookupTableTextureManager.bindLutTexture(gl, GL2.GL_TEXTURE2, sharedContextData, cell.getLookupTable());
-//                rescaleShader.bindUniform("lutTex", 2);
-//                rescaleShader.bindUniform("useLut", true);
-//                switch (cell.getCompositingMode()) {
-//                case CM_BLEND:
-//                    rescaleShader.bindUniform("useLutAlphaBlending", true);
-//                    break;
-//                default:
-//                    rescaleShader.bindUniform("useLutAlphaBlending", false);
-//                }
-//                rescaleShader.bindUniform("useGrayscaleRGBOutput", false);
-//            } else {
+            if (cell.isOutputGrayscaleRGBs()) {
+                grayScaleTexManager.bindGrayscaleRGBLutTexture(null, GL13.GL_TEXTURE3, sharedContextData, cell.getDisplayedModelElement());
+                rescaleShader.bindUniform("grayscaleRgbTex", 3);
+                rescaleShader.bindUniform("useGrayscaleRGBOutput", true);
+                rescaleShader.bindUniform("useLut", false);
+                rescaleShader.bindUniform("useLutAlphaBlending", false);
+            } else if (lut != null) {
+                lutTexManager.bindLutTexture(null, GL13.GL_TEXTURE2, sharedContextData, cell.getLookupTable());
+                rescaleShader.bindUniform("lutTex", 2);
+                rescaleShader.bindUniform("useLut", true);
+                switch (cell.getCompositingMode()) {
+                case CM_BLEND:
+                    rescaleShader.bindUniform("useLutAlphaBlending", true);
+                    break;
+                default:
+                    rescaleShader.bindUniform("useLutAlphaBlending", false);
+                }
+                rescaleShader.bindUniform("useGrayscaleRGBOutput", false);
+            } else {
                 rescaleShader.bindUniform("useLut", false);
                 rescaleShader.bindUniform("useLutAlphaBlending", false);
                 rescaleShader.bindUniform("useGrayscaleRGBOutput", false);
-//            }
+            }
             rescaleShader.bindUniform("preScale", texRef.getPreScale());
             rescaleShader.bindUniform("preOffset", texRef.getPreOffset());
             {
@@ -234,7 +223,6 @@ public class ImageListViewImagePaintController extends CellPaintControllerBase {
             }
             // TODO: (GL_TEXTURE_ENV is ignored because a frag shader is active) make the compositing mode configurable (replace/combine)
             GL11.glTexEnvi(GL11.GL_TEXTURE_ENV, GL11.GL_TEXTURE_ENV_MODE, GL11.GL_REPLACE);
-//            TextureCoords coords = texRef.getCoords();
             GL11.glColor3f(0, 1, 0);
             float w2 = (float) getOriginalImageWidth(cell) / 2, h2 = (float) getOriginalImageHeight(cell) / 2;
             GL11.glBegin(GL11.GL_QUADS);
@@ -249,7 +237,6 @@ public class ImageListViewImagePaintController extends CellPaintControllerBase {
             GL11.glVertex2f(-w2, -h2);
             
             GL11.glEnd();
-//            LWJGLImageTextureManager.unbindCurrentImageTexture();
             texManager.unbindCurrentImageTexture(null);
             rescaleShader.unbind();
         } finally {
@@ -259,9 +246,6 @@ public class ImageListViewImagePaintController extends CellPaintControllerBase {
 
     @Override
     protected void paintGL(ImageListViewCell cell, GL2 gl, Map<String, Object> sharedContextData) {
-        if(texManager == null) {
-            texManager = JGLImageTextureManager.getInstance();
-        }
         
         Dimension cellSize = cell.getLatestSize();
         gl.glPushMatrix();
@@ -284,13 +268,13 @@ public class ImageListViewImagePaintController extends CellPaintControllerBase {
             }
             rescaleShader.bindUniform("tex", 1);
             if (cell.isOutputGrayscaleRGBs()) {
-                GrayscaleRGBLookupTextureManager.bindGrayscaleRGBLutTexture(gl, GL2.GL_TEXTURE3, sharedContextData, cell.getDisplayedModelElement());
+                grayScaleTexManager.bindGrayscaleRGBLutTexture(gl, GL2.GL_TEXTURE3, sharedContextData, cell.getDisplayedModelElement());
                 rescaleShader.bindUniform("grayscaleRgbTex", 3);
                 rescaleShader.bindUniform("useGrayscaleRGBOutput", true);
                 rescaleShader.bindUniform("useLut", false);
                 rescaleShader.bindUniform("useLutAlphaBlending", false);
             } else if (lut != null) {
-                LookupTableTextureManager.bindLutTexture(gl, GL2.GL_TEXTURE2, sharedContextData, cell.getLookupTable());
+                lutTexManager.bindLutTexture(gl, GL2.GL_TEXTURE2, sharedContextData, cell.getLookupTable());
                 rescaleShader.bindUniform("lutTex", 2);
                 rescaleShader.bindUniform("useLut", true);
                 switch (cell.getCompositingMode()) {

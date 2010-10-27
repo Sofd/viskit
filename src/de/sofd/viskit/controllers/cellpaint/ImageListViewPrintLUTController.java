@@ -16,6 +16,8 @@ import javax.media.opengl.GL2;
 
 import com.sun.opengl.util.gl2.GLUT;
 
+import de.sofd.viskit.controllers.cellpaint.texturemanager.JGLLookupTableTextureManager;
+import de.sofd.viskit.controllers.cellpaint.texturemanager.LookupTableTextureManager;
 import de.sofd.viskit.image3D.jogl.control.LutController;
 import de.sofd.viskit.model.LookupTable;
 import de.sofd.viskit.ui.imagelist.ImageListView;
@@ -36,6 +38,9 @@ public class ImageListViewPrintLUTController extends CellPaintControllerBase {
     public static enum ScaleType {
         ABSOLUTE, PERCENTAGE
     };
+    
+    
+    private LookupTableTextureManager lutManager;
     private ScaleType type = ScaleType.ABSOLUTE;
     private int intervals = 3;
     private Color textColor = Color.green;
@@ -82,6 +87,11 @@ public class ImageListViewPrintLUTController extends CellPaintControllerBase {
 
     @Override
     protected void paintGL(ImageListViewCell cell, GL2 gl, Map<String, Object> sharedContextData) {
+        
+        if(lutManager == null) {
+            lutManager = JGLLookupTableTextureManager.getInstance();
+        }
+        
         Dimension cellSize = cell.getLatestSize();
         double cellHeight = cellSize.getHeight();
         double cellWidth = cellSize.getWidth();
@@ -137,7 +147,7 @@ public class ImageListViewPrintLUTController extends CellPaintControllerBase {
         gl.glPopAttrib();
 
         // draw lut legend
-        LookupTableTextureManager.bindLutTexture(gl, GL2.GL_TEXTURE2, sharedContextData, lut);
+        lutManager.bindLutTexture(gl, GL2.GL_TEXTURE2, sharedContextData, lut);
         gl.glTexEnvi(GL2.GL_TEXTURE_ENV, GL2.GL_TEXTURE_ENV_MODE, GL2.GL_REPLACE);
         gl.glBegin(GL2.GL_QUADS);
         gl.glMultiTexCoord1f(GL2.GL_TEXTURE2, 1);
@@ -150,7 +160,7 @@ public class ImageListViewPrintLUTController extends CellPaintControllerBase {
         gl.glVertex2i(lutWidth, 0);
         gl.glEnd();
 
-        LookupTableTextureManager.unbindCurrentLutTexture(gl);
+        lutManager.unbindCurrentLutTexture(gl);
         gl.glDisable(GL2.GL_TEXTURE_1D);
     }
 

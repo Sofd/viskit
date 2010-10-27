@@ -1,4 +1,4 @@
-package de.sofd.viskit.controllers.cellpaint;
+package de.sofd.viskit.controllers.cellpaint.texturemanager;
 
 import java.util.Map;
 

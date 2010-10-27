@@ -93,7 +93,10 @@ public class ImageListViewInitialZoomPanController {
             oldControlledImageListView.removePropertyChangeListener(reseterOnModelOrScaleModeChange);
             //TODO: avoid Swing (JComponent) dependency by introducing introduce UI-independent equivalent to add/RemoveComponentListener()
             // into ImageListView
-            ((JComponent)oldControlledImageListView).removeComponentListener(reseterOnResize);
+            if(oldControlledImageListView instanceof JComponent) {
+                ((JComponent)oldControlledImageListView).removeComponentListener(reseterOnResize);                
+            }
+            
         }
         if (null != controlledImageListView) {
             // add the paint listener below the image in the z-order, so it will be invoked
@@ -101,7 +104,9 @@ public class ImageListViewInitialZoomPanController {
             controlledImageListView.addCellPaintListener(ImageListView.PAINT_ZORDER_IMAGE - 1, cellHandler);
             controlledImageListView.addCellPropertyChangeListener(cellHandler);
             controlledImageListView.addPropertyChangeListener(reseterOnModelOrScaleModeChange);
-            ((JComponent)controlledImageListView).addComponentListener(reseterOnResize);
+            if(controlledImageListView instanceof JComponent) {
+                ((JComponent)controlledImageListView).addComponentListener(reseterOnResize);                
+            }
             alreadyInitializedImagesKeys.clear();
         }
         propertyChangeSupport.firePropertyChange(PROP_CONTROLLEDIMAGELISTVIEW, oldControlledImageListView, controlledImageListView);

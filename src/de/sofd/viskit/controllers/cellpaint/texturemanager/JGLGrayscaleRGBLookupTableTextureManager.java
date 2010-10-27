@@ -1,61 +1,37 @@
-package de.sofd.viskit.controllers.cellpaint;
+package de.sofd.viskit.controllers.cellpaint.texturemanager;
 
 import static javax.media.opengl.GL2GL3.GL_TEXTURE_1D;
 
 import java.nio.ByteBuffer;
-import java.util.LinkedHashMap;
 import java.util.Map;
 
 import javax.media.opengl.GL;
 import javax.media.opengl.GL2;
 
-import org.apache.log4j.Logger;
-
 import de.sofd.viskit.model.ImageListViewModelElement;
 import de.sofd.viskit.model.RawImage;
 import de.sofd.viskit.ui.grayscale.GrayscaleUtil;
 
-/**
- *
- * @author olaf
- */
-public class GrayscaleRGBLookupTextureManager {
+public class JGLGrayscaleRGBLookupTableTextureManager extends GrayscaleRGBLookupTextureManager {
 
-    protected static final Logger logger = Logger.getLogger(GrayscaleRGBLookupTextureManager.class);
-
-    public static class TextureRef {
-        private final int texId;
-
-        public TextureRef(int texId) {
-            this.texId = texId;
-        }
-
-        public int getTexId() {
-            return texId;
-        }
+    
+    private static final GrayscaleRGBLookupTextureManager manager = new JGLGrayscaleRGBLookupTableTextureManager();
+    
+    private JGLGrayscaleRGBLookupTableTextureManager() {
+        
+    }
+    
+    public static GrayscaleRGBLookupTextureManager getInstance() {
+        return manager;
     }
 
-    private static class TextureRefStore {
-        private final LinkedHashMap<Object, TextureRef> texRefsByImageKey = new LinkedHashMap<Object, TextureRef>(256, 0.75F, true);
-
-        public boolean containsTextureFor(Object key) {
-            return texRefsByImageKey.containsKey(key);
-        }
-
-        public TextureRef getTexRef(Object key) {
-            return texRefsByImageKey.get(key);
-        }
-
-        public void putTexRef(Object key, TextureRef texRef, GL gl) {
-            texRefsByImageKey.put(key, texRef);
-        }
-
-    }
-
-    private static final String TEX_STORE = "grayscaleRgbLutTexturesStore";
-
-    public static TextureRef bindGrayscaleRGBLutTexture(GL2 gl, int texUnit, Map<String, Object> sharedContextData, ImageListViewModelElement elt) {
+    
+    @Override
+    public TextureRef bindGrayscaleRGBLutTexture(
+            Object glContext, int texUnit, Map<String, Object> sharedContextData, ImageListViewModelElement elt) {
         TextureRefStore texRefStore = (TextureRefStore) sharedContextData.get(TEX_STORE);
+        GL2 gl = getGL2(glContext);
+        
         if (null == texRefStore) {
             logger.info("CREATING NEW TextureRef store for grayscale=>RGB LUT textures");
             texRefStore = new TextureRefStore();
@@ -102,7 +78,7 @@ public class GrayscaleRGBLookupTextureManager {
             gl.glTexParameteri(GL_TEXTURE_1D, GL.GL_TEXTURE_MIN_FILTER, GL.GL_NEAREST);  // nearest neighbor filtering is important -- we don't 
             gl.glTexParameteri(GL_TEXTURE_1D, GL.GL_TEXTURE_MAG_FILTER, GL.GL_NEAREST);  // want the GL to interpolate between two grayscale RGBs at any time
             texRef = new TextureRef(texId[0]);
-            texRefStore.putTexRef(usedBitCount, texRef, gl);
+            texRefStore.putTexRef(usedBitCount, texRef);
         }
         gl.glEnable(GL2.GL_TEXTURE_1D);
         gl.glActiveTexture(texUnit);
@@ -110,7 +86,21 @@ public class GrayscaleRGBLookupTextureManager {
         return texRef;
     }
 
-    public static void unbindCurrentLutTexture(GL2 gl) {
+    @Override
+    public void unbindCurrentLutTexture(Object glContext) {
+        GL2 gl = getGL2(glContext);
         gl.glBindTexture(GL2.GL_TEXTURE_1D, 0);
+
     }
+    
+    private GL2 getGL2(Object glContext) {
+        GL2 gl = null;
+        if(glContext instanceof GL2) {
+            gl = (GL2) glContext;
+        }
+        else throw new IllegalStateException("No GL2 Context passed!");
+        return gl;
+    }
+
+
 }

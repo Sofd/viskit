@@ -46,6 +46,8 @@ import de.sofd.viskit.controllers.cellpaint.ImageListViewImagePaintController;
 import de.sofd.viskit.model.DicomModelFactory;
 import de.sofd.viskit.model.ImageListViewModelElement;
 import de.sofd.viskit.model.IntuitiveFileNameComparator;
+import de.sofd.viskit.model.LookupTable;
+import de.sofd.viskit.model.LookupTables;
 import de.sofd.viskit.model.ModelFactory;
 import de.sofd.viskit.ui.imagelist.ImageListViewCell;
 import de.sofd.viskit.ui.imagelist.ImageListView.ScaleMode;
@@ -385,18 +387,12 @@ public class TWLImageListTestApp {
                 new ImageListViewImagePaintController(listView).setEnabled(true);
                 new ImageListViewMouseZoomPanController(listView);
                 new ImageListViewMouseWindowingController(listView);
-//                final ImageListViewInitialZoomPanController initZoomPanController = new ImageListViewInitialZoomPanController(listView);
-//                initZoomPanController.setEnabled(true);
-                
+                final ImageListViewInitialZoomPanController initZoomPanController = new ImageListViewInitialZoomPanController(listView);
+                initZoomPanController.setEnabled(true);
+                                
+                // add scale mode combo box
                 final ListModel<ScaleMode> scaleModeModel = new SimpleChangableListModel<ScaleMode>(listView.getSupportedScaleModes());
-
                 ComboBox<ScaleMode> scaleModeBox = new ComboBox<ScaleMode>(scaleModeModel) {
-                    @Override
-                    protected boolean handleEvent(Event evt) {
-                        super.handleEvent(evt);
-                        System.out.println("Handle Event");
-                        return true;
-                    }
                     
                     @Override
                     protected void listBoxSelectionChanged(boolean close) {
@@ -410,8 +406,25 @@ public class TWLImageListTestApp {
                 scaleModeBox.setSelected(1);
                 listToolbar.add(scaleModeBox);
 
-
+                // add lookup table combo box
+                final ListModel<LookupTable> lutModel = new SimpleChangableListModel<LookupTable>(LookupTables.getAllKnownLuts());
                 
+                ComboBox<LookupTable> lutBox = new ComboBox<LookupTable>(lutModel) {
+                    
+                    @Override
+                    protected void listBoxSelectionChanged(boolean close) {
+                        super.listBoxSelectionChanged(close);
+                        int lutIdx = this.getSelected();
+                        LookupTable lut = lutModel.getEntry(lutIdx);
+                        // TODO set lut for sliders
+                        System.out.println("activating lut: " + lut);
+                        for (int i = 0; i < listView.getLength(); i++) {
+                            listView.getCell(i).setLookupTable(lut);
+                        }                        
+                    }
+                };
+                listToolbar.add(lutBox);
+
                 Widget listPanel = new Widget() {
                     @Override
                     protected void layout() {
