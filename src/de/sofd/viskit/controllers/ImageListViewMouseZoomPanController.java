@@ -111,6 +111,7 @@ public class ImageListViewMouseZoomPanController {
                     if (translateLastX == -1 || translateLastY == -1) {
                         translateLastX = e.getX();
                         translateLastY = e.getY();
+                        e.consume();
                         return;
                     }
                     ImageListViewCell cell = (ImageListViewCell) e.getSource();

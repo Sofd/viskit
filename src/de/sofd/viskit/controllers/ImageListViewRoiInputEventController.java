@@ -121,6 +121,9 @@ public class ImageListViewRoiInputEventController {
                 MouseEvent translatedEvt = Misc.deepCopy(evt);
                 translatedEvt.translatePoint((int) -imageOffset.getX(), (int) -imageOffset.getY());
                 cell.getRoiDrawingViewer().processInputEvent(translatedEvt);
+                if (translatedEvt.isConsumed()) {
+                    evt.consume();
+                }
                 if (refreshCell) {
                     controlledImageListView.refreshCell(cell);
                 }

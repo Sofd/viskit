@@ -90,6 +90,7 @@ public class JGridImageListView extends JImageListView {
             }
         };
         setupInternalUiInteractions();
+        //wrappedGridList.setDragEnabled(true);
         wrappedGridList.setBackground(Color.BLACK);
         wrappedGridList.setVisible(true);
         this.add(wrappedGridList);
@@ -539,6 +540,9 @@ public class JGridImageListView extends JImageListView {
                     fireCellMouseWheelEvent((MouseWheelEvent) ce);
                 } else {
                     fireCellMouseEvent(ce);
+                }
+                if (ce.isConsumed()) {
+                    evt.consume();
                 }
             }
         } catch (NotInitializedException e) {
