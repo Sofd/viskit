@@ -15,6 +15,7 @@ import java.io.File;
 import java.io.IOException;
 
 import javax.swing.DefaultListModel;
+import javax.swing.JCheckBox;
 import javax.swing.JFrame;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
@@ -22,25 +23,36 @@ import javax.swing.event.ListSelectionListener;
 import org.apache.log4j.BasicConfigurator;
 import org.dcm4che2.data.DicomObject;
 import org.dcm4che2.data.Tag;
+import org.jdesktop.beansbinding.BeanProperty;
+import org.jdesktop.beansbinding.Bindings;
+import org.jdesktop.beansbinding.AutoBinding.UpdateStrategy;
 import org.lwjgl.LWJGLException;
 
 import de.matthiasmann.twl.Alignment;
 import de.matthiasmann.twl.BoxLayout;
+import de.matthiasmann.twl.Button;
 import de.matthiasmann.twl.ComboBox;
 import de.matthiasmann.twl.GUI;
 import de.matthiasmann.twl.Label;
+import de.matthiasmann.twl.ToggleButton;
 import de.matthiasmann.twl.Widget;
 import de.matthiasmann.twl.BoxLayout.Direction;
+import de.matthiasmann.twl.model.BooleanModel;
 import de.matthiasmann.twl.model.ListModel;
+import de.matthiasmann.twl.model.SimpleBooleanModel;
 import de.matthiasmann.twl.model.SimpleChangableListModel;
 import de.matthiasmann.twl.renderer.Font;
 import de.matthiasmann.twl.renderer.lwjgl.LWJGLRenderer;
 import de.matthiasmann.twl.theme.ThemeManager;
 import de.sofd.swing.DefaultBoundedListSelectionModel;
 import de.sofd.twlawt.TWLAWTGLCanvas;
+import de.sofd.util.FloatRange;
 import de.sofd.viskit.controllers.ImageListViewInitialZoomPanController;
 import de.sofd.viskit.controllers.ImageListViewMouseWindowingController;
 import de.sofd.viskit.controllers.ImageListViewMouseZoomPanController;
+import de.sofd.viskit.controllers.ImageListViewSelectionScrollSyncController;
+import de.sofd.viskit.controllers.ImageListViewWindowingApplyToAllController;
+import de.sofd.viskit.controllers.ImageListViewZoomPanApplyToAllController;
 import de.sofd.viskit.controllers.cellpaint.ImageListViewImagePaintController;
 import de.sofd.viskit.controllers.cellpaint.ImageListViewPrintLUTController;
 import de.sofd.viskit.controllers.cellpaint.ImageListViewPrintTextToCellsController;
@@ -414,6 +426,13 @@ public class TWLImageListTestApp {
                 ptc.setEnabled(true);
                 final ImageListViewPrintLUTController plutc = new ImageListViewPrintLUTController(listView,4,ScaleType.PERCENTAGE);
                 plutc.setEnabled(true);
+                
+                
+                ImageListViewSelectionScrollSyncController sssc = new ImageListViewSelectionScrollSyncController(listView);
+                sssc.setScrollPositionTracksSelection(true);
+                sssc.setSelectionTracksScrollPosition(true);
+                sssc.setAllowEmptySelection(false);
+                sssc.setEnabled(true);
                                 
                 // add scale mode combo box
                 final ListModel<ScaleMode> scaleModeModel = new SimpleChangableListModel<ScaleMode>(listView.getSupportedScaleModes());
@@ -434,10 +453,7 @@ public class TWLImageListTestApp {
 
                 // add lookup table combo box
                 final ListModel<LookupTable> lutModel = new SimpleChangableListModel<LookupTable>(LookupTables.getAllKnownLuts()) {
-
-                    
                 };
-                
                 ComboBox<LookupTable> lutBox = new ComboBox<LookupTable>(lutModel) {
                     
                     @Override
@@ -451,11 +467,43 @@ public class TWLImageListTestApp {
                             listView.getCell(i).setLookupTable(lut);
                         }                        
                     }
-                    
-
                 };
                 lutBox.setTooltipContent("Lookup Table Combo Box");
                 listToolbar.add(lutBox);
+
+                // add windowing all checkbox                
+                final ImageListViewWindowingApplyToAllController wndAllController = new ImageListViewWindowingApplyToAllController(listView);
+                BooleanModel wAllModel = new SimpleBooleanModel();
+                wAllModel.setValue(false);
+                final ToggleButton wAllButton = new ToggleButton(wAllModel);
+                wAllButton.setTooltipContent("Apply windowing to all cells");
+                wAllButton.addCallback(new Runnable() {
+
+                    @Override
+                    public void run() {
+                        wndAllController.setEnabled(wAllButton.isActive());
+                    }
+                    
+                });
+                listToolbar.add(wAllButton);
+                listToolbar.add(new Label("wAll  "));
+                
+                // add zooming all checkbox
+                final ImageListViewZoomPanApplyToAllController zpAllController = new ImageListViewZoomPanApplyToAllController(listView);
+                BooleanModel zAllModel = new SimpleBooleanModel();
+                zAllModel.setValue(false);
+                final ToggleButton zAllButton = new ToggleButton(zAllModel);
+                zAllButton.setTooltipContent("Apply zooming to all cells");
+                zAllButton.addCallback(new Runnable() {
+
+                    @Override
+                    public void run() {
+                        zpAllController.setEnabled(zAllButton.isActive());
+                    }
+                    
+                });
+                listToolbar.add(zAllButton);
+                listToolbar.add(new Label("zAll  "));
 
                 Widget listPanel = new Widget() {
                     @Override
@@ -467,6 +515,70 @@ public class TWLImageListTestApp {
                         listView.setSize(getInnerWidth(), getInnerHeight() - h);
                     }
                 };
+                
+
+                Button wsButton = new Button("wS");
+                wsButton.addCallback(new Runnable() {
+
+                    @Override
+                    public void run() {
+                        ImageListViewModelElement elt = listView.getSelectedValue();
+                        if (null != elt) {
+                            ImageListViewCell cell = listView.getCellForElement(elt);
+//                            cell.setWindowLocation((int)slider.getWindowLocation());
+//                            cell.setWindowWidth((int)slider.getWindowWidth());
+                        }
+                    }
+                });
+                listToolbar.add(wsButton);
+                
+                Button wOButton = new Button("wO");
+                wOButton.addCallback(new Runnable() {
+
+                    @Override
+                    public void run() {
+                        ImageListViewModelElement elt = listView.getSelectedValue();
+                        if (null != elt) {
+                            final ImageListViewCell cell = listView.getCellForElement(elt);
+                            final FloatRange usedRange = cell.getDisplayedModelElement().getUsedPixelValuesRange();
+
+                            cell.setWindowWidth((int) usedRange.getDelta());
+                            cell.setWindowLocation((int) (usedRange.getMin() + usedRange.getMax()) / 2);
+                            //TODO if zpAllController enabled, apply windowing to all cells
+                        }
+                    }
+                    
+                });
+                listToolbar.add(wOButton);
+                
+                Button zRstButton = new Button("zRst");
+                zRstButton.addCallback(new Runnable() {
+
+                    @Override
+                    public void run() {
+                        initZoomPanController.reset();
+                    }
+                    
+                });
+                listToolbar.add(zRstButton);
+                
+                Button wAButton = new Button("wA");
+                wAButton.addCallback(new Runnable() {
+
+                    @Override
+                    public void run() {
+                        ImageListViewModelElement elt = listView.getSelectedValue();
+                        if (null != elt) {
+                            ImageListViewCell cell = listView.getCellForElement(elt);
+                            cell.setWindowWidth(4095);
+                            cell.setWindowLocation(2047);
+                            //TODO if zpAllController enabled, apply windowing to all cells
+                        }
+                    }
+                    
+                });
+                listToolbar.add(wAButton);
+                
                 listPanel.setTheme("");
                 listPanel.add(listToolbar);
                 listPanel.add(listView);
