@@ -344,6 +344,8 @@
     <fontDef name="combobox" filename="font.fnt" color="black">
         <fontParam if="comboboxKeyboardFocus" color="white"/>
     </fontDef>
+    <fontDef name="canvasfont" filename="font.fnt" color="lime">
+    </fontDef>
 
     <inputMapDef name="-defaultInputMap">
         <action name="selectAll">ctrl A</action>
@@ -539,6 +541,10 @@
         <param name="largeGap"><dimension>15,15</dimension></param>
         <param name="namedGaps"><map/></param>
     </theme>
+    
+    <theme name="canvas" ref="-defaults" allowWildcard="true">
+    	<param name="font"><font>canvasfont</font></param>
+    </theme>
 
     <theme name="panel" ref="-defaults">
         <param name="background"><image>-borderA</image></param>
@@ -552,7 +558,10 @@
         <theme name="combobox" ref="combobox" allowWildcard="true"/>
         <theme name="hslider" ref="hslider" allowWildcard="true"/>
         <theme name="vscrollbar" ref ="vscrollbar" allowWildcard="true"/>
+        <theme name="canvas" ref="canvas" allowWildcard="true"/>
     </theme>
+    
+
 
     <theme name="textarea" ref="-defaults" allowWildcard="true">
         <param name="background"><image>-borderC</image></param>

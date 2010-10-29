@@ -150,6 +150,7 @@ public class ImageListViewImagePaintController extends CellPaintControllerBase {
             isInitialized = true;
         }
         Dimension cellSize = cell.getLatestSize();
+
         GL11.glPushMatrix();
         GL11.glClear(GL11.GL_COLOR_BUFFER_BIT);    
         try {

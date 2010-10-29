@@ -1,13 +1,7 @@
 package de.sofd.viskit.controllers.cellpaint.texturemanager;
 
-import static javax.media.opengl.GL2GL3.GL_TEXTURE_1D;
-
 import java.nio.FloatBuffer;
-import java.nio.ShortBuffer;
 import java.util.Map;
-
-import javax.media.opengl.GL;
-import javax.media.opengl.GL2;
 
 import org.lwjgl.NondirectBufferWrapper;
 import org.lwjgl.opengl.ARBTextureFloat;
@@ -62,15 +56,15 @@ public class LWJGLLookupTableTextureManager extends LookupTableTextureManager {
                     GL11.GL_FLOAT,        // type
                     NondirectBufferWrapper.wrapDirect(lutToUse)// data
                     );
-            GL11.glTexParameteri(GL_TEXTURE_1D, GL.GL_TEXTURE_WRAP_S, GL2.GL_CLAMP);
-            GL11.glTexParameteri(GL_TEXTURE_1D, GL.GL_TEXTURE_MIN_FILTER, GL.GL_NEAREST);
-            GL11.glTexParameteri(GL_TEXTURE_1D, GL.GL_TEXTURE_MAG_FILTER, GL.GL_NEAREST);
+            GL11.glTexParameteri(GL11.GL_TEXTURE_1D, GL11.GL_TEXTURE_WRAP_S, GL11.GL_CLAMP);
+            GL11.glTexParameteri(GL11.GL_TEXTURE_1D, GL11.GL_TEXTURE_MIN_FILTER, GL11.GL_NEAREST);
+            GL11.glTexParameteri(GL11.GL_TEXTURE_1D, GL11.GL_TEXTURE_MAG_FILTER, GL11.GL_NEAREST);
             texRef = new TextureRef(texId);
             texRefStore.putTexRef(lut, texRef);
         }
-        GL11.glEnable(GL2.GL_TEXTURE_1D);
+        GL11.glEnable(GL11.GL_TEXTURE_1D);
         GL13.glActiveTexture(texUnit);
-        GL11.glBindTexture(GL2.GL_TEXTURE_1D, texRef.getTexId());
+        GL11.glBindTexture(GL11.GL_TEXTURE_1D, texRef.getTexId());
         return texRef;
     }
 

@@ -9,10 +9,16 @@ import java.util.Map;
 
 import javax.media.opengl.GL2;
 
+import org.lwjgl.opengl.GL11;
+import org.lwjgl.opengl.GL13;
+
 import com.sun.opengl.util.gl2.GLUT;
 
+import de.matthiasmann.twl.AnimationState;
+import de.matthiasmann.twl.renderer.Font;
 import de.sofd.viskit.ui.imagelist.ImageListView;
 import de.sofd.viskit.ui.imagelist.ImageListViewCell;
+import de.sofd.viskit.ui.imagelist.twlimpl.TWLImageListView;
 
 /**
  * Controller that references a ImageListView and an "enabled" flag. When
@@ -83,16 +89,14 @@ public class ImageListViewPrintTextToCellsController extends CellPaintController
     }
     
     @Override
-    protected void paintGL(ImageListViewCell cell, GL2 gl,
-            Map<String, Object> sharedContextData) {
+    protected void paintGL(ImageListViewCell cell, GL2 gl, Map<String, Object> sharedContextData) {
         GLUT glut = new GLUT();
-        gl.glPushAttrib(GL2.GL_CURRENT_BIT|GL2.GL_ENABLE_BIT);
+        gl.glPushAttrib(GL2.GL_CURRENT_BIT | GL2.GL_ENABLE_BIT);
         try {
             gl.glDisable(GL2.GL_TEXTURE_2D);
             gl.glShadeModel(GL2.GL_FLAT);
-            gl.glColor3f((float) textColor.getRed() / 255F,
-                         (float) textColor.getGreen() / 255F,
-                         (float) textColor.getBlue() / 255F);
+            gl.glColor3f((float) textColor.getRed() / 255F, (float) textColor.getGreen() / 255F, (float) textColor
+                    .getBlue() / 255F);
             int posx = (int) textPosition.getX();
             int posy = (int) textPosition.getY();
             int lineHeight = 13;
@@ -105,7 +109,32 @@ public class ImageListViewPrintTextToCellsController extends CellPaintController
             gl.glPopAttrib();
         }
     }
-    
+
+    @Override
+    protected void paintLWJGL(ImageListViewCell cell, Map<String, Object> sharedContextData) {
+        Font font = (Font) sharedContextData.get(TWLImageListView.CANVAS_FONT);
+        if(font == null) {
+            throw new IllegalStateException("No font available for cell text drawing!");
+        }
+        GL11.glPushAttrib(GL11.GL_CURRENT_BIT | GL11.GL_ENABLE_BIT | GL11.GL_TEXTURE_BIT);
+        try {
+            GL13.glActiveTexture(GL13.GL_TEXTURE0);
+            GL11.glEnable(GL11.GL_TEXTURE_2D);
+            GL11.glShadeModel(GL2.GL_FLAT);
+            GL11.glColor3f((float) textColor.getRed() / 255F, (float) textColor.getGreen() / 255F, (float) textColor
+                    .getBlue() / 255F);
+            int posx = (int) textPosition.getX();
+            int posy = (int) textPosition.getY()-10;
+            int lineHeight = 13;
+            for (String line : getTextToPrint(cell)) {
+                font.drawText(null, posx, posy, line);
+                posy += lineHeight;
+            }
+        } finally {
+            GL11.glPopAttrib();
+        }
+    }
+
     /**
      * Called to obtain the text to print.
      * 

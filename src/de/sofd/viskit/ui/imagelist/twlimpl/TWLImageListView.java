@@ -19,11 +19,15 @@ import javax.swing.event.ListDataEvent;
 import org.dcm4che2.data.Tag;
 import org.lwjgl.opengl.GL11;
 
+import de.matthiasmann.twl.AnimationState;
 import de.matthiasmann.twl.Event;
 import de.matthiasmann.twl.GUI;
+import de.matthiasmann.twl.Label;
 import de.matthiasmann.twl.Scrollbar;
+import de.matthiasmann.twl.ThemeInfo;
 import de.matthiasmann.twl.Widget;
 import de.matthiasmann.twl.Scrollbar.Orientation;
+import de.matthiasmann.twl.renderer.Font;
 import de.sofd.lang.Runnable1;
 import de.sofd.twlawt.TwlToAwtMouseEventConverter;
 import de.sofd.util.IdentityHashSet;
@@ -48,10 +52,11 @@ import de.sofd.viskit.ui.imagelist.event.cellpaint.ImageListViewCellPaintListene
  */
 public class TWLImageListView extends TWLImageListViewBase {
 
+    public static final String CANVAS_FONT = "CANVAS_FONT";
     public static final int CELL_BORDER_WIDTH = 2;
     private Widget canvas;
     private Scrollbar scrollBar;
-    
+
 //    private static final SharedContextData sharedContextData = new SharedContextData();
     
     // fake context data
@@ -68,7 +73,7 @@ public class TWLImageListView extends TWLImageListViewBase {
         setTheme("");
         
         canvas = new Canvas();
-        canvas.setTheme("");
+        canvas.setTheme("canvas");
         this.add(canvas);
         
         scrollBar =  new Scrollbar(Orientation.VERTICAL);
@@ -78,6 +83,9 @@ public class TWLImageListView extends TWLImageListViewBase {
         updateScrollbar();
         setupInternalUiInteractions();
     }
+    
+
+
     
     @Override
     protected void layout() {
@@ -100,6 +108,12 @@ public class TWLImageListView extends TWLImageListViewBase {
          */
         int viewWidth, viewHeight;
         
+        @Override
+        protected void applyTheme(ThemeInfo themeInfo) {
+            super.applyTheme(themeInfo);
+            sharedContextData.put(CANVAS_FONT, (themeInfo.getFont("font")));            
+        }
+        
         private void setupEye2ViewportTransformation(GUI gui) {
             viewHeight = getInnerHeight();
             viewWidth = getInnerWidth();    
@@ -118,7 +132,7 @@ public class TWLImageListView extends TWLImageListViewBase {
         }
                 
         @Override
-        protected void paintWidget(GUI gui) {
+        protected void paintWidget(GUI gui) {            
             GL11.glPushAttrib(GL11.GL_ALL_ATTRIB_BITS);            
             initializeUninitializedCellPaintListeners();
             GL11.glMatrixMode(GL11.GL_PROJECTION);
@@ -131,6 +145,7 @@ public class TWLImageListView extends TWLImageListViewBase {
                 GL11.glHint(GL11.GL_LINE_SMOOTH_HINT, GL11.GL_FASTEST);
                 
                 GL11.glMatrixMode(GL11.GL_MODELVIEW);
+            
                 GL11.glPushMatrix();
                 try {
 
@@ -170,6 +185,8 @@ public class TWLImageListView extends TWLImageListViewBase {
         
                             // draw selection box
                             ListSelectionModel sm = getSelectionModel();
+                            
+                            GL11.glLineWidth(2);
                             if (sm != null && sm.isSelectedIndex(iCell)) {
                                 GL11.glColor3f(1, 0, 0);
                                 GL11.glBegin(GL11.GL_LINE_LOOP);                                
@@ -226,6 +243,36 @@ public class TWLImageListView extends TWLImageListViewBase {
                 GL11.glMatrixMode(GL11.GL_PROJECTION);
                 GL11.glPopMatrix();
                 GL11.glPopAttrib();
+                
+
+//                int matrix =  GL11.glGetInteger(GL11.GL_MATRIX_MODE );
+//                System.out.println(matrix);
+//                font.drawText(this.getAnimationState(), 50, 50, "blablablaaaaaa");
+                
+//                GL11.glPushAttrib(GL11.GL_CURRENT_BIT|GL11.GL_LIGHTING_BIT|GL11.GL_LINE_BIT|GL11.GL_HINT_BIT|GL11.GL_POLYGON_BIT|GL11.GL_ENABLE_BIT|GL11.GL_VIEWPORT_BIT|GL11.GL_TRANSFORM_BIT);
+//                GL11.glMatrixMode(GL11.GL_MODELVIEW);
+
+                
+//                GL11.glDisable(GL11.GL_TEXTURE_2D);
+//                GL11.glDisable(GL11.GL_LINE_SMOOTH);
+//                GL11.glHint(GL11.GL_LINE_SMOOTH_HINT, GL11.GL_FASTEST);
+//                GL11.glLineWidth(2);
+//                GL11.glPolygonMode(GL11.GL_FRONT_AND_BACK, GL11.GL_LINE);
+//                GL11.glShadeModel(GL11.GL_FLAT);
+//                GL11.glColor3f((float) 255F/ 255F,
+//                        (float) 0/ 255F,
+//                        (float) 0 / 255F);
+//                
+
+//                GL11.glBegin(GL11.GL_QUADS);
+//                GL11.glVertex2f(getInnerX()+1, getInnerY()+1);
+//                GL11.glVertex2f(getInnerX() + getInnerWidth()-1, getInnerY()+1);
+//                GL11.glVertex2f(getInnerX() + getInnerWidth()-1, getInnerY() + getInnerHeight()-1);
+//                GL11.glVertex2f(getInnerX()+1, getInnerY() + getInnerHeight()-1);
+//                GL11.glEnd();
+//                GL11.glPopAttrib();
+                
+
             }
         }
         

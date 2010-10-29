@@ -14,14 +14,20 @@ import java.util.Map;
 
 import javax.media.opengl.GL2;
 
+import org.lwjgl.opengl.GL11;
+import org.lwjgl.opengl.GL13;
+
 import com.sun.opengl.util.gl2.GLUT;
 
+import de.matthiasmann.twl.renderer.Font;
 import de.sofd.viskit.controllers.cellpaint.texturemanager.JGLLookupTableTextureManager;
+import de.sofd.viskit.controllers.cellpaint.texturemanager.LWJGLLookupTableTextureManager;
 import de.sofd.viskit.controllers.cellpaint.texturemanager.LookupTableTextureManager;
 import de.sofd.viskit.image3D.jogl.control.LutController;
 import de.sofd.viskit.model.LookupTable;
 import de.sofd.viskit.ui.imagelist.ImageListView;
 import de.sofd.viskit.ui.imagelist.ImageListViewCell;
+import de.sofd.viskit.ui.imagelist.twlimpl.TWLImageListView;
 
 /**
  * Controller that draws a lookup table legend to the cell elements. The size of
@@ -162,6 +168,95 @@ public class ImageListViewPrintLUTController extends CellPaintControllerBase {
 
         lutManager.unbindCurrentLutTexture(gl);
         gl.glDisable(GL2.GL_TEXTURE_1D);
+    }
+    
+    @Override
+    protected void paintLWJGL(ImageListViewCell cell, Map<String, Object> sharedContextData) {
+        if (lutManager == null) {
+            lutManager = LWJGLLookupTableTextureManager.getInstance();
+        }
+
+        Font font = (Font) sharedContextData.get(TWLImageListView.CANVAS_FONT);
+        if(font == null) {
+            throw new IllegalStateException("No font available for cell text drawing!");
+        }
+        
+        Dimension cellSize = cell.getLatestSize();
+        double cellHeight = cellSize.getHeight();
+        double cellWidth = cellSize.getWidth();
+
+        LookupTable lut = cell.getLookupTable();
+        // no lookup table assigned
+        if (lut == null) {
+            return;
+        }
+        // cell size is too small, do not display the lut
+        if (cellHeight < lutHeight + 50 || cellWidth < lutHeight + 50) {
+            return;
+        }
+        // get scale value list
+        List<String> scaleList = getScaleList(cell);
+
+        // calculate lut and text position
+        Point2D lutPosition = calculateLutPosition(cellSize);
+        Point2D textPosition = calculateTextPosition(lutPosition);
+
+        GL11.glPushAttrib(GL11.GL_CURRENT_BIT | GL11.GL_ENABLE_BIT);
+        GL11.glPushMatrix();
+        try {
+            GL11.glTranslated(lutPosition.getX(), lutPosition.getY(), 0);
+
+            // draw border
+            GL11.glDisable(GL11.GL_TEXTURE_2D);
+
+            GL11.glBegin(GL11.GL_QUADS);
+            GL11.glColor3f(0.5f, 0.5f, 0.5f);
+            GL11.glVertex2i(-1, -1);
+            GL11.glVertex2i(-1, lutHeight + 1);
+            GL11.glVertex2i(lutWidth + 1, lutHeight + 1);
+            GL11.glVertex2i(lutWidth + 1, -1);
+            GL11.glEnd();
+
+            // draw lut legend
+            lutManager.bindLutTexture(null, GL13.GL_TEXTURE2, sharedContextData, lut);
+            GL11.glTexEnvi(GL11.GL_TEXTURE_ENV, GL11.GL_TEXTURE_ENV_MODE, GL11.GL_REPLACE);
+            GL11.glBegin(GL11.GL_QUADS);
+            GL13.glMultiTexCoord1f(GL13.GL_TEXTURE2, 1);
+            GL11.glVertex2i(0, 0);
+            GL13.glMultiTexCoord1f(GL13.GL_TEXTURE2, 0);
+            GL11.glVertex2i(0, lutHeight);
+            GL13.glMultiTexCoord1f(GL13.GL_TEXTURE2, 0);
+            GL11.glVertex2i(lutWidth, lutHeight);
+            GL13.glMultiTexCoord1f(GL13.GL_TEXTURE2, 1);
+            GL11.glVertex2i(lutWidth, 0);
+            GL11.glEnd();
+
+            lutManager.unbindCurrentLutTexture(null);
+            GL11.glDisable(GL11.GL_TEXTURE_1D);
+        } finally {
+            GL11.glPopMatrix();
+            GL11.glPopAttrib();
+        }
+
+        GL11.glPushAttrib(GL11.GL_TEXTURE_BIT);
+        try {
+            GL13.glActiveTexture(GL13.GL_TEXTURE0);
+            GL11.glEnable(GL11.GL_TEXTURE_2D);
+            GL11.glColor3f((float) textColor.getRed() / 255F, (float) textColor.getGreen() / 255F, (float) textColor
+                    .getBlue() / 255F);
+            int posx = (int) textPosition.getX();
+            int posy = (int) textPosition.getY() - 15;
+            int lineHeight = lutHeight / intervals;
+
+            // draw lut values
+            for (String scale : scaleList) {
+                font.drawText(null, posx - scale.length() * 10,
+                        posy, scale);
+                posy += lineHeight;
+            }
+        } finally {
+            GL11.glPopAttrib();
+        }
     }
 
     @Override

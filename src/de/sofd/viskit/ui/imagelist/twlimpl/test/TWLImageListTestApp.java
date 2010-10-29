@@ -13,8 +13,6 @@ import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.File;
 import java.io.IOException;
-import java.util.Collection;
-import java.util.LinkedList;
 
 import javax.swing.DefaultListModel;
 import javax.swing.JFrame;
@@ -22,27 +20,32 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 
 import org.apache.log4j.BasicConfigurator;
+import org.dcm4che2.data.DicomObject;
+import org.dcm4che2.data.Tag;
 import org.lwjgl.LWJGLException;
 
 import de.matthiasmann.twl.Alignment;
 import de.matthiasmann.twl.BoxLayout;
 import de.matthiasmann.twl.ComboBox;
-import de.matthiasmann.twl.Event;
 import de.matthiasmann.twl.GUI;
 import de.matthiasmann.twl.Label;
 import de.matthiasmann.twl.Widget;
 import de.matthiasmann.twl.BoxLayout.Direction;
 import de.matthiasmann.twl.model.ListModel;
 import de.matthiasmann.twl.model.SimpleChangableListModel;
+import de.matthiasmann.twl.renderer.Font;
 import de.matthiasmann.twl.renderer.lwjgl.LWJGLRenderer;
 import de.matthiasmann.twl.theme.ThemeManager;
 import de.sofd.swing.DefaultBoundedListSelectionModel;
 import de.sofd.twlawt.TWLAWTGLCanvas;
 import de.sofd.viskit.controllers.ImageListViewInitialZoomPanController;
-import de.sofd.viskit.controllers.ImageListViewMouseMeasurementController;
 import de.sofd.viskit.controllers.ImageListViewMouseWindowingController;
 import de.sofd.viskit.controllers.ImageListViewMouseZoomPanController;
 import de.sofd.viskit.controllers.cellpaint.ImageListViewImagePaintController;
+import de.sofd.viskit.controllers.cellpaint.ImageListViewPrintLUTController;
+import de.sofd.viskit.controllers.cellpaint.ImageListViewPrintTextToCellsController;
+import de.sofd.viskit.controllers.cellpaint.ImageListViewPrintLUTController.ScaleType;
+import de.sofd.viskit.model.DicomImageListViewModelElement;
 import de.sofd.viskit.model.DicomModelFactory;
 import de.sofd.viskit.model.ImageListViewModelElement;
 import de.sofd.viskit.model.IntuitiveFileNameComparator;
@@ -52,7 +55,7 @@ import de.sofd.viskit.model.ModelFactory;
 import de.sofd.viskit.ui.imagelist.ImageListViewCell;
 import de.sofd.viskit.ui.imagelist.ImageListView.ScaleMode;
 import de.sofd.viskit.ui.imagelist.twlimpl.TWLImageListView;
-import de.sofd.viskit.ui.imagelist.twlimpl.TWLImageListView.MyScaleMode;
+import de.sofd.viskit.util.DicomUtil;
 
 public class TWLImageListTestApp {
     
@@ -256,7 +259,7 @@ public class TWLImageListTestApp {
         private static final long serialVersionUID = 9180551822762846051L;
         protected ThemeManager theme;
         
-        BoxLayout toolbar;
+        private BoxLayout toolbar;
 
         public MainTwlCanvas() throws LWJGLException {
             super();
@@ -389,6 +392,28 @@ public class TWLImageListTestApp {
                 new ImageListViewMouseWindowingController(listView);
                 final ImageListViewInitialZoomPanController initZoomPanController = new ImageListViewInitialZoomPanController(listView);
                 initZoomPanController.setEnabled(true);
+                
+                final ImageListViewPrintTextToCellsController ptc = new ImageListViewPrintTextToCellsController(listView) {
+                    @Override
+                    protected String[] getTextToPrint(ImageListViewCell cell) {
+                        final DicomImageListViewModelElement elt = (DicomImageListViewModelElement) cell.getDisplayedModelElement();
+                        DicomObject dicomImageMetaData = elt.getDicomImageMetaData();
+                        return new String[] {
+                                "" + elt.getImageKey(),
+                                "Frame: " + elt.getFrameNumber()+"/"+(elt.getTotalFrameNumber()-1),
+                                "PN: " + dicomImageMetaData.getString(Tag.PatientName),
+                                "SL: " + dicomImageMetaData.getString(Tag.SliceLocation),
+                                "wl/ww: " + cell.getWindowLocation() + "/" + cell.getWindowWidth(),
+                                "lower/upper: " + (cell.getWindowLocation() - cell.getWindowWidth()/2) + "/" + (cell.getWindowLocation() + cell.getWindowWidth()/2),
+                                "pxValuesRange: " + elt.getUsedPixelValuesRange(),
+                                "Zoom: " + cell.getScale(),
+                                "Slice orientation: " + DicomUtil.getSliceOrientation(dicomImageMetaData)
+                        };
+                    }
+                };
+                ptc.setEnabled(true);
+                final ImageListViewPrintLUTController plutc = new ImageListViewPrintLUTController(listView,4,ScaleType.PERCENTAGE);
+                plutc.setEnabled(true);
                                 
                 // add scale mode combo box
                 final ListModel<ScaleMode> scaleModeModel = new SimpleChangableListModel<ScaleMode>(listView.getSupportedScaleModes());
@@ -404,10 +429,14 @@ public class TWLImageListTestApp {
                     
                 };
                 scaleModeBox.setSelected(1);
+                scaleModeBox.setTooltipContent("Scale Mode Box");
                 listToolbar.add(scaleModeBox);
 
                 // add lookup table combo box
-                final ListModel<LookupTable> lutModel = new SimpleChangableListModel<LookupTable>(LookupTables.getAllKnownLuts());
+                final ListModel<LookupTable> lutModel = new SimpleChangableListModel<LookupTable>(LookupTables.getAllKnownLuts()) {
+
+                    
+                };
                 
                 ComboBox<LookupTable> lutBox = new ComboBox<LookupTable>(lutModel) {
                     
@@ -422,7 +451,10 @@ public class TWLImageListTestApp {
                             listView.getCell(i).setLookupTable(lut);
                         }                        
                     }
+                    
+
                 };
+                lutBox.setTooltipContent("Lookup Table Combo Box");
                 listToolbar.add(lutBox);
 
                 Widget listPanel = new Widget() {
