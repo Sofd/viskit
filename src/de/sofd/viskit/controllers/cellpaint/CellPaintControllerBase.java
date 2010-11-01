@@ -9,6 +9,7 @@ import javax.media.opengl.GL;
 import javax.media.opengl.GL2;
 import javax.media.opengl.GLAutoDrawable;
 
+import de.matthiasmann.twl.renderer.lwjgl.LWJGLRenderer;
 import de.sofd.viskit.draw2d.gc.ViskitGC;
 import de.sofd.viskit.model.ImageListViewModelElement;
 import de.sofd.viskit.model.ImageListViewModelElement.InitializationState;
@@ -186,7 +187,7 @@ public class CellPaintControllerBase {
             paintJ2D(cell, (Graphics2D) e.getGc().getGraphics2D().create());
         } else if (e.getGc().isLWJGLRendererAvailable() && e.getGc().isLWJGLPreferred()) {
             // paint using OpenGL (LWJGL)+
-            paintLWJGL(cell, e.getSharedContextData());
+            paintLWJGL(cell, (LWJGLRenderer)e.getGc().getLWJGLRenderer(), e.getSharedContextData());
         }
         else {
            // paint using OpenGL (JOGL)
@@ -218,7 +219,7 @@ public class CellPaintControllerBase {
         
     }
     
-    protected void paintLWJGL(ImageListViewCell cell, Map<String,Object> sharedContextData) {
+    protected void paintLWJGL(ImageListViewCell cell, LWJGLRenderer renderer, Map<String,Object> sharedContextData) {
         
     }
     

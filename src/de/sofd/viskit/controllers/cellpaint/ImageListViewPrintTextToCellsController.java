@@ -14,8 +14,8 @@ import org.lwjgl.opengl.GL13;
 
 import com.sun.opengl.util.gl2.GLUT;
 
-import de.matthiasmann.twl.AnimationState;
 import de.matthiasmann.twl.renderer.Font;
+import de.matthiasmann.twl.renderer.lwjgl.LWJGLRenderer;
 import de.sofd.viskit.ui.imagelist.ImageListView;
 import de.sofd.viskit.ui.imagelist.ImageListViewCell;
 import de.sofd.viskit.ui.imagelist.twlimpl.TWLImageListView;
@@ -111,7 +111,7 @@ public class ImageListViewPrintTextToCellsController extends CellPaintController
     }
 
     @Override
-    protected void paintLWJGL(ImageListViewCell cell, Map<String, Object> sharedContextData) {
+    protected void paintLWJGL(ImageListViewCell cell, LWJGLRenderer renderer, Map<String, Object> sharedContextData) {
         Font font = (Font) sharedContextData.get(TWLImageListView.CANVAS_FONT);
         if(font == null) {
             throw new IllegalStateException("No font available for cell text drawing!");
@@ -120,16 +120,18 @@ public class ImageListViewPrintTextToCellsController extends CellPaintController
         try {
             GL13.glActiveTexture(GL13.GL_TEXTURE0);
             GL11.glEnable(GL11.GL_TEXTURE_2D);
-            GL11.glShadeModel(GL2.GL_FLAT);
+            GL11.glShadeModel(GL11.GL_FLAT);
             GL11.glColor3f((float) textColor.getRed() / 255F, (float) textColor.getGreen() / 255F, (float) textColor
                     .getBlue() / 255F);
             int posx = (int) textPosition.getX();
             int posy = (int) textPosition.getY()-10;
             int lineHeight = 13;
+            renderer.pushGlobalTintColor(textColor.getRed()/ 255F, textColor.getGreen()/ 255F, textColor.getBlue()/ 255F, textColor.getAlpha()/ 255F);
             for (String line : getTextToPrint(cell)) {
                 font.drawText(null, posx, posy, line);
                 posy += lineHeight;
             }
+            renderer.popGlobalTintColor();
         } finally {
             GL11.glPopAttrib();
         }

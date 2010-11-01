@@ -26,6 +26,7 @@ import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL12;
 import org.lwjgl.opengl.GL13;
 
+import de.matthiasmann.twl.renderer.lwjgl.LWJGLRenderer;
 import de.sofd.math.LinAlg;
 import de.sofd.util.FloatRange;
 import de.sofd.viskit.controllers.cellpaint.texturemanager.GrayscaleRGBLookupTextureManager;
@@ -140,7 +141,7 @@ public class ImageListViewImagePaintController extends CellPaintControllerBase {
     
     
     @Override
-    protected void paintLWJGL(ImageListViewCell cell, Map<String,Object> sharedContextData) {
+    protected void paintLWJGL(ImageListViewCell cell, LWJGLRenderer renderer, Map<String,Object> sharedContextData) {
         // TODO shader initialization by firing events like {@link ImageListViewCellPaintListener#glDrawableInitialized(GLAutoDrawable}
         if(!isInitialized) {
             initializeGLShader();

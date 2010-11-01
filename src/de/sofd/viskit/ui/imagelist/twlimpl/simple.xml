@@ -344,7 +344,7 @@
     <fontDef name="combobox" filename="font.fnt" color="black">
         <fontParam if="comboboxKeyboardFocus" color="white"/>
     </fontDef>
-    <fontDef name="canvasfont" filename="font.fnt" color="lime">
+    <fontDef name="canvasfont" filename="font.fnt" color="white">
     </fontDef>
 
     <inputMapDef name="-defaultInputMap">

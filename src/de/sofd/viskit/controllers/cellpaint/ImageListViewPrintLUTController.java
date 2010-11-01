@@ -20,6 +20,7 @@ import org.lwjgl.opengl.GL13;
 import com.sun.opengl.util.gl2.GLUT;
 
 import de.matthiasmann.twl.renderer.Font;
+import de.matthiasmann.twl.renderer.lwjgl.LWJGLRenderer;
 import de.sofd.viskit.controllers.cellpaint.texturemanager.JGLLookupTableTextureManager;
 import de.sofd.viskit.controllers.cellpaint.texturemanager.LWJGLLookupTableTextureManager;
 import de.sofd.viskit.controllers.cellpaint.texturemanager.LookupTableTextureManager;
@@ -171,7 +172,7 @@ public class ImageListViewPrintLUTController extends CellPaintControllerBase {
     }
     
     @Override
-    protected void paintLWJGL(ImageListViewCell cell, Map<String, Object> sharedContextData) {
+    protected void paintLWJGL(ImageListViewCell cell, LWJGLRenderer renderer, Map<String, Object> sharedContextData) {
         if (lutManager == null) {
             lutManager = LWJGLLookupTableTextureManager.getInstance();
         }
@@ -249,11 +250,13 @@ public class ImageListViewPrintLUTController extends CellPaintControllerBase {
             int lineHeight = lutHeight / intervals;
 
             // draw lut values
+            renderer.pushGlobalTintColor(textColor.getRed()/ 255F, textColor.getGreen()/ 255F, textColor.getBlue()/ 255F, textColor.getAlpha()/ 255F);
             for (String scale : scaleList) {
                 font.drawText(null, posx - scale.length() * 10,
                         posy, scale);
                 posy += lineHeight;
             }
+            renderer.popGlobalTintColor();
         } finally {
             GL11.glPopAttrib();
         }

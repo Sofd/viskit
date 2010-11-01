@@ -47,15 +47,20 @@ import de.matthiasmann.twl.theme.ThemeManager;
 import de.sofd.swing.DefaultBoundedListSelectionModel;
 import de.sofd.twlawt.TWLAWTGLCanvas;
 import de.sofd.util.FloatRange;
+import de.sofd.viskit.controllers.ImageListViewInitialWindowingController;
 import de.sofd.viskit.controllers.ImageListViewInitialZoomPanController;
+import de.sofd.viskit.controllers.ImageListViewMouseMeasurementController;
 import de.sofd.viskit.controllers.ImageListViewMouseWindowingController;
 import de.sofd.viskit.controllers.ImageListViewMouseZoomPanController;
+import de.sofd.viskit.controllers.ImageListViewRoiInputEventController;
 import de.sofd.viskit.controllers.ImageListViewSelectionScrollSyncController;
 import de.sofd.viskit.controllers.ImageListViewWindowingApplyToAllController;
 import de.sofd.viskit.controllers.ImageListViewZoomPanApplyToAllController;
 import de.sofd.viskit.controllers.cellpaint.ImageListViewImagePaintController;
+import de.sofd.viskit.controllers.cellpaint.ImageListViewInitStateIndicationPaintController;
 import de.sofd.viskit.controllers.cellpaint.ImageListViewPrintLUTController;
 import de.sofd.viskit.controllers.cellpaint.ImageListViewPrintTextToCellsController;
+import de.sofd.viskit.controllers.cellpaint.ImageListViewRoiPaintController;
 import de.sofd.viskit.controllers.cellpaint.ImageListViewPrintLUTController.ScaleType;
 import de.sofd.viskit.model.DicomImageListViewModelElement;
 import de.sofd.viskit.model.DicomModelFactory;
@@ -207,7 +212,7 @@ public class TWLImageListTestApp {
             //*/
             
             //listModels.add(getViewerListModelForDirectory(new File("/home/olaf/headvolume")));
-            //listModels.add(getViewerListModelForDirectory(new File("/home/olaf/oliverdicom/series1")));
+            //listModels.add(getViewerListModelForDirect69690e292714ory(new File("/home/olaf/oliverdicom/series1")));
             //listModels.add(getViewerListModelForDirectory(new File("/home/olaf/oliverdicom/INCISIX")));
 
             //listModels.add(getViewerListModelForDirectory(new File("/shares/projects/StudyBrowser/data/disk312043/Images/cd833__center4001")));
@@ -399,12 +404,42 @@ public class TWLImageListTestApp {
                 });
                 listView.getSelectionModel().setSelectionInterval(0, 0);
                 // apply controller to image list view
+
+                final ImageListViewInitialWindowingController initWindowingController = new ImageListViewInitialWindowingController(listView) {
+                    @Override
+                    protected void initializeCell(final ImageListViewCell cell) {
+                        try {
+                            final DicomImageListViewModelElement delt = (DicomImageListViewModelElement) cell.getDisplayedModelElement();
+                            ImageListViewWindowingApplyToAllController.runWithAllControllersInhibited(new Runnable() {
+                                @Override
+                                public void run() {
+                                    double wl;
+                                    double ww;
+                                    if(delt.getDicomImageMetaData().contains(Tag.WindowCenter) && delt.getDicomImageMetaData().contains(Tag.WindowWidth)) {
+                                        wl = delt.getDicomImageMetaData().getDouble(Tag.WindowCenter);
+                                        ww = delt.getDicomImageMetaData().getDouble(Tag.WindowWidth);    
+                                    }
+                                    else {
+                                        FloatRange pixelValueRange = delt.getUsedPixelValuesRange();
+                                        wl = pixelValueRange.getMin()+pixelValueRange.getDelta()/2;
+                                        ww = pixelValueRange.getDelta();
+                                    }
+                                    cell.setWindowWidth((int)ww);
+                                    cell.setWindowLocation((int)wl);
+                                }
+                            });
+                        } catch (Exception e) {
+                            super.initializeCell(cell);
+                        }
+                    }
+                };
+                initWindowingController.setEnabled(true);
+                final ImageListViewInitialZoomPanController initZoomPanController = new ImageListViewInitialZoomPanController(listView);
+                initZoomPanController.setEnabled(true);
                 new ImageListViewImagePaintController(listView).setEnabled(true);
                 new ImageListViewMouseZoomPanController(listView);
                 new ImageListViewMouseWindowingController(listView);
-                final ImageListViewInitialZoomPanController initZoomPanController = new ImageListViewInitialZoomPanController(listView);
-                initZoomPanController.setEnabled(true);
-                
+                new ImageListViewRoiInputEventController(listView);
                 final ImageListViewPrintTextToCellsController ptc = new ImageListViewPrintTextToCellsController(listView) {
                     @Override
                     protected String[] getTextToPrint(ImageListViewCell cell) {
@@ -426,6 +461,11 @@ public class TWLImageListTestApp {
                 ptc.setEnabled(true);
                 final ImageListViewPrintLUTController plutc = new ImageListViewPrintLUTController(listView,4,ScaleType.PERCENTAGE);
                 plutc.setEnabled(true);
+                new ImageListViewRoiPaintController(listView).setEnabled(true);
+                
+                new ImageListViewInitStateIndicationPaintController(listView);
+
+                new ImageListViewMouseMeasurementController(listView).setEnabled(true);
                 
                 
                 ImageListViewSelectionScrollSyncController sssc = new ImageListViewSelectionScrollSyncController(listView);
@@ -452,6 +492,7 @@ public class TWLImageListTestApp {
                 listToolbar.add(scaleModeBox);
 
                 // add lookup table combo box
+                listToolbar.add(new Label("lut:"));
                 final ListModel<LookupTable> lutModel = new SimpleChangableListModel<LookupTable>(LookupTables.getAllKnownLuts()) {
                 };
                 ComboBox<LookupTable> lutBox = new ComboBox<LookupTable>(lutModel) {
@@ -476,6 +517,7 @@ public class TWLImageListTestApp {
                 BooleanModel wAllModel = new SimpleBooleanModel();
                 wAllModel.setValue(false);
                 final ToggleButton wAllButton = new ToggleButton(wAllModel);
+                wAllButton.setTheme("checkbox");
                 wAllButton.setTooltipContent("Apply windowing to all cells");
                 wAllButton.addCallback(new Runnable() {
 
@@ -493,6 +535,7 @@ public class TWLImageListTestApp {
                 BooleanModel zAllModel = new SimpleBooleanModel();
                 zAllModel.setValue(false);
                 final ToggleButton zAllButton = new ToggleButton(zAllModel);
+                zAllButton.setTheme("checkbox");
                 zAllButton.setTooltipContent("Apply zooming to all cells");
                 zAllButton.addCallback(new Runnable() {
 
@@ -527,6 +570,7 @@ public class TWLImageListTestApp {
                             ImageListViewCell cell = listView.getCellForElement(elt);
 //                            cell.setWindowLocation((int)slider.getWindowLocation());
 //                            cell.setWindowWidth((int)slider.getWindowWidth());
+                            // TODO set slider values
                         }
                     }
                 });

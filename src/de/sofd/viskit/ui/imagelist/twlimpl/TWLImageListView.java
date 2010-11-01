@@ -610,7 +610,7 @@ public class TWLImageListView extends TWLImageListViewBase {
             @Override
             public void run(ImageListViewCellPaintListener l) {
                 if (uninitializedCellPaintListeners.contains(l)) {
-//                    l.glSharedContextDataInitialization(gl, sharedContextData.getAttributes());
+                    l.glSharedContextDataInitialization(null, sharedContextData);
 //                    l.glDrawableInitialized(glAutoDrawable);
                 }
             }
