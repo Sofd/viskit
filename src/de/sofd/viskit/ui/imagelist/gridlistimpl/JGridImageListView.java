@@ -362,7 +362,7 @@ public class JGridImageListView extends JImageListView {
         public static final int BORDER_WIDTH = 2;
 
         public WrappedGridListComponentFactory() {
-            super(new EmptyBorder(BORDER_WIDTH,BORDER_WIDTH,BORDER_WIDTH,BORDER_WIDTH), new LineBorder(Color.RED, BORDER_WIDTH));
+            super(BORDER_WIDTH, Color.RED, Color.BLUE);
         }
 
         @Override
