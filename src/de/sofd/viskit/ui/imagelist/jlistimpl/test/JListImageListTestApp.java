@@ -6,6 +6,9 @@ import java.awt.GraphicsConfiguration;
 import java.awt.GraphicsDevice;
 import java.awt.GraphicsEnvironment;
 import java.awt.GridLayout;
+import java.awt.datatransfer.DataFlavor;
+import java.awt.datatransfer.Transferable;
+import java.awt.datatransfer.UnsupportedFlavorException;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
@@ -37,6 +40,8 @@ import javax.swing.JToolBar;
 import javax.swing.ListModel;
 import javax.swing.ListSelectionModel;
 import javax.swing.SwingUtilities;
+import javax.swing.TransferHandler;
+import javax.swing.TransferHandler.TransferSupport;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 
@@ -52,6 +57,7 @@ import de.sofd.draw2d.DrawingObject;
 import de.sofd.draw2d.viewer.tools.EllipseTool;
 import de.sofd.draw2d.viewer.tools.SelectorTool;
 import de.sofd.swing.DefaultBoundedListSelectionModel;
+import de.sofd.swing.test.dnd.jgridlist.GridListCellContents;
 import de.sofd.util.FloatRange;
 import de.sofd.viskit.controllers.GenericILVCellPropertySyncController;
 import de.sofd.viskit.controllers.ImageListViewInitialWindowingController;
@@ -97,6 +103,7 @@ import de.sofd.viskit.ui.imagelist.event.ImageListViewListener;
 import de.sofd.viskit.ui.imagelist.event.cellpaint.ImageListViewCellPaintEvent;
 import de.sofd.viskit.ui.imagelist.event.cellpaint.ImageListViewCellPaintListener;
 import de.sofd.viskit.ui.imagelist.glimpl.JGLImageListView;
+import de.sofd.viskit.ui.imagelist.gridlistimpl.DndSupport;
 import de.sofd.viskit.ui.imagelist.gridlistimpl.JGridImageListView;
 import de.sofd.viskit.ui.imagelist.jlistimpl.JListImageListView;
 import de.sofd.viskit.util.DicomUtil;
@@ -776,6 +783,7 @@ public class JListImageListTestApp {
                 //listView = newJGLImageListView();
                 listView = newJGridImageListView();
             }
+            setupDnd();
             this.add(listView, BorderLayout.CENTER);
             ImageListViewInitialWindowingController initWindowingController = new ImageListViewInitialWindowingController(listView) {
                 @Override
@@ -1048,7 +1056,81 @@ public class JListImageListTestApp {
         public JToolBar getToolbar() {
             return toolbar;
         }
+        
+        private void setupDnd() {
+            if (!(listView instanceof JGridImageListView)) {  //DnD support in GridILV only for now
+                return;
+            }
+            JGridImageListView gridListView = (JGridImageListView) listView;
+            gridListView.setDndSupport(dndSupport);
+        }
 
+        private DataFlavor ilvListCellFlavor = new DataFlavor(DataFlavor.javaJVMLocalObjectMimeType +
+                "; class=" + ImageListViewCellContents.class.getCanonicalName(),
+                "ImageListView cell contents");
+        
+        private DndSupport dndSupport = new DndSupport() {
+            
+            private int[] draggedIndices;
+            private int addIndex = -1;
+            private int addCount = 0;
+
+            @Override
+            public int getSourceActions(ImageListView source) {
+                return TransferHandler.COPY | TransferHandler.MOVE;
+            }
+            
+            @Override
+            public Transferable dragStart(ImageListView source, int action) {
+                final StringBuffer txt = new StringBuffer(30);
+                boolean start = true;
+                draggedIndices = listView.getSelectedIndices();
+                final Object[] values = listView.getSelectedValues();
+                for (Object elt : values) {
+                    if (!start) {
+                        txt.append("\n");
+                    }
+                    txt.append(elt.toString());
+                    start = false;
+                }
+                return new Transferable() {
+                    @Override
+                    public boolean isDataFlavorSupported(DataFlavor flavor) {
+                        return flavor.equals(DataFlavor.stringFlavor) || flavor.equals(ilvListCellFlavor);
+                    }
+                    @Override
+                    public DataFlavor[] getTransferDataFlavors() {
+                        return new DataFlavor[]{ilvListCellFlavor, DataFlavor.stringFlavor};
+                    }
+                    @Override
+                    public Object getTransferData(DataFlavor flavor)
+                            throws UnsupportedFlavorException, IOException {
+                        if (flavor.equals(ilvListCellFlavor)) {
+                            return new GridListCellContents(values);
+                        } else if (flavor.equals(DataFlavor.stringFlavor)) {
+                            return txt.toString();
+                        } else {
+                            throw new UnsupportedFlavorException(flavor);
+                        }
+                    }
+                };
+            }
+            
+            @Override
+            public boolean canImport(ImageListView source, TransferSupport ts) {
+                return false;
+            }
+
+            @Override
+            public boolean importData(ImageListView source, TransferSupport ts) {
+                return false;
+            }
+            
+            @Override
+            public void exportDone(ImageListView source, Transferable data, int action) {
+            }
+            
+        };
     }
     
     protected JListImageListView newJListImageListView() {

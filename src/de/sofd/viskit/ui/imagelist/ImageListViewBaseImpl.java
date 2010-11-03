@@ -549,6 +549,40 @@ public abstract class ImageListViewBaseImpl /*< extends $baseClass >*/ implement
     }
 
     @Override
+    public Object[] getSelectedValues() {
+        ListSelectionModel sm = getSelectionModel();
+        int minSI = sm.getMinSelectionIndex();
+        int maxSI = sm.getMaxSelectionIndex();
+        Object[] tmp = new Object[1 + (maxSI - minSI)];
+        int n = 0;
+        for (int i = minSI; i <= maxSI; i++) {
+            if (sm.isSelectedIndex(i)) {
+                tmp[n++] = getModel().getElementAt(i);
+            }
+        }
+        Object[] result = new Object[n];
+        System.arraycopy(tmp, 0, result, 0, n);
+        return result;
+    }
+
+    @Override
+    public int[] getSelectedIndices() {
+        ListSelectionModel sm = getSelectionModel();
+        int minSI = sm.getMinSelectionIndex();
+        int maxSI = sm.getMaxSelectionIndex();
+        int[] tmp = new int[1 + (maxSI - minSI)];
+        int n = 0;
+        for (int i = minSI; i <= maxSI; i++) {
+            if (sm.isSelectedIndex(i)) {
+                tmp[n++] = i;
+            }
+        }
+        int[] result = new int[n];
+        System.arraycopy(tmp, 0, result, 0, n);
+        return result;
+    }
+
+    @Override
     public int getMinSelectionIndex() {
         return getSelectionModel().getMinSelectionIndex();
     }
