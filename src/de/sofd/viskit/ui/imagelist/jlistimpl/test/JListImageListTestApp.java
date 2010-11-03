@@ -1085,8 +1085,8 @@ public class JListImageListTestApp {
                 final StringBuffer txt = new StringBuffer(30);
                 boolean start = true;
                 draggedIndices = listView.getSelectedIndices();
-                final Object[] values = listView.getSelectedValues();
-                for (Object elt : values) {
+                final ImageListViewModelElement[] elements = listView.getSelectedValues();
+                for (ImageListViewModelElement elt : elements) {
                     if (!start) {
                         txt.append("\n");
                     }
@@ -1106,7 +1106,7 @@ public class JListImageListTestApp {
                     public Object getTransferData(DataFlavor flavor)
                             throws UnsupportedFlavorException, IOException {
                         if (flavor.equals(ilvListCellFlavor)) {
-                            return new GridListCellContents(values);
+                            return new GridListCellContents(elements);
                         } else if (flavor.equals(DataFlavor.stringFlavor)) {
                             return txt.toString();
                         } else {
@@ -1117,17 +1117,20 @@ public class JListImageListTestApp {
             }
             
             @Override
-            public boolean canImport(ImageListView source, TransferSupport ts) {
-                return false;
+            public boolean canImport(ImageListView source, TransferSupport ts, int index, boolean isInsert) {
+                return ts.isDataFlavorSupported(ilvListCellFlavor);
             }
 
             @Override
-            public boolean importData(ImageListView source, TransferSupport ts) {
+            public boolean importData(ImageListView source, TransferSupport ts, int index, boolean isInsert) {
                 return false;
             }
             
             @Override
             public void exportDone(ImageListView source, Transferable data, int action) {
+                draggedIndices = null;
+                addCount = 0;
+                addIndex = -1;
             }
             
         };

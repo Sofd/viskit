@@ -404,13 +404,23 @@ public class JGridImageListView extends JImageListView {
 
         @Override
         public boolean canImport(TransferSupport ts) {
-            couldImport = dndSupport.canImport(JGridImageListView.this, ts);
+            lastDropLocation = wrappedGridList.getDropLocationFor(ts.getDropLocation().getDropPoint());
+            if (lastDropLocation != null) {
+                couldImport = dndSupport.canImport(JGridImageListView.this, ts, lastDropLocation.getIndex(), lastDropLocation.isInsert());
+            } else {
+                couldImport = false;
+            }
             return couldImport;
         }
 
         @Override
         public boolean importData(TransferSupport ts) {
-            return dndSupport.importData(JGridImageListView.this, ts);
+            JGridList.DropLocation dl= wrappedGridList.getDropLocationFor(ts.getDropLocation().getDropPoint());
+            if (dl != null) {
+                return dndSupport.importData(JGridImageListView.this, ts, dl.getIndex(), dl.isInsert());
+            } else {
+                return false;
+            }
         }
 
         @Override
@@ -428,6 +438,7 @@ public class JGridImageListView extends JImageListView {
         @Override
         protected void exportDone(JComponent source, Transferable data, int action) {
             dndSupport.exportDone(JGridImageListView.this, data, action);
+            wrappedGridList.setRenderedDropLocation(null);
         }
 
 

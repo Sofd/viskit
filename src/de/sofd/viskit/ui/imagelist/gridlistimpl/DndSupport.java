@@ -18,8 +18,17 @@ import de.sofd.viskit.ui.imagelist.ImageListView;
  */
 public interface DndSupport {
     Transferable dragStart(ImageListView source, int action);
-    boolean canImport(ImageListView source, TransferSupport ts);
     int getSourceActions(ImageListView source);
-    boolean importData(ImageListView source, TransferSupport ts);
+
+    /**
+     * The TransferSupport should only be needed for #isDataFlavorSupported,
+     * really. May introduce our own abstraction interface instead.
+     * 
+     * @param source
+     * @param ts
+     * @return
+     */
+    boolean canImport(ImageListView source, TransferSupport ts, int index, boolean isInsert);
+    boolean importData(ImageListView source, TransferSupport ts, int index, boolean isInsert);
     void exportDone(ImageListView source, Transferable data, int action);
 }
