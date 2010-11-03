@@ -57,7 +57,6 @@ import de.sofd.draw2d.DrawingObject;
 import de.sofd.draw2d.viewer.tools.EllipseTool;
 import de.sofd.draw2d.viewer.tools.SelectorTool;
 import de.sofd.swing.DefaultBoundedListSelectionModel;
-import de.sofd.swing.test.dnd.jgridlist.GridListCellContents;
 import de.sofd.util.FloatRange;
 import de.sofd.viskit.controllers.GenericILVCellPropertySyncController;
 import de.sofd.viskit.controllers.ImageListViewInitialWindowingController;
@@ -1106,7 +1105,7 @@ public class JListImageListTestApp {
                     public Object getTransferData(DataFlavor flavor)
                             throws UnsupportedFlavorException, IOException {
                         if (flavor.equals(ilvListCellFlavor)) {
-                            return new GridListCellContents(elements);
+                            return new ImageListViewCellContents(elements);
                         } else if (flavor.equals(DataFlavor.stringFlavor)) {
                             return txt.toString();
                         } else {
@@ -1123,11 +1122,64 @@ public class JListImageListTestApp {
 
             @Override
             public boolean importData(ImageListView source, TransferSupport ts, int index, boolean isInsert) {
-                return false;
+                if (!canImport(source, ts, index, isInsert)) {
+                    return false;
+                }
+                DefaultListModel model = (DefaultListModel) listView.getModel();
+                //TODO: for MOVE operations within one list, we need to remove the source element here, before inserting it
+                //at the target location, rather than in exportDone() (i.e. after inserting it), because
+                //ImageListView does not yet support putting the same element into it more than once
+                //(so COPY operations within one list won't be supported at all)
+                try {
+                    //TODO list.setRenderedDropLocation(null);  //--necessary?
+                    Transferable t = ts.getTransferable();
+                    ImageListViewCellContents cellContents = (ImageListViewCellContents) t.getTransferData(ilvListCellFlavor);
+                    System.out.println("importing: " + cellContents);
+                    ImageListViewCellContents.CellAndElementData[] datas = cellContents.getDatas();
+                    boolean first = true;
+                    for (int i = datas.length - 1; i >= 0; i--) {
+                        ImageListViewModelElement elt = datas[i].toElement();
+                        if (first) {
+                            if (isInsert) {
+                                model.insertElementAt(elt, index);
+                            } else {
+                                model.setElementAt(elt, index);
+                            }
+                            first = false;
+                        } else {
+                            model.insertElementAt(elt, index);
+                        }
+                        addIndex = index;
+                        addCount = datas.length;
+                        if (!isInsert) {
+                            addCount -= 1;
+                        }
+                    }
+                    return true;
+                } catch (UnsupportedFlavorException e) {
+                    e.printStackTrace();
+                    return false;
+                } catch (IOException e) {
+                    e.printStackTrace();
+                    return false;
+                }
             }
             
             @Override
             public void exportDone(ImageListView source, Transferable data, int action) {
+                DefaultListModel model = (DefaultListModel)listView.getModel();
+                if (action == TransferHandler.MOVE) {
+                    if (draggedIndices != null) {
+                        for (int i = 0; i < draggedIndices.length; i++) {
+                            if (draggedIndices[i] >= addIndex) {
+                                draggedIndices[i] += addCount;
+                            }
+                        }
+                        for (int i = draggedIndices.length - 1; i >= 0; i--) {
+                            model.remove(draggedIndices[i]);
+                        }
+                    }
+                }
                 draggedIndices = null;
                 addCount = 0;
                 addIndex = -1;

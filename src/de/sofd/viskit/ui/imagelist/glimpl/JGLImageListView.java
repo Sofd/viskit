@@ -211,14 +211,18 @@ public class JGLImageListView extends JImageListView {
                 IntRange[] newlyVisibleRanges =   IntRange.subtract(newlyVisibleRange, previouslyVisibleRange);
                 for (IntRange r : newlyInvisibleRanges) {
                     for (int i = r.getMin(); i <= r.getMax(); i++) {
-                        logger.debug("setting to prio  0: index " + i);
-                        getElementAt(i).setPriority(this, 0);
+                        if (i < getLength()) {
+                            logger.debug("setting to prio  0: index " + i);
+                            getElementAt(i).setPriority(this, 0);
+                        }
                     }
                 }
                 for (IntRange r : newlyVisibleRanges) {
                     for (int i = r.getMin(); i <= r.getMax(); i++) {
-                        logger.debug("setting to prio 10: index " + i);
-                        getElementAt(i).setPriority(this, 10);
+                        if (i < getLength()) {
+                            logger.debug("setting to prio 10: index " + i);
+                            getElementAt(i).setPriority(this, 10);
+                        }
                     }
                 }
             }

@@ -28,6 +28,14 @@ public class ImageListViewCellContents implements Serializable {
             this.url = url;
         }
         
+        ImageListViewModelElement toElement() {
+            if (url != null) {
+                return new FileBasedDicomImageListViewModelElement(url);
+            } else {
+                return new FileBasedDicomImageListViewModelElement(file);
+            }
+        }
+        
         public static CellAndElementData createFromElement(ImageListViewModelElement elt) {
             if (!(elt instanceof FileBasedDicomImageListViewModelElement)) {
                 return null;
@@ -43,19 +51,20 @@ public class ImageListViewCellContents implements Serializable {
         
     }
     
-    private List<CellAndElementData> datas;
+    private CellAndElementData[] datas;
     
     public ImageListViewCellContents(ImageListViewModelElement[] elements) {
-        this.datas = new ArrayList<CellAndElementData>(20);
+        List<CellAndElementData> datas = new ArrayList<CellAndElementData>(20);
         for (ImageListViewModelElement elt : elements) {
             CellAndElementData data = CellAndElementData.createFromElement(elt);
             if (data != null) {
                 datas.add(data);
             }
         }
+        this.datas = datas.toArray(new CellAndElementData[datas.size()]);
     }
 
-    public List<CellAndElementData> getDatas() {
+    public CellAndElementData[] getDatas() {
         return datas;
     }
 
