@@ -43,16 +43,28 @@ public class ImageListViewCellContents implements Serializable {
             this.url = url;
         }
 
+        public File getFile() {
+            return file;
+        }
+        
+        public URL getUrl() {
+            return url;
+        }
+        
         /**
          * Recreate an element from the representation (deserialization).
          * 
          * @return
          */
         public ImageListViewModelElement toElement() {
+            return toElement(false);
+        }
+        
+        public ImageListViewModelElement toElement(boolean checkReadability) {
             if (url != null) {
-                return new FileBasedDicomImageListViewModelElement(url);
+                return new FileBasedDicomImageListViewModelElement(url, checkReadability);
             } else {
-                return new FileBasedDicomImageListViewModelElement(file);
+                return new FileBasedDicomImageListViewModelElement(file, checkReadability);
             }
         }
         

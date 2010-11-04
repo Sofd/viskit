@@ -1142,18 +1142,18 @@ public class JListImageListTestApp {
                     //TODO list.setRenderedDropLocation(null);  //--necessary?
                     int action = ts.getDropAction();
                     Transferable t = ts.getTransferable();
-                    ImageListViewCellContents cellContents = (ImageListViewCellContents) t.getTransferData(ilvListCellFlavor);
-                    System.out.println("importing: " + cellContents);
-                    ImageListViewCellContents.CellAndElementData[] datas = cellContents.getDatas();
-                    if (!isLegalDndOperation(action, draggedIndices, datas, index, isInsert)) {
+                    ImageListViewCellContents droppedCellContents = (ImageListViewCellContents) t.getTransferData(ilvListCellFlavor);
+                    System.out.println("importing: " + droppedCellContents);
+                    ImageListViewCellContents.CellAndElementData[] droppedEltDatas = droppedCellContents.getDatas();
+                    if (!isDropAllowed(action, droppedEltDatas, index, isInsert, draggedIndices)) {
                         return false;
                     }
                     if (draggedIndices == null) {
                         //data is being DnD'd from another list into this list
                         currentDndIsIntraListMove = false;
                         boolean first = true;
-                        for (int i = datas.length - 1; i >= 0; i--) {
-                            ImageListViewModelElement elt = datas[i].toElement();
+                        for (int i = droppedEltDatas.length - 1; i >= 0; i--) {
+                            ImageListViewModelElement elt = droppedEltDatas[i].toElement();
                             if (first) {
                                 if (isInsert) {
                                     model.insertElementAt(elt, index);
@@ -1166,19 +1166,13 @@ public class JListImageListTestApp {
                             }
                         }
                     } else {
-                        //list-internal DnD
-                        if (action != TransferHandler.MOVE) {
-                            //list-internal copy operation would always create duplicates
-                            JOptionPane.showMessageDialog(listView, "Operation denied -- no duplicate elements allowed in a list.",
-                                                          "Error", JOptionPane.ERROR_MESSAGE);
-                            return false;
-                        }
                         //list-internal move. Need to remove to-be-moved elements before inserting them at the target location
+                        assert(action == TransferHandler.MOVE); //because isDropAllowed() returned true
                         currentDndIsIntraListMove = true;
                         boolean mustInsert = isInsert;
                         for (int i = draggedIndices.length - 1; i >= 0; i--) {
                             int draggedIndex = draggedIndices[i];
-                            ImageListViewCellContents.CellAndElementData draggedEltData = datas[i];
+                            ImageListViewCellContents.CellAndElementData draggedEltData = droppedEltDatas[i];
                             if (draggedIndex >= index) {
                                 if (draggedIndex == index && !mustInsert) {
                                     //element would be moved onto itself => just start inserting with the next one and do nothing else
@@ -1226,10 +1220,44 @@ public class JListImageListTestApp {
                 }
             }
             
-            private boolean isLegalDndOperation(int action, int[] draggedIndices, ImageListViewCellContents.CellAndElementData[] datas, int index, boolean isInsert) {
-                //TODO: correctness check (no duplicates) here
+            private boolean isDropAllowed(int action, ImageListViewCellContents.CellAndElementData[] droppedEltDatas, int index, boolean isInsert, int[] draggedIndices) {
+                if (draggedIndices != null && action != TransferHandler.MOVE) {
+                    //list-internal copy operation would always create duplicates
+                    JOptionPane.showMessageDialog(listView, "Operation denied -- no duplicate elements allowed in a list.",
+                                                  "Error", JOptionPane.ERROR_MESSAGE);
+                    return false;
+                }
+                DefaultListModel model = (DefaultListModel) listView.getModel();
+                //pre-create list of recreated elements for performance
+                ImageListViewModelElement[] droppedElts = new ImageListViewModelElement[droppedEltDatas.length];
+                for (int i = 0; i < droppedEltDatas.length; i++) {
+                    droppedElts[i] = droppedEltDatas[i].toElement(false);
+                }
+                for (int i = 0; i < model.getSize(); i++) {
+                    if (draggedIndices != null && contains(draggedIndices, i)) {
+                        //list-internal move and i is a to-be-moved index
+                        continue;
+                    }
+                    ImageListViewModelElement elt = (ImageListViewModelElement) model.get(i);
+                    //copy or move. elt must not be equal to any of the droppedEltDatas
+                    for (ImageListViewModelElement droppedElt : droppedElts) {
+                        if (droppedElt.getKey().equals(elt.getKey())) {
+                            JOptionPane.showMessageDialog(listView, "Operation denied -- no duplicate elements allowed in a list.",
+                                    "Error", JOptionPane.ERROR_MESSAGE);
+                            return false;
+                        }
+                    }
+                }
                 return true;
             }
+            
+            private boolean contains(int[] ints, int i) {
+                for (int i2: ints) {
+                    if (i2==i) { return true; }
+                }
+                return false;
+            }
+            
             
             @Override
             public void exportDone(ImageListView source, Transferable data, int action) {
