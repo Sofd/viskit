@@ -1072,7 +1072,7 @@ public class JListImageListTestApp {
         private DndSupport dndSupport = new DndSupport() {
             /*
              * At the moment, ImageListViews don't support having the same
-             * model element (identified by ILVModelElement#getey) in a list
+             * model element (identified by ILVModelElement#getKey) in a list
              * more than once. This means that we can't support DnD operations
              * that would create such duplicates, and move DnD operations within
              * one list get more complicated: We have to perform the whole
@@ -1167,6 +1167,7 @@ public class JListImageListTestApp {
                         }
                     } else {
                         //list-internal move. Need to remove to-be-moved elements before inserting them at the target location
+                        //this is rather intricate; see doc/dnd/dnd-movenoduplicates-sample.pdf for an example
                         assert(action == TransferHandler.MOVE); //because isDropAllowed() returned true
                         currentDndIsIntraListMove = true;
                         boolean mustInsert = isInsert;
