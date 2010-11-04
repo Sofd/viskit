@@ -35,6 +35,7 @@ import javax.swing.JComponent;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JToolBar;
 import javax.swing.ListModel;
@@ -1069,10 +1070,20 @@ public class JListImageListTestApp {
                 "ImageListView cell contents");
         
         private DndSupport dndSupport = new DndSupport() {
+            /*
+             * At the moment, ImageListViews don't support having the same
+             * model element (identified by ILVModelElement#getey) in a list
+             * more than once. This means that we can't support DnD operations
+             * that would create such duplicates, and move DnD operations within
+             * one list get more complicated: We have to perform the whole
+             * operation in #importData, first removing each element and then
+             * inserting it at the new position, rather than just copying the
+             * elements in #importData and afterwards remove the originals in
+             * #exportDone.
+             */
             
             private int[] draggedIndices;
-            private int addIndex = -1;
-            private int addCount = 0;
+            private boolean currentDndIsIntraListMove;
 
             @Override
             public int getSourceActions(ImageListView source) {
@@ -1092,6 +1103,7 @@ public class JListImageListTestApp {
                     txt.append(elt.toString());
                     start = false;
                 }
+                currentDndIsIntraListMove = false;
                 return new Transferable() {
                     @Override
                     public boolean isDataFlavorSupported(DataFlavor flavor) {
@@ -1126,35 +1138,84 @@ public class JListImageListTestApp {
                     return false;
                 }
                 DefaultListModel model = (DefaultListModel) listView.getModel();
-                //TODO: for MOVE operations within one list, we need to remove the source element here, before inserting it
-                //at the target location, rather than in exportDone() (i.e. after inserting it), because
-                //ImageListView does not yet support putting the same element into it more than once
-                //(so COPY operations within one list won't be supported at all)
                 try {
                     //TODO list.setRenderedDropLocation(null);  //--necessary?
+                    int action = ts.getDropAction();
                     Transferable t = ts.getTransferable();
                     ImageListViewCellContents cellContents = (ImageListViewCellContents) t.getTransferData(ilvListCellFlavor);
                     System.out.println("importing: " + cellContents);
                     ImageListViewCellContents.CellAndElementData[] datas = cellContents.getDatas();
-                    boolean first = true;
-                    for (int i = datas.length - 1; i >= 0; i--) {
-                        ImageListViewModelElement elt = datas[i].toElement();
-                        if (first) {
-                            if (isInsert) {
-                                model.insertElementAt(elt, index);
+                    if (!isLegalDndOperation(action, draggedIndices, datas, index, isInsert)) {
+                        return false;
+                    }
+                    if (draggedIndices == null) {
+                        //data is being DnD'd from another list into this list
+                        currentDndIsIntraListMove = false;
+                        boolean first = true;
+                        for (int i = datas.length - 1; i >= 0; i--) {
+                            ImageListViewModelElement elt = datas[i].toElement();
+                            if (first) {
+                                if (isInsert) {
+                                    model.insertElementAt(elt, index);
+                                } else {
+                                    model.setElementAt(elt, index);
+                                }
+                                first = false;
                             } else {
-                                model.setElementAt(elt, index);
+                                model.insertElementAt(elt, index);
                             }
-                            first = false;
-                        } else {
-                            model.insertElementAt(elt, index);
                         }
-                        addIndex = index;
-                        addCount = datas.length;
-                        if (!isInsert) {
-                            addCount -= 1;
+                    } else {
+                        //list-internal DnD
+                        if (action != TransferHandler.MOVE) {
+                            //list-internal copy operation would always create duplicates
+                            JOptionPane.showMessageDialog(listView, "Operation denied -- no duplicate elements allowed in a list.",
+                                                          "Error", JOptionPane.ERROR_MESSAGE);
+                            return false;
+                        }
+                        //list-internal move. Need to remove to-be-moved elements before inserting them at the target location
+                        currentDndIsIntraListMove = true;
+                        boolean mustInsert = isInsert;
+                        for (int i = draggedIndices.length - 1; i >= 0; i--) {
+                            int draggedIndex = draggedIndices[i];
+                            ImageListViewCellContents.CellAndElementData draggedEltData = datas[i];
+                            if (draggedIndex >= index) {
+                                if (draggedIndex == index && !mustInsert) {
+                                    //element would be moved onto itself => just start inserting with the next one and do nothing else
+                                    mustInsert = true;
+                                    continue;
+                                }
+                                model.removeElementAt(draggedIndex);
+                                ImageListViewModelElement newElt = draggedEltData.toElement();
+                                if (mustInsert) {
+                                    model.insertElementAt(newElt, index);
+                                    //all draggedIndices above index must be incremented because
+                                    //we just inserted an additional element at index
+                                    for (int i2 = i-1; i2 >=0; i2--) {
+                                        if (draggedIndices[i2] >= index) {
+                                            draggedIndices[i2]++;
+                                        }
+                                    }
+                                } else {
+                                    model.setElementAt(newElt, index);
+                                }
+                            } else {
+                                //draggedIndex < index
+                                model.removeElementAt(draggedIndex);
+                                //index must be decremented because we just removed an element from before it
+                                index--;
+                                ImageListViewModelElement newElt = draggedEltData.toElement();
+                                if (mustInsert) {
+                                    model.insertElementAt(newElt, index);
+                                } else {
+                                    model.setElementAt(newElt, index);
+                                }
+                            }
+                            
+                            mustInsert = true; //after the first moved element, all subsequent elements are inserted
                         }
                     }
+                    
                     return true;
                 } catch (UnsupportedFlavorException e) {
                     e.printStackTrace();
@@ -1165,24 +1226,23 @@ public class JListImageListTestApp {
                 }
             }
             
+            private boolean isLegalDndOperation(int action, int[] draggedIndices, ImageListViewCellContents.CellAndElementData[] datas, int index, boolean isInsert) {
+                //TODO: correctness check (no duplicates) here
+                return true;
+            }
+            
             @Override
             public void exportDone(ImageListView source, Transferable data, int action) {
                 DefaultListModel model = (DefaultListModel)listView.getModel();
-                if (action == TransferHandler.MOVE) {
-                    if (draggedIndices != null) {
-                        for (int i = 0; i < draggedIndices.length; i++) {
-                            if (draggedIndices[i] >= addIndex) {
-                                draggedIndices[i] += addCount;
-                            }
-                        }
+                if (action == TransferHandler.MOVE && !currentDndIsIntraListMove) {
+                    //data was moved out of this list to somewhere else => need to remove it from here
+                    if (draggedIndices != null) { //should always be the case?
                         for (int i = draggedIndices.length - 1; i >= 0; i--) {
                             model.remove(draggedIndices[i]);
                         }
                     }
                 }
                 draggedIndices = null;
-                addCount = 0;
-                addIndex = -1;
             }
             
         };
