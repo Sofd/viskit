@@ -132,6 +132,10 @@ public interface ImageListView {
 
     public ImageListViewModelElement getSelectedValue();
 
+    public Object[] getSelectedValues();
+    
+    public int[] getSelectedIndices();
+    
     public int getMinSelectionIndex();
 
     public int getMaxSelectionIndex();

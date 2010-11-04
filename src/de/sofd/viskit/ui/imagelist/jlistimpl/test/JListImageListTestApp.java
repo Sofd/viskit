@@ -6,6 +6,9 @@ import java.awt.GraphicsConfiguration;
 import java.awt.GraphicsDevice;
 import java.awt.GraphicsEnvironment;
 import java.awt.GridLayout;
+import java.awt.datatransfer.DataFlavor;
+import java.awt.datatransfer.Transferable;
+import java.awt.datatransfer.UnsupportedFlavorException;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
@@ -32,11 +35,14 @@ import javax.swing.JComponent;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JToolBar;
 import javax.swing.ListModel;
 import javax.swing.ListSelectionModel;
 import javax.swing.SwingUtilities;
+import javax.swing.TransferHandler;
+import javax.swing.TransferHandler.TransferSupport;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 
@@ -97,6 +103,7 @@ import de.sofd.viskit.ui.imagelist.event.ImageListViewListener;
 import de.sofd.viskit.ui.imagelist.event.cellpaint.ImageListViewCellPaintEvent;
 import de.sofd.viskit.ui.imagelist.event.cellpaint.ImageListViewCellPaintListener;
 import de.sofd.viskit.ui.imagelist.glimpl.JGLImageListView;
+import de.sofd.viskit.ui.imagelist.gridlistimpl.DndSupport;
 import de.sofd.viskit.ui.imagelist.gridlistimpl.JGridImageListView;
 import de.sofd.viskit.ui.imagelist.jlistimpl.JListImageListView;
 import de.sofd.viskit.util.DicomUtil;
@@ -776,6 +783,7 @@ public class JListImageListTestApp {
                 //listView = newJGLImageListView();
                 listView = newJGridImageListView();
             }
+            setupDnd();
             this.add(listView, BorderLayout.CENTER);
             ImageListViewInitialWindowingController initWindowingController = new ImageListViewInitialWindowingController(listView) {
                 @Override
@@ -1048,7 +1056,225 @@ public class JListImageListTestApp {
         public JToolBar getToolbar() {
             return toolbar;
         }
+        
+        private void setupDnd() {
+            if (!(listView instanceof JGridImageListView)) {  //DnD support in GridILV only for now
+                return;
+            }
+            JGridImageListView gridListView = (JGridImageListView) listView;
+            gridListView.setDndSupport(dndSupport);
+        }
 
+        private DataFlavor ilvListCellFlavor = new DataFlavor(DataFlavor.javaJVMLocalObjectMimeType +
+                "; class=" + ImageListViewCellContents.class.getCanonicalName(),
+                "ImageListView cell contents");
+        
+        private DndSupport dndSupport = new DndSupport() {
+            /*
+             * At the moment, ImageListViews don't support having the same
+             * model element (identified by ILVModelElement#getKey) in a list
+             * more than once. This means that we can't support DnD operations
+             * that would create such duplicates, and move DnD operations within
+             * one list get more complicated: We have to perform the whole
+             * operation in #importData, first removing each element and then
+             * inserting it at the new position, rather than just copying the
+             * elements in #importData and afterwards remove the originals in
+             * #exportDone.
+             */
+            
+            private int[] draggedIndices;
+            private boolean currentDndIsIntraListMove;
+
+            @Override
+            public int getSourceActions(ImageListView source) {
+                return TransferHandler.COPY | TransferHandler.MOVE;
+            }
+            
+            @Override
+            public Transferable dragStart(ImageListView source, int action) {
+                final StringBuffer txt = new StringBuffer(30);
+                boolean start = true;
+                draggedIndices = listView.getSelectedIndices();
+                final ImageListViewModelElement[] elements = listView.getSelectedValues();
+                for (ImageListViewModelElement elt : elements) {
+                    if (!start) {
+                        txt.append("\n");
+                    }
+                    txt.append(elt.toString());
+                    start = false;
+                }
+                currentDndIsIntraListMove = false;
+                return new Transferable() {
+                    @Override
+                    public boolean isDataFlavorSupported(DataFlavor flavor) {
+                        return flavor.equals(DataFlavor.stringFlavor) || flavor.equals(ilvListCellFlavor);
+                    }
+                    @Override
+                    public DataFlavor[] getTransferDataFlavors() {
+                        return new DataFlavor[]{ilvListCellFlavor, DataFlavor.stringFlavor};
+                    }
+                    @Override
+                    public Object getTransferData(DataFlavor flavor)
+                            throws UnsupportedFlavorException, IOException {
+                        if (flavor.equals(ilvListCellFlavor)) {
+                            return new ImageListViewCellContents(elements);
+                        } else if (flavor.equals(DataFlavor.stringFlavor)) {
+                            return txt.toString();
+                        } else {
+                            throw new UnsupportedFlavorException(flavor);
+                        }
+                    }
+                };
+            }
+            
+            @Override
+            public boolean canImport(ImageListView source, TransferSupport ts, int index, boolean isInsert) {
+                return ts.isDataFlavorSupported(ilvListCellFlavor);
+            }
+
+            @Override
+            public boolean importData(ImageListView source, TransferSupport ts, int index, boolean isInsert) {
+                if (!canImport(source, ts, index, isInsert)) {
+                    return false;
+                }
+                DefaultListModel model = (DefaultListModel) listView.getModel();
+                try {
+                    //TODO list.setRenderedDropLocation(null);  //--necessary?
+                    int action = ts.getDropAction();
+                    Transferable t = ts.getTransferable();
+                    ImageListViewCellContents droppedCellContents = (ImageListViewCellContents) t.getTransferData(ilvListCellFlavor);
+                    System.out.println("importing: " + droppedCellContents);
+                    ImageListViewCellContents.CellAndElementData[] droppedEltDatas = droppedCellContents.getDatas();
+                    if (!isDropAllowed(action, droppedEltDatas, index, isInsert, draggedIndices)) {
+                        return false;
+                    }
+                    if (draggedIndices == null) {
+                        //data is being DnD'd from another list into this list
+                        currentDndIsIntraListMove = false;
+                        boolean first = true;
+                        for (int i = droppedEltDatas.length - 1; i >= 0; i--) {
+                            ImageListViewModelElement elt = droppedEltDatas[i].toElement();
+                            if (first) {
+                                if (isInsert) {
+                                    model.insertElementAt(elt, index);
+                                } else {
+                                    model.setElementAt(elt, index);
+                                }
+                                first = false;
+                            } else {
+                                model.insertElementAt(elt, index);
+                            }
+                        }
+                    } else {
+                        //list-internal move. Need to remove to-be-moved elements before inserting them at the target location
+                        //this is rather intricate; see doc/dnd/dnd-movenoduplicates-sample.pdf for an example
+                        assert(action == TransferHandler.MOVE); //because isDropAllowed() returned true
+                        currentDndIsIntraListMove = true;
+                        boolean mustInsert = isInsert;
+                        for (int i = draggedIndices.length - 1; i >= 0; i--) {
+                            int draggedIndex = draggedIndices[i];
+                            ImageListViewCellContents.CellAndElementData draggedEltData = droppedEltDatas[i];
+                            if (draggedIndex >= index) {
+                                if (draggedIndex == index && !mustInsert) {
+                                    //element would be moved onto itself => just start inserting with the next one and do nothing else
+                                    mustInsert = true;
+                                    continue;
+                                }
+                                model.removeElementAt(draggedIndex);
+                                ImageListViewModelElement newElt = draggedEltData.toElement();
+                                if (mustInsert) {
+                                    model.insertElementAt(newElt, index);
+                                    //all draggedIndices above index must be incremented because
+                                    //we just inserted an additional element at index
+                                    for (int i2 = i-1; i2 >=0; i2--) {
+                                        if (draggedIndices[i2] >= index) {
+                                            draggedIndices[i2]++;
+                                        }
+                                    }
+                                } else {
+                                    model.setElementAt(newElt, index);
+                                }
+                            } else {
+                                //draggedIndex < index
+                                model.removeElementAt(draggedIndex);
+                                //index must be decremented because we just removed an element from before it
+                                index--;
+                                ImageListViewModelElement newElt = draggedEltData.toElement();
+                                if (mustInsert) {
+                                    model.insertElementAt(newElt, index);
+                                } else {
+                                    model.setElementAt(newElt, index);
+                                }
+                            }
+                            
+                            mustInsert = true; //after the first moved element, all subsequent elements are inserted
+                        }
+                    }
+                    
+                    return true;
+                } catch (UnsupportedFlavorException e) {
+                    e.printStackTrace();
+                    return false;
+                } catch (IOException e) {
+                    e.printStackTrace();
+                    return false;
+                }
+            }
+            
+            private boolean isDropAllowed(int action, ImageListViewCellContents.CellAndElementData[] droppedEltDatas, int index, boolean isInsert, int[] draggedIndices) {
+                if (draggedIndices != null && action != TransferHandler.MOVE) {
+                    //list-internal copy operation would always create duplicates
+                    JOptionPane.showMessageDialog(listView, "Operation denied -- no duplicate elements allowed in a list.",
+                                                  "Error", JOptionPane.ERROR_MESSAGE);
+                    return false;
+                }
+                DefaultListModel model = (DefaultListModel) listView.getModel();
+                //pre-create list of recreated elements for performance
+                ImageListViewModelElement[] droppedElts = new ImageListViewModelElement[droppedEltDatas.length];
+                for (int i = 0; i < droppedEltDatas.length; i++) {
+                    droppedElts[i] = droppedEltDatas[i].toElement(false);
+                }
+                for (int i = 0; i < model.getSize(); i++) {
+                    if (draggedIndices != null && contains(draggedIndices, i)) {
+                        //list-internal move and i is a to-be-moved index
+                        continue;
+                    }
+                    ImageListViewModelElement elt = (ImageListViewModelElement) model.get(i);
+                    //copy or move. elt must not be equal to any of the droppedEltDatas
+                    for (ImageListViewModelElement droppedElt : droppedElts) {
+                        if (droppedElt.getKey().equals(elt.getKey())) {
+                            JOptionPane.showMessageDialog(listView, "Operation denied -- no duplicate elements allowed in a list.",
+                                    "Error", JOptionPane.ERROR_MESSAGE);
+                            return false;
+                        }
+                    }
+                }
+                return true;
+            }
+            
+            private boolean contains(int[] ints, int i) {
+                for (int i2: ints) {
+                    if (i2==i) { return true; }
+                }
+                return false;
+            }
+            
+            
+            @Override
+            public void exportDone(ImageListView source, Transferable data, int action) {
+                DefaultListModel model = (DefaultListModel)listView.getModel();
+                if (action == TransferHandler.MOVE && !currentDndIsIntraListMove) {
+                    //data was moved out of this list to somewhere else => need to remove it from here
+                    if (draggedIndices != null) { //should always be the case?
+                        for (int i = draggedIndices.length - 1; i >= 0; i--) {
+                            model.remove(draggedIndices[i]);
+                        }
+                    }
+                }
+                draggedIndices = null;
+            }
+            
+        };
     }
     
     protected JListImageListView newJListImageListView() {

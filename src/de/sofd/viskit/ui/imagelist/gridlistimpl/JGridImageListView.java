@@ -5,14 +5,23 @@ import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.GridLayout;
 import java.awt.Point;
+import java.awt.datatransfer.DataFlavor;
+import java.awt.datatransfer.Transferable;
+import java.awt.datatransfer.UnsupportedFlavorException;
+import java.awt.dnd.DropTargetDragEvent;
+import java.awt.dnd.DropTargetDropEvent;
+import java.awt.dnd.DropTargetEvent;
+import java.awt.dnd.DropTargetListener;
 import java.awt.event.ActionEvent;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelEvent;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.TooManyListenersException;
 
 import javax.swing.AbstractAction;
 import javax.swing.Action;
@@ -25,6 +34,8 @@ import javax.swing.KeyStroke;
 import javax.swing.ListModel;
 import javax.swing.ListSelectionModel;
 import javax.swing.SwingUtilities;
+import javax.swing.TransferHandler;
+import javax.swing.TransferHandler.TransferSupport;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.LineBorder;
 import javax.swing.event.ListDataEvent;
@@ -35,6 +46,7 @@ import org.apache.log4j.Logger;
 
 import de.sofd.swing.AbstractFramedSelectionGridListComponentFactory;
 import de.sofd.swing.JGridList;
+import de.sofd.swing.test.dnd.jgridlist.GridListCellContents;
 import de.sofd.util.DynScope;
 import de.sofd.util.IntRange;
 import de.sofd.util.Misc;
@@ -72,6 +84,8 @@ public class JGridImageListView extends JImageListView {
     protected DefaultListModel wrappedGridListModel;
 
     private boolean inExternalSetFirstVisibleIdx = false;
+    
+    protected DndSupport dndSupport;
 
     public JGridImageListView() {
         setLayout(new GridLayout(1, 1));
@@ -90,7 +104,6 @@ public class JGridImageListView extends JImageListView {
             }
         };
         setupInternalUiInteractions();
-        //wrappedGridList.setDragEnabled(true);
         wrappedGridList.setBackground(Color.BLACK);
         wrappedGridList.setVisible(true);
         this.add(wrappedGridList);
@@ -219,14 +232,18 @@ public class JGridImageListView extends JImageListView {
                 IntRange[] newlyVisibleRanges =   IntRange.subtract(newlyVisibleRange, previouslyVisibleRange);
                 for (IntRange r : newlyInvisibleRanges) {
                     for (int i = r.getMin(); i <= r.getMax(); i++) {
-                        logger.debug("setting to prio  0: index " + i);
-                        getElementAt(i).setPriority(this, 0);
+                        if (i < getLength()) {
+                            logger.debug("setting to prio  0: index " + i);
+                            getElementAt(i).setPriority(this, 0);
+                        }
                     }
                 }
                 for (IntRange r : newlyVisibleRanges) {
                     for (int i = r.getMin(); i <= r.getMax(); i++) {
-                        logger.debug("setting to prio 10: index " + i);
-                        getElementAt(i).setPriority(this, 10);
+                        if (i < getLength()) {
+                            logger.debug("setting to prio 10: index " + i);
+                            getElementAt(i).setPriority(this, 10);
+                        }
                     }
                 }
             }
@@ -357,12 +374,109 @@ public class JGridImageListView extends JImageListView {
         wrappedGridList.repaintCells();
     }
 
+
+    ////DnD support
+
+    public void setDndSupport(DndSupport dndSupport) {
+        this.dndSupport = dndSupport;
+        if (dndSupport == null) {
+            wrappedGridList.setDragEnabled(false);
+            wrappedGridList.setTransferHandler(null);
+            wrappedGridList.getDropTarget().removeDropTargetListener(wrappedGridListTH);
+        } else {
+            wrappedGridList.setDragEnabled(true);
+            wrappedGridList.setTransferHandler(wrappedGridListTH);
+            try {
+                wrappedGridList.getDropTarget().addDropTargetListener(wrappedGridListTH);
+            } catch (TooManyListenersException e) {
+                throw new RuntimeException("SHOULD NEVER HAPPEN", e);
+            }
+        }
+    }
+
+    public DndSupport getDndSupport() {
+        return dndSupport;
+    }
+    
+    protected WrappedGridListTransferHandler wrappedGridListTH = new WrappedGridListTransferHandler();
+    
+    protected class WrappedGridListTransferHandler extends TransferHandler implements DropTargetListener {
+        
+        private int sourceActions;
+        private boolean couldImport;
+        private JGridList.DropLocation lastDropLocation;
+
+        @Override
+        public boolean canImport(TransferSupport ts) {
+            lastDropLocation = wrappedGridList.getDropLocationFor(ts.getDropLocation().getDropPoint());
+            if (lastDropLocation != null) {
+                couldImport = dndSupport.canImport(JGridImageListView.this, ts, lastDropLocation.getIndex(), lastDropLocation.isInsert());
+            } else {
+                couldImport = false;
+            }
+            return couldImport;
+        }
+
+        @Override
+        public boolean importData(TransferSupport ts) {
+            JGridList.DropLocation dl= wrappedGridList.getDropLocationFor(ts.getDropLocation().getDropPoint());
+            if (dl != null) {
+                return dndSupport.importData(JGridImageListView.this, ts, dl.getIndex(), dl.isInsert());
+            } else {
+                return false;
+            }
+        }
+
+        @Override
+        public int getSourceActions(JComponent c) {
+            sourceActions = dndSupport.getSourceActions(JGridImageListView.this);
+            return sourceActions;
+        }
+        
+        @Override
+        protected Transferable createTransferable(JComponent c) {
+            sourceActions = dndSupport.getSourceActions(JGridImageListView.this); //just to be sure
+            return dndSupport.dragStart(JGridImageListView.this, sourceActions);
+        }
+        
+        @Override
+        protected void exportDone(JComponent source, Transferable data, int action) {
+            dndSupport.exportDone(JGridImageListView.this, data, action);
+            wrappedGridList.setRenderedDropLocation(null);
+        }
+
+
+        //DropTargetListener methods. Called by the list's DropTarget immediately
+        //AFTER the corresponding TransferHandler methods. E.g. dragOver() is
+        //called after a corresponding call of canImport().
+        
+        @Override
+        public void dropActionChanged(DropTargetDragEvent dtde) {
+        }
+        @Override
+        public void drop(DropTargetDropEvent dtde) {
+            wrappedGridList.setRenderedDropLocation(null);
+        }
+        @Override
+        public void dragOver(DropTargetDragEvent dtde) {
+            wrappedGridList.setRenderedDropLocation(couldImport ? lastDropLocation : null);
+        }
+        @Override
+        public void dragExit(DropTargetEvent dte) {
+            wrappedGridList.setRenderedDropLocation(null);
+        }
+        @Override
+        public void dragEnter(DropTargetDragEvent dtde) {
+        }
+    }
+
+    
     class WrappedGridListComponentFactory extends AbstractFramedSelectionGridListComponentFactory {
 
         public static final int BORDER_WIDTH = 2;
 
         public WrappedGridListComponentFactory() {
-            super(new EmptyBorder(BORDER_WIDTH,BORDER_WIDTH,BORDER_WIDTH,BORDER_WIDTH), new LineBorder(Color.RED, BORDER_WIDTH));
+            super(BORDER_WIDTH, Color.RED, Color.BLUE);
         }
 
         @Override
