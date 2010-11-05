@@ -19,15 +19,12 @@ import javax.swing.event.ListDataEvent;
 import org.dcm4che2.data.Tag;
 import org.lwjgl.opengl.GL11;
 
-import de.matthiasmann.twl.AnimationState;
 import de.matthiasmann.twl.Event;
 import de.matthiasmann.twl.GUI;
-import de.matthiasmann.twl.Label;
 import de.matthiasmann.twl.Scrollbar;
 import de.matthiasmann.twl.ThemeInfo;
 import de.matthiasmann.twl.Widget;
 import de.matthiasmann.twl.Scrollbar.Orientation;
-import de.matthiasmann.twl.renderer.Font;
 import de.sofd.lang.Runnable1;
 import de.sofd.twlawt.TwlToAwtMouseEventConverter;
 import de.sofd.util.IdentityHashSet;
@@ -40,7 +37,6 @@ import de.sofd.viskit.model.DicomImageListViewModelElement;
 import de.sofd.viskit.model.ImageListViewModelElement;
 import de.sofd.viskit.model.NotInitializedException;
 import de.sofd.viskit.model.ImageListViewModelElement.InitializationState;
-import de.sofd.viskit.test.jogl.coil.SharedContextData;
 import de.sofd.viskit.ui.imagelist.ImageListViewCell;
 import de.sofd.viskit.ui.imagelist.event.cellpaint.ImageListViewCellPaintEvent;
 import de.sofd.viskit.ui.imagelist.event.cellpaint.ImageListViewCellPaintListener;
@@ -56,10 +52,8 @@ public class TWLImageListView extends TWLImageListViewBase {
     public static final int CELL_BORDER_WIDTH = 2;
     private Widget canvas;
     private Scrollbar scrollBar;
-
-//    private static final SharedContextData sharedContextData = new SharedContextData();
-    
-    // fake context data
+   
+    // minimal context data
     private final Map<String, Object> sharedContextData = new HashMap<String, Object>();
     
     private final Collection<ImageListViewCellPaintListener> uninitializedCellPaintListeners
@@ -196,6 +190,7 @@ public class TWLImageListView extends TWLImageListViewBase {
                                 GL11.glVertex2f(- CELL_BORDER_WIDTH + 1,  cellHeight + CELL_BORDER_WIDTH);                            
                                 GL11.glEnd();
                             }
+                            GL11.glLineWidth(1);
                             cell.setLatestSize(new Dimension(cellWidth, cellHeight));
 
                             // clip
@@ -243,36 +238,6 @@ public class TWLImageListView extends TWLImageListViewBase {
                 GL11.glMatrixMode(GL11.GL_PROJECTION);
                 GL11.glPopMatrix();
                 GL11.glPopAttrib();
-                
-
-//                int matrix =  GL11.glGetInteger(GL11.GL_MATRIX_MODE );
-//                System.out.println(matrix);
-//                font.drawText(this.getAnimationState(), 50, 50, "blablablaaaaaa");
-                
-//                GL11.glPushAttrib(GL11.GL_CURRENT_BIT|GL11.GL_LIGHTING_BIT|GL11.GL_LINE_BIT|GL11.GL_HINT_BIT|GL11.GL_POLYGON_BIT|GL11.GL_ENABLE_BIT|GL11.GL_VIEWPORT_BIT|GL11.GL_TRANSFORM_BIT);
-//                GL11.glMatrixMode(GL11.GL_MODELVIEW);
-
-                
-//                GL11.glDisable(GL11.GL_TEXTURE_2D);
-//                GL11.glDisable(GL11.GL_LINE_SMOOTH);
-//                GL11.glHint(GL11.GL_LINE_SMOOTH_HINT, GL11.GL_FASTEST);
-//                GL11.glLineWidth(2);
-//                GL11.glPolygonMode(GL11.GL_FRONT_AND_BACK, GL11.GL_LINE);
-//                GL11.glShadeModel(GL11.GL_FLAT);
-//                GL11.glColor3f((float) 255F/ 255F,
-//                        (float) 0/ 255F,
-//                        (float) 0 / 255F);
-//                
-
-//                GL11.glBegin(GL11.GL_QUADS);
-//                GL11.glVertex2f(getInnerX()+1, getInnerY()+1);
-//                GL11.glVertex2f(getInnerX() + getInnerWidth()-1, getInnerY()+1);
-//                GL11.glVertex2f(getInnerX() + getInnerWidth()-1, getInnerY() + getInnerHeight()-1);
-//                GL11.glVertex2f(getInnerX()+1, getInnerY() + getInnerHeight()-1);
-//                GL11.glEnd();
-//                GL11.glPopAttrib();
-                
-
             }
         }
         

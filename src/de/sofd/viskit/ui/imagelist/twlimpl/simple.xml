@@ -333,6 +333,25 @@
             <area inset="2" tint="lime" xywh="25,5,1,1"/>
         </composed>
     </images>
+    
+    <!-- ROI Tool Panel Icons -->
+    <images file="selector.png" format="RGB" filter="linear">
+        <area name="selectoricon" xywh="0,0,20,20"/>
+    </images>
+    
+    <images file="ellipse.png" format="RGB" filter="linear">
+        <area name="ellipseicon" xywh="0,0,20,20"/>
+    </images>
+    
+    <images file="rectangle.png" format="RGB" filter="linear">
+        <area name="rectangleicon" xywh="0,0,20,20"/>
+    </images>
+    
+    <images file="polygon.png" format="RGB" filter="linear">
+        <area name="polygonicon" xywh="0,0,20,20"/>
+    </images>
+    
+    
 
     <include filename="cursors.xml"/>
     
@@ -365,6 +384,8 @@
         <param name="maxHeight"><int>0</int></param>
         <param name="inputMap"><inputMap>-defaultInputMap</inputMap></param>
     </theme>
+    
+
 
     <theme name="button" ref="-defaults" allowWildcard="true">
         <param name=""><image>button.*</image></param>
@@ -376,6 +397,23 @@
         <param name=""><image>togglebutton.*</image></param>
         <param name="border"><border>background.border</border></param>
     </theme>
+    
+    <theme name="selectortogglebutton" ref="togglebutton" allowWildcard="true">
+        <param name="background"><image>selectoricon</image></param>
+    </theme>
+
+    <theme name="ellipsetogglebutton" ref="togglebutton" allowWildcard="true">
+        <param name="background"><image>ellipseicon</image></param>
+    </theme>
+
+    <theme name="rectangletogglebutton" ref="togglebutton" allowWildcard="true">
+        <param name="background"><image>rectangleicon</image></param>
+    </theme>
+
+    <theme name="polygontogglebutton" ref="togglebutton" allowWildcard="true">
+        <param name="background"><image>polygonicon</image></param>
+    </theme>
+
 
     <theme name="radiobutton" ref="button" allowWildcard="true">
         <param name=""><image>radiobutton.*</image></param>
@@ -546,6 +584,17 @@
     	<param name="font"><font>canvasfont</font></param>
     </theme>
 
+    <theme name="synctoolpanel" ref="-defaults" allowWildcard="true">
+        <param name="alignment"><enum type="alignment">center</enum></param>
+        <param name="spacing"><int>2</int></param>
+        <param name="background"><image>white</image></param>
+                <theme name="label" ref="label" allowWildcard="true"/>
+        <theme name="button" ref="button" allowWildcard="true"/>
+        <theme name="checkbox" ref="checkbox" allowWildcard="true"/>
+        <theme name="togglebutton" ref="togglebutton" allowWildcard="true"/>
+    </theme>
+
+
     <theme name="panel" ref="-defaults">
         <param name="background"><image>-borderA</image></param>
         <param name="border"><border>background.border</border></param>
@@ -557,11 +606,21 @@
         <theme name="checkbox" ref="checkbox" allowWildcard="true"/>
         <theme name="combobox" ref="combobox" allowWildcard="true"/>
         <theme name="hslider" ref="hslider" allowWildcard="true"/>
+        <!-- viskit related themes -->
         <theme name="vscrollbar" ref ="vscrollbar" allowWildcard="true"/>
         <theme name="canvas" ref="canvas" allowWildcard="true"/>
+        <theme name="selectortogglebutton" ref="selectortogglebutton" allowWildcard="true"/>
+        <theme name="rectangletogglebutton" ref="rectangletogglebutton" allowWildcard="true"/>
+        <theme name="ellipsetogglebutton" ref="ellipsetogglebutton" allowWildcard="true"/>
+        <theme name="polygontogglebutton" ref="polygontogglebutton" allowWildcard="true"/>
+        <theme name="synctoolpanel" ref="synctoolpanel" allowWildcard="true"/>
+        <theme name="display" ref="label">
+            <param name=""><image>listbox.display.*</image></param>
+            <param name="font"><font>listbox-display</font></param>
+            <param name="border"><border>2</border></param>
+        </theme>
     </theme>
     
-
 
     <theme name="textarea" ref="-defaults" allowWildcard="true">
         <param name="background"><image>-borderC</image></param>

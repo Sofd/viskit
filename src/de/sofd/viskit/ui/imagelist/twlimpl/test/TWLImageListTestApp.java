@@ -13,9 +13,10 @@ import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 import javax.swing.DefaultListModel;
-import javax.swing.JCheckBox;
 import javax.swing.JFrame;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
@@ -23,9 +24,6 @@ import javax.swing.event.ListSelectionListener;
 import org.apache.log4j.BasicConfigurator;
 import org.dcm4che2.data.DicomObject;
 import org.dcm4che2.data.Tag;
-import org.jdesktop.beansbinding.BeanProperty;
-import org.jdesktop.beansbinding.Bindings;
-import org.jdesktop.beansbinding.AutoBinding.UpdateStrategy;
 import org.lwjgl.LWJGLException;
 
 import de.matthiasmann.twl.Alignment;
@@ -41,21 +39,26 @@ import de.matthiasmann.twl.model.BooleanModel;
 import de.matthiasmann.twl.model.ListModel;
 import de.matthiasmann.twl.model.SimpleBooleanModel;
 import de.matthiasmann.twl.model.SimpleChangableListModel;
-import de.matthiasmann.twl.renderer.Font;
+import de.matthiasmann.twl.renderer.Image;
 import de.matthiasmann.twl.renderer.lwjgl.LWJGLRenderer;
 import de.matthiasmann.twl.theme.ThemeManager;
 import de.sofd.swing.DefaultBoundedListSelectionModel;
 import de.sofd.twlawt.TWLAWTGLCanvas;
 import de.sofd.util.FloatRange;
+import de.sofd.viskit.controllers.GenericILVCellPropertySyncController;
 import de.sofd.viskit.controllers.ImageListViewInitialWindowingController;
 import de.sofd.viskit.controllers.ImageListViewInitialZoomPanController;
 import de.sofd.viskit.controllers.ImageListViewMouseMeasurementController;
 import de.sofd.viskit.controllers.ImageListViewMouseWindowingController;
 import de.sofd.viskit.controllers.ImageListViewMouseZoomPanController;
 import de.sofd.viskit.controllers.ImageListViewRoiInputEventController;
+import de.sofd.viskit.controllers.ImageListViewRoiToolApplicationController;
 import de.sofd.viskit.controllers.ImageListViewSelectionScrollSyncController;
+import de.sofd.viskit.controllers.ImageListViewSelectionSynchronizationController;
 import de.sofd.viskit.controllers.ImageListViewWindowingApplyToAllController;
 import de.sofd.viskit.controllers.ImageListViewZoomPanApplyToAllController;
+import de.sofd.viskit.controllers.MultiILVSyncSetController;
+import de.sofd.viskit.controllers.MultiImageListViewController;
 import de.sofd.viskit.controllers.cellpaint.ImageListViewImagePaintController;
 import de.sofd.viskit.controllers.cellpaint.ImageListViewInitStateIndicationPaintController;
 import de.sofd.viskit.controllers.cellpaint.ImageListViewPrintLUTController;
@@ -69,9 +72,12 @@ import de.sofd.viskit.model.IntuitiveFileNameComparator;
 import de.sofd.viskit.model.LookupTable;
 import de.sofd.viskit.model.LookupTables;
 import de.sofd.viskit.model.ModelFactory;
+import de.sofd.viskit.ui.imagelist.ImageListView;
 import de.sofd.viskit.ui.imagelist.ImageListViewCell;
 import de.sofd.viskit.ui.imagelist.ImageListView.ScaleMode;
 import de.sofd.viskit.ui.imagelist.twlimpl.TWLImageListView;
+import de.sofd.viskit.ui.twl.RoiToolWidget;
+import de.sofd.viskit.ui.twl.LutListBox.LutBoxDisplay;
 import de.sofd.viskit.util.DicomUtil;
 
 public class TWLImageListTestApp {
@@ -276,8 +282,11 @@ public class TWLImageListTestApp {
         private static final long serialVersionUID = 9180551822762846051L;
         protected ThemeManager theme;
         
+        private GUI gui;
+        
         private BoxLayout toolbar;
-
+        private List<Image> syncColorImgs = new ArrayList<Image>();
+        
         public MainTwlCanvas() throws LWJGLException {
             super();
         }
@@ -301,13 +310,25 @@ public class TWLImageListTestApp {
             }
             theme = newTheme;
             
-            getGUI().setSize();
-            getGUI().applyTheme(theme);
-            getGUI().setBackground(theme.getImageNoWarning("gui.background"));
+            Image whiteBackground = theme.getImage("white");
+            
+            for(Color c : syncColors) {
+                syncColorImgs.add(whiteBackground.createTintedVersion(new de.matthiasmann.twl.Color(c.getRGB())));
+            }
+            
+//            getGUI().setSize();
+//            getGUI().applyTheme(theme);
+//            getGUI().setBackground(theme.getImageNoWarning("gui.background"));
+            
+            gui.setSize();
+            gui.applyTheme(theme);
+            gui.setBackground(theme.getImageNoWarning("gui.background"));
+            
         }
 
         @Override
         protected GUI createGUI(LWJGLRenderer renderer) throws Exception {
+            
             final de.sofd.twl.GridLayout mainPane = new de.sofd.twl.GridLayout(2, 1);
             mainPane.setTheme(""); // "buttonBox");
 
@@ -331,20 +352,39 @@ public class TWLImageListTestApp {
             toolbar.setTheme("panel");
             toolbar.setAlignment(Alignment.CENTER);
 
-            toolbar.add(new Label("Main Toolbar: ROI / SYNC"));
+            RoiToolWidget roiToolPanel = new RoiToolWidget();
+            toolbar.add(roiToolPanel);
+            
+            toolbar.add(new Label("Sync: "));
 
             rootWidget.add(toolbar);
             rootWidget.add(mainPane);
             GUI gui = new GUI(rootWidget, renderer);
+            
+            this.gui = gui;
+            
+            loadTheme();
 
+            
+            List<ImageListView> lists = new ArrayList<ImageListView>();
             for (int i = 0; i < factory.getModelsCount(); i++) {
                 // slider, scale mode, windowing stuff etc.
-                final BoxLayout listToolbar = new BoxLayout(Direction.HORIZONTAL);
+                
+
+                final BoxLayout listToolbar = new BoxLayout(Direction.HORIZONTAL) {
+                    @Override
+                    protected void layout() {
+                        super.layout();
+                    }
+                };
                 listToolbar.setTheme("panel");
                 listToolbar.setAlignment(Alignment.CENTER);
                 listToolbar.add(new Label("ScaleMode: "));
                 
                 final TWLImageListView listView = new TWLImageListView();
+                
+                lists.add(listView);
+                
                 listView.setScaleMode(TWLImageListView.MyScaleMode.newCellGridMode(2, 2));
                 listView.setSelectionModel(new DefaultBoundedListSelectionModel());
                 listView.addCellMouseWheelListener(new MouseWheelListener() {
@@ -511,6 +551,10 @@ public class TWLImageListTestApp {
                 };
                 lutBox.setTooltipContent("Lookup Table Combo Box");
                 listToolbar.add(lutBox);
+                                
+//                final LutBoxDisplay lutTestDisplay = new LutBoxDisplay();
+//                lutTestDisplay.setData(LookupTables.getLut("sopha"));
+//                listToolbar.add(lutTestDisplay);
 
                 // add windowing all checkbox                
                 final ImageListViewWindowingApplyToAllController wndAllController = new ImageListViewWindowingApplyToAllController(listView);
@@ -627,7 +671,66 @@ public class TWLImageListTestApp {
                 listPanel.add(listToolbar);
                 listPanel.add(listView);
                 mainPane.add(listPanel);
+                
+                new ImageListViewRoiToolApplicationController(lists.toArray(new TWLImageListView[0])).setRoiToolPanel(roiToolPanel);
+                
+                for (final Color c : syncColors) {
+                    final MultiILVSyncSetController.SyncSet syncSet = multiSyncSetController.getSyncSet(c);
+//                    final JCheckBox cb = new JCheckBox();
+//                    cb.setBackground(c);
+//                    lvp.getToolbar().add(cb);
+//                    cb.addActionListener(new ActionListener() {
+//                        @Override
+//                        public void actionPerformed(ActionEvent e) {
+//                            if (cb.isSelected()) {
+//                                syncSet.addList(lvp.getListView());
+//                            } else {
+//                                syncSet.removeList(lvp.getListView());
+//                            }
+//                        }
+//                    });
+                }
+                
             }
+
+
+            for (Color c: syncColors) {
+                final MultiILVSyncSetController.SyncSet syncSet = multiSyncSetController.getSyncSet(c);
+                BoxLayout syncToolPanel = new BoxLayout();                
+                syncToolPanel.setTheme("synctoolpanel");
+                Image background = syncToolPanel.getBackground();
+ 
+//                Image tintedBackGround = background.createTintedVersion(new de.matthiasmann.twl.Color((byte) c.get, (byte) c.getGreen(),
+//                        (byte) c.getBlue(), (byte) c.getAlpha()));
+//                Image tintedBackGround = background.createTintedVersion(new de.matthiasmann.twl.Color(c.getRGB()));
+//                syncToolPanel.setBackground(tintedBackGround);
+                Image whitebackground = theme.getImage("white");                
+                syncToolPanel.setBackground(whitebackground.createTintedVersion(new de.matthiasmann.twl.Color(c.getRGB())));
+                
+                ToggleButton scb = new ToggleButton();
+                scb.setTheme("checkbox");
+//                cb.setModel(syncSet.getIsControllerSyncedModel("selection"));
+//                cb.setBackground(c);
+                syncToolPanel.add(scb);
+                syncToolPanel.add(new Label("selections "));
+                
+                ToggleButton wcb = new ToggleButton();
+                wcb.setTheme("checkbox");
+//                cb.setModel(syncSet.getIsControllerSyncedModel("windowing"));
+//                cb.setBackground(c);
+                syncToolPanel.add(wcb);
+                syncToolPanel.add(new Label("windowing "));
+
+                ToggleButton zcb = new ToggleButton();
+                zcb.setTheme("checkbox");
+//                cb.setModel(syncSet.getIsControllerSyncedModel("zoompan"));
+//                cb.setBackground(c);
+                syncToolPanel.add(zcb);
+                syncToolPanel.add(new Label("zoom/pan "));
+                
+                toolbar.add(syncToolPanel);
+            }
+            
             return gui;
         }
 
@@ -635,11 +738,45 @@ public class TWLImageListTestApp {
         protected void onGuiCreated() {
             super.onGuiCreated();
             try {
-                loadTheme();
+//                loadTheme();
             } catch (Exception e) {
                 throw new RuntimeException(e.getLocalizedMessage(), e);
             }
         }
+    }
+    
+    private Color[] syncColors = new Color[]{Color.red, Color.green, Color.cyan};
+    
+    MultiILVSyncSetController multiSyncSetController = new MultiILVSyncSetController();
+    {
+        for (Color c : syncColors) {
+            multiSyncSetController.addSyncSet(c);
+        }
+        multiSyncSetController.addSyncControllerType("selection", new MultiILVSyncSetController.SyncControllerFactory() {
+            @Override
+            public MultiImageListViewController createController() {
+                ImageListViewSelectionSynchronizationController result = new ImageListViewSelectionSynchronizationController();
+                result.setKeepRelativeSelectionIndices(true);
+                result.setEnabled(true);
+                return result;
+            }
+        });
+        multiSyncSetController.addSyncControllerType("windowing", new MultiILVSyncSetController.SyncControllerFactory() {
+            @Override
+            public MultiImageListViewController createController() {
+                GenericILVCellPropertySyncController result = new GenericILVCellPropertySyncController(new String[]{"windowLocation", "windowWidth"});
+                result.setEnabled(true);
+                return result;
+            }
+        });
+        multiSyncSetController.addSyncControllerType("zoompan", new MultiILVSyncSetController.SyncControllerFactory() {
+            @Override
+            public MultiImageListViewController createController() {
+                GenericILVCellPropertySyncController result = new GenericILVCellPropertySyncController(new String[]{"scale", "centerOffset"});
+                result.setEnabled(true);
+                return result;
+            }
+        });
     }
     
     public void hide() {

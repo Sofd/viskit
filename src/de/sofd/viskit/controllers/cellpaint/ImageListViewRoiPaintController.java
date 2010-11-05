@@ -9,7 +9,9 @@ import java.util.Map;
 import javax.media.opengl.GL2;
 
 import org.dcm4che2.data.Tag;
+import org.lwjgl.opengl.GL11;
 
+import de.matthiasmann.twl.renderer.lwjgl.LWJGLRenderer;
 import de.sofd.viskit.draw2d.gc.ViskitGC;
 import de.sofd.viskit.model.DicomImageListViewModelElement;
 import de.sofd.viskit.model.ImageListViewModelElement;
@@ -65,6 +67,27 @@ public class ImageListViewRoiPaintController extends CellPaintControllerBase {
             cell.getRoiDrawingViewer().paint(gc);
         } finally {
             gl.glPopMatrix();
+        }
+    }
+    
+    @Override
+    protected void paintLWJGL(ImageListViewCell cell, LWJGLRenderer renderer, Map<String,Object> sharedContextData) {
+        cell.getDisplayedModelElement();
+        ViskitGC gc = new ViskitGC(renderer);
+        GL11.glPushMatrix();
+        try {
+            Point2D centerOffset = cell.getCenterOffset();
+            float scale = (float) cell.getScale();
+            float w2 = (float) getOriginalImageWidth(cell) * scale / 2;
+            float h2 = (float) getOriginalImageHeight(cell) * scale / 2;
+            Dimension cellSize = cell.getLatestSize();
+            GL11.glTranslated(cellSize.getWidth() / 2, cellSize.getHeight() / 2, 0);
+            GL11.glTranslated(centerOffset.getX(), centerOffset.getY(), 0);
+            GL11.glTranslated(-w2, -h2, 0);
+
+            cell.getRoiDrawingViewer().paint(gc);
+        } finally {
+            GL11.glPopMatrix();
         }
     }
     

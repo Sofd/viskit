@@ -5,6 +5,7 @@ import de.sofd.draw2d.event.DrawingObjectTagChangeEvent;
 import de.sofd.draw2d.viewer.tools.DrawingViewerTool;
 import de.sofd.draw2d.viewer.tools.SelectorTool;
 import de.sofd.draw2d.viewer.tools.TagNames;
+import de.sofd.viskit.ui.RoiToolPane;
 import de.sofd.viskit.ui.RoiToolPanel;
 import de.sofd.viskit.ui.imagelist.ImageListView;
 import de.sofd.viskit.ui.imagelist.ImageListViewCell;
@@ -12,6 +13,7 @@ import de.sofd.viskit.ui.imagelist.event.ImageListViewCellAddEvent;
 import de.sofd.viskit.ui.imagelist.event.ImageListViewCellRemoveEvent;
 import de.sofd.viskit.ui.imagelist.event.ImageListViewEvent;
 import de.sofd.viskit.ui.imagelist.event.ImageListViewListener;
+
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
@@ -35,7 +37,7 @@ public class ImageListViewRoiToolApplicationController {
     static final Logger logger = Logger.getLogger(ImageListViewRoiToolApplicationController.class);
 
     private final List<ImageListView> lists = new ArrayList<ImageListView>();
-    private RoiToolPanel roiToolPanel;
+    private RoiToolPane roiToolPane;
     private boolean enabled = true;
     public static final String PROP_ENABLED = "enabled";
 
@@ -104,8 +106,8 @@ public class ImageListViewRoiToolApplicationController {
      *
      * @return the value of roiToolPanel
      */
-    public RoiToolPanel getRoiToolPanel() {
-        return roiToolPanel;
+    public RoiToolPane getRoiToolPanel() {
+        return roiToolPane;
     }
 
     /**
@@ -113,17 +115,17 @@ public class ImageListViewRoiToolApplicationController {
      *
      * @param roiToolPanel new value of roiToolPanel
      */
-    public void setRoiToolPanel(RoiToolPanel roiToolPanel) {
+    public void setRoiToolPanel(RoiToolPane roiToolPanel) {
         disconnectUiElements();
-        this.roiToolPanel = roiToolPanel;
+        this.roiToolPane = roiToolPanel;
         connectUiElements();
     }
 
     protected void connectUiElements() {
-        if (this.roiToolPanel == null || this.lists.isEmpty()) {
+        if (this.roiToolPane == null || this.lists.isEmpty()) {
             return;
         }
-        this.roiToolPanel.addPropertyChangeListener(roiToolChangeHandler);
+        this.roiToolPane.addPropertyChangeListener(roiToolChangeHandler);
         for (ImageListView lv : this.lists) {
             for (int i = 0; i < lv.getLength(); i++) {
                 lv.getElementAt(i).getRoiDrawing().addDrawingListener(drawingEventHandler);
@@ -134,10 +136,10 @@ public class ImageListViewRoiToolApplicationController {
     }
 
     protected void disconnectUiElements() {
-        if (this.roiToolPanel == null || this.lists.isEmpty()) {
+        if (this.roiToolPane == null || this.lists.isEmpty()) {
             return;
         }
-        this.roiToolPanel.removePropertyChangeListener(roiToolChangeHandler);
+        this.roiToolPane.removePropertyChangeListener(roiToolChangeHandler);
         for (ImageListView lv : this.lists) {
             for (int i = 0; i < lv.getLength(); i++) {
                 lv.getElementAt(i).getRoiDrawing().removeDrawingListener(drawingEventHandler);
@@ -153,7 +155,7 @@ public class ImageListViewRoiToolApplicationController {
             if (! RoiToolPanel.PROP_TOOLCLASS.equals(evt.getPropertyName())) {
                 return;
             }
-            activateToolClass(roiToolPanel.getToolClass());
+            activateToolClass(roiToolPane.getToolClass());
         }
     };
 
@@ -178,7 +180,7 @@ public class ImageListViewRoiToolApplicationController {
     private ImageListViewListener listCellAddRemoveHandler = new ImageListViewListener() {
         @Override
         public void onImageListViewEvent(ImageListViewEvent e) {
-            if (null == roiToolPanel) {
+            if (null == roiToolPane) {
                 // no ROI tool panel => we can assume we haven't connected our GUI elements. No action required.
                 return;
             }
@@ -190,7 +192,7 @@ public class ImageListViewRoiToolApplicationController {
                 ImageListViewCellAddEvent cae = (ImageListViewCellAddEvent) e;
                 ImageListViewCell cell = cae.getCell();
                 cell.getDisplayedModelElement().getRoiDrawing().addDrawingListener(drawingEventHandler);
-                activateToolClassOnCell(roiToolPanel.getToolClass(), cell);
+                activateToolClassOnCell(roiToolPane.getToolClass(), cell);
             } else if (e instanceof ImageListViewCellRemoveEvent) {
                 ImageListViewCellRemoveEvent cre = (ImageListViewCellRemoveEvent) e;
                 ImageListViewCell cell = cre.getCell();
@@ -227,7 +229,7 @@ public class ImageListViewRoiToolApplicationController {
                 activateToolClassOnCell(toolClass, lv.getCell(i));
             }
         }
-        roiToolPanel.setToolClass(toolClass);
+        roiToolPane.setToolClass(toolClass);
     }
 
     protected static void activateToolClassOnCell(Class<? extends DrawingViewerTool> toolClass, ImageListViewCell cell) {
