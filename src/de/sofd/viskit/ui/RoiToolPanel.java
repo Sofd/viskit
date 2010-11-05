@@ -30,7 +30,6 @@ public class RoiToolPanel extends javax.swing.JPanel implements RoiToolPane {
             new BiHashMap<JToggleButton, Class<? extends DrawingViewerTool> >();
 
     private Class<? extends DrawingViewerTool> toolClass;
-    public static final String PROP_TOOLCLASS = "toolClass";
 
     /** Creates new form RoiJPanel */
     public RoiToolPanel() {

@@ -6,7 +6,6 @@ import de.sofd.draw2d.viewer.tools.DrawingViewerTool;
 import de.sofd.draw2d.viewer.tools.SelectorTool;
 import de.sofd.draw2d.viewer.tools.TagNames;
 import de.sofd.viskit.ui.RoiToolPane;
-import de.sofd.viskit.ui.RoiToolPanel;
 import de.sofd.viskit.ui.imagelist.ImageListView;
 import de.sofd.viskit.ui.imagelist.ImageListViewCell;
 import de.sofd.viskit.ui.imagelist.event.ImageListViewCellAddEvent;
@@ -24,7 +23,7 @@ import org.apache.log4j.Logger;
 
 /**
  * Controller that maintains a list of references to {@link JImageListView} objects,
- * a reference to a {@link RoiToolPanel}, and
+ * a reference to a {@link RoiToolPane}, and
  * and a boolean "enabled" flag. If the flag is set to true, a DrawingViewer tool class
  * being selected in the panel leads to an instance of that tool being activated on
  * all cells of all the JImageListViews. Also, immediately after a drawing object has
@@ -152,7 +151,7 @@ public class ImageListViewRoiToolApplicationController {
     private PropertyChangeListener roiToolChangeHandler = new PropertyChangeListener() {
         @Override
         public void propertyChange(PropertyChangeEvent evt) {
-            if (! RoiToolPanel.PROP_TOOLCLASS.equals(evt.getPropertyName())) {
+            if (! RoiToolPane.PROP_TOOLCLASS.equals(evt.getPropertyName())) {
                 return;
             }
             activateToolClass(roiToolPane.getToolClass());

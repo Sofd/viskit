@@ -12,6 +12,7 @@ import de.sofd.draw2d.viewer.tools.DrawingViewerTool;
  */
 public interface RoiToolPane {
     
+    public static final String PROP_TOOLCLASS = "toolClass";
     
     public Class<? extends DrawingViewerTool> getToolClass();
     

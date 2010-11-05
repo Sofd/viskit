@@ -35,7 +35,6 @@ public class RoiToolWidget extends BoxLayout implements RoiToolPane{
         new BiHashMap<ToggleButton, Class<? extends DrawingViewerTool> >();
 
     private Class<? extends DrawingViewerTool> toolClass;
-    public static final String PROP_TOOLCLASS = "toolClass";
     
     private ToggleButton selectorToggleButton;
     private ToggleButton ellipseToggleButton;
