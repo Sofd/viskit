@@ -367,7 +367,7 @@ public class TWLImageListTestApp {
 
             
             List<ImageListView> lists = new ArrayList<ImageListView>();
-            for (int i = 0; i < factory.getModelsCount(); i++) {
+            for (String modelKey : factory.getAllModelKeys()) {
                 // slider, scale mode, windowing stuff etc.
                 
 
@@ -433,7 +433,7 @@ public class TWLImageListTestApp {
                     }
 
                 });
-                listView.setModel(factory.getModel(String.valueOf(i)));
+                listView.setModel(factory.getModel(modelKey));
                 listView.setTheme("panel");
                 listView.addListSelectionListener(new ListSelectionListener() {
 
