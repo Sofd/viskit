@@ -76,8 +76,8 @@ import de.sofd.viskit.ui.imagelist.ImageListView;
 import de.sofd.viskit.ui.imagelist.ImageListViewCell;
 import de.sofd.viskit.ui.imagelist.ImageListView.ScaleMode;
 import de.sofd.viskit.ui.imagelist.twlimpl.TWLImageListView;
+import de.sofd.viskit.ui.twl.LookupTableComboBox;
 import de.sofd.viskit.ui.twl.RoiToolWidget;
-import de.sofd.viskit.ui.twl.LutListBox.LutBoxDisplay;
 import de.sofd.viskit.util.DicomUtil;
 
 public class TWLImageListTestApp {
@@ -189,7 +189,8 @@ public class TWLImageListTestApp {
         frame.addWindowListener(new WindowAdapter() {
             @Override
             public void windowClosing(WindowEvent e) {
-                TWLImageListTestApp.this.hide();
+//                TWLImageListTestApp.this.hide();
+                System.exit(0);
             }
         });
         
@@ -535,26 +536,42 @@ public class TWLImageListTestApp {
                 listToolbar.add(new Label("lut:"));
                 final ListModel<LookupTable> lutModel = new SimpleChangableListModel<LookupTable>(LookupTables.getAllKnownLuts()) {
                 };
-                ComboBox<LookupTable> lutBox = new ComboBox<LookupTable>(lutModel) {
+//                ComboBox<LookupTable> lutBox = new ComboBox<LookupTable>(lutModel) {
+//                    
+//                    @Override
+//                    protected void listBoxSelectionChanged(boolean close) {
+//                        super.listBoxSelectionChanged(close);
+//                        int lutIdx = this.getSelected();
+//                        LookupTable lut = lutModel.getEntry(lutIdx);
+//                        // TODO set lut for sliders
+//                        System.out.println("activating lut: " + lut);
+//                        for (int i = 0; i < listView.getLength(); i++) {
+//                            listView.getCell(i).setLookupTable(lut);
+//                        }                        
+//                    }
+//                };
+//                lutBox.setTooltipContent("Lookup Table Combo Box");
+//                listToolbar.add(lutBox);
+                
+                // lookup table combo box
+                LookupTableComboBox lutListBox = new LookupTableComboBox(lutModel,listView.getSharedContextData()){
                     
                     @Override
                     protected void listBoxSelectionChanged(boolean close) {
-                        super.listBoxSelectionChanged(close);
+                        super.listBoxSelectionChanged(close);                            
                         int lutIdx = this.getSelected();
                         LookupTable lut = lutModel.getEntry(lutIdx);
                         // TODO set lut for sliders
                         System.out.println("activating lut: " + lut);
                         for (int i = 0; i < listView.getLength(); i++) {
                             listView.getCell(i).setLookupTable(lut);
-                        }                        
+                        }
                     }
+                
                 };
-                lutBox.setTooltipContent("Lookup Table Combo Box");
-                listToolbar.add(lutBox);
-                                
-//                final LutBoxDisplay lutTestDisplay = new LutBoxDisplay();
-//                lutTestDisplay.setData(LookupTables.getLut("sopha"));
-//                listToolbar.add(lutTestDisplay);
+                lutListBox.setTheme("combobox");
+                lutListBox.setTooltipContent("Lookup Table Combo Box");
+                listToolbar.add(lutListBox);
 
                 // add windowing all checkbox                
                 final ImageListViewWindowingApplyToAllController wndAllController = new ImageListViewWindowingApplyToAllController(listView);

@@ -54,10 +54,15 @@ public class TWLImageListView extends TWLImageListViewBase {
     private Scrollbar scrollBar;
    
     // minimal context data
-    private final Map<String, Object> sharedContextData = new HashMap<String, Object>();
+    private static final Map<String, Object> sharedContextData = new HashMap<String, Object>();
     
     private final Collection<ImageListViewCellPaintListener> uninitializedCellPaintListeners
     = new IdentityHashSet<ImageListViewCellPaintListener>();
+    
+    
+    public Map<String,Object> getSharedContextData() {
+        return sharedContextData;
+    }
     
     public TWLImageListView() {        
         ShaderManager.initializeManager(new LWJGLShaderFactory());

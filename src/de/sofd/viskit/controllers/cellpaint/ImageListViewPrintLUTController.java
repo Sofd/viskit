@@ -209,6 +209,7 @@ public class ImageListViewPrintLUTController extends CellPaintControllerBase {
 
             // draw border
             GL11.glDisable(GL11.GL_TEXTURE_2D);
+            GL11.glDisable(GL11.GL_BLEND);
 
             GL11.glBegin(GL11.GL_QUADS);
             GL11.glColor3f(0.5f, 0.5f, 0.5f);

@@ -503,7 +503,7 @@
     </theme>
 
     <fontDef name="listbox-display" filename="font.fnt" color="black">
-        <fontParam if="selected" color="white"/>
+        <fontParam if="selected" color="gray"/>
     </fontDef>
     <theme name="listbox" ref="-defaults" allowWildcard="true">
         <param name="background"><image>-borderC</image></param>

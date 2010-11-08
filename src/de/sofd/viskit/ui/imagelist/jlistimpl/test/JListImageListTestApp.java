@@ -727,8 +727,8 @@ public class JListImageListTestApp {
         public ListViewPanel() {
             this.setLayout(new BorderLayout());
             if (isUserHonglinh()) {
-                listView = newJGLImageListView();
-//                listView = newJGridImageListView();
+//                listView = newJGLImageListView();
+                listView = newJGridImageListView();
             } else if (isUserFokko()) {
                 //listView = newJGLImageListView();
                 listView = newJGridImageListView();
