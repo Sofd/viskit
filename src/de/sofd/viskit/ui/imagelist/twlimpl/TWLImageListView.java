@@ -38,6 +38,7 @@ import de.sofd.viskit.model.DicomImageListViewModelElement;
 import de.sofd.viskit.model.ImageListViewModelElement;
 import de.sofd.viskit.model.NotInitializedException;
 import de.sofd.viskit.model.ImageListViewModelElement.InitializationState;
+import de.sofd.viskit.ui.imagelist.CompListener;
 import de.sofd.viskit.ui.imagelist.ImageListViewCell;
 import de.sofd.viskit.ui.imagelist.event.cellpaint.ImageListViewCellPaintEvent;
 import de.sofd.viskit.ui.imagelist.event.cellpaint.ImageListViewCellPaintListener;
@@ -67,6 +68,12 @@ public class TWLImageListView extends TWLImageListViewBase {
         return sharedContextData;
     }
     
+    /**
+     * Constructor
+     * 
+     * @param awtGLCanvas
+     *            is needed to refresh repainting of the @link{AWTGLCanvas}
+     */
     public TWLImageListView(AWTGLCanvas awtGLCanvas) {        
         ShaderManager.initializeManager(new LWJGLShaderFactory());
         
@@ -87,16 +94,16 @@ public class TWLImageListView extends TWLImageListViewBase {
         setupInternalUiInteractions();
     }
     
-
-
-    
     @Override
     protected void layout() {
-        int w = scrollBar.getPreferredWidth();
+        int w = scrollBar.getPreferredWidth();        
+        Dimension oldCanvasSize = new Dimension(canvas.getWidth(),canvas.getHeight());
         canvas.setPosition(getInnerX(), getInnerY());
         canvas.setSize(getInnerWidth()-w, getInnerHeight());
         scrollBar.setPosition(getInnerX()+getInnerWidth()-w, getInnerY());
         scrollBar.setSize(w, getInnerHeight());
+        Dimension newCanvasSize = new Dimension(canvas.getWidth(),canvas.getHeight());
+        this.fireCompSizeChange(oldCanvasSize, newCanvasSize);
     }
     
     protected class Canvas extends Widget {
@@ -455,8 +462,6 @@ public class TWLImageListView extends TWLImageListViewBase {
             }
         }
     }
-
-
 
     protected static Collection<ScaleMode> supportedScaleModes;
     static {

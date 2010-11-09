@@ -316,6 +316,10 @@ public interface ImageListView {
     public void setForeground(Color fg);
 
     public void setBackground(Color bg);
+    
+    public void addCompListener(CompListener listener);
+    
+    public void removeCompListener(CompListener listener);
 
     public void addImageListViewListener(ImageListViewListener listener);
 

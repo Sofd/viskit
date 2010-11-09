@@ -84,7 +84,9 @@ public abstract class ImageListViewBaseImpl /*< extends $baseClass >*/ implement
     private String displayName = "";
     private ScaleMode scaleMode;
     private final Map<ImageListViewCell, Integer> cellToIndexMap = new IdentityHashMap<ImageListViewCell, Integer>();
-
+    private final List<CompListener> compListeners = new ArrayList<CompListener>();
+    
+    
     // TODO: it's probably better to use a map that uses normal (equals()/hashCode()-based)
     //       mapping for the modelElement => cell direction
     // TODO: maybe this should really be list of cell objects that tracks the model
@@ -165,6 +167,21 @@ public abstract class ImageListViewBaseImpl /*< extends $baseClass >*/ implement
 
 //</  #end
 
+    @Override
+    public void addCompListener(CompListener listener) {
+        compListeners.add(listener);
+    }
+    
+    @Override
+    public void removeCompListener(CompListener listener) {
+        compListeners.remove(listener);
+    }
+    
+    public void fireCompSizeChange(Dimension oldSize, Dimension newSize) {
+        for(CompListener listener : compListeners) {
+            listener.compResized(oldSize, newSize);
+        }
+    }
     
     /**
      * Set the value of model

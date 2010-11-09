@@ -6,6 +6,8 @@ import java.awt.Dimension;
 import java.awt.GridLayout;
 import java.awt.Point;
 import java.awt.event.ActionEvent;
+import java.awt.event.ComponentEvent;
+import java.awt.event.ComponentAdapter;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
@@ -76,6 +78,7 @@ public class JGridImageListView extends JImageListView {
     private boolean inExternalSetFirstVisibleIdx = false;
 
     public JGridImageListView() {
+
         setLayout(new GridLayout(1, 1));
         wrappedGridList = new JGridList() {
             @Override
@@ -102,6 +105,18 @@ public class JGridImageListView extends JImageListView {
         wrappedGridList.addMouseListener(wholeGridTestMouseHandler);
         wrappedGridList.addMouseMotionListener(wholeGridTestMouseHandler);
         wrappedGridList.addMouseWheelListener(wholeGridTestMouseHandler);
+        this.addComponentListener(new ComponentAdapter() {
+            private Dimension oldComponentSize = new Dimension();
+
+            
+            @Override
+            public void componentResized(ComponentEvent e) {
+                Dimension oldCompSize = new Dimension((int)oldComponentSize.getWidth(),(int)oldComponentSize.getHeight());
+                JGridImageListView.this.fireCompSizeChange(oldCompSize, e.getComponent().getSize());
+                oldComponentSize = e.getComponent().getSize();
+            }
+            
+        });
     }
     
     @Override

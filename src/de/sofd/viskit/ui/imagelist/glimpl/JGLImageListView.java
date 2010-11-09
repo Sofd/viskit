@@ -5,6 +5,8 @@ import java.awt.Dimension;
 import java.awt.EventQueue;
 import java.awt.Point;
 import java.awt.event.ActionEvent;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
@@ -58,6 +60,7 @@ import de.sofd.viskit.ui.imagelist.ImageListViewCell;
 import de.sofd.viskit.ui.imagelist.JImageListView;
 import de.sofd.viskit.ui.imagelist.event.cellpaint.ImageListViewCellPaintEvent;
 import de.sofd.viskit.ui.imagelist.event.cellpaint.ImageListViewCellPaintListener;
+import de.sofd.viskit.ui.imagelist.gridlistimpl.JGridImageListView;
 
 /**
  * JImageListView implementation that paints all cells onto a single aggregated
@@ -97,6 +100,18 @@ public class JGLImageListView extends JImageListView {
         scrollBar.getModel().addChangeListener(scrollbarChangeListener);
 
         setSelectionModel(new DefaultListSelectionModel());
+        this.addComponentListener(new ComponentAdapter() {
+            private Dimension oldComponentSize = new Dimension();
+            
+            @Override
+            public void componentResized(ComponentEvent e) {
+                Dimension oldCompSize = new Dimension((int)oldComponentSize.getWidth(),(int)oldComponentSize.getHeight());
+                JGLImageListView.this.fireCompSizeChange(oldCompSize, e.getComponent().getSize());
+                oldComponentSize = e.getComponent().getSize();
+            }
+            
+        });
+
     }
 
     private void createGlCanvas() {
