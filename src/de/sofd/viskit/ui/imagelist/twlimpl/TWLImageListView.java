@@ -17,6 +17,7 @@ import javax.swing.ListSelectionModel;
 import javax.swing.event.ListDataEvent;
 
 import org.dcm4che2.data.Tag;
+import org.lwjgl.opengl.AWTGLCanvas;
 import org.lwjgl.opengl.GL11;
 
 import de.matthiasmann.twl.Event;
@@ -52,6 +53,8 @@ public class TWLImageListView extends TWLImageListViewBase {
     public static final int CELL_BORDER_WIDTH = 2;
     private Widget canvas;
     private Scrollbar scrollBar;
+    private AWTGLCanvas awtGLCanvas;
+
    
     // minimal context data
     private static final Map<String, Object> sharedContextData = new HashMap<String, Object>();
@@ -64,12 +67,13 @@ public class TWLImageListView extends TWLImageListViewBase {
         return sharedContextData;
     }
     
-    public TWLImageListView() {        
+    public TWLImageListView(AWTGLCanvas awtGLCanvas) {        
         ShaderManager.initializeManager(new LWJGLShaderFactory());
         
         setScaleMode(new MyScaleMode(2, 2));        
         // adds the canvas
         setTheme("");
+        this.awtGLCanvas = awtGLCanvas;
         
         canvas = new Canvas();
         canvas.setTheme("canvas");
@@ -131,7 +135,8 @@ public class TWLImageListView extends TWLImageListViewBase {
         }
                 
         @Override
-        protected void paintWidget(GUI gui) {            
+        protected void paintWidget(GUI gui) {
+            
             GL11.glPushAttrib(GL11.GL_ALL_ATTRIB_BITS);            
             initializeUninitializedCellPaintListeners();
             GL11.glMatrixMode(GL11.GL_PROJECTION);
@@ -743,6 +748,8 @@ public class TWLImageListView extends TWLImageListViewBase {
                 }
             }
         });
+        
+        
 
 //        InputMap inputMap = this.getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
 //        ActionMap actionMap = this.getActionMap();
@@ -766,5 +773,45 @@ public class TWLImageListView extends TWLImageListViewBase {
 //            inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_RIGHT, 0), "right");
 //            actionMap.put("right", new SelectionShiftAction(1));
 //        }
+    }
+    
+    @Override
+    public void refreshCell(ImageListViewCell cell) {
+        if(awtGLCanvas != null) {
+            awtGLCanvas.repaint();
+        }
+        else {
+            super.refreshCell(cell);
+        }
+    }
+
+    @Override
+    public void refreshCellForElement(ImageListViewModelElement elt) {
+        if(awtGLCanvas != null) {
+            awtGLCanvas.repaint();
+        }
+        else {
+            super.refreshCellForElement(elt);
+        }
+    }
+
+    @Override
+    public void refreshCellForIndex(int idx) {
+        if(awtGLCanvas != null) {
+            awtGLCanvas.repaint();
+        }
+        else {
+            refreshCellForIndex(idx);
+        }
+    }
+
+    @Override
+    public void refreshCells() {
+        if(awtGLCanvas != null) {
+            awtGLCanvas.repaint();
+        }
+        else {
+            refreshCells();
+        }
     }
 }

@@ -382,7 +382,7 @@ public class TWLImageListTestApp {
                 listToolbar.setAlignment(Alignment.CENTER);
                 listToolbar.add(new Label("ScaleMode: "));
                 
-                final TWLImageListView listView = new TWLImageListView();
+                final TWLImageListView listView = new TWLImageListView(this);
                 
                 lists.add(listView);
                 
@@ -535,24 +535,7 @@ public class TWLImageListTestApp {
                 // add lookup table combo box
                 listToolbar.add(new Label("lut:"));
                 final ListModel<LookupTable> lutModel = new SimpleChangableListModel<LookupTable>(LookupTables.getAllKnownLuts()) {
-                };
-//                ComboBox<LookupTable> lutBox = new ComboBox<LookupTable>(lutModel) {
-//                    
-//                    @Override
-//                    protected void listBoxSelectionChanged(boolean close) {
-//                        super.listBoxSelectionChanged(close);
-//                        int lutIdx = this.getSelected();
-//                        LookupTable lut = lutModel.getEntry(lutIdx);
-//                        // TODO set lut for sliders
-//                        System.out.println("activating lut: " + lut);
-//                        for (int i = 0; i < listView.getLength(); i++) {
-//                            listView.getCell(i).setLookupTable(lut);
-//                        }                        
-//                    }
-//                };
-//                lutBox.setTooltipContent("Lookup Table Combo Box");
-//                listToolbar.add(lutBox);
-                
+                };                
                 // lookup table combo box
                 LookupTableComboBox lutListBox = new LookupTableComboBox(lutModel,listView.getSharedContextData()){
                     
