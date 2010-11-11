@@ -1,27 +1,27 @@
-package de.sofd.viskit.image3D.jogl.util;
+package de.sofd.viskit.image3D.util;
 
-import java.io.*;
-import javax.media.opengl.*;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 
-import org.apache.log4j.*;
+import org.apache.log4j.Logger;
 
 public abstract class Shader
 {
     protected static final Logger logger = Logger.getLogger(Shader.class);
     
-    protected GL2 gl;
+
     protected String shaderName;
     
-    public Shader( GL2 gl,
-                   String shaderName ) throws Exception
+    public Shader( String shaderName ) throws Exception
     {
-        this.gl = gl;
         this.shaderName = shaderName;
     }
     
     public abstract void bind();
     
-    public abstract void cleanUp( GL2 gl ); 
+    public abstract void cleanUp( ); 
     
     protected String readShader( String fname ) throws IOException
     {
@@ -42,9 +42,23 @@ public abstract class Shader
     }
     
     protected abstract void setupShader() throws Exception;
+    
 
     public abstract void unbind();
     
+    public abstract void addProgramUniform(String name);
     
+    public abstract void bindUniform(String name, boolean value);
+    
+    public abstract void bindUniform(String name, float value);
+    
+    public abstract void bindUniform(String name, float[] value);
+    
+    public abstract void bindUniform(String name, int value);
+    
+    
+    public abstract int getProgram();
+    
+    public abstract void setProgram(int program);
     
 }

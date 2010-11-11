@@ -8,15 +8,16 @@ import java.nio.*;
 import javax.media.opengl.*;
 
 import de.sofd.util.*;
+import de.sofd.viskit.image3D.util.Shader;
 import de.sofd.viskit.util.*;
 
 public class TransferIntegrationFrameBuffer extends FrameBuffer {
-    protected GLShader shader;
+    protected Shader shader;
 
     protected FloatBuffer transferFunction;
     protected int transferTexId;
 
-    public TransferIntegrationFrameBuffer(GLShader shader, FloatBuffer transferFunction, int transferTexId) {
+    public TransferIntegrationFrameBuffer(Shader shader, FloatBuffer transferFunction, int transferTexId) {
         super(new Size(transferFunction.capacity() / 4, transferFunction.capacity() / 4));
 
         this.shader = shader;

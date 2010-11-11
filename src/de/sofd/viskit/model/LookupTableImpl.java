@@ -47,6 +47,11 @@ public class LookupTableImpl implements LookupTable {
             return false;
         return true;
     }
+    
+    @Override
+    public String toString() {
+        return name;
+    }
 
     
 }

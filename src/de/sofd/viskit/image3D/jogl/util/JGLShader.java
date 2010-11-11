@@ -9,9 +9,12 @@ import javax.media.opengl.*;
 
 import com.sun.opengl.util.*;
 
-public class GLShader extends Shader
-{
+import de.sofd.viskit.image3D.util.Shader;
 
+public class JGLShader extends Shader
+{
+    protected GL2 gl;
+    
     protected boolean useGeomShader;
     protected int inputGeom;
     protected int outputGeom;
@@ -23,16 +26,17 @@ public class GLShader extends Shader
     
     protected HashMap<String, Integer> uniformMap = new HashMap<String, Integer>();
 
-    public GLShader(GL2 gl, String fname) throws Exception
+    public JGLShader(GL2 gl, String fname) throws Exception
     {
         this(gl, fname, false, -1, -1, -1 );
     }
 
-    public GLShader(GL2 gl, String shaderName, boolean useGeomShader,
+    public JGLShader(GL2 gl, String shaderName, boolean useGeomShader,
             int inputGeom, int outputGeom, int vertOut) throws Exception
     {
-        super(gl, shaderName);
+        super(shaderName);
 
+        this.gl = gl;
         this.useGeomShader = useGeomShader;
         this.inputGeom = inputGeom;
         this.outputGeom = outputGeom;
@@ -47,12 +51,7 @@ public class GLShader extends Shader
         setupShader();
         
     }
-    
-    public void addProgramUniform(String name)
-    {
-        int loc = gl.glGetUniformLocation(getProgram(), name);
-        uniformMap.put(name, loc);
-    }
+
     
     @Override
     public void bind()
@@ -60,16 +59,26 @@ public class GLShader extends Shader
         gl.glUseProgram(this.program);
     }
     
+    @Override
+    public void addProgramUniform(String name)
+    {
+        int loc = gl.glGetUniformLocation(getProgram(), name);
+        uniformMap.put(name, loc);
+    }
+    
+    @Override
     public void bindUniform(String name, boolean value)
     {
         gl.glUniform1i(uniformMap.get(name), ( value ? 1 : 0 ));
     }
     
+    @Override
     public void bindUniform(String name, float value)
     {
         gl.glUniform1f(uniformMap.get(name), value);
     }
     
+    @Override
     public void bindUniform(String name, float[] value) {
         switch ( value.length )
         {
@@ -89,16 +98,19 @@ public class GLShader extends Shader
         
     }
     
+    @Override
     public void bindUniform(String name, int value)
     {
         gl.glUniform1i(uniformMap.get(name), value);
     }
 
+    @Override
     public int getProgram()
     {
         return program;
     }
     
+    @Override
     public void setProgram(int program)
     {
         this.program = program;
@@ -198,9 +210,8 @@ public class GLShader extends Shader
     }
 
     @Override
-    public void cleanUp( GL2 gl ) {
+    public void cleanUp( ) {
         gl.glDeleteShader(shader);
         gl.glDeleteProgram(program);
     }
-    
 }

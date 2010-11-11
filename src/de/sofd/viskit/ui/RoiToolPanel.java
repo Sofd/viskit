@@ -7,11 +7,12 @@ import de.sofd.draw2d.viewer.tools.RectangleTool;
 import de.sofd.draw2d.viewer.tools.SelectorTool;
 import de.sofd.util.BiHashMap;
 import de.sofd.util.BiMap;
+
 import javax.swing.JToggleButton;
 import org.apache.log4j.Logger;
 
 /**
- * UI component that allows the user to interactively select a ROI drawing tool
+ * Swing UI component that allows the user to interactively select a ROI drawing tool
  * (e.g. ellipse tool, rectangle tool, selector tool) in the UI. The selection
  * is represented as the corresponding {@link DrawingViewerTool} subclass, e.g.
  * {@link EllipseTool}, {@link RectangleTool} or {@link SelectorTool}, which is
@@ -23,13 +24,12 @@ import org.apache.log4j.Logger;
  * selected tool class will be selected. These UI aspects aren't exposed through
  * the public API though, and may be changed by a subclass of this class.
  */
-public class RoiToolPanel extends javax.swing.JPanel {
+public class RoiToolPanel extends javax.swing.JPanel implements RoiToolPane {
 
     private final BiMap<JToggleButton, Class<? extends DrawingViewerTool> > toolClassesByButton =
             new BiHashMap<JToggleButton, Class<? extends DrawingViewerTool> >();
 
     private Class<? extends DrawingViewerTool> toolClass;
-    public static final String PROP_TOOLCLASS = "toolClass";
 
     /** Creates new form RoiJPanel */
     public RoiToolPanel() {
@@ -121,6 +121,7 @@ public class RoiToolPanel extends javax.swing.JPanel {
      *
      * @return the value of toolClass
      */
+    @Override
     public Class<? extends DrawingViewerTool> getToolClass() {
         return toolClass;
     }
@@ -130,6 +131,7 @@ public class RoiToolPanel extends javax.swing.JPanel {
      *
      * @param toolClass new value of toolClass
      */
+    @Override
     public void setToolClass(Class<? extends DrawingViewerTool> toolClass) {
         Class<? extends DrawingViewerTool> oldToolClass = this.toolClass;
         if (this.toolClass != toolClass) {

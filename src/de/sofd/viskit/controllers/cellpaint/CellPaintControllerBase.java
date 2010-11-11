@@ -9,6 +9,7 @@ import javax.media.opengl.GL;
 import javax.media.opengl.GL2;
 import javax.media.opengl.GLAutoDrawable;
 
+import de.matthiasmann.twl.renderer.lwjgl.LWJGLRenderer;
 import de.sofd.viskit.draw2d.gc.ViskitGC;
 import de.sofd.viskit.model.ImageListViewModelElement;
 import de.sofd.viskit.model.ImageListViewModelElement.InitializationState;
@@ -184,8 +185,12 @@ public class CellPaintControllerBase {
         if (e.getGc().isGraphics2DAvailable() && ! e.getGc().isGlPreferred()) {
             // paint using Java2D
             paintJ2D(cell, (Graphics2D) e.getGc().getGraphics2D().create());
-        } else {
-           // paint using OpenGL
+        } else if (e.getGc().isLWJGLRendererAvailable() && e.getGc().isLWJGLPreferred()) {
+            // paint using OpenGL (LWJGL)+
+            paintLWJGL(cell, (LWJGLRenderer)e.getGc().getLWJGLRenderer(), e.getSharedContextData());
+        }
+        else {
+           // paint using OpenGL (JOGL)
            paintGL(cell, e.getGc().getGl().getGL2(), e.getSharedContextData());
         }
     }
@@ -206,12 +211,18 @@ public class CellPaintControllerBase {
         
     }
     
+    public void glDrawableDisposing(GLAutoDrawable glAutoDrawable) {
+    }
+    
+    
     protected void paintGL(ImageListViewCell cell, GL2 gl, Map<String, Object> sharedContextData) {
         
     }
     
-    public void glDrawableDisposing(GLAutoDrawable glAutoDrawable) {
+    protected void paintLWJGL(ImageListViewCell cell, LWJGLRenderer renderer, Map<String,Object> sharedContextData) {
+        
     }
+    
     
     protected final PropertyChangeSupport propertyChangeSupport = new PropertyChangeSupport(this);
 

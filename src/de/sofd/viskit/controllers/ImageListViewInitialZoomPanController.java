@@ -1,6 +1,7 @@
 package de.sofd.viskit.controllers;
 
 import de.sofd.viskit.model.ImageListViewModelElement;
+import de.sofd.viskit.ui.imagelist.CompListener;
 import de.sofd.viskit.ui.imagelist.ImageListView;
 import de.sofd.viskit.ui.imagelist.ImageListViewCell;
 import de.sofd.viskit.ui.imagelist.event.cellpaint.ImageListViewCellPaintEvent;
@@ -91,9 +92,7 @@ public class ImageListViewInitialZoomPanController {
             oldControlledImageListView.removeCellPaintListener(cellHandler);
             oldControlledImageListView.removeCellPropertyChangeListener(cellHandler);
             oldControlledImageListView.removePropertyChangeListener(reseterOnModelOrScaleModeChange);
-            //TODO: avoid Swing (JComponent) dependency by introducing introduce UI-independent equivalent to add/RemoveComponentListener()
-            // into ImageListView
-            ((JComponent)oldControlledImageListView).removeComponentListener(reseterOnResize);
+            oldControlledImageListView.removeCompListener(compListener);           
         }
         if (null != controlledImageListView) {
             // add the paint listener below the image in the z-order, so it will be invoked
@@ -101,7 +100,7 @@ public class ImageListViewInitialZoomPanController {
             controlledImageListView.addCellPaintListener(ImageListView.PAINT_ZORDER_IMAGE - 1, cellHandler);
             controlledImageListView.addCellPropertyChangeListener(cellHandler);
             controlledImageListView.addPropertyChangeListener(reseterOnModelOrScaleModeChange);
-            ((JComponent)controlledImageListView).addComponentListener(reseterOnResize);
+            controlledImageListView.addCompListener(compListener);
             alreadyInitializedImagesKeys.clear();
         }
         propertyChangeSupport.firePropertyChange(PROP_CONTROLLEDIMAGELISTVIEW, oldControlledImageListView, controlledImageListView);
@@ -262,15 +261,17 @@ public class ImageListViewInitialZoomPanController {
         }
     };
     
-    private ComponentAdapter reseterOnResize = new ComponentAdapter() {
+    private CompListener compListener = new CompListener() {
+
         @Override
-        public void componentResized(ComponentEvent e) {
-            reset(/*true, false*/);
-            // TODO: what you may rather want is to reset scale and translation,
-            //   but only if they weren't changed manually before? But when would
-            //   you reset the scale/translation at all then? By manual user
-            //   request?
+        public void compResized(Dimension oldSize, Dimension newSize) {
+            reset();
+          // TODO: what you may rather want is to reset scale and translation,
+          //   but only if they weren't changed manually before? But when would
+          //   you reset the scale/translation at all then? By manual user
+          //   request?
         }
+        
     };
 
     

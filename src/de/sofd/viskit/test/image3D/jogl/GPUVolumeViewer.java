@@ -17,6 +17,7 @@ import de.sofd.viskit.image.*;
 import de.sofd.viskit.image3D.control.*;
 import de.sofd.viskit.image3D.jogl.model.*;
 import de.sofd.viskit.image3D.jogl.view.*;
+import de.sofd.viskit.image3D.util.ShaderManager;
 import de.sofd.viskit.image3D.view.*;
 import de.sofd.viskit.util.*;
 
@@ -41,6 +42,7 @@ public class GPUVolumeViewer extends JFrame implements MouseListener
 
     public static void main( String args[] )
     {
+
         JFrame.setDefaultLookAndFeelDecorated( true );
         JDialog.setDefaultLookAndFeelDecorated( true );
 

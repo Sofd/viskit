@@ -9,6 +9,7 @@ import java.nio.*;
 import javax.media.opengl.*;
 
 import de.sofd.viskit.image3D.jogl.util.*;
+import de.sofd.viskit.image3D.util.ShaderManager;
 import de.sofd.viskit.util.*;
 
 public class TransferFunction {
@@ -23,8 +24,11 @@ public class TransferFunction {
     
     protected boolean loadPreIntegrated = true;
     
+    protected ShaderManager shaderManager;
+    
     public TransferFunction() {
         setBuffer(ImageUtil.getRGBATransferFunction(Color.BLACK, Color.WHITE, 0.0f, 1.0f));
+        shaderManager = ShaderManager.getInstance();
     }
     
     public void bindTexture(GL2 gl) {
@@ -47,7 +51,7 @@ public class TransferFunction {
     }
     
     public void createIntegrationFbo(GL2 gl) throws Exception {
-        integrationFbo = new TransferIntegrationFrameBuffer(ShaderManager.get("transferIntegration"), buffer, texId);
+        integrationFbo = new TransferIntegrationFrameBuffer(shaderManager.get("transferIntegration"), buffer, texId);
         integrationFbo.createTexture(gl, GL_RGBA32F, GL_RGBA);
         integrationFbo.createFBO(gl);
     }

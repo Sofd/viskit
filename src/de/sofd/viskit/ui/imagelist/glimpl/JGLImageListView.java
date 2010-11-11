@@ -5,6 +5,8 @@ import java.awt.Dimension;
 import java.awt.EventQueue;
 import java.awt.Point;
 import java.awt.event.ActionEvent;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
@@ -46,6 +48,9 @@ import de.sofd.util.IntRange;
 import de.sofd.util.Misc;
 import de.sofd.viskit.draw2d.gc.ViskitGC;
 import de.sofd.viskit.image.ViskitImage;
+import de.sofd.viskit.image3D.jogl.util.JGLShaderFactory;
+import de.sofd.viskit.image3D.util.ShaderManager;
+import de.sofd.viskit.model.DicomImageListViewModelElement;
 import de.sofd.viskit.model.ImageListViewModelElement;
 import de.sofd.viskit.model.NotInitializedException;
 import de.sofd.viskit.model.ImageListViewModelElement.InitializationState;
@@ -92,6 +97,18 @@ public class JGLImageListView extends JImageListView {
         scrollBar.getModel().addChangeListener(scrollbarChangeListener);
 
         setSelectionModel(new DefaultListSelectionModel());
+        this.addComponentListener(new ComponentAdapter() {
+            private Dimension oldComponentSize = new Dimension();
+            
+            @Override
+            public void componentResized(ComponentEvent e) {
+                Dimension oldCompSize = new Dimension((int)oldComponentSize.getWidth(),(int)oldComponentSize.getHeight());
+                JGLImageListView.this.fireCompSizeChange(oldCompSize, e.getComponent().getSize());
+                oldComponentSize = e.getComponent().getSize();
+            }
+            
+        });
+
     }
 
     private void createGlCanvas() {
@@ -382,6 +399,9 @@ public class JGLImageListView extends JImageListView {
             // Use debug pipeline
             glAutoDrawable.setGL(new DebugGL2(glAutoDrawable.getGL().getGL2()));
             GL2 gl = glAutoDrawable.getGL().getGL2();
+            
+            ShaderManager.initializeManager(new JGLShaderFactory(gl));
+            
             gl.setSwapInterval(1);
             gl.glClearColor(0,0,0,0);
             gl.glShadeModel(gl.GL_FLAT);

@@ -13,6 +13,8 @@ import java.awt.dnd.DropTargetDropEvent;
 import java.awt.dnd.DropTargetEvent;
 import java.awt.dnd.DropTargetListener;
 import java.awt.event.ActionEvent;
+import java.awt.event.ComponentEvent;
+import java.awt.event.ComponentAdapter;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
@@ -88,6 +90,7 @@ public class JGridImageListView extends JImageListView {
     protected DndSupport dndSupport;
 
     public JGridImageListView() {
+
         setLayout(new GridLayout(1, 1));
         wrappedGridList = new JGridList() {
             @Override
@@ -114,6 +117,18 @@ public class JGridImageListView extends JImageListView {
         wrappedGridList.addMouseListener(wholeGridTestMouseHandler);
         wrappedGridList.addMouseMotionListener(wholeGridTestMouseHandler);
         wrappedGridList.addMouseWheelListener(wholeGridTestMouseHandler);
+        this.addComponentListener(new ComponentAdapter() {
+            private Dimension oldComponentSize = new Dimension();
+
+            
+            @Override
+            public void componentResized(ComponentEvent e) {
+                Dimension oldCompSize = new Dimension((int)oldComponentSize.getWidth(),(int)oldComponentSize.getHeight());
+                JGridImageListView.this.fireCompSizeChange(oldCompSize, e.getComponent().getSize());
+                oldComponentSize = e.getComponent().getSize();
+            }
+            
+        });
     }
     
     @Override

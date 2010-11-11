@@ -11,31 +11,43 @@ import java.awt.image.BufferedImageOp;
 import java.awt.image.Raster;
 import java.awt.image.RescaleOp;
 import java.awt.image.WritableRaster;
+import java.nio.IntBuffer;
 import java.nio.ShortBuffer;
 import java.util.Map;
 
 import javax.media.opengl.GL2;
 import javax.media.opengl.GLAutoDrawable;
+import javax.media.opengl.GLException;
 
+import org.apache.log4j.Logger;
 import org.dcm4che2.data.DicomObject;
 import org.dcm4che2.data.Tag;
+import org.lwjgl.opengl.GL11;
+import org.lwjgl.opengl.GL12;
+import org.lwjgl.opengl.GL13;
 
-import com.sun.opengl.util.texture.TextureCoords;
-
+import de.matthiasmann.twl.renderer.lwjgl.LWJGLRenderer;
 import de.sofd.math.LinAlg;
 import de.sofd.util.FloatRange;
 import de.sofd.viskit.image.RawImage;
 import de.sofd.viskit.image.ViskitImage;
-import de.sofd.viskit.image3D.jogl.util.GLShader;
-import de.sofd.viskit.image3D.jogl.util.ShaderManager;
+import de.sofd.viskit.controllers.cellpaint.texturemanager.GrayscaleRGBLookupTextureManager;
+import de.sofd.viskit.controllers.cellpaint.texturemanager.ImageTextureManager;
+import de.sofd.viskit.controllers.cellpaint.texturemanager.JGLGrayscaleRGBLookupTableTextureManager;
+import de.sofd.viskit.controllers.cellpaint.texturemanager.JGLImageTextureManager;
+import de.sofd.viskit.controllers.cellpaint.texturemanager.JGLLookupTableTextureManager;
+import de.sofd.viskit.controllers.cellpaint.texturemanager.LookupTableTextureManager;
+import de.sofd.viskit.controllers.cellpaint.texturemanager.LWJGLGrayscaleRGBLookupTableTextureManager;
+import de.sofd.viskit.controllers.cellpaint.texturemanager.LWJGLImageTextureManager;
+import de.sofd.viskit.controllers.cellpaint.texturemanager.LWJGLLookupTableTextureManager;
+import de.sofd.viskit.controllers.cellpaint.texturemanager.ImageTextureManager.TextureRef;
+import de.sofd.viskit.image3D.util.Shader;
+import de.sofd.viskit.image3D.util.ShaderManager;
 import de.sofd.viskit.model.DicomImageListViewModelElement;
 import de.sofd.viskit.model.ImageListViewModelElement;
 import de.sofd.viskit.model.LookupTable;
 import de.sofd.viskit.ui.imagelist.ImageListView;
 import de.sofd.viskit.ui.imagelist.ImageListViewCell;
-import java.nio.IntBuffer;
-import javax.media.opengl.GLException;
-import org.apache.log4j.Logger;
 
 /**
  * Cell-painting controller that paints the image of the cell's model element
@@ -46,12 +58,20 @@ import org.apache.log4j.Logger;
 public class ImageListViewImagePaintController extends CellPaintControllerBase {
 
     static final Logger logger = Logger.getLogger(ImageListViewImagePaintController.class);
-
+    
+    private static ShaderManager shaderManager = ShaderManager.getInstance();
+    private Shader rescaleShader;
+    private ImageTextureManager texManager;    
+    private LookupTableTextureManager lutTexManager;
+    private GrayscaleRGBLookupTextureManager grayScaleTexManager;
+    
+    private boolean isInitialized = false;
+    
     static {
-        ShaderManager.init("shader");
+        shaderManager.init("shader");
     }
 
-    private GLShader rescaleShader;
+
     
     public ImageListViewImagePaintController() {
         this(null, ImageListView.PAINT_ZORDER_IMAGE);
@@ -65,17 +85,20 @@ public class ImageListViewImagePaintController extends CellPaintControllerBase {
         super(controlledImageListView, zOrder);
     }
     
-    ///////////// OpenGL rendering
+    ///////////// OpenGL rendering with JOGL
     
     @Override
     protected void glDrawableInitialized(GLAutoDrawable glAutoDrawable) {
-        initializeGLShader(glAutoDrawable.getGL().getGL2());
+        texManager = JGLImageTextureManager.getInstance();
+        lutTexManager = JGLLookupTableTextureManager.getInstance();
+        grayScaleTexManager = JGLGrayscaleRGBLookupTableTextureManager.getInstance();
+        initializeGLShader();
     }
     
-    protected void initializeGLShader(GL2 gl) {
-        try {
-            ShaderManager.read(gl, "rescaleop");
-            rescaleShader = ShaderManager.get("rescaleop");
+    protected void initializeGLShader() {
+        try {        
+            shaderManager.read("rescaleop");
+            rescaleShader = shaderManager.get("rescaleop");
             rescaleShader.addProgramUniform("preScale");
             rescaleShader.addProgramUniform("preOffset");
             rescaleShader.addProgramUniform("scale");
@@ -88,6 +111,114 @@ public class ImageListViewImagePaintController extends CellPaintControllerBase {
             rescaleShader.addProgramUniform("grayscaleRgbTex");
         } catch (Exception e) {
             throw new RuntimeException("couldn't initialize GL shader: " + e.getLocalizedMessage(), e);
+        }
+    }
+    
+    
+    @Override
+    protected void paintLWJGL(ImageListViewCell cell, LWJGLRenderer renderer, Map<String,Object> sharedContextData) {
+        // TODO shader initialization by firing events like {@link ImageListViewCellPaintListener#glDrawableInitialized(GLAutoDrawable}
+        if(!isInitialized) {
+            initializeGLShader();
+            texManager = LWJGLImageTextureManager.getInstance();
+            lutTexManager = LWJGLLookupTableTextureManager.getInstance();
+            grayScaleTexManager = LWJGLGrayscaleRGBLookupTableTextureManager.getInstance();
+            isInitialized = true;
+        }
+        final ImageListViewModelElement elt = cell.getDisplayedModelElement();
+        final ViskitImage img = elt.getImage();
+        Dimension cellSize = cell.getLatestSize();
+
+        GL11.glPushMatrix();
+        GL11.glClear(GL11.GL_COLOR_BUFFER_BIT);    
+        try {
+            GL11.glTranslated(cellSize.getWidth() / 2, cellSize.getHeight() / 2, 0);
+            GL11.glTranslated(cell.getCenterOffset().getX(), cell.getCenterOffset().getY(), 0);
+            GL11.glScaled(cell.getScale(), cell.getScale(), 1);          
+            TextureRef texRef = texManager.bindImageTexture(null, GL13.GL_TEXTURE1, sharedContextData, cell.getDisplayedModelElement());
+            
+            LookupTable lut = cell.getLookupTable();
+            try {
+                rescaleShader.bind();  // TODO: rescaleShader's internal gl may be outdated here...? (but shaders are shared betw. contexts, so if it's outdated, we'll have other problems as well...)
+            } catch (Exception e) {
+                // TODO: this is a total hack to "resolve" the above. It should not really be done; there is no guarantee
+                // the exception is raised anyway
+                logger.error("binding the rescale GL shader failed, trying to compile it anew", e);
+                initializeGLShader();
+            }
+            rescaleShader.bindUniform("tex", 1);
+            if (cell.isOutputGrayscaleRGBs()) {
+                grayScaleTexManager.bindGrayscaleRGBLutTexture(null, GL13.GL_TEXTURE3, sharedContextData, cell.getDisplayedModelElement());
+                rescaleShader.bindUniform("grayscaleRgbTex", 3);
+                rescaleShader.bindUniform("useGrayscaleRGBOutput", true);
+                rescaleShader.bindUniform("useLut", false);
+                rescaleShader.bindUniform("useLutAlphaBlending", false);
+            } else if (lut != null) {
+                lutTexManager.bindLutTexture(null, GL13.GL_TEXTURE2, sharedContextData, cell.getLookupTable());
+                rescaleShader.bindUniform("lutTex", 2);
+                rescaleShader.bindUniform("useLut", true);
+                switch (cell.getCompositingMode()) {
+                case CM_BLEND:
+                    rescaleShader.bindUniform("useLutAlphaBlending", true);
+                    break;
+                default:
+                    rescaleShader.bindUniform("useLutAlphaBlending", false);
+                }
+                rescaleShader.bindUniform("useGrayscaleRGBOutput", false);
+            } else {
+                rescaleShader.bindUniform("useLut", false);
+                rescaleShader.bindUniform("useLutAlphaBlending", false);
+                rescaleShader.bindUniform("useGrayscaleRGBOutput", false);
+            }
+            rescaleShader.bindUniform("preScale", texRef.getPreScale());
+            rescaleShader.bindUniform("preOffset", texRef.getPreOffset());
+            {
+                FloatRange pxValuesRange = img.getMaximumPixelValuesRange();
+                float minGrayvalue = pxValuesRange.getMin();
+                float nGrayvalues = pxValuesRange.getDelta();
+                float wl = (cell.getWindowLocation() - minGrayvalue) / nGrayvalues;
+                float ww = cell.getWindowWidth() / nGrayvalues;
+                float scale = 1F/ww;
+                float offset = (ww/2-wl)*scale;
+                // HACK HACK: Apply DICOM rescale slope/intercept values if present. TODO: DICOM-specific code doesn't belong here?
+                // TODO: this will cause the "optimal windowing" parameters as calculated by e.g. ImageListViewInitialWindowingController
+                // to produce wrongly windowed images. Happens e.g. with the Charite dental images.
+                if (elt instanceof DicomImageListViewModelElement) {
+                    try {
+                        DicomImageListViewModelElement delt = (DicomImageListViewModelElement) elt;
+                        if (delt.getDicomImageMetaData().contains(Tag.RescaleSlope) && delt.getDicomImageMetaData().contains(Tag.RescaleIntercept)) {
+                            float rscSlope = delt.getDicomImageMetaData().getFloat(Tag.RescaleSlope);
+                            float rscIntercept = delt.getDicomImageMetaData().getFloat(Tag.RescaleIntercept) / nGrayvalues;
+                            offset = scale * rscIntercept + offset;
+                            scale = scale * rscSlope;
+                        }
+                    } catch (Exception e) {
+                        //ignore -- no error, use default preScale/preOffset
+                    }
+                }
+                rescaleShader.bindUniform("scale", scale);
+                rescaleShader.bindUniform("offset", offset);
+            }
+            // TODO: (GL_TEXTURE_ENV is ignored because a frag shader is active) make the compositing mode configurable (replace/combine)
+            GL11.glTexEnvi(GL11.GL_TEXTURE_ENV, GL11.GL_TEXTURE_ENV_MODE, GL11.GL_REPLACE);
+            GL11.glColor3f(0, 1, 0);
+            float w2 = (float) img.getWidth() / 2, h2 = (float) img.getHeight() / 2;
+            GL11.glBegin(GL11.GL_QUADS);
+            // TODO: wrong orientation here? check visually!       
+            GL11.glTexCoord2f(texRef.left(), texRef.top());
+            GL11.glVertex2f(-w2, h2);
+            GL11.glTexCoord2f(texRef.right(), texRef.top());
+            GL11.glVertex2f( w2,  h2);
+            GL11.glTexCoord2f(texRef.right(), texRef.bottom());
+            GL11.glVertex2f( w2, -h2);
+            GL11.glTexCoord2f(texRef.left(), texRef.bottom());
+            GL11.glVertex2f(-w2, -h2);
+            
+            GL11.glEnd();
+            texManager.unbindCurrentImageTexture(null);
+            rescaleShader.unbind();
+        } finally {
+            GL11.glPopMatrix();
         }
     }
 
@@ -104,7 +235,9 @@ public class ImageListViewImagePaintController extends CellPaintControllerBase {
             gl.glTranslated(cell.getCenterOffset().getX(), cell.getCenterOffset().getY(), 0);
             gl.glScaled(cell.getScale(), cell.getScale(), 1);
             //TODO: texture caching using img, not elt, as the cache key
-            ImageTextureManager.TextureRef texRef = ImageTextureManager.bindImageTexture(gl, GL2.GL_TEXTURE1, sharedContextData, cell.getDisplayedModelElement()/*, cell.isOutputGrayscaleRGBs()*/);
+
+            TextureRef texRef = texManager.bindImageTexture(gl, GL2.GL_TEXTURE1, sharedContextData, cell.getDisplayedModelElement()/*, cell.isOutputGrayscaleRGBs()*/);
+            
             LookupTable lut = cell.getLookupTable();
             try {
                 rescaleShader.bind();  // TODO: rescaleShader's internal gl may be outdated here...? (but shaders are shared betw. contexts, so if it's outdated, we'll have other problems as well...)
@@ -112,19 +245,19 @@ public class ImageListViewImagePaintController extends CellPaintControllerBase {
                 // TODO: this is a total hack to "resolve" the above. It should not really be done; there is no guarantee
                 // the exception is raised anyway
                 logger.error("binding the rescale GL shader failed, trying to compile it anew", e);
-                initializeGLShader(gl);
+                initializeGLShader();
             }
             //TODO: reuse the pixelTransform stuff from the J2D renderer (tryWindowRawImage()) and use only that in the
             // shader rather than the plethora of shader variables we have now
             rescaleShader.bindUniform("tex", 1);
             if (cell.isOutputGrayscaleRGBs()) {
-                GrayscaleRGBLookupTextureManager.bindGrayscaleRGBLutTexture(gl, GL2.GL_TEXTURE3, sharedContextData, cell.getDisplayedModelElement());
+                grayScaleTexManager.bindGrayscaleRGBLutTexture(gl, GL2.GL_TEXTURE3, sharedContextData, cell.getDisplayedModelElement());
                 rescaleShader.bindUniform("grayscaleRgbTex", 3);
                 rescaleShader.bindUniform("useGrayscaleRGBOutput", true);
                 rescaleShader.bindUniform("useLut", false);
                 rescaleShader.bindUniform("useLutAlphaBlending", false);
             } else if (lut != null) {
-                LookupTableTextureManager.bindLutTexture(gl, GL2.GL_TEXTURE2, sharedContextData, cell.getLookupTable());
+                lutTexManager.bindLutTexture(gl, GL2.GL_TEXTURE2, sharedContextData, cell.getLookupTable());
                 rescaleShader.bindUniform("lutTex", 2);
                 rescaleShader.bindUniform("useLut", true);
                 switch (cell.getCompositingMode()) {
@@ -173,21 +306,21 @@ public class ImageListViewImagePaintController extends CellPaintControllerBase {
             }
             // TODO: (GL_TEXTURE_ENV is ignored because a frag shader is active) make the compositing mode configurable (replace/combine)
             gl.glTexEnvi(GL2.GL_TEXTURE_ENV, GL2.GL_TEXTURE_ENV_MODE, gl.GL_REPLACE);
-            TextureCoords coords = texRef.getCoords();
             gl.glColor3f(0, 1, 0);
             float w2 = (float) img.getWidth() / 2, h2 = (float) img.getHeight() / 2;
             gl.glBegin(GL2.GL_QUADS);
             // TODO: wrong orientation here? check visually!
-            gl.glTexCoord2f(coords.left(), coords.top());
+           
+            gl.glTexCoord2f(texRef.left(), texRef.top());
             gl.glVertex2f(-w2, h2);
-            gl.glTexCoord2f(coords.right(), coords.top());
+            gl.glTexCoord2f(texRef.right(), texRef.top());
             gl.glVertex2f( w2,  h2);
-            gl.glTexCoord2f(coords.right(), coords.bottom());
+            gl.glTexCoord2f(texRef.right(), texRef.bottom());
             gl.glVertex2f( w2, -h2);
-            gl.glTexCoord2f(coords.left(), coords.bottom());
-            gl.glVertex2f(-w2, -h2);
+            gl.glTexCoord2f(texRef.left(), texRef.bottom());
+            gl.glVertex2f(-w2, -h2);            
             gl.glEnd();
-            ImageTextureManager.unbindCurrentImageTexture(gl);
+            texManager.unbindCurrentImageTexture(gl);
             rescaleShader.unbind();
         } finally {
             gl.glPopMatrix();

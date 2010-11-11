@@ -33,5 +33,6 @@
 	<classpathentry kind="lib" path="lib/jogl/newt.all.jar"/>
 	<classpathentry kind="lib" path="lib/vtk/vtk-5.2.1.jar"/>
 	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/de.sofd.swing"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/de.sofd.twlawt"/>
 	<classpathentry kind="output" path="build/classes"/>
 </classpath>

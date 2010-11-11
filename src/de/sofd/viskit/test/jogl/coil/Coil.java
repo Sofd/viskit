@@ -7,7 +7,7 @@ import com.sun.opengl.util.texture.TextureIO;
 import de.sofd.lang.Runnable2;
 import de.sofd.math.LinAlg;
 import de.sofd.util.DynScope;
-import de.sofd.viskit.image3D.jogl.util.GLShader;
+import de.sofd.viskit.image3D.jogl.util.JGLShader;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.Buffer;
@@ -211,7 +211,7 @@ public class Coil implements GLDrawableObject {
             gl.glTexParameteri(gl.GL_TEXTURE_2D, gl.GL_TEXTURE_WRAP_S, gl.GL_REPEAT);
             gl.glTexParameteri(gl.GL_TEXTURE_2D, gl.GL_TEXTURE_WRAP_T, gl.GL_REPEAT);
             gl.glTexEnvi(GL2.GL_TEXTURE_ENV, GL2.GL_TEXTURE_ENV_MODE, gl.GL_REPLACE);
-            GLShader shader = (GLShader) DynScope.get("shader");
+            JGLShader shader = (JGLShader) DynScope.get("shader");
             shader.bind();
             shader.bindUniform("tex", 0);
             coilTexture.enable();
@@ -228,7 +228,7 @@ public class Coil implements GLDrawableObject {
         gl.glCallList(coilDisplayList);
         if (isTextured) {
             coilTexture.disable();
-            GLShader shader = (GLShader) DynScope.get("shader");
+            JGLShader shader = (JGLShader) DynScope.get("shader");
             shader.unbind();
         } else {
             gl.glPopAttrib();

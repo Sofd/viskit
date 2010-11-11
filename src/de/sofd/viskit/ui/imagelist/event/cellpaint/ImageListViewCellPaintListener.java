@@ -50,6 +50,7 @@ public interface ImageListViewCellPaintListener {
      * @param glAutoDrawable
      */
     void glDrawableInitialized(GLAutoDrawable glAutoDrawable);
+    
 
     /**
      * Method that will be called every time a GL context is being set up whose

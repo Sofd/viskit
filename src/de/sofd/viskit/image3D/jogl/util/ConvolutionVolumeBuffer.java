@@ -7,15 +7,16 @@ import javax.media.opengl.*;
 
 import de.sofd.util.*;
 import de.sofd.viskit.image3D.jogl.model.*;
+import de.sofd.viskit.image3D.util.Shader;
 
 public class ConvolutionVolumeBuffer extends VolumeBuffer
 {
 
-    protected GLShader shader;
+    protected Shader shader;
 
     protected VolumeObject volumeObject;
     
-    public ConvolutionVolumeBuffer( IntDimension3D size, GLShader shader, VolumeObject volumeObject )
+    public ConvolutionVolumeBuffer( IntDimension3D size, Shader shader, VolumeObject volumeObject )
     {
         super( size );
         this.shader = shader;

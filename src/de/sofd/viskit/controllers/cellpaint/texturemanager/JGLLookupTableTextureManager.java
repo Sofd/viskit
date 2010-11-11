@@ -1,61 +1,36 @@
-package de.sofd.viskit.controllers.cellpaint;
+package de.sofd.viskit.controllers.cellpaint.texturemanager;
 
 import static javax.media.opengl.GL2GL3.GL_TEXTURE_1D;
 
 import java.nio.FloatBuffer;
-import java.util.LinkedHashMap;
 import java.util.Map;
 
 import javax.media.opengl.GL;
 import javax.media.opengl.GL2;
 
-import org.apache.log4j.Logger;
-
 import de.sofd.viskit.model.LookupTable;
 
-/**
- *
- * @author olaf
- */
-public class LookupTableTextureManager {
-
-    protected static final Logger logger = Logger.getLogger(LookupTableTextureManager.class);
-
-    public static class TextureRef {
-        private final int texId;
-
-        public TextureRef(int texId) {
-            this.texId = texId;
-        }
-
-        public int getTexId() {
-            return texId;
-        }
+public class JGLLookupTableTextureManager extends LookupTableTextureManager {
+    
+    private static final LookupTableTextureManager lutManager = new JGLLookupTableTextureManager();
+    
+    private JGLLookupTableTextureManager() {
+        
     }
-
-    private static class TextureRefStore {
-        private final LinkedHashMap<LookupTable, TextureRef> texRefsByImageKey = new LinkedHashMap<LookupTable, TextureRef>(256, 0.75F, true);
-
-        public boolean containsTextureFor(LookupTable lut) {
-            return texRefsByImageKey.containsKey(lut);
-        }
-
-        public TextureRef getTexRef(LookupTable lut) {
-            return texRefsByImageKey.get(lut);
-        }
-
-        public void putTexRef(LookupTable lut, TextureRef texRef, GL gl) {
-            texRefsByImageKey.put(lut, texRef);
-        }
-
+    
+    public static LookupTableTextureManager getInstance() {
+        return lutManager;
     }
+    
+    
 
-    private static final String TEX_STORE = "lutTexturesStore";
-
-    public static TextureRef bindLutTexture(GL2 gl, int texUnit, Map<String, Object> sharedContextData, LookupTable lut) {
+    @Override
+    public TextureRef bindLutTexture(Object glContext, int texUnit, Map<String, Object> sharedContextData,
+            LookupTable lut) {
         if (lut == null) {
             return null;
         }
+        GL2 gl = getGL2(glContext);
         
         TextureRefStore texRefStore = (TextureRefStore) sharedContextData.get(TEX_STORE);
         if (null == texRefStore) {
@@ -87,7 +62,7 @@ public class LookupTableTextureManager {
             gl.glTexParameteri(GL_TEXTURE_1D, GL.GL_TEXTURE_MIN_FILTER, GL.GL_NEAREST);
             gl.glTexParameteri(GL_TEXTURE_1D, GL.GL_TEXTURE_MAG_FILTER, GL.GL_NEAREST);
             texRef = new TextureRef(texId[0]);
-            texRefStore.putTexRef(lut, texRef, gl);
+            texRefStore.putTexRef(lut, texRef);
         }
         gl.glEnable(GL2.GL_TEXTURE_1D);
         gl.glActiveTexture(texUnit);
@@ -95,7 +70,18 @@ public class LookupTableTextureManager {
         return texRef;
     }
 
-    public static void unbindCurrentLutTexture(GL2 gl) {
+    @Override
+    public void unbindCurrentLutTexture(Object glContext) {
+        GL2 gl = getGL2(glContext);
         gl.glBindTexture(GL2.GL_TEXTURE_1D, 0);
+    }
+    
+    private GL2 getGL2(Object glContext) {
+        GL2 gl = null;
+        if(glContext instanceof GL2) {
+            gl = (GL2) glContext;
+        }
+        else throw new IllegalStateException("No GL2 Context passed!");
+        return gl;
     }
 }
