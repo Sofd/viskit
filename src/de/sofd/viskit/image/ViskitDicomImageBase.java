@@ -68,14 +68,14 @@ public abstract class ViskitDicomImageBase extends ViskitImageBase {
 
         if (result.getPixelType() != RawImage.PIXEL_TYPE_UNSIGNED_16BIT) {
             //signed
-            short[] shorts = dicomObject.getShorts(Tag.PixelData);
+            short[] shorts = dicomObject.getShorts(Tag.PixelData);   //TODO: we're relying on dcm4che's DICOM element caching here
             
             ShortBuffer tmp = ShortBuffer.wrap(shorts);
             tmp.position(height*width*frameNumber);
             result.setPixelData(tmp.slice());
         } else {
             //unsigned int
-            int[] ints = dicomObject.getInts(Tag.PixelData);
+            int[] ints = dicomObject.getInts(Tag.PixelData);         //TODO: we're relying on dcm4che's DICOM element caching here
             IntBuffer tmp = IntBuffer.wrap(ints);
             tmp.position(height*width*frameNumber);
             result.setPixelData(tmp.slice());
