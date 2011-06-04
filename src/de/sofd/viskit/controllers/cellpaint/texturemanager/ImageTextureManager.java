@@ -127,7 +127,7 @@ public abstract class ImageTextureManager {
                 Map.Entry<Object, TextureRef> oldestEntry = texRefsByImageKey.entrySet().iterator().next();
                 logger.debug("deleting texture to free up memory: " + oldestEntry.getKey());
                 TextureRef oldestTexRef = oldestEntry.getValue();
-                glDeleteTextures(null, 1, new int[]{oldestTexRef.getTexId()}, 0);
+                glDeleteTextures(null, 1, new int[]{oldestTexRef.getTexId()}, 0); //TODO: <<== BUG/regression! glDeleteTextures needs a glContext (1st param.); null triggers an exception
                 totalMemConsumption -= oldestTexRef.getMemorySize();
                 texRefsByImageKey.remove(oldestEntry.getKey());
             }
