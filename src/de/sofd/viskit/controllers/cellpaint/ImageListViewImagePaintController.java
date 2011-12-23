@@ -48,6 +48,7 @@ import de.sofd.viskit.model.ImageListViewModelElement;
 import de.sofd.viskit.model.LookupTable;
 import de.sofd.viskit.ui.imagelist.ImageListView;
 import de.sofd.viskit.ui.imagelist.ImageListViewCell;
+import java.nio.FloatBuffer;
 
 /**
  * Cell-painting controller that paints the image of the cell's model element
@@ -519,6 +520,7 @@ public class ImageListViewImagePaintController extends CellPaintControllerBase {
                 WritableRaster resultRaster = result.getRaster();
                 if (lut != null) {
                     //separate loop for LUTs to spare one if-then-else in the innermost loop body (the difference is probably neglectible though..)
+                    int[][] lutRGBAs = lut.getRGBA256intArrays();
                     for (int y = 0; y < h; y++) {
                         for (int x = 0; x < w; x++) {
                             int destLutIndex = (int)(txscale * srcBuffer.get(index++) + txoffset);
@@ -528,14 +530,7 @@ public class ImageListViewImagePaintController extends CellPaintControllerBase {
                             } else if (destLutIndex >= lutLength) {
                                 destLutIndex = lutLengthMinus1;
                             }
-                            destLutIndex *= 4; //=> index into the buffer. May have done this with the pixelTransform,
-                            //but would have to convert the result to a multiple of 4 afterwards then, which make it slower
-
-                            // TODO: for better performance, maybe set the whole pixel at once from
-                            //       a pre-computed IntBuffer version of the LUT containing each RGBA quadruple in one int
-                            resultRaster.setSample(x, y, 0, 255 * lut.getRGBAValues().get(destLutIndex));
-                            resultRaster.setSample(x, y, 1, 255 * lut.getRGBAValues().get(destLutIndex + 1));
-                            resultRaster.setSample(x, y, 2, 255 * lut.getRGBAValues().get(destLutIndex + 2));
+                            resultRaster.setPixel(x, y, lutRGBAs[destLutIndex]);
                         }
                     }
                 } else {
