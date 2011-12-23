@@ -533,9 +533,9 @@ public class ImageListViewImagePaintController extends CellPaintControllerBase {
 
                             // TODO: for better performance, maybe set the whole pixel at once from
                             //       a pre-computed IntBuffer version of the LUT containing each RGBA quadruple in one int
-                            resultRaster.setSample(x, y, 0, 256 * lut.getRGBAValues().get(destLutIndex));
-                            resultRaster.setSample(x, y, 1, 256 * lut.getRGBAValues().get(destLutIndex + 1));
-                            resultRaster.setSample(x, y, 2, 256 * lut.getRGBAValues().get(destLutIndex + 2));
+                            resultRaster.setSample(x, y, 0, 255 * lut.getRGBAValues().get(destLutIndex));
+                            resultRaster.setSample(x, y, 1, 255 * lut.getRGBAValues().get(destLutIndex + 1));
+                            resultRaster.setSample(x, y, 2, 255 * lut.getRGBAValues().get(destLutIndex + 2));
                         }
                     }
                 } else {
