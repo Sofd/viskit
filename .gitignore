@@ -2,3 +2,6 @@
 *.class
 build/
 dist/
+^.project
+^.classpath
+^.settings
