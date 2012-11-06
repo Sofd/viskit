@@ -222,7 +222,7 @@ public class DicomUtil {
         if ((iop = o.getFloats(tagPath)) != null)
             return iop;
         
-        tagPath[0] = Tag.PerframeFunctionalGroupsSequence;
+        tagPath[0] = Tag.PerFrameFunctionalGroupsSequence;
         tagPath[1] = frame;
         return o.getFloats(tagPath);
     }
