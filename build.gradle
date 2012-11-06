@@ -1,0 +1,47 @@
+dependencies {
+    compile project(':sofd_draw2d')
+    compile project(':sofd_swing')
+    compile project(':twl')
+    compile project(':sofd_twl')
+    compile project(':sofd_twlawt')
+    compile 'net.java.jinput:jinput:2.0.5'
+    compile 'dcm4che:dcm4che-core:2.0.24'
+    compile 'dcm4che:dcm4che-hp:2.0.24'
+    compile 'dcm4che:dcm4che-iod:2.0.24'
+    compile 'dcm4che:dcm4che-filecache:2.0.24'
+    compile 'dcm4che:dcm4che-net:2.0.24'
+    compile 'dcm4che:dcm4che-audit:2.0.24'
+    compile 'dcm4che:dcm4che-image:2.0.24'
+    compile 'dcm4che:dcm4che-imageio:2.0.24'
+    compile 'dcm4che:dcm4che-imageio-rle:2.0.24'
+    //compile 'org.jogamp.jogl:jogl-all:2.0-rc11' //moves stuff into org.jogamp package...
+    compile ':jogl.all'
+    compile ':nativewindow.all'
+    compile 'commons-lang:commons-lang:2.6'
+    compile 'commons-cli:commons-cli:1.2'
+    compile 'org.slf4j:slf4j-api:1.5.0'
+    compile 'org.slf4j:slf4j-log4j12:1.6.0'
+    //compile 'log4j:log4j:1.2.15'
+    compile ':concurrent'
+    compile ':vtk:5.2.1'
+    //compile 'org.jdesktop:appframework:1.0.3'
+    compile 'org.swinglabs:swingx:1.6.1'
+    compile 'org.jdesktop:beansbinding:1.2.1'
+    // compile ':lwjgl_util'
+    compile 'org.lwjgl.lwjgl:lwjgl:2.8.4'
+    // compile ':jai_imageio'
+}
+
+//TODO: auto-generation of *ImageListViewBase.java files from
+//./de/sofd/viskit/ui/imagelist/ImageListViewBaseImpl.java/*.pp.properties
+// (as of now, the generated files are checked into the VCS)
+
+
+task runTestApp(dependsOn:build) {
+    doLast {
+        project.javaexec {
+            setMain 'de.sofd.viskit.ui.imagelist.jlistimpl.test.JListImageListTestApp'
+            classpath project.sourceSets.main.runtimeClasspath
+        }
+    }
+}

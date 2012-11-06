@@ -48,7 +48,6 @@ import org.apache.log4j.Logger;
 
 import de.sofd.swing.AbstractFramedSelectionGridListComponentFactory;
 import de.sofd.swing.JGridList;
-import de.sofd.swing.test.dnd.jgridlist.GridListCellContents;
 import de.sofd.util.DynScope;
 import de.sofd.util.IntRange;
 import de.sofd.util.Misc;
