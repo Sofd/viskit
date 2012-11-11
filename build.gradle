@@ -17,6 +17,8 @@ dependencies {
     //compile 'org.jogamp.jogl:jogl-all:2.0-rc11' //moves stuff into org.jogamp package...
     compile ':jogl.all'
     compile ':nativewindow.all'
+    compile ':gluegen-rt'
+    compile ':newt.all'
     compile 'commons-lang:commons-lang:2.6'
     compile 'commons-cli:commons-cli:1.2'
     compile 'org.slf4j:slf4j-api:1.5.0'
@@ -27,8 +29,8 @@ dependencies {
     //compile 'org.jdesktop:appframework:1.0.3'
     compile 'org.swinglabs:swingx:1.6.1'
     compile 'org.jdesktop:beansbinding:1.2.1'
-    // compile ':lwjgl_util'
     compile 'org.lwjgl.lwjgl:lwjgl:2.8.4'
+    compile 'org.lwjgl.lwjgl:lwjgl_util:2.8.4'
     // compile ':jai_imageio'
 }
 
@@ -37,11 +39,48 @@ dependencies {
 // (as of now, the generated files are checked into the VCS)
 
 
+task cleanOldNatives << {
+    ant.delete(failonerror:false) {
+        fileset(dir:"src/dist") {
+            include(name:"**/*.so")
+            include(name:"**/*.dll")
+            include(name:"**/*.jnilib")
+            include(name:"**/*.dylib")
+        }
+    }
+    ant.delete(dir:"src/dist/bin/META-INF", failonerror:false)
+}
+
+task unpackNatives(dependsOn: cleanOldNatives) << {
+    configurations.compile.files.each { file ->
+        if (file.name.matches(".*native.*")) {
+            logger.debug("Unpacking " + file.name + " into src/dist...")
+            ant.unzip(src:file, dest:"src/dist/bin", overwrite:"true")
+        }
+    }
+    ant.delete(dir:"src/dist/bin/META-INF", failonerror:false)
+}
+
+compileJava.dependsOn(unpackNatives)
+
+
 task runTestApp(dependsOn:build) {
     doLast {
         project.javaexec {
             setMain 'de.sofd.viskit.ui.imagelist.jlistimpl.test.JListImageListTestApp'
             classpath project.sourceSets.main.runtimeClasspath
+            jvmArgs '-Djava.library.path=../lib/jogl/linux64', '-Xmx1024m', '-Xms256m'
+        }
+    }
+}
+
+
+task runTWLTestApp(dependsOn:build) {
+    doLast {
+        project.javaexec {
+            setMain 'de.sofd.viskit.ui.imagelist.twlimpl.test.TWLImageListTestApp'
+            classpath project.sourceSets.main.runtimeClasspath
+            jvmArgs '-Djava.library.path=src/dist/bin', '-Xmx1024m', '-Xms256m'
         }
     }
 }
