@@ -1,3 +1,7 @@
+configurations {
+    buildtoolsCompile
+}
+
 dependencies {
     compile project(':sofd_draw2d')
     compile project(':sofd_swing')
@@ -32,6 +36,12 @@ dependencies {
     compile 'org.lwjgl.lwjgl:lwjgl:2.8.4'
     compile 'org.lwjgl.lwjgl:lwjgl_util:2.8.4'
     // compile ':jai_imageio'
+
+    buildtoolsCompile 'org.apache.velocity:velocity:1.6.2'
+}
+
+sourceSets {
+    buildtools
 }
 
 //TODO: auto-generation of *ImageListViewBase.java files from
@@ -61,7 +71,22 @@ task unpackNatives(dependsOn: cleanOldNatives) << {
     ant.delete(dir:"src/dist/bin/META-INF", failonerror:false)
 }
 
-compileJava.dependsOn(unpackNatives)
+task generateMixins {
+    dependsOn buildtoolsClasses
+    doLast {
+        project.javaexec {
+            setMain 'de.sofd.viskit.ui.imagelist.ILVBaseMixinPreproc'
+            classpath project.sourceSets.buildtools.runtimeClasspath
+            args 'src/main/java', 'de/sofd/viskit/ui/imagelist/ImageListViewBaseImpl.java'
+        }
+    }
+}
+
+tasks.compileJava.dependsOn(unpackNatives)
+tasks.compileJava.dependsOn(generateMixins)
+tasks.eclipse.dependsOn(generateMixins)
+
+eclipse.classpath.plusConfigurations += configurations.buildtoolsCompile
 
 
 task runTestApp(dependsOn:build) {

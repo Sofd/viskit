@@ -777,8 +777,8 @@ public class JListImageListTestApp {
                 //listView = newJGLImageListView();
                 listView = newJGridImageListView();
             } else if (isUserOlaf()) {
-                //listView = newJGLImageListView();
-                listView = newJGridImageListView();
+                listView = newJGLImageListView();
+                //listView = newJGridImageListView();
             } else {
                 //listView = newJGLImageListView();
                 listView = newJGridImageListView();
