@@ -28,8 +28,6 @@ dependencies {
     compile 'org.slf4j:slf4j-api:1.5.0'
     compile 'org.slf4j:slf4j-log4j12:1.6.0'
     //compile 'log4j:log4j:1.2.15'
-    compile ':concurrent'
-    compile ':vtk:5.2.1'
     //compile 'org.jdesktop:appframework:1.0.3'
     compile 'org.swinglabs:swingx:1.6.1'
     compile 'org.jdesktop:beansbinding:1.2.1'

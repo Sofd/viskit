@@ -29,6 +29,8 @@ import org.lwjgl.opengl.GL13;
 import de.matthiasmann.twl.renderer.lwjgl.LWJGLRenderer;
 import de.sofd.math.LinAlg;
 import de.sofd.util.FloatRange;
+import de.sofd.viskit.glutil.Shader;
+import de.sofd.viskit.glutil.ShaderManager;
 import de.sofd.viskit.image.RawImage;
 import de.sofd.viskit.image.ViskitImage;
 import de.sofd.viskit.controllers.cellpaint.texturemanager.GrayscaleRGBLookupTextureManager;
@@ -41,8 +43,6 @@ import de.sofd.viskit.controllers.cellpaint.texturemanager.LWJGLGrayscaleRGBLook
 import de.sofd.viskit.controllers.cellpaint.texturemanager.LWJGLImageTextureManager;
 import de.sofd.viskit.controllers.cellpaint.texturemanager.LWJGLLookupTableTextureManager;
 import de.sofd.viskit.controllers.cellpaint.texturemanager.ImageTextureManager.TextureRef;
-import de.sofd.viskit.image3D.util.Shader;
-import de.sofd.viskit.image3D.util.ShaderManager;
 import de.sofd.viskit.model.DicomImageListViewModelElement;
 import de.sofd.viskit.model.ImageListViewModelElement;
 import de.sofd.viskit.model.LookupTable;

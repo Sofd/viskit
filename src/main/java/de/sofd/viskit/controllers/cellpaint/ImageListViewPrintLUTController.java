@@ -24,7 +24,7 @@ import de.matthiasmann.twl.renderer.lwjgl.LWJGLRenderer;
 import de.sofd.viskit.controllers.cellpaint.texturemanager.JGLLookupTableTextureManager;
 import de.sofd.viskit.controllers.cellpaint.texturemanager.LWJGLLookupTableTextureManager;
 import de.sofd.viskit.controllers.cellpaint.texturemanager.LookupTableTextureManager;
-import de.sofd.viskit.image3D.jogl.control.LutController;
+import de.sofd.viskit.glutil.control.LutController;
 import de.sofd.viskit.model.LookupTable;
 import de.sofd.viskit.ui.imagelist.ImageListView;
 import de.sofd.viskit.ui.imagelist.ImageListViewCell;

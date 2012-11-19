@@ -5,7 +5,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Map.Entry;
 
-import de.sofd.viskit.image3D.jogl.control.LutController;
+import de.sofd.viskit.glutil.control.LutController;
 import de.sofd.viskit.util.LutFunction;
 
 public class LookupTables {
