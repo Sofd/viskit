@@ -46,11 +46,9 @@ import de.sofd.lang.Runnable1;
 import de.sofd.util.IdentityHashSet;
 import de.sofd.util.IntRange;
 import de.sofd.util.Misc;
-import de.sofd.viskit.draw2d.gc.ViskitGC;
 import de.sofd.viskit.glutil.ShaderManager;
 import de.sofd.viskit.glutil.jogl.JGLShaderFactory;
 import de.sofd.viskit.image.ViskitImage;
-import de.sofd.viskit.model.DicomImageListViewModelElement;
 import de.sofd.viskit.model.ImageListViewModelElement;
 import de.sofd.viskit.model.NotInitializedException;
 import de.sofd.viskit.model.ImageListViewModelElement.InitializationState;
@@ -58,6 +56,7 @@ import de.sofd.viskit.ui.imagelist.ImageListViewCell;
 import de.sofd.viskit.ui.imagelist.JImageListView;
 import de.sofd.viskit.ui.imagelist.event.cellpaint.ImageListViewCellPaintEvent;
 import de.sofd.viskit.ui.imagelist.event.cellpaint.ImageListViewCellPaintListener;
+import de.sofd.viskit.ui.imagelist.glimpl.draw2d.GLGC;
 
 /**
  * JImageListView implementation that paints all cells onto a single aggregated
@@ -491,7 +490,7 @@ public class JGLImageListView extends JImageListView {
                         gl.glScissor(boxMinX + CELL_BORDER_WIDTH, boxMinY + CELL_BORDER_WIDTH, cellWidth, cellHeight);
     
                         // draw cell
-                        ViskitGC gc = new ViskitGC(gl);
+                        GLGC gc = new GLGC(gl);
                         
                         // call all CellPaintListeners in the z-order
                         try {
