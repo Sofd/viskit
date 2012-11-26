@@ -23,25 +23,25 @@ import org.lwjgl.opengl.GL11;
 import de.matthiasmann.twl.Event;
 import de.matthiasmann.twl.GUI;
 import de.matthiasmann.twl.Scrollbar;
+import de.matthiasmann.twl.Scrollbar.Orientation;
 import de.matthiasmann.twl.ThemeInfo;
 import de.matthiasmann.twl.Widget;
-import de.matthiasmann.twl.Scrollbar.Orientation;
+import de.sofd.draw2d.viewer.gc.GC;
 import de.sofd.lang.Runnable1;
 import de.sofd.twlawt.TwlToAwtMouseEventConverter;
 import de.sofd.util.IdentityHashSet;
 import de.sofd.util.IntRange;
 import de.sofd.util.Misc;
-import de.sofd.viskit.draw2d.gc.ViskitGC;
 import de.sofd.viskit.glutil.ShaderManager;
 import de.sofd.viskit.glutil.lwjgl.LWJGLShaderFactory;
 import de.sofd.viskit.model.DicomImageListViewModelElement;
 import de.sofd.viskit.model.ImageListViewModelElement;
-import de.sofd.viskit.model.NotInitializedException;
 import de.sofd.viskit.model.ImageListViewModelElement.InitializationState;
-import de.sofd.viskit.ui.imagelist.CompListener;
+import de.sofd.viskit.model.NotInitializedException;
 import de.sofd.viskit.ui.imagelist.ImageListViewCell;
 import de.sofd.viskit.ui.imagelist.event.cellpaint.ImageListViewCellPaintEvent;
 import de.sofd.viskit.ui.imagelist.event.cellpaint.ImageListViewCellPaintListener;
+import de.sofd.viskit.ui.imagelist.twlimpl.draw2d.LWJGLGC;
 
 /**
  * 
@@ -218,7 +218,7 @@ public class TWLImageListView extends TWLImageListViewBase {
                                 GL11.glScissor(boxMinX + CELL_BORDER_WIDTH+this.getX(), absYPos+boxMinY + CELL_BORDER_WIDTH, cellWidth, cellHeight);
                                 
                                 // call all CellPaintListeners in the z-order
-                                ViskitGC gc = new ViskitGC(gui.getRenderer());
+                                GC gc = new LWJGLGC();
                                 
                                 try {
                                     //TODO shared context data adaption for LWJGL context

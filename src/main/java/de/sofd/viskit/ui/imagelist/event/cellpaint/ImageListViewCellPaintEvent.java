@@ -1,18 +1,18 @@
 package de.sofd.viskit.ui.imagelist.event.cellpaint;
 
-import de.sofd.viskit.draw2d.gc.ViskitGC;
-import de.sofd.viskit.ui.imagelist.ImageListViewCell;
-import de.sofd.viskit.ui.imagelist.ImageListView;
-
 import java.awt.Rectangle;
 import java.util.EventObject;
 import java.util.Map;
+
+import de.sofd.draw2d.viewer.gc.GC;
+import de.sofd.viskit.ui.imagelist.ImageListView;
+import de.sofd.viskit.ui.imagelist.ImageListViewCell;
 
 /**
  * Event that indicates that a {@link ImageListViewCell} of a
  * {@link ImageListView} is being repainted. The receiver of the event (an
  * instance of {@link ImageListViewCellPaintListener}) can use the passed
- * {@link ViskitGC} of the event to paint anything into the cell.
+ * {@link GC} of the event to paint anything into the cell.
  * <p>
  * There may be several {@link ImageListViewCellPaintListener}s on the same
  * {@link ImageListView}, in which case they all participate in painting the
@@ -25,12 +25,12 @@ import java.util.Map;
  */
 public class ImageListViewCellPaintEvent extends EventObject {
 
-    private final ViskitGC gc;
+    private final GC gc;
     private final Rectangle clip;
     private Map<String, Object> sharedContextData;
     private boolean consumed = false;
     
-    public ImageListViewCellPaintEvent(ImageListViewCell source, ViskitGC gc, Rectangle clip, Map<String, Object> sharedContextData) {
+    public ImageListViewCellPaintEvent(ImageListViewCell source, GC gc, Rectangle clip, Map<String, Object> sharedContextData) {
         super(source);
         this.gc = gc;
         this.clip = clip;
@@ -44,9 +44,9 @@ public class ImageListViewCellPaintEvent extends EventObject {
 
     /**
      * 
-     * @return {@link ViskitGC} to draw onto
+     * @return {@link GC} to draw onto
      */
-    public ViskitGC getGc() {
+    public GC getGc() {
         return gc;
     }
 

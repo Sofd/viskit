@@ -5,9 +5,9 @@ import java.awt.Graphics2D;
 
 import org.apache.log4j.Logger;
 
-import de.sofd.viskit.draw2d.gc.ViskitGC;
-import de.sofd.viskit.model.NotInitializedException;
+import de.sofd.draw2d.viewer.gc.GC;
 import de.sofd.viskit.model.ImageListViewModelElement.InitializationState;
+import de.sofd.viskit.model.NotInitializedException;
 import de.sofd.viskit.ui.imagelist.ImageListViewCell;
 import de.sofd.viskit.ui.imagelist.JImageListView;
 import de.sofd.viskit.ui.imagelist.cellviewers.BaseImageListViewCellViewer;
@@ -44,14 +44,14 @@ public class ImageListViewCellViewer extends BaseImageListViewCellViewer {
 
         try {
             // call all CellPaintListeners in the z-order
-            ((JImageListView)getDisplayedCell().getOwner()).fireCellPaintEvent(new ImageListViewCellPaintEvent(getDisplayedCell(), new ViskitGC(g2d), null, null));
+            ((JImageListView)getDisplayedCell().getOwner()).fireCellPaintEvent(new ImageListViewCellPaintEvent(getDisplayedCell(), new GC(g2d), null, null));
         } catch (NotInitializedException e) {
             // a paint listener indicated that the cell's model element is uninitialized.
             // set the element's initializationState accordingly, repaint everything to let paint listeners to draw the right thing
             // TODO: clear out the cell before?
             logger.debug("NotInitializedException drawing " + getDisplayedCell().getDisplayedModelElement(), e);
             getDisplayedCell().getDisplayedModelElement().setInitializationState(InitializationState.UNINITIALIZED);
-            ((JImageListView)getDisplayedCell().getOwner()).fireCellPaintEvent(new ImageListViewCellPaintEvent(getDisplayedCell(), new ViskitGC(g2d), null, null));
+            ((JImageListView)getDisplayedCell().getOwner()).fireCellPaintEvent(new ImageListViewCellPaintEvent(getDisplayedCell(), new GC(g2d), null, null));
         } catch (Exception e) {
             logger.error("Exception drawing " + getDisplayedCell().getDisplayedModelElement() + ". Setting the model elt to permanent ERROR state.", e);
             //TODO: support the notion of "temporary" errors, for which we would not change the initializationState?
