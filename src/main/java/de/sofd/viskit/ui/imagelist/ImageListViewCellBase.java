@@ -1,9 +1,5 @@
 package de.sofd.viskit.ui.imagelist;
 
-import de.sofd.viskit.model.ImageListViewModelElement;
-import de.sofd.viskit.model.LookupTable;
-import de.sofd.draw2d.viewer.DrawingViewer;
-import de.sofd.viskit.draw2d.vieweradapters.ViskitDrawingObjectViewerAdapterFactory;
 import java.awt.Dimension;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Point2D;
@@ -14,6 +10,10 @@ import java.beans.PropertyChangeSupport;
 import java.beans.PropertyDescriptor;
 import java.util.HashSet;
 import java.util.Set;
+
+import de.sofd.draw2d.viewer.DrawingViewer;
+import de.sofd.viskit.model.ImageListViewModelElement;
+import de.sofd.viskit.model.LookupTable;
 
 /**
  * Base class for most {@link ImageListViewCell} implementations. Implements
@@ -45,8 +45,7 @@ public class ImageListViewCellBase implements ImageListViewCell {
         scale = 1.0;
         centerOffset = new Point2D.Double(0, 0);
         interactiveWindowingInProgress = false;
-        roiDrawingViewer = new DrawingViewer(displayedModelElement.getRoiDrawing(),
-                                             new ViskitDrawingObjectViewerAdapterFactory());
+        roiDrawingViewer = owner.getBackend().createRoiDrawingViewer(displayedModelElement, this);
     }
 
     @Override
