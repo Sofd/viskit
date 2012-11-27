@@ -23,7 +23,8 @@ public abstract class JImageListView extends JImageListViewBase {
 
     static final Logger logger = Logger.getLogger(JImageListView.class);
     
-    public JImageListView() {
+    public JImageListView(ImageListViewBackend backend) {
+        super(backend);
         ensureUiStateIsCopiedForAddedComponents();
     }
 

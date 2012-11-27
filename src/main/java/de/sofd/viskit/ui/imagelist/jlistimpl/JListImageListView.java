@@ -36,6 +36,7 @@ import de.sofd.viskit.model.ImageListViewModelElement;
 import de.sofd.viskit.ui.imagelist.ImageListViewCell;
 import de.sofd.viskit.ui.imagelist.JImageListView;
 import de.sofd.viskit.ui.imagelist.cellviewers.java2d.ImageListViewCellViewer;
+import de.sofd.viskit.ui.imagelist.j2dimpl.J2DImageListViewBackend;
 
 /**
  * JImageListView implementation that uses an aggreagated {@link JList}.
@@ -51,6 +52,7 @@ public class JListImageListView extends JImageListView {
     protected final JScrollPane wrappedListScrollPane;
 
     public JListImageListView() {
+        super(new J2DImageListViewBackend());
         setLayout(new GridLayout(1, 1));
         wrappedList = new JList();
         wrappedList.setVisible(true);

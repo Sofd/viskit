@@ -84,6 +84,7 @@ public class JGLImageListView extends JImageListView {
         = new IdentityHashSet<ImageListViewCellPaintListener>();
 
     public JGLImageListView() {
+        super(new GLImageListViewBackend());
         setLayout(new BorderLayout());
         if (instances.isEmpty() || sharedContextData.getGlContext() != null) {
             createGlCanvas();

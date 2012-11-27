@@ -543,4 +543,15 @@ public interface ImageListView {
     public Dimension getUnscaledPreferredCellDisplayAreaSize(
             ImageListViewCell cell);
 
+    /**
+     * The backend of this ImageListView. Generally, controllers attached to
+     * this list use this to perform backend-specific tasks like drawing onto
+     * the list's cells.
+     * <p>
+     * Must not change during the lifetime of the list.
+     * 
+     * @return
+     */
+    public ImageListViewBackend getBackend();
+    
 }

@@ -86,6 +86,8 @@ public abstract class ImageListViewBaseImpl /*< extends $baseClass >*/ implement
     private final Map<ImageListViewCell, Integer> cellToIndexMap = new IdentityHashMap<ImageListViewCell, Integer>();
     private final List<CompListener> compListeners = new ArrayList<CompListener>();
     
+    private final ImageListViewBackend backend;
+    
     
     // TODO: it's probably better to use a map that uses normal (equals()/hashCode()-based)
     //       mapping for the modelElement => cell direction
@@ -96,7 +98,8 @@ public abstract class ImageListViewBaseImpl /*< extends $baseClass >*/ implement
     private BiMap<ImageListViewModelElement, ImageListViewCell> cellsByElementMap
             = new BiIdentityHashMap<ImageListViewModelElement, ImageListViewCell>();
 
-    public ImageListViewBaseImpl() {
+    public ImageListViewBaseImpl(ImageListViewBackend backend) {
+        this.backend = backend;
     }
 
     /**
@@ -1404,6 +1407,11 @@ public abstract class ImageListViewBaseImpl /*< extends $baseClass >*/ implement
         result.width -= 2 * getCellBorderWidth();
         result.height -= 2 * getCellBorderWidth();
         return result;
+    }
+    
+    @Override
+    public ImageListViewBackend getBackend() {
+        return backend;
     }
 
 }

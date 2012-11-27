@@ -74,7 +74,8 @@ public class TWLImageListView extends TWLImageListViewBase {
      * @param awtGLCanvas
      *            is needed to refresh repainting of the @link{AWTGLCanvas}
      */
-    public TWLImageListView(AWTGLCanvas awtGLCanvas) {        
+    public TWLImageListView(AWTGLCanvas awtGLCanvas) {
+        super(new TWLImageListViewBackend());
         ShaderManager.initializeManager(new LWJGLShaderFactory());
         
         setScaleMode(new MyScaleMode(2, 2));        
