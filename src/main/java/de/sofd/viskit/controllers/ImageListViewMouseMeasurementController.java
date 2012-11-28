@@ -211,16 +211,6 @@ public class ImageListViewMouseMeasurementController {
         private Font cellFont;
         
         @Override
-        public void glDrawableInitialized(GLAutoDrawable glAutoDrawable) {
-        }
-        
-        @Override
-        public void glSharedContextDataInitialization(GL gl,
-                Map<String, Object> sharedData) {
-            cellFont = (Font) sharedData.get(TWLImageListView.CANVAS_FONT);
-        }
-        
-        @Override
         public void onCellPaint(ImageListViewCellPaintEvent e) {
             if (!isEnabled() || currentlyMeasuredCell != e.getSource() || startingPoint == null || draggedPoint == null) {
                 return;
@@ -280,10 +270,6 @@ public class ImageListViewMouseMeasurementController {
                     gl.glPopAttrib();
                 }
             }
-        }
-        
-        @Override
-        public void glDrawableDisposing(GLAutoDrawable glAutoDrawable) {
         }
 
     };

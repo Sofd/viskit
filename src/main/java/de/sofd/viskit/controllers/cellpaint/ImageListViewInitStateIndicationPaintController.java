@@ -15,6 +15,7 @@ import de.sofd.viskit.model.ImageListViewModelElement;
 import de.sofd.viskit.model.ImageListViewModelElement.InitializationState;
 import de.sofd.viskit.ui.imagelist.ImageListView;
 import de.sofd.viskit.ui.imagelist.ImageListViewCell;
+import de.sofd.viskit.ui.imagelist.event.cellpaint.ImageListViewCellPaintEvent;
 
 /**
  * Cell paint controller that draws indications into a cell if the cell's model

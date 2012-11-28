@@ -80,9 +80,6 @@ public class JGLImageListView extends JImageListView {
     protected static final Set<JGLImageListView> instances = new IdentityHashSet<JGLImageListView>();
     private static final SharedContextData sharedContextData = new SharedContextData();
     
-    private final Collection<ImageListViewCellPaintListener> uninitializedCellPaintListeners
-        = new IdentityHashSet<ImageListViewCellPaintListener>();
-
     public JGLImageListView() {
         super(new GLImageListViewBackend());
         setLayout(new BorderLayout());
@@ -129,32 +126,6 @@ public class JGLImageListView extends JImageListView {
     @Override
     public boolean isUiInitialized() {
         return cellsViewer != null;
-    }
-    
-    @Override
-    public void addCellPaintListener(int zOrder,
-            ImageListViewCellPaintListener listener) {
-        super.addCellPaintListener(zOrder, listener);
-        uninitializedCellPaintListeners.add(listener);
-    }
-    
-    @Override
-    public void removeCellPaintListener(ImageListViewCellPaintListener listener) {
-        super.removeCellPaintListener(listener);
-        uninitializedCellPaintListeners.remove(listener);
-    }
-    
-    protected void initializeUninitializedCellPaintListeners(final GL gl, final GLAutoDrawable glAutoDrawable) {
-        forEachCellPaintListenerInZOrder(new Runnable1<ImageListViewCellPaintListener>() {
-            @Override
-            public void run(ImageListViewCellPaintListener l) {
-                if (uninitializedCellPaintListeners.contains(l)) {
-                    l.glSharedContextDataInitialization(gl, sharedContextData.getAttributes());
-                    l.glDrawableInitialized(glAutoDrawable);
-                }
-            }
-        });
-        uninitializedCellPaintListeners.clear();
     }
     
     @Override
@@ -420,15 +391,13 @@ public class JGLImageListView extends JImageListView {
                     }
                 });
             }
-            initializeUninitializedCellPaintListeners(gl, glAutoDrawable);
+            getBackend().glSharedContextDataInitialization(gl, sharedContextData.getAttributes());
         }
 
         @Override
         public void display(GLAutoDrawable glAutoDrawable) {
             //System.out.println("DISP " + drawableToString(glAutoDrawable));
             GL2 gl = glAutoDrawable.getGL().getGL2();
-            
-            initializeUninitializedCellPaintListeners(gl, glAutoDrawable);
             
             gl.glClear(gl.GL_COLOR_BUFFER_BIT);
             gl.glMatrixMode(gl.GL_MODELVIEW);

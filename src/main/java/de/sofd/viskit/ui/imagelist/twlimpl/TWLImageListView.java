@@ -27,9 +27,7 @@ import de.matthiasmann.twl.Scrollbar.Orientation;
 import de.matthiasmann.twl.ThemeInfo;
 import de.matthiasmann.twl.Widget;
 import de.sofd.draw2d.viewer.gc.GC;
-import de.sofd.lang.Runnable1;
 import de.sofd.twlawt.TwlToAwtMouseEventConverter;
-import de.sofd.util.IdentityHashSet;
 import de.sofd.util.IntRange;
 import de.sofd.util.Misc;
 import de.sofd.viskit.glutil.ShaderManager;
@@ -40,7 +38,6 @@ import de.sofd.viskit.model.ImageListViewModelElement.InitializationState;
 import de.sofd.viskit.model.NotInitializedException;
 import de.sofd.viskit.ui.imagelist.ImageListViewCell;
 import de.sofd.viskit.ui.imagelist.event.cellpaint.ImageListViewCellPaintEvent;
-import de.sofd.viskit.ui.imagelist.event.cellpaint.ImageListViewCellPaintListener;
 import de.sofd.viskit.ui.imagelist.twlimpl.draw2d.LWJGLGC;
 
 /**
@@ -60,8 +57,7 @@ public class TWLImageListView extends TWLImageListViewBase {
     // minimal context data
     private static final Map<String, Object> sharedContextData = new HashMap<String, Object>();
     
-    private final Collection<ImageListViewCellPaintListener> uninitializedCellPaintListeners
-    = new IdentityHashSet<ImageListViewCellPaintListener>();
+    private boolean glContextInitialized = false;
     
     
     public Map<String,Object> getSharedContextData() {
@@ -146,7 +142,10 @@ public class TWLImageListView extends TWLImageListViewBase {
         protected void paintWidget(GUI gui) {
             
             GL11.glPushAttrib(GL11.GL_ALL_ATTRIB_BITS);            
-            initializeUninitializedCellPaintListeners();
+            if (!glContextInitialized) {
+                getBackend().glSharedContextDataInitialization(null, sharedContextData);
+                glContextInitialized = true;
+            }
             GL11.glMatrixMode(GL11.GL_PROJECTION);
             GL11.glPushMatrix();
             setupEye2ViewportTransformation(gui);
@@ -571,32 +570,6 @@ public class TWLImageListView extends TWLImageListViewBase {
     public Dimension getCurrentCellSize(ImageListViewCell cell) {
         return new Dimension(canvas.getInnerWidth() / getScaleMode().getCellColumnCount(),
                              canvas.getInnerHeight()/ getScaleMode().getCellRowCount());
-    }
-    
-    @Override
-    public void addCellPaintListener(int zOrder,
-            ImageListViewCellPaintListener listener) {
-        super.addCellPaintListener(zOrder, listener);
-        uninitializedCellPaintListeners.add(listener);
-    }
-    
-    @Override
-    public void removeCellPaintListener(ImageListViewCellPaintListener listener) {
-        super.removeCellPaintListener(listener);
-        uninitializedCellPaintListeners.remove(listener);
-    }
-    
-    protected void initializeUninitializedCellPaintListeners() {
-        forEachCellPaintListenerInZOrder(new Runnable1<ImageListViewCellPaintListener>() {
-            @Override
-            public void run(ImageListViewCellPaintListener l) {
-                if (uninitializedCellPaintListeners.contains(l)) {
-                    l.glSharedContextDataInitialization(null, sharedContextData);
-//                    l.glDrawableInitialized(glAutoDrawable);
-                }
-            }
-        });
-        uninitializedCellPaintListeners.clear();
     }
     
     protected IntRange previouslyVisibleRange = null;

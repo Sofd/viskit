@@ -1282,17 +1282,7 @@ public abstract class ImageListViewBaseImpl /*< extends $baseClass >*/ implement
     public void fireCellPaintEvent(ImageListViewCellPaintEvent e, int minZ, int maxZ) {
         ImageListViewCellPaintListener dummy = new ImageListViewCellPaintListener() {
             @Override
-            public void glSharedContextDataInitialization(GL gl,
-                    Map<String, Object> sharedData) {
-            }
-            @Override
-            public void glDrawableInitialized(GLAutoDrawable glAutoDrawable) {
-            }
-            @Override
             public void onCellPaint(ImageListViewCellPaintEvent e) {
-            }
-            @Override
-            public void glDrawableDisposing(GLAutoDrawable glAutoDrawable) {
             }
         };
         ListenerRecord<ImageListViewCellPaintListener> min = new ListenerRecord<ImageListViewCellPaintListener>(dummy, minZ);

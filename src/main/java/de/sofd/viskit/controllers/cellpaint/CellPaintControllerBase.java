@@ -1,19 +1,12 @@
 package de.sofd.viskit.controllers.cellpaint;
 
-import java.awt.Graphics2D;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
-import java.util.Map;
 
-import javax.media.opengl.GL;
-import javax.media.opengl.GL2;
-import javax.media.opengl.GLAutoDrawable;
-
-import de.matthiasmann.twl.renderer.lwjgl.LWJGLRenderer;
-import de.sofd.viskit.draw2d.gc.ViskitGC;
 import de.sofd.viskit.model.ImageListViewModelElement;
 import de.sofd.viskit.model.ImageListViewModelElement.InitializationState;
 import de.sofd.viskit.ui.imagelist.ImageListView;
+import de.sofd.viskit.ui.imagelist.ImageListViewBackend;
 import de.sofd.viskit.ui.imagelist.ImageListViewCell;
 import de.sofd.viskit.ui.imagelist.event.cellpaint.ImageListViewCellPaintEvent;
 import de.sofd.viskit.ui.imagelist.event.cellpaint.ImageListViewCellPaintListener;
@@ -23,18 +16,16 @@ import de.sofd.viskit.ui.imagelist.event.cellpaint.ImageListViewCellPaintListene
  * the cells of a ImageListView.
  * <p>
  * The base class implements managing the controlled ImageListView, implements
- * an enable flag and z y order value, takes care of refreshing the cells if the
+ * an enable flag and z-order value, takes care of refreshing the cells if the
  * controlled list or the enabled flag changes, and dispatches each cell paint
  * event to one of the methods {@link #paintJ2D(ImageListViewCell, Graphics2D)}
  * or {@link #paintGL(ImageListViewCell, GL2)}, depending on the capabilities of
  * the cell's {@link ViskitGC} that was passed in from the paint event.
  * <p>
- * Subclasses implement {@link #paintJ2D(ImageListViewCell, Graphics2D)} or
- * {@link #paintGL(ImageListViewCell, GL2)} (preferably both, to support
- * painting in both Java2D and OpenGL). Optionally, they may also override
- * {@link #glDrawableInitialized(GLAutoDrawable)} and/or
- * {@link #glDrawableDisposing(GLAutoDrawable)} if they want to perform work
- * once per OpenGL drawable context initialization/disposal.
+ * Subclasses implement {@link #paint(ImageListViewCellPaintEvent)} to perform
+ * the actual painting. Most likely, some or all of the work should be delegated
+ * to the list's {@link ImageListViewBackend}, which must contain all
+ * technology-specific code.
  * <p>
  * Generally, this class is meant as a base for simple cell paint controllers
  * whose sole purpose is to paint something at a specific z-order into the cells
@@ -146,21 +137,14 @@ public class CellPaintControllerBase {
         private boolean inProgrammedChange = false;
         
         @Override
-        public void glSharedContextDataInitialization(GL gl, Map<String, Object> sharedData) {
-            CellPaintControllerBase.this.glSharedContextDataInitialization(gl, sharedData);
-        }
-        
-        @Override
-        public void glDrawableInitialized(GLAutoDrawable glAutoDrawable) {
-            CellPaintControllerBase.this.glDrawableInitialized(glAutoDrawable);
-        }
-
-        @Override
         public void onCellPaint(ImageListViewCellPaintEvent e) {
             if (!isEnabled()) {
                 return;
             }
             if (inProgrammedChange) {
+                return;
+            }
+            if (!canPaintInitializationState(e.getSource().getDisplayedModelElement().getInitializationState())) {
                 return;
             }
             inProgrammedChange = true;
@@ -171,56 +155,18 @@ public class CellPaintControllerBase {
             }
         }
         
-        @Override
-        public void glDrawableDisposing(GLAutoDrawable glAutoDrawable) {
-            CellPaintControllerBase.this.glDrawableDisposing(glAutoDrawable);
-        }
     };
 
+    /**
+     * Paint callback. Empty by default, subclasses should override.
+     * 
+     * @param e
+     */
     protected void paint(ImageListViewCellPaintEvent e) {
-        ImageListViewCell cell = e.getSource();
-        if (!canPaintInitializationState(cell.getDisplayedModelElement().getInitializationState())) {
-            return;
-        }
-        if (e.getGc().isGraphics2DAvailable() && ! e.getGc().isGlPreferred()) {
-            // paint using Java2D
-            paintJ2D(cell, (Graphics2D) e.getGc().getGraphics2D().create());
-        } else if (e.getGc().isLWJGLRendererAvailable() && e.getGc().isLWJGLPreferred()) {
-            // paint using OpenGL (LWJGL)+
-            paintLWJGL(cell, (LWJGLRenderer)e.getGc().getLWJGLRenderer(), e.getSharedContextData());
-        }
-        else {
-           // paint using OpenGL (JOGL)
-           paintGL(cell, e.getGc().getGl().getGL2(), e.getSharedContextData());
-        }
     }
     
     protected boolean canPaintInitializationState(ImageListViewModelElement.InitializationState initState) {
         return initState == InitializationState.INITIALIZED;
-    }
-    
-    protected void paintJ2D(ImageListViewCell cell, Graphics2D g2d) {
-        
-    }
-    
-    protected void glDrawableInitialized(GLAutoDrawable glAutoDrawable) {
-        
-    }
-    
-    protected void glSharedContextDataInitialization(GL gl, Map<String, Object> sharedData) {
-        
-    }
-    
-    public void glDrawableDisposing(GLAutoDrawable glAutoDrawable) {
-    }
-    
-    
-    protected void paintGL(ImageListViewCell cell, GL2 gl, Map<String, Object> sharedContextData) {
-        
-    }
-    
-    protected void paintLWJGL(ImageListViewCell cell, LWJGLRenderer renderer, Map<String,Object> sharedContextData) {
-        
     }
     
     

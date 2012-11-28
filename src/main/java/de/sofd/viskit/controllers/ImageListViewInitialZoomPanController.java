@@ -192,15 +192,6 @@ public class ImageListViewInitialZoomPanController {
         private boolean inProgrammedChange = false;
         
         @Override
-        public void glSharedContextDataInitialization(GL gl,
-                Map<String, Object> sharedData) {
-        }
-        
-        @Override
-        public void glDrawableInitialized(GLAutoDrawable glAutoDrawable) {
-        }
-        
-        @Override
         public void onCellPaint(ImageListViewCellPaintEvent e) {
             if (!isEnabled()) {
                 return;
@@ -244,10 +235,6 @@ public class ImageListViewInitialZoomPanController {
             alreadyInitializedImagesKeys.add(sourceCell.getDisplayedModelElement().getKey());
         }
 
-        @Override
-        public void glDrawableDisposing(GLAutoDrawable glAutoDrawable) {
-        }
-        
     };
 
 

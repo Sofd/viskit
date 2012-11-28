@@ -695,16 +695,6 @@ public class JListImageListTestApp {
                         System.out.println("list " + lnumCaptured[0] + " UI coming up after " + (t1-t0) + " ms (" + (t1-t01) + " ms after creation of all models, " + (t1-t00) + " ms after startup)");
                     }
                 }
-                @Override
-                public void glSharedContextDataInitialization(GL gl,
-                        Map<String, Object> sharedData) {
-                }
-                @Override
-                public void glDrawableInitialized(GLAutoDrawable glAutoDrawable) {
-                }
-                @Override
-                public void glDrawableDisposing(GLAutoDrawable glAutoDrawable) {
-                }
             });
             lvp.getListView().setModel(lm);
             long t1 = System.currentTimeMillis();
