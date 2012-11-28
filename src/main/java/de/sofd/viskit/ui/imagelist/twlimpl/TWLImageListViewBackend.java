@@ -1,6 +1,9 @@
 package de.sofd.viskit.ui.imagelist.twlimpl;
 
+import java.awt.Color;
 import java.awt.Dimension;
+import java.awt.geom.Point2D;
+import java.util.List;
 import java.util.Map;
 
 import org.apache.log4j.Logger;
@@ -11,6 +14,7 @@ import org.lwjgl.opengl.GL13;
 import de.matthiasmann.twl.renderer.Font;
 import de.matthiasmann.twl.renderer.Renderer;
 import de.sofd.draw2d.viewer.DrawingViewer;
+import de.sofd.draw2d.viewer.gc.GC;
 import de.sofd.util.FloatRange;
 import de.sofd.viskit.controllers.cellpaint.texturemanager.GrayscaleRGBLookupTextureManager;
 import de.sofd.viskit.controllers.cellpaint.texturemanager.ImageTextureManager;
@@ -29,6 +33,7 @@ import de.sofd.viskit.ui.imagelist.ImageListViewBackendBase;
 import de.sofd.viskit.ui.imagelist.ImageListViewCell;
 import de.sofd.viskit.ui.imagelist.event.cellpaint.ImageListViewCellPaintEvent;
 import de.sofd.viskit.ui.imagelist.twlimpl.draw2d.LWJGLDrawingObjectViewerAdapterFactory;
+import de.sofd.viskit.ui.imagelist.twlimpl.draw2d.LWJGLGC;
 
 public class TWLImageListViewBackend extends ImageListViewBackendBase {
 
@@ -56,6 +61,109 @@ public class TWLImageListViewBackend extends ImageListViewBackendBase {
         return new DrawingViewer(elt.getRoiDrawing(), new LWJGLDrawingObjectViewerAdapterFactory());
     }
 
+    @Override
+    public void paintCellInitStateIndication(GC gc, String text, int textX, int textY, Color textColor) {
+        // TODO impl
+        
+    }
+    
+    @Override
+    public void paintCellROIs(ImageListViewCellPaintEvent e) {
+        // TODO Auto-generated method stub
+        
+    }
+    
+    @Override
+    public void paintMeasurementIntoCell(ImageListViewCellPaintEvent e) {
+        // TODO Auto-generated method stub
+        
+    }
+    
+
+    private LookupTableTextureManager lutManager;
+
+    @Override
+    public void printLUTIntoCell(ImageListViewCellPaintEvent evt, int lutWidth, int lutHeight, int intervals, Point2D lutPosition, Point2D textPosition, Color textColor, List<String> scaleList) {
+        if (lutManager == null) {
+            lutManager = LWJGLLookupTableTextureManager.getInstance();
+        }
+
+        ImageListViewCell cell = evt.getSource();
+        Map<String, Object> sharedContextData = evt.getSharedContextData();
+        Renderer renderer = ((LWJGLGC)evt.getGc()).getTWLRenderer();
+        LookupTable lut = cell.getLookupTable();
+
+        Font font = (Font) sharedContextData.get(TWLImageListView.CANVAS_FONT);
+        if(font == null) {
+            throw new IllegalStateException("No font available for cell text drawing!");
+        }
+        
+        GL11.glPushAttrib(GL11.GL_CURRENT_BIT | GL11.GL_ENABLE_BIT);
+        GL11.glPushMatrix();
+        try {
+            GL11.glTranslated(lutPosition.getX(), lutPosition.getY(), 0);
+
+            // draw border
+            GL11.glDisable(GL11.GL_TEXTURE_2D);
+            GL11.glDisable(GL11.GL_BLEND);
+
+            GL11.glBegin(GL11.GL_QUADS);
+            GL11.glColor3f(0.5f, 0.5f, 0.5f);
+            GL11.glVertex2i(-1, -1);
+            GL11.glVertex2i(-1, lutHeight + 1);
+            GL11.glVertex2i(lutWidth + 1, lutHeight + 1);
+            GL11.glVertex2i(lutWidth + 1, -1);
+            GL11.glEnd();
+
+            // draw lut legend
+            lutManager.bindLutTexture(null, GL13.GL_TEXTURE2, sharedContextData, lut);
+            GL11.glTexEnvi(GL11.GL_TEXTURE_ENV, GL11.GL_TEXTURE_ENV_MODE, GL11.GL_REPLACE);
+            GL11.glBegin(GL11.GL_QUADS);
+            GL13.glMultiTexCoord1f(GL13.GL_TEXTURE2, 1);
+            GL11.glVertex2i(0, 0);
+            GL13.glMultiTexCoord1f(GL13.GL_TEXTURE2, 0);
+            GL11.glVertex2i(0, lutHeight);
+            GL13.glMultiTexCoord1f(GL13.GL_TEXTURE2, 0);
+            GL11.glVertex2i(lutWidth, lutHeight);
+            GL13.glMultiTexCoord1f(GL13.GL_TEXTURE2, 1);
+            GL11.glVertex2i(lutWidth, 0);
+            GL11.glEnd();
+
+            lutManager.unbindCurrentLutTexture(null);
+            GL11.glDisable(GL11.GL_TEXTURE_1D);
+        } finally {
+            GL11.glPopMatrix();
+            GL11.glPopAttrib();
+        }
+
+        GL11.glPushAttrib(GL11.GL_TEXTURE_BIT);
+        try {
+            GL13.glActiveTexture(GL13.GL_TEXTURE0);
+            GL11.glEnable(GL11.GL_TEXTURE_2D);
+            GL11.glColor3f((float) textColor.getRed() / 255F, (float) textColor.getGreen() / 255F, (float) textColor
+                    .getBlue() / 255F);
+            int posx = (int) textPosition.getX();
+            int posy = (int) textPosition.getY() - 15;
+            int lineHeight = lutHeight / intervals;
+
+            // draw lut values
+            renderer.pushGlobalTintColor(textColor.getRed()/ 255F, textColor.getGreen()/ 255F, textColor.getBlue()/ 255F, textColor.getAlpha()/ 255F);
+            for (String scale : scaleList) {
+                font.drawText(null, posx - scale.length() * 10,
+                        posy, scale);
+                posy += lineHeight;
+            }
+            renderer.popGlobalTintColor();
+        } finally {
+            GL11.glPopAttrib();
+        }
+    }
+    
+    @Override
+    public void printTextIntoCell(ImageListViewCellPaintEvent e) {
+        // TODO Auto-generated method stub
+        
+    }
 
     protected void initializeGLShader() {
         try {        

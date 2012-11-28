@@ -1,10 +1,14 @@
 package de.sofd.viskit.ui.imagelist;
 
+import java.awt.Color;
+import java.awt.geom.Point2D;
+import java.util.List;
 import java.util.Map;
 
 import javax.media.opengl.GLAutoDrawable;
 
 import de.sofd.draw2d.viewer.DrawingViewer;
+import de.sofd.draw2d.viewer.gc.GC;
 import de.sofd.viskit.model.ImageListViewModelElement;
 import de.sofd.viskit.ui.imagelist.event.cellpaint.ImageListViewCellPaintEvent;
 
@@ -46,8 +50,27 @@ public interface ImageListViewBackend {
      */
     void glSharedContextDataInitialization(Object gl, Map<String, Object> sharedData);
 
+    /**
+     * Create a DrawingViewer for the given cell that's compatible with the backend.
+     * 
+     * @param elt
+     * @param cell
+     * @return
+     */
     DrawingViewer createRoiDrawingViewer(ImageListViewModelElement elt, ImageListViewCell cell);
 
 
+    ////TODO: try to modularize these methods more (e.g. drawing lines, texts etc.)
+    
     void paintCellImage(ImageListViewCellPaintEvent e);
+
+    void paintCellInitStateIndication(GC gc, String text, int textX, int textY, Color textColor);
+
+    void printLUTIntoCell(ImageListViewCellPaintEvent e, int lutWidth, int lutHeight, int intervals, Point2D lutPosition, Point2D textPosition, Color textColor, List<String> scaleList);
+
+    void printTextIntoCell(ImageListViewCellPaintEvent e);
+
+    void paintCellROIs(ImageListViewCellPaintEvent e);
+
+    void paintMeasurementIntoCell(ImageListViewCellPaintEvent e);
 }

@@ -1,7 +1,9 @@
 package de.sofd.viskit.ui.imagelist.j2dimpl;
 
+import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics2D;
+import java.awt.RenderingHints;
 import java.awt.color.ColorSpace;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Point2D;
@@ -13,6 +15,7 @@ import java.awt.image.RescaleOp;
 import java.awt.image.WritableRaster;
 import java.nio.IntBuffer;
 import java.nio.ShortBuffer;
+import java.util.List;
 import java.util.Map;
 
 import org.dcm4che2.data.DicomObject;
@@ -20,8 +23,10 @@ import org.dcm4che2.data.Tag;
 
 import de.sofd.draw2d.viewer.DrawingViewer;
 import de.sofd.draw2d.viewer.adapters.DefaultObjectViewerAdapterFactory;
+import de.sofd.draw2d.viewer.gc.GC;
 import de.sofd.math.LinAlg;
 import de.sofd.util.FloatRange;
+import de.sofd.viskit.glutil.control.LutController;
 import de.sofd.viskit.image.RawImage;
 import de.sofd.viskit.image.ViskitImage;
 import de.sofd.viskit.model.DicomImageListViewModelElement;
@@ -42,6 +47,99 @@ public class J2DImageListViewBackend extends ImageListViewBackendBase {
     @Override
     public DrawingViewer createRoiDrawingViewer(ImageListViewModelElement elt, ImageListViewCell cell) {
         return new DrawingViewer(elt.getRoiDrawing(), new DefaultObjectViewerAdapterFactory());
+    }
+
+    @Override
+    public void paintCellInitStateIndication(GC gc, String text, int textX, int textY, Color textColor) {
+        Graphics2D g2d = gc.getGraphics2D();
+        g2d.setColor(textColor);
+        g2d.drawString(text, textX, textY);
+    }
+    
+    @Override
+    public void paintCellROIs(ImageListViewCellPaintEvent e) {
+        // TODO Auto-generated method stub
+        
+    }
+    
+    @Override
+    public void paintMeasurementIntoCell(ImageListViewCellPaintEvent e) {
+        // TODO Auto-generated method stub
+        
+    }
+    
+    @Override
+    public void printLUTIntoCell(ImageListViewCellPaintEvent e, int lutWidth, int lutHeight, int intervals, Point2D lutPosition, Point2D textPosition, Color textColor, List<String> scaleList) {
+        ImageListViewCell cell = e.getSource();
+        LookupTable lut = cell.getLookupTable();
+        Graphics2D g2d = (Graphics2D) e.getGc().getGraphics2D().create();
+
+        Graphics2D userGraphics = (Graphics2D) g2d.create();
+
+        // draw lut values
+        g2d.setColor(textColor);
+        int posx = (int) textPosition.getX();
+        int posy = (int) textPosition.getY() - 5;
+        int lineHeight = lutHeight / intervals;
+
+        for (String scale : scaleList) {
+            g2d.drawString(scale, posx - scale.length() * 10, posy);
+            posy += lineHeight;
+        }
+        // draw lut legend      
+        BufferedImage lutImage = scaleImage(rotateImage(LutController.getLutMap().get(lut.getName()).getBimg()), lutWidth, lutHeight);
+
+        // create bordered image
+        BufferedImage borderedImage = new BufferedImage(lutImage.getWidth() + 2, lutImage.getHeight() + 2, lutImage
+                .getType());
+        Graphics2D graphic = borderedImage.createGraphics();
+        graphic.setColor(Color.GRAY);
+        graphic.fillRect(0, 0, borderedImage.getWidth(), borderedImage.getHeight());
+        graphic.drawImage(lutImage, 1, 1, null);
+
+        userGraphics.drawImage(borderedImage, null, (int) lutPosition.getX(), (int) lutPosition.getY());
+    }
+
+    /**
+     * rotate image by 270 degrees
+     * 
+     * @param image
+     * @return rotated image
+     */
+    private BufferedImage rotateImage(BufferedImage image) {
+        int j = image.getWidth();
+        int i = image.getHeight();
+        BufferedImage rotatedImage = new BufferedImage(i, j, image.getType());
+        int p = 0;
+        for (int x1 = 0; x1 < j; x1++) {
+            for (int y1 = 0; y1 < i; y1++) {
+                p = image.getRGB(x1, y1);
+                rotatedImage.setRGB(y1, j - 1 - x1, p);
+            }
+        }
+        return rotatedImage;
+    }
+    
+    /**
+     * scale image to defined size (lutWidth, lutHeight)
+     * 
+     * @param image
+     * @return scaled image
+     */
+    private BufferedImage scaleImage(BufferedImage image, int lutWidth, int lutHeight) {
+        BufferedImage scaledImage = new BufferedImage(lutWidth, lutHeight, BufferedImage.TYPE_INT_ARGB);
+        Graphics2D graphics2D = scaledImage.createGraphics();
+        graphics2D.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
+        graphics2D.drawImage(image, 0, 0, lutWidth,
+                lutHeight, null);
+        return scaledImage;
+        
+    }
+    
+    @Override
+    public void printTextIntoCell(ImageListViewCellPaintEvent e) {
+        // TODO Auto-generated method stub
+        
     }
 
     @Override

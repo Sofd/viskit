@@ -218,7 +218,7 @@ public class TWLImageListView extends TWLImageListViewBase {
                                 GL11.glScissor(boxMinX + CELL_BORDER_WIDTH+this.getX(), absYPos+boxMinY + CELL_BORDER_WIDTH, cellWidth, cellHeight);
                                 
                                 // call all CellPaintListeners in the z-order
-                                GC gc = new LWJGLGC();
+                                GC gc = new LWJGLGC(gui.getRenderer());
                                 
                                 try {
                                     //TODO shared context data adaption for LWJGL context

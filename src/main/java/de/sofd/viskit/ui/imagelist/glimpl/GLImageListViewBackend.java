@@ -1,7 +1,11 @@
 package de.sofd.viskit.ui.imagelist.glimpl;
 
+import static com.sun.opengl.util.gl2.GLUT.BITMAP_8_BY_13;
+
+import java.awt.Color;
 import java.awt.Dimension;
-import java.awt.Graphics2D;
+import java.awt.geom.Point2D;
+import java.util.List;
 import java.util.Map;
 
 import javax.media.opengl.GL2;
@@ -10,8 +14,10 @@ import javax.media.opengl.GLException;
 import org.apache.log4j.Logger;
 import org.dcm4che2.data.Tag;
 
-import de.matthiasmann.twl.renderer.lwjgl.LWJGLRenderer;
+import com.sun.opengl.util.gl2.GLUT;
+
 import de.sofd.draw2d.viewer.DrawingViewer;
+import de.sofd.draw2d.viewer.gc.GC;
 import de.sofd.util.FloatRange;
 import de.sofd.viskit.controllers.cellpaint.texturemanager.GrayscaleRGBLookupTextureManager;
 import de.sofd.viskit.controllers.cellpaint.texturemanager.ImageTextureManager;
@@ -43,8 +49,6 @@ public class GLImageListViewBackend extends ImageListViewBackendBase {
     private LookupTableTextureManager lutTexManager;
     private GrayscaleRGBLookupTextureManager grayScaleTexManager;
     
-    private boolean isInitialized = false;
-    
     static {
         shaderManager.init("shader");
     }
@@ -61,6 +65,114 @@ public class GLImageListViewBackend extends ImageListViewBackendBase {
     @Override
     public DrawingViewer createRoiDrawingViewer(ImageListViewModelElement elt, ImageListViewCell cell) {
         return new DrawingViewer(elt.getRoiDrawing(), new GLDrawingObjectViewerAdapterFactory());
+    }
+
+    @Override
+    public void paintCellInitStateIndication(GC gc, String text, int textX, int textY, Color textColor) {
+        GL2 gl = ((GLGC)gc).getGl().getGL2();
+        GLUT glut = new GLUT();
+        gl.glPushAttrib(GL2.GL_CURRENT_BIT|GL2.GL_ENABLE_BIT);
+        try {
+            gl.glDisable(GL2.GL_TEXTURE_2D);
+            gl.glShadeModel(GL2.GL_FLAT);
+            gl.glColor3f((float) textColor.getRed() / 255F,
+                         (float) textColor.getGreen() / 255F,
+                         (float) textColor.getBlue() / 255F);
+            gl.glRasterPos2i(textX, textY);
+            glut.glutBitmapString(BITMAP_8_BY_13, text);
+        } finally {
+            gl.glPopAttrib();
+        }
+    }
+    
+    @Override
+    public void paintCellROIs(ImageListViewCellPaintEvent evt) {
+        ImageListViewCell cell = evt.getSource();
+        GL2 gl = ((GLGC)evt.getGc()).getGl().getGL2();
+        Map<String, Object> sharedContextData = evt.getSharedContextData();
+        
+    }
+    
+    @Override
+    public void paintMeasurementIntoCell(ImageListViewCellPaintEvent evt) {
+        ImageListViewCell cell = evt.getSource();
+        GL2 gl = ((GLGC)evt.getGc()).getGl().getGL2();
+        Map<String, Object> sharedContextData = evt.getSharedContextData();
+        
+    }
+    
+
+    private LookupTableTextureManager lutManager;
+    
+    @Override
+    public void printLUTIntoCell(ImageListViewCellPaintEvent evt, int lutWidth, int lutHeight, int intervals, Point2D lutPosition, Point2D textPosition, Color textColor, List<String> scaleList) {
+        if(lutManager == null) {
+            lutManager = JGLLookupTableTextureManager.getInstance();
+        }
+        
+        ImageListViewCell cell = evt.getSource();
+        LookupTable lut = cell.getLookupTable();
+        GL2 gl = ((GLGC)evt.getGc()).getGl().getGL2();
+        Map<String, Object> sharedContextData = evt.getSharedContextData();
+        
+        GLUT glut = new GLUT();
+        // draw lut values
+        gl.glPushAttrib(GL2.GL_CURRENT_BIT | GL2.GL_ENABLE_BIT);
+        try {
+            gl.glDisable(GL2.GL_TEXTURE_2D);
+            gl.glShadeModel(GL2.GL_FLAT);
+            gl.glColor3f((float) textColor.getRed() / 255F, (float) textColor.getGreen() / 255F, (float) textColor
+                    .getBlue() / 255F);
+            int posx = (int) textPosition.getX();
+            int posy = (int) textPosition.getY() - 5;
+            int lineHeight = lutHeight / intervals;
+            for (String scale : scaleList) {
+                gl.glRasterPos2i(posx - scale.length() * 10, posy);
+                glut.glutBitmapString(BITMAP_8_BY_13, scale + "");
+                posy += lineHeight;
+            }
+        } finally {
+            gl.glPopAttrib();
+        }
+        gl.glDisable(GL2.GL_TEXTURE_2D);
+
+        gl.glTranslated(lutPosition.getX(), lutPosition.getY(), 0);
+
+        // draw border
+        gl.glPushAttrib(GL2.GL_CURRENT_BIT);
+        gl.glBegin(GL2.GL_QUADS);
+        gl.glColor3f(0.5f, 0.5f, 0.5f);
+        gl.glVertex2i(-1, -1);
+        gl.glVertex2i(-1, lutHeight + 1);
+        gl.glVertex2i(lutWidth + 1, lutHeight + 1);
+        gl.glVertex2i(lutWidth + 1, -1);
+        gl.glEnd();
+        gl.glPopAttrib();
+
+        // draw lut legend
+        lutManager.bindLutTexture(gl, GL2.GL_TEXTURE2, sharedContextData, lut);
+        gl.glTexEnvi(GL2.GL_TEXTURE_ENV, GL2.GL_TEXTURE_ENV_MODE, GL2.GL_REPLACE);
+        gl.glBegin(GL2.GL_QUADS);
+        gl.glMultiTexCoord1f(GL2.GL_TEXTURE2, 1);
+        gl.glVertex2i(0, 0);
+        gl.glMultiTexCoord1f(GL2.GL_TEXTURE2, 0);
+        gl.glVertex2i(0, lutHeight);
+        gl.glMultiTexCoord1f(GL2.GL_TEXTURE2, 0);
+        gl.glVertex2i(lutWidth, lutHeight);
+        gl.glMultiTexCoord1f(GL2.GL_TEXTURE2, 1);
+        gl.glVertex2i(lutWidth, 0);
+        gl.glEnd();
+
+        lutManager.unbindCurrentLutTexture(gl);
+        gl.glDisable(GL2.GL_TEXTURE_1D);
+    }
+    
+    @Override
+    public void printTextIntoCell(ImageListViewCellPaintEvent evt) {
+        ImageListViewCell cell = evt.getSource();
+        GL2 gl = ((GLGC)evt.getGc()).getGl().getGL2();
+        Map<String, Object> sharedContextData = evt.getSharedContextData();
+        
     }
 
     protected void initializeGLShader() {
