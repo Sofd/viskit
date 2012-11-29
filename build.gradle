@@ -90,8 +90,8 @@ eclipse.classpath.plusConfigurations += configurations.buildtoolsCompile
 task runTestApp(dependsOn:build) {
     doLast {
         project.javaexec {
-            setMain 'de.sofd.viskit.ui.imagelist.jlistimpl.test.JListImageListTestApp'
-            classpath project.sourceSets.main.runtimeClasspath
+            setMain 'de.sofd.viskit.ui.imagelist.testapp.ImageListTestApp'
+            classpath project.sourceSets.test.runtimeClasspath
             jvmArgs '-Djava.library.path=../lib/jogl/linux64', '-Xmx1024m', '-Xms256m'
         }
     }

@@ -1,4 +1,4 @@
-package de.sofd.viskit.ui.imagelist.jlistimpl.test;
+package de.sofd.viskit.ui.imagelist.testapp;
 
 import de.sofd.draw2d.Drawing;
 import de.sofd.draw2d.EllipseObject;

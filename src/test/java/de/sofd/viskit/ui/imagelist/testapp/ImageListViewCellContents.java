@@ -1,4 +1,4 @@
-package de.sofd.viskit.ui.imagelist.jlistimpl.test;
+package de.sofd.viskit.ui.imagelist.testapp;
 
 import java.io.File;
 import java.io.Serializable;
