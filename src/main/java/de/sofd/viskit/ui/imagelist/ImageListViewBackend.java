@@ -12,6 +12,19 @@ import de.sofd.draw2d.viewer.gc.GC;
 import de.sofd.viskit.model.ImageListViewModelElement;
 import de.sofd.viskit.ui.imagelist.event.cellpaint.ImageListViewCellPaintEvent;
 
+/**
+ * Interface the defines technology-specific functionality needed by
+ * {@link ImageListView} implementations. An {@link ImageListView} instance has
+ * exactly one such backend, which is can't change over time.
+ * 
+ * Will be implemented by each technology backend (e.g. J2D, JOGL).
+ * 
+ * TODO: Operations are very coarse-grained and non-reusable atm. because theyŕe
+ * tailored to the needs of specific controllers. Try to refactor things so the
+ * operations resemble a more general drawing API some more.
+ * 
+ * @author olaf
+ */
 public interface ImageListViewBackend {
 
     /**
@@ -68,9 +81,20 @@ public interface ImageListViewBackend {
 
     void printLUTIntoCell(ImageListViewCellPaintEvent e, int lutWidth, int lutHeight, int intervals, Point2D lutPosition, Point2D textPosition, Color textColor, List<String> scaleList);
 
-    void printTextIntoCell(ImageListViewCellPaintEvent e);
+    /**
+     * TODO unify with {@link #paintCellInitStateIndication(GC, String, int, int, Color)}
+     * @param e
+     * @param text
+     * @param textPosition
+     * @param textColor
+     */
+    void printTextIntoCell(ImageListViewCellPaintEvent e, String[] text, int textX, int textY, Color textColor);
 
     void paintCellROIs(ImageListViewCellPaintEvent e);
 
-    void paintMeasurementIntoCell(ImageListViewCellPaintEvent e);
+    /**
+     * TODO: split line drawing + text printing, unify the latter with {@link #printTextIntoCell(ImageListViewCellPaintEvent, String[], int, int, Color)}
+     * @param e
+     */
+    void paintMeasurementIntoCell(ImageListViewCellPaintEvent e, Point2D p1, Point2D p2, String text, Color textColor);
 }

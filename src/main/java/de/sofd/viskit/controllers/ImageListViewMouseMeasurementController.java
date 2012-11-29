@@ -1,37 +1,22 @@
 package de.sofd.viskit.controllers;
 
-import static com.sun.opengl.util.gl2.GLUT.BITMAP_8_BY_13;
-import de.matthiasmann.twl.renderer.Font;
-import de.matthiasmann.twl.renderer.lwjgl.LWJGLRenderer;
+import java.awt.Color;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.awt.geom.Point2D;
+import java.beans.PropertyChangeListener;
+import java.beans.PropertyChangeSupport;
+import java.text.DecimalFormat;
+
+import org.dcm4che2.data.DicomObject;
+import org.dcm4che2.data.Tag;
+
 import de.sofd.viskit.model.DicomImageListViewModelElement;
 import de.sofd.viskit.model.ImageListViewModelElement;
 import de.sofd.viskit.ui.imagelist.ImageListView;
 import de.sofd.viskit.ui.imagelist.ImageListViewCell;
 import de.sofd.viskit.ui.imagelist.event.cellpaint.ImageListViewCellPaintEvent;
 import de.sofd.viskit.ui.imagelist.event.cellpaint.ImageListViewCellPaintListener;
-import de.sofd.viskit.ui.imagelist.twlimpl.TWLImageListView;
-
-import java.awt.Color;
-import java.awt.Graphics2D;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
-import java.awt.geom.Line2D;
-import java.awt.geom.Point2D;
-import java.beans.PropertyChangeListener;
-import java.beans.PropertyChangeSupport;
-import java.text.DecimalFormat;
-import java.util.Map;
-
-import javax.media.opengl.GL;
-import javax.media.opengl.GL2;
-import javax.media.opengl.GLAutoDrawable;
-
-import org.dcm4che2.data.DicomObject;
-import org.dcm4che2.data.Tag;
-import org.lwjgl.opengl.GL11;
-import org.lwjgl.opengl.GL13;
-
-import com.sun.opengl.util.gl2.GLUT;
 
 /**
  *
@@ -208,68 +193,17 @@ public class ImageListViewMouseMeasurementController {
     
     private ImageListViewCellPaintListener cellPaintHandler = new ImageListViewCellPaintListener() {
         
-        private Font cellFont;
-        
         @Override
         public void onCellPaint(ImageListViewCellPaintEvent e) {
             if (!isEnabled() || currentlyMeasuredCell != e.getSource() || startingPoint == null || draggedPoint == null) {
                 return;
             }
-            if (e.getGc().isGraphics2DAvailable() && ! e.getGc().isGlPreferred()) {
-                // paint using Java2D
-                Graphics2D g2d = e.getGc().getGraphics2D();
-                g2d.setColor(drawingColor);
-                g2d.draw(new Line2D.Double(startingPoint, draggedPoint));
-                g2d.drawString(getDistanceLabel(currentlyMeasuredCell, startingPoint, draggedPoint),
-                               (int) (startingPoint.getX() + draggedPoint.getX()) / 2,
-                               (int) (startingPoint.getY() + draggedPoint.getY()) / 2);
-           } 
-            else if (e.getGc().isLWJGLPreferred()) {                
-                if(cellFont == null) {
-                    throw new IllegalStateException("No font available for cell text drawing!");
-                }
-                LWJGLRenderer renderer = (LWJGLRenderer)e.getGc().getLWJGLRenderer();
-                GL11.glPushAttrib(GL11.GL_CURRENT_BIT | GL11.GL_ENABLE_BIT | GL11.GL_TEXTURE_BIT);
-                try {
-                    GL13.glActiveTexture(GL13.GL_TEXTURE0);
-                    GL11.glEnable(GL11.GL_TEXTURE_2D);
-                    GL11.glShadeModel(GL11.GL_FLAT);
-                    GL11.glColor3f((float) drawingColor.getRed() / 255F,
-                            (float) drawingColor.getGreen() / 255F,
-                            (float) drawingColor.getBlue() / 255F);
-                    GL11.glBegin(GL11.GL_LINE_STRIP);
-                    GL11.glVertex2d(startingPoint.getX(), startingPoint.getY());
-                    GL11.glVertex2d(draggedPoint.getX(), draggedPoint.getY());
-                    GL11.glEnd();
-
-                    renderer.pushGlobalTintColor(drawingColor.getRed()/ 255F, drawingColor.getGreen()/ 255F, drawingColor.getBlue()/ 255F, drawingColor.getAlpha()/ 255F);
-                       cellFont.drawText(null, (int)((startingPoint.getX() + draggedPoint.getX()) / 2), (int)((startingPoint.getY() + draggedPoint.getY()) / 2), getDistanceLabel(currentlyMeasuredCell, startingPoint, draggedPoint));
-                       renderer.popGlobalTintColor();
-                } finally {
-                    GL11.glPopAttrib();
-                }
-            }
-            else {
-                // paint using OpenGL
-                GL2 gl = e.getGc().getGl().getGL2();
-                GLUT glut = new GLUT();
-                gl.glPushAttrib(GL2.GL_CURRENT_BIT|GL2.GL_ENABLE_BIT);
-                try {
-                    gl.glShadeModel(GL2.GL_FLAT);
-                    gl.glColor3f((float) drawingColor.getRed() / 255F,
-                                 (float) drawingColor.getGreen() / 255F,
-                                 (float) drawingColor.getBlue() / 255F);
-                    gl.glBegin(GL.GL_LINE_STRIP);
-                    gl.glVertex2d(startingPoint.getX(), startingPoint.getY());
-                    gl.glVertex2d(draggedPoint.getX(), draggedPoint.getY());
-                    gl.glEnd();
-                    gl.glRasterPos2i((int) (startingPoint.getX() + draggedPoint.getX()) / 2,
-                                     (int) (startingPoint.getY() + draggedPoint.getY()) / 2);
-                    glut.glutBitmapString(BITMAP_8_BY_13, getDistanceLabel(currentlyMeasuredCell, startingPoint, draggedPoint));
-                } finally {
-                    gl.glPopAttrib();
-                }
-            }
+            getControlledImageListView().getBackend().paintMeasurementIntoCell(
+                    e,
+                    startingPoint,
+                    draggedPoint,
+                    getDistanceLabel(currentlyMeasuredCell, startingPoint, draggedPoint),
+                    drawingColor);
         }
 
     };

@@ -6,6 +6,7 @@ import java.awt.Graphics2D;
 import java.awt.RenderingHints;
 import java.awt.color.ColorSpace;
 import java.awt.geom.AffineTransform;
+import java.awt.geom.Line2D;
 import java.awt.geom.Point2D;
 import java.awt.image.AffineTransformOp;
 import java.awt.image.BufferedImage;
@@ -57,15 +58,24 @@ public class J2DImageListViewBackend extends ImageListViewBackendBase {
     }
     
     @Override
-    public void paintCellROIs(ImageListViewCellPaintEvent e) {
-        // TODO Auto-generated method stub
-        
+    public void paintCellROIs(ImageListViewCellPaintEvent evt) {
+        ImageListViewCell cell = evt.getSource();
+        Graphics2D g2d = (Graphics2D) evt.getGc().getGraphics2D().create();
+        Graphics2D userGraphics = (Graphics2D)g2d.create();
+        Point2D imageOffset = getImageOffset(cell);
+     
+        userGraphics.transform(AffineTransform.getTranslateInstance(imageOffset.getX(), imageOffset.getY()));
+        cell.getRoiDrawingViewer().paint(new GC(userGraphics));
     }
     
     @Override
-    public void paintMeasurementIntoCell(ImageListViewCellPaintEvent e) {
-        // TODO Auto-generated method stub
-        
+    public void paintMeasurementIntoCell(ImageListViewCellPaintEvent evt, Point2D p1, Point2D p2, String text, Color textColor) {
+        Graphics2D g2d = evt.getGc().getGraphics2D();
+        g2d.setColor(textColor);
+        g2d.draw(new Line2D.Double(p1, p2));
+        g2d.drawString(text,
+                       (int) (p1.getX() + p2.getX()) / 2,
+                       (int) (p1.getY() + p2.getY()) / 2);
     }
     
     @Override
@@ -137,9 +147,14 @@ public class J2DImageListViewBackend extends ImageListViewBackendBase {
     }
     
     @Override
-    public void printTextIntoCell(ImageListViewCellPaintEvent e) {
-        // TODO Auto-generated method stub
-        
+    public void printTextIntoCell(ImageListViewCellPaintEvent evt, String[] text, int textX, int textY, Color textColor) {
+        Graphics2D g2d = (Graphics2D) evt.getGc().getGraphics2D().create();
+        g2d.setColor(textColor);
+        int lineHeight = g2d.getFontMetrics().getHeight();
+        for (String line : text) {
+            g2d.drawString(line, textX, textY);
+            textY += lineHeight;
+        }
     }
 
     @Override

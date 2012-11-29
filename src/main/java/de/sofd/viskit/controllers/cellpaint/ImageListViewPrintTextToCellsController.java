@@ -1,24 +1,11 @@
 package de.sofd.viskit.controllers.cellpaint;
 
-import static com.sun.opengl.util.gl2.GLUT.BITMAP_8_BY_13;
-
 import java.awt.Color;
-import java.awt.Graphics2D;
 import java.awt.geom.Point2D;
-import java.util.Map;
 
-import javax.media.opengl.GL2;
-
-import org.lwjgl.opengl.GL11;
-import org.lwjgl.opengl.GL13;
-
-import com.sun.opengl.util.gl2.GLUT;
-
-import de.matthiasmann.twl.renderer.Font;
-import de.matthiasmann.twl.renderer.lwjgl.LWJGLRenderer;
 import de.sofd.viskit.ui.imagelist.ImageListView;
 import de.sofd.viskit.ui.imagelist.ImageListViewCell;
-import de.sofd.viskit.ui.imagelist.twlimpl.TWLImageListView;
+import de.sofd.viskit.ui.imagelist.event.cellpaint.ImageListViewCellPaintEvent;
 
 /**
  * Controller that references a ImageListView and an "enabled" flag. When
@@ -77,64 +64,13 @@ public class ImageListViewPrintTextToCellsController extends CellPaintController
     }
 
     @Override
-    protected void paintJ2D(ImageListViewCell cell, Graphics2D g2d) {
-        g2d.setColor(textColor);
-        int posx = (int) textPosition.getX();
-        int posy = (int) textPosition.getY();
-        int lineHeight = g2d.getFontMetrics().getHeight();
-        for (String line : getTextToPrint(cell)) {
-            g2d.drawString(line, posx, posy);
-            posy += lineHeight;
-        }
-    }
-    
-    @Override
-    protected void paintGL(ImageListViewCell cell, GL2 gl, Map<String, Object> sharedContextData) {
-        GLUT glut = new GLUT();
-        gl.glPushAttrib(GL2.GL_CURRENT_BIT | GL2.GL_ENABLE_BIT);
-        try {
-            gl.glDisable(GL2.GL_TEXTURE_2D);
-            gl.glShadeModel(GL2.GL_FLAT);
-            gl.glColor3f((float) textColor.getRed() / 255F, (float) textColor.getGreen() / 255F, (float) textColor
-                    .getBlue() / 255F);
-            int posx = (int) textPosition.getX();
-            int posy = (int) textPosition.getY();
-            int lineHeight = 13;
-            for (String line : getTextToPrint(cell)) {
-                gl.glRasterPos2i(posx, posy);
-                glut.glutBitmapString(BITMAP_8_BY_13, line);
-                posy += lineHeight;
-            }
-        } finally {
-            gl.glPopAttrib();
-        }
-    }
-
-    @Override
-    protected void paintLWJGL(ImageListViewCell cell, LWJGLRenderer renderer, Map<String, Object> sharedContextData) {
-        Font font = (Font) sharedContextData.get(TWLImageListView.CANVAS_FONT);
-        if(font == null) {
-            throw new IllegalStateException("No font available for cell text drawing!");
-        }
-        GL11.glPushAttrib(GL11.GL_CURRENT_BIT | GL11.GL_ENABLE_BIT | GL11.GL_TEXTURE_BIT);
-        try {
-            GL13.glActiveTexture(GL13.GL_TEXTURE0);
-            GL11.glEnable(GL11.GL_TEXTURE_2D);
-            GL11.glShadeModel(GL11.GL_FLAT);
-            GL11.glColor3f((float) textColor.getRed() / 255F, (float) textColor.getGreen() / 255F, (float) textColor
-                    .getBlue() / 255F);
-            int posx = (int) textPosition.getX();
-            int posy = (int) textPosition.getY()-10;
-            int lineHeight = 13;
-            renderer.pushGlobalTintColor(textColor.getRed()/ 255F, textColor.getGreen()/ 255F, textColor.getBlue()/ 255F, textColor.getAlpha()/ 255F);
-            for (String line : getTextToPrint(cell)) {
-                font.drawText(null, posx, posy, line);
-                posy += lineHeight;
-            }
-            renderer.popGlobalTintColor();
-        } finally {
-            GL11.glPopAttrib();
-        }
+    protected void paint(ImageListViewCellPaintEvent e) {
+        getControlledImageListView().getBackend().printTextIntoCell(
+                e,
+                getTextToPrint(e.getSource()),
+                (int) getTextPosition().getX(),
+                (int) getTextPosition().getY(),
+                textColor);
     }
 
     /**

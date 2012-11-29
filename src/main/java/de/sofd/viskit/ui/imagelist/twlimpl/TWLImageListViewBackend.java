@@ -68,15 +68,54 @@ public class TWLImageListViewBackend extends ImageListViewBackendBase {
     }
     
     @Override
-    public void paintCellROIs(ImageListViewCellPaintEvent e) {
-        // TODO Auto-generated method stub
-        
+    public void paintCellROIs(ImageListViewCellPaintEvent evt) {
+        ImageListViewCell cell = evt.getSource();
+        Renderer renderer = ((LWJGLGC)evt.getGc()).getTWLRenderer();
+        cell.getDisplayedModelElement();
+        GL11.glPushMatrix();
+        try {
+            Point2D centerOffset = cell.getCenterOffset();
+            float scale = (float) cell.getScale();
+            float w2 = (float) cell.getDisplayedModelElement().getImage().getWidth() * scale / 2;
+            float h2 = (float) cell.getDisplayedModelElement().getImage().getHeight() * scale / 2;
+            Dimension cellSize = cell.getLatestSize();
+            GL11.glTranslated(cellSize.getWidth() / 2, cellSize.getHeight() / 2, 0);
+            GL11.glTranslated(centerOffset.getX(), centerOffset.getY(), 0);
+            GL11.glTranslated(-w2, -h2, 0);
+
+            cell.getRoiDrawingViewer().paint(new LWJGLGC(renderer));
+        } finally {
+            GL11.glPopMatrix();
+        }
     }
     
     @Override
-    public void paintMeasurementIntoCell(ImageListViewCellPaintEvent e) {
-        // TODO Auto-generated method stub
-        
+    public void paintMeasurementIntoCell(ImageListViewCellPaintEvent evt, Point2D p1, Point2D p2, String text, Color textColor) {
+        Map<String, Object> sharedContextData = evt.getSharedContextData();
+        Renderer renderer = ((LWJGLGC)evt.getGc()).getTWLRenderer();
+        Font font = (Font) sharedContextData.get(TWLImageListView.CANVAS_FONT);
+        if(font == null) {
+            throw new IllegalStateException("No font available for cell text drawing!");
+        }
+        GL11.glPushAttrib(GL11.GL_CURRENT_BIT | GL11.GL_ENABLE_BIT | GL11.GL_TEXTURE_BIT);
+        try {
+            GL13.glActiveTexture(GL13.GL_TEXTURE0);
+            GL11.glEnable(GL11.GL_TEXTURE_2D);
+            GL11.glShadeModel(GL11.GL_FLAT);
+            GL11.glColor3f((float) textColor.getRed() / 255F,
+                    (float) textColor.getGreen() / 255F,
+                    (float) textColor.getBlue() / 255F);
+            GL11.glBegin(GL11.GL_LINE_STRIP);
+            GL11.glVertex2d(p1.getX(), p1.getY());
+            GL11.glVertex2d(p2.getX(), p2.getY());
+            GL11.glEnd();
+
+            renderer.pushGlobalTintColor(textColor.getRed()/ 255F, textColor.getGreen()/ 255F, textColor.getBlue()/ 255F, textColor.getAlpha()/ 255F);
+            font.drawText(null, (int)((p1.getX() + p2.getX()) / 2), (int)((p1.getY() + p2.getY()) / 2), text);
+            renderer.popGlobalTintColor();
+        } finally {
+            GL11.glPopAttrib();
+        }
     }
     
 
@@ -160,9 +199,30 @@ public class TWLImageListViewBackend extends ImageListViewBackendBase {
     }
     
     @Override
-    public void printTextIntoCell(ImageListViewCellPaintEvent e) {
-        // TODO Auto-generated method stub
-        
+    public void printTextIntoCell(ImageListViewCellPaintEvent evt, String[] text, int textX, int textY, Color textColor) {
+        Map<String, Object> sharedContextData = evt.getSharedContextData();
+        Renderer renderer = ((LWJGLGC)evt.getGc()).getTWLRenderer();
+        Font font = (Font) sharedContextData.get(TWLImageListView.CANVAS_FONT);
+        if(font == null) {
+            throw new IllegalStateException("No font available for cell text drawing!");
+        }
+        GL11.glPushAttrib(GL11.GL_CURRENT_BIT | GL11.GL_ENABLE_BIT | GL11.GL_TEXTURE_BIT);
+        try {
+            GL13.glActiveTexture(GL13.GL_TEXTURE0);
+            GL11.glEnable(GL11.GL_TEXTURE_2D);
+            GL11.glShadeModel(GL11.GL_FLAT);
+            GL11.glColor3f((float) textColor.getRed() / 255F, (float) textColor.getGreen() / 255F, (float) textColor
+                    .getBlue() / 255F);
+            int lineHeight = 13;
+            renderer.pushGlobalTintColor(textColor.getRed()/ 255F, textColor.getGreen()/ 255F, textColor.getBlue()/ 255F, textColor.getAlpha()/ 255F);
+            for (String line : text) {
+                font.drawText(null, textX, textY, line);
+                textY += lineHeight;
+            }
+            renderer.popGlobalTintColor();
+        } finally {
+            GL11.glPopAttrib();
+        }
     }
 
     protected void initializeGLShader() {

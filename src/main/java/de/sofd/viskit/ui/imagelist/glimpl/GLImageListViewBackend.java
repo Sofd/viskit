@@ -8,6 +8,7 @@ import java.awt.geom.Point2D;
 import java.util.List;
 import java.util.Map;
 
+import javax.media.opengl.GL;
 import javax.media.opengl.GL2;
 import javax.media.opengl.GLException;
 
@@ -89,16 +90,45 @@ public class GLImageListViewBackend extends ImageListViewBackendBase {
     public void paintCellROIs(ImageListViewCellPaintEvent evt) {
         ImageListViewCell cell = evt.getSource();
         GL2 gl = ((GLGC)evt.getGc()).getGl().getGL2();
-        Map<String, Object> sharedContextData = evt.getSharedContextData();
+        cell.getDisplayedModelElement();
+        gl.glPushMatrix();
+        try {
+            Point2D centerOffset = cell.getCenterOffset();
+            float scale = (float) cell.getScale();
+            float w2 = (float) cell.getDisplayedModelElement().getImage().getWidth() * scale / 2;
+            float h2 = (float) cell.getDisplayedModelElement().getImage().getHeight() * scale / 2;
+            Dimension cellSize = cell.getLatestSize();
+            gl.glTranslated(cellSize.getWidth() / 2, cellSize.getHeight() / 2, 0);
+            gl.glTranslated(centerOffset.getX(), centerOffset.getY(), 0);
+            gl.glTranslated(-w2, -h2, 0);
+
+            cell.getRoiDrawingViewer().paint(new GLGC(gl));
+        } finally {
+            gl.glPopMatrix();
+        }
         
     }
     
     @Override
-    public void paintMeasurementIntoCell(ImageListViewCellPaintEvent evt) {
-        ImageListViewCell cell = evt.getSource();
+    public void paintMeasurementIntoCell(ImageListViewCellPaintEvent evt, Point2D p1, Point2D p2, String text, Color textColor) {
         GL2 gl = ((GLGC)evt.getGc()).getGl().getGL2();
-        Map<String, Object> sharedContextData = evt.getSharedContextData();
-        
+        GLUT glut = new GLUT();
+        gl.glPushAttrib(GL2.GL_CURRENT_BIT|GL2.GL_ENABLE_BIT);
+        try {
+            gl.glShadeModel(GL2.GL_FLAT);
+            gl.glColor3f((float) textColor.getRed() / 255F,
+                         (float) textColor.getGreen() / 255F,
+                         (float) textColor.getBlue() / 255F);
+            gl.glBegin(GL.GL_LINE_STRIP);
+            gl.glVertex2d(p1.getX(), p1.getY());
+            gl.glVertex2d(p2.getX(), p2.getY());
+            gl.glEnd();
+            gl.glRasterPos2i((int) (p1.getX() + p2.getX()) / 2,
+                             (int) (p1.getY() + p2.getY()) / 2);
+            glut.glutBitmapString(BITMAP_8_BY_13, text);
+        } finally {
+            gl.glPopAttrib();
+        }
     }
     
 
@@ -168,11 +198,24 @@ public class GLImageListViewBackend extends ImageListViewBackendBase {
     }
     
     @Override
-    public void printTextIntoCell(ImageListViewCellPaintEvent evt) {
-        ImageListViewCell cell = evt.getSource();
+    public void printTextIntoCell(ImageListViewCellPaintEvent evt, String[] text, int textX, int textY, Color textColor) {
         GL2 gl = ((GLGC)evt.getGc()).getGl().getGL2();
-        Map<String, Object> sharedContextData = evt.getSharedContextData();
-        
+        GLUT glut = new GLUT();
+        gl.glPushAttrib(GL2.GL_CURRENT_BIT | GL2.GL_ENABLE_BIT);
+        try {
+            gl.glDisable(GL2.GL_TEXTURE_2D);
+            gl.glShadeModel(GL2.GL_FLAT);
+            gl.glColor3f((float) textColor.getRed() / 255F, (float) textColor.getGreen() / 255F, (float) textColor
+                    .getBlue() / 255F);
+            int lineHeight = 13;
+            for (String line : text) {
+                gl.glRasterPos2i(textX, textY);
+                glut.glutBitmapString(BITMAP_8_BY_13, line);
+                textY += lineHeight;
+            }
+        } finally {
+            gl.glPopAttrib();
+        }
     }
 
     protected void initializeGLShader() {
