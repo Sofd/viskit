@@ -1,7 +1,10 @@
+*~
 *.[oa]
 *.class
 build/
 dist/
-^.project
-^.classpath
-^.settings
+bin/
+.project
+.classpath
+src/main/java/de/sofd/viskit/ui/imagelist/twlimpl/TWLImageListViewBase.java
+src/main/java/de/sofd/viskit/ui/imagelist/JImageListViewBase.java
