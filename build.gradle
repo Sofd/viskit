@@ -87,7 +87,7 @@ tasks.eclipse.dependsOn(generateMixins)
 eclipse.classpath.plusConfigurations += configurations.buildtoolsCompile
 
 
-task runTestApp(dependsOn:build) {
+task runJ2DTestApp(dependsOn:build) {
     doLast {
         project.javaexec {
             setMain 'de.sofd.viskit.ui.imagelist.testapp.ImageListTestApp'
@@ -97,6 +97,15 @@ task runTestApp(dependsOn:build) {
     }
 }
 
+task runGLTestApp(dependsOn:build) {
+    doLast {
+        project.javaexec {
+            setMain 'de.sofd.viskit.ui.imagelist.testapp.ImageListTestApp'
+            classpath project.sourceSets.test.runtimeClasspath
+            jvmArgs '-Djava.library.path=../lib/jogl/linux64', '-Dviskit.testapp.class=de.sofd.viskit.ui.imagelist.glimpl.JGLImageListView', '-Xmx1024m', '-Xms256m'
+        }
+    }
+}
 
 task runTWLTestApp(dependsOn:build) {
     doLast {

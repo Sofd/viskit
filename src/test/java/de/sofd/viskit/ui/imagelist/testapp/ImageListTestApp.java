@@ -84,10 +84,8 @@ import de.sofd.viskit.ui.imagelist.ImageListViewCell;
 import de.sofd.viskit.ui.imagelist.JImageListView;
 import de.sofd.viskit.ui.imagelist.event.cellpaint.ImageListViewCellPaintEvent;
 import de.sofd.viskit.ui.imagelist.event.cellpaint.ImageListViewCellPaintListener;
-import de.sofd.viskit.ui.imagelist.glimpl.JGLImageListView;
 import de.sofd.viskit.ui.imagelist.gridlistimpl.DndSupport;
 import de.sofd.viskit.ui.imagelist.gridlistimpl.JGridImageListView;
-import de.sofd.viskit.ui.imagelist.jlistimpl.JListImageListView;
 import de.sofd.viskit.util.DicomUtil;
 
 /**
@@ -244,7 +242,8 @@ public class ImageListTestApp {
             
             debugObjects.put("lvp" + lnum, lvp);
             debugObjects.put("lv" + lnum, lvp.getListView());
-            lvp.setPixelValueRange(factory.getPixelRange(modelKey));
+            //lvp.setPixelValueRange(factory.getPixelRange(modelKey));
+            lvp.setPixelValueRange(-4095f, 4095f);
             
             // initialization performance measurement: add a cell paint listener
             // to take the time when a cell in the list is first drawn,
@@ -323,8 +322,7 @@ public class ImageListTestApp {
         
         public ListViewPanel() {
             this.setLayout(new BorderLayout());
-            //listView = newJGLImageListView();
-            listView = newJGridImageListView();
+            listView = createJImageListView();
             setupDnd();
             this.add(listView, BorderLayout.CENTER);
             ImageListViewInitialWindowingController initWindowingController = new ImageListViewInitialWindowingController(listView) {
@@ -583,11 +581,11 @@ public class ImageListTestApp {
             });
         }
         
-        public void setPixelValueRange(float[] range) {
+        public void setPixelValueRange(float... range) {
             slider.setMinimumValue(range[0]);
             slider.setMaximumValue(range[1]);
         }
-
+        
         public JImageListView getListView() {
             return listView;
         }
@@ -815,29 +813,22 @@ public class ImageListTestApp {
             
         };
     }
-    
-    protected JListImageListView newJListImageListView() {
-        JListImageListView viewer = new JListImageListView();
-        viewer.setSelectionModel(new DefaultBoundedListSelectionModel());
-        return viewer;
-    }
-    
-    protected JGridImageListView newJGridImageListView() {
-        final JGridImageListView viewer = new JGridImageListView();
-        viewer.setScaleMode(JGridImageListView.MyScaleMode.newCellGridMode(2, 2));
-        viewer.setSelectionModel(new DefaultBoundedListSelectionModel());
-        return viewer;
-    }
 
-    protected JGLImageListView newJGLImageListView() {
-        final JGLImageListView viewer = new JGLImageListView();
-        viewer.setScaleMode(JGLImageListView.MyScaleMode.newCellGridMode(5, 5));
-        viewer.setSelectionModel(new DefaultBoundedListSelectionModel());
-        viewer.setScaleMode(JGLImageListView.MyScaleMode.newCellGridMode(2, 2));
-        viewer.setSelectionModel(new DefaultBoundedListSelectionModel());
-        return viewer;
+    protected JImageListView createJImageListView() {
+        String viewClassName = System.getProperty("viskit.testapp.class", "de.sofd.viskit.ui.imagelist.gridlistimpl.JGridImageListView");
+        try {
+            JImageListView viewer = (JImageListView) Class.forName(viewClassName).newInstance();
+            viewer.setSelectionModel(new DefaultBoundedListSelectionModel());
+            return viewer;
+        } catch (InstantiationException e) {
+            throw new IllegalStateException("couldn't create view class: " + viewClassName, e);
+        } catch (IllegalAccessException e) {
+            throw new IllegalStateException("couldn't create view class: " + viewClassName, e);
+        } catch (ClassNotFoundException e) {
+            throw new IllegalStateException("couldn't create view class: " + viewClassName, e);
+        }
     }
-
+    
     protected static DefaultListModel getViewerListModelForDirectory(File dir) {
         DefaultListModel result = new DefaultListModel();
         File[] files = dir.listFiles();
