@@ -1,10 +1,9 @@
-package de.sofd.viskit.ui.imagelist.twlimpl.test;
+package de.sofd.viskit.ui.imagelist.twlimpl.testapp;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.GraphicsDevice;
 import java.awt.GraphicsEnvironment;
-import java.awt.event.ComponentEvent;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
@@ -17,7 +16,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import javax.swing.DefaultListModel;
 import javax.swing.JFrame;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
@@ -29,13 +27,13 @@ import org.lwjgl.LWJGLException;
 
 import de.matthiasmann.twl.Alignment;
 import de.matthiasmann.twl.BoxLayout;
+import de.matthiasmann.twl.BoxLayout.Direction;
 import de.matthiasmann.twl.Button;
 import de.matthiasmann.twl.ComboBox;
 import de.matthiasmann.twl.GUI;
 import de.matthiasmann.twl.Label;
 import de.matthiasmann.twl.ToggleButton;
 import de.matthiasmann.twl.Widget;
-import de.matthiasmann.twl.BoxLayout.Direction;
 import de.matthiasmann.twl.model.BooleanModel;
 import de.matthiasmann.twl.model.ListModel;
 import de.matthiasmann.twl.model.SimpleBooleanModel;
@@ -63,9 +61,9 @@ import de.sofd.viskit.controllers.MultiImageListViewController;
 import de.sofd.viskit.controllers.cellpaint.ImageListViewImagePaintController;
 import de.sofd.viskit.controllers.cellpaint.ImageListViewInitStateIndicationPaintController;
 import de.sofd.viskit.controllers.cellpaint.ImageListViewPrintLUTController;
+import de.sofd.viskit.controllers.cellpaint.ImageListViewPrintLUTController.ScaleType;
 import de.sofd.viskit.controllers.cellpaint.ImageListViewPrintTextToCellsController;
 import de.sofd.viskit.controllers.cellpaint.ImageListViewRoiPaintController;
-import de.sofd.viskit.controllers.cellpaint.ImageListViewPrintLUTController.ScaleType;
 import de.sofd.viskit.model.DicomImageListViewModelElement;
 import de.sofd.viskit.model.DicomModelFactory;
 import de.sofd.viskit.model.ImageListViewModelElement;
@@ -74,8 +72,8 @@ import de.sofd.viskit.model.LookupTable;
 import de.sofd.viskit.model.LookupTables;
 import de.sofd.viskit.model.ModelFactory;
 import de.sofd.viskit.ui.imagelist.ImageListView;
-import de.sofd.viskit.ui.imagelist.ImageListViewCell;
 import de.sofd.viskit.ui.imagelist.ImageListView.ScaleMode;
+import de.sofd.viskit.ui.imagelist.ImageListViewCell;
 import de.sofd.viskit.ui.imagelist.twlimpl.TWLImageListView;
 import de.sofd.viskit.ui.twl.LookupTableComboBox;
 import de.sofd.viskit.ui.twl.RoiToolWidget;
@@ -83,87 +81,30 @@ import de.sofd.viskit.util.DicomUtil;
 
 public class TWLImageListTestApp {
     
-    public static boolean isUser(String userName) {
-        return userName.equals(System.getProperty("user.name"));
-    }
-    
-    public static boolean isUserFokko() {
-        return isUser("fokko");
-    }
-    
-    public static boolean isUserHonglinh() {
-        return isUser("honglinh");
-    }
-
-    public static boolean isUserOlaf() {
-        return isUser("olaf");
-    }
-    
     private DicomModelFactory factory = new DicomModelFactory(null,new IntuitiveFileNameComparator());
     private JFrame mainFrame = null;
     
     public TWLImageListTestApp() throws Exception {
         boolean useAsyncMode = (null != System.getProperty("viskit.testapp.asyncMode"));
-        if (isUserHonglinh()) {
-            factory = new DicomModelFactory(null, new IntuitiveFileNameComparator());
-            if (useAsyncMode) {
-                factory.setSupportMultiframes(false);
-                factory.setCheckFileReadability(false);
-                factory.setAsyncMode(true);
-            } else {
-                // when using async mode, also avoid pre-reading of DICOM files to further minimize startup time
-                factory.setSupportMultiframes(false);
-                factory.setCheckFileReadability(false);
-                factory.setAsyncMode(false);
-            }
-        } else if (isUserFokko()) {
-            factory = new DicomModelFactory(System.getProperty("user.home") + File.separator + "viskit-model-cache.txt", new IntuitiveFileNameComparator());
-            if (useAsyncMode) {
-                factory.setSupportMultiframes(false);
-                factory.setCheckFileReadability(false);
-                factory.setAsyncMode(true);
-            } else {
-                // when using async mode, also avoid pre-reading of DICOM files to further minimize startup time
-                factory.setSupportMultiframes(false);
-                factory.setCheckFileReadability(false);
-                factory.setAsyncMode(false);
-            }
-        } else if (isUserOlaf()) {
-            factory = new DicomModelFactory(System.getProperty("user.home") + File.separator + "viskit-model-cache.txt", new IntuitiveFileNameComparator());
-            if (useAsyncMode) {
-                factory.setSupportMultiframes(false);
-                factory.setCheckFileReadability(false);
-                factory.setAsyncMode(true);
-            } else {
-                factory.setSupportMultiframes(false);
-                factory.setCheckFileReadability(false);
-                factory.setAsyncMode(false);
-            }
-            GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
-            GraphicsDevice[] gs = ge.getScreenDevices();
+        factory = new DicomModelFactory(System.getProperty("user.home") + File.separator + "viskit-model-cache.txt", new IntuitiveFileNameComparator());
+        if (useAsyncMode) {
+            factory.setSupportMultiframes(false);
+            factory.setCheckFileReadability(false);
+            factory.setAsyncMode(true);
         } else {
-            factory = new DicomModelFactory(System.getProperty("user.home") + File.separator + "viskit-model-cache.txt", new IntuitiveFileNameComparator());
-            if (useAsyncMode) {
-                factory.setSupportMultiframes(false);
-                factory.setCheckFileReadability(false);
-                factory.setAsyncMode(true);
-            } else {
-                // when using async mode, also avoid pre-reading of DICOM files to further minimize startup time
-                factory.setSupportMultiframes(false);
-                factory.setCheckFileReadability(false);
-                factory.setAsyncMode(false);
-            }
+            factory.setSupportMultiframes(false);
+            factory.setCheckFileReadability(false);
+            factory.setAsyncMode(false);
         }
+        GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
+        GraphicsDevice[] gs = ge.getScreenDevices();
         mainFrame = newMultiListFrame("TWL Multi-List Frame");
     }
     
     protected static void addModelForDir(ModelFactory factory, File dir) throws IOException {
         factory.addModel(dir.getCanonicalPath(), dir);
-        if (isUserOlaf()) {
-            //test error states (file-not-found in this case)
-            DefaultListModel dlm = (DefaultListModel) factory.getModel(dir.getCanonicalPath());
-            //dlm.insertElementAt(new FileBasedDicomImageListViewModelElement(new File("/foo/bar/baz"), false), 1);
-        }
+        //DefaultListModel dlm = (DefaultListModel) factory.getModel(dir.getCanonicalPath());
+        //dlm.insertElementAt(new FileBasedDicomImageListViewModelElement(new File("/foo/bar/baz"), false), 1);
     }
     
     public static void main(String[] args) throws Exception{
@@ -197,81 +138,20 @@ public class TWLImageListTestApp {
         
         
         final long t00 = System.currentTimeMillis();
+        ///*
+        addModelForDir(factory, new File("/home/olaf/hieronymusr/br312046/images/cd00906__center10102"));
+        addModelForDir(factory, new File("/home/olaf/hieronymusr/br312046/images/cd00908__center10101"));
+        //addModelForDir(factory, new File("/home/olaf/Downloads/MESA-storage-B_10_11_0/links"));
+
+        //listModels.add(factory.getModel("1"));
+        //listModels.add(factory.getModel("2"));
+        //*/
         
-        if (isUserHonglinh()) {
-            factory.addModel("0", new File("/home/honglinh/br312046/images/cd00906__center10102"));
-            factory.addModel("1", new File("/home/honglinh/br312046/images/cd00908__center10101"));
-            
-//          listModels.add(factory.createModelFromDir(new File("/home/honglinh/Desktop/dicomfiles1")));
-            
-//          listModels.add(getViewerListModelForDirectory(new File("/home/honglinh/Desktop/dicomfiles1")));
-//          listModels.add(getViewerListModelForDirectory(new File("/home/honglinh/Desktop/dicomfiles1")));
-//          listModels.add(factory.createModelFromDir(new File("/home/honglinh/Desktop/multiframedicoms")));
-            //listModels.add(factory.getModel("1"));
-            //listModels.add(factory.getModel("2"));
-        } else if (isUserOlaf()) {
-            ///*
-            addModelForDir(factory, new File("/home/olaf/hieronymusr/br312046/images/cd00906__center10102"));
-            addModelForDir(factory, new File("/home/olaf/hieronymusr/br312046/images/cd00908__center10101"));
-            //addModelForDir(factory, new File("/home/olaf/Downloads/MESA-storage-B_10_11_0/links"));
+        //listModels.add(getViewerListModelForDirectory(new File("/home/olaf/headvolume")));
+        //listModels.add(getViewerListModelForDirect69690e292714ory(new File("/home/olaf/oliverdicom/series1")));
+        //listModels.add(getViewerListModelForDirectory(new File("/home/olaf/oliverdicom/INCISIX")));
 
-            //listModels.add(factory.getModel("1"));
-            //listModels.add(factory.getModel("2"));
-            //*/
-            
-            //listModels.add(getViewerListModelForDirectory(new File("/home/olaf/headvolume")));
-            //listModels.add(getViewerListModelForDirect69690e292714ory(new File("/home/olaf/oliverdicom/series1")));
-            //listModels.add(getViewerListModelForDirectory(new File("/home/olaf/oliverdicom/INCISIX")));
-
-            //listModels.add(getViewerListModelForDirectory(new File("/shares/projects/StudyBrowser/data/disk312043/Images/cd833__center4001")));
-//          listModels.add(getViewerListModelForDirectory(new File("/shares/projects/StudyBrowser/data/disk312043/Images/cd865__center4001")));
-          //listModels.add(getViewerListModelForDirectory(new File("/home/olaf/oliverdicom/ARTIFIX")));
-          //listModels.add(getViewerListModelForDirectory(new File("/home/olaf/oliverdicom/BRAINIX")));
-          //listModels.add(getViewerListModelForDirectory(new File("/tmp/cd00926__center10101")));
-          //listModels.add(getViewerListModelForDirectory(new File("/tmp/cd00927__center10103")));
-          //listModels.add(getViewerListModelForDirectory(new File("/home/olaf/gi/Images/cd00900__center10102")));
-          //listModels.add(getViewerListModelForDirectory(new File("/home/olaf/gi/Images/cd00901__center14146")));
-          
-          //listModels.add(getViewerListModelForDirectory(new File("/home/sofd/disk88888/Images/cd88888010__center100")));
-          //listModels.add(getViewerListModelForDirectory(new File("/home/olaf/hieronymusr/br312046/images/cd00900__center10102")));
-          ///*
-          //listModels.add(getViewerListModelForDirectory(new File("/home/olaf/hieronymusr/disk312046/Images/cd00917__center10102")));
-          ///listModels.add(getViewerListModelForDirectory(new File("/home/olaf/hieronymusr/br312046/images/cd00903__center10101")));
-          //listModels.add(getViewerListModelForDirectory(new File("/home/olaf/hieronymusr/br312046/images/cd00904__center10101")));
-          //listModels.add(getViewerListModelForDirectory(new File("/home/olaf/hieronymusr/br312046/images/cd00905__center10101")));
-          ///listModels.add(getViewerListModelForDirectory(new File("/home/olaf/hieronymusr/br312046/images/cd00907__center10102")));
-          //listModels.add(getViewerListModelForDirectory(new File("/home/olaf/gi/resources/DICOM-Testbilder/1578")));
-          //*/
-          
-            //listModels.add(getViewerListModelForDirectory(new File("/home/olaf/hieronymusr/br312046/images/cd00906__center10102")));
-            //listModels.add(getViewerListModelForDirectory(new File("/home/olaf/hieronymusr/br312046/images/cd00908__center10101")));
-
-          //listModels.add(getViewerListModelForDirectory(new File("/home/olaf/hieronymusr/br312046/images/cd00909__center10101")));
-          //*/
-          //listModels.add(getViewerListModelForDirectory(new File("/home/olaf/hieronymusr/br312046/images/cd00907__center10102")));
-          //listModels.add(getViewerListModelForDirectory(new File("/shares/shared/olaf/cd823__center4001")));
-
-          //listModels.add(getViewerListModelForDirectory(new File("/home/olaf/hieronymusr/br312046/images/cd00907__center10102")));
-          //listModels.add(getViewerListModelForDirectory(new File("/shares/shared/olaf/cd823__center4001")));
-          
-//          listModels.add(getViewerListModelForDirectory(new File("/home/olaf/hieronymusr/br312043/images/cd800__center4001")));
-//          listModels.add(getViewerListModelForDirectory(new File("/home/olaf/hieronymusr/br312043/images/cd801__center4001")));
-
-        } else if (isUserFokko()) {
-            // a unique key should be used instead of 1 and 2, f.e. PatientID+StudyInstanceUID+SeriesInstanceUID to identify the series
-            factory.addModel("1", new File("/Users/fokko/disk312046/Images/cd00903__center10101"));
-            factory.addModel("2", new File("/Users/fokko/disk312046/Images/cd00904__center10101"));
-
-            //listModels.add(factory.getModel("1"));
-            //listModels.add(factory.getModel("2"));
-        } else {
-            // a unique key should be used instead of 1 and 2, f.e. PatientID+StudyInstanceUID+SeriesInstanceUID to identify the series
-            factory.addModel("1", new File("/path/to/dcm/dir/1"));
-            factory.addModel("2", new File("/path/to/dcm/dir/2"));
-
-            //listModels.add(factory.getModel("1"));
-            //listModels.add(factory.getModel("2"));
-        }
+        //listModels.add(getViewerListModelForDirectory(new File("/shares/projects/StudyBrowser/data/disk312043/Images/cd833__center4001")));
         
         final long t01 = System.currentTimeMillis();
 

@@ -101,8 +101,8 @@ task runTestApp(dependsOn:build) {
 task runTWLTestApp(dependsOn:build) {
     doLast {
         project.javaexec {
-            setMain 'de.sofd.viskit.ui.imagelist.twlimpl.test.TWLImageListTestApp'
-            classpath project.sourceSets.main.runtimeClasspath
+            setMain 'de.sofd.viskit.ui.imagelist.twlimpl.testapp.TWLImageListTestApp'
+            classpath project.sourceSets.test.runtimeClasspath
             jvmArgs '-Djava.library.path=src/dist/bin', '-Xmx1024m', '-Xms256m'
         }
     }
