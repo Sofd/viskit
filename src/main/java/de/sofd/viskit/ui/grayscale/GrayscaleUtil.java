@@ -2,7 +2,7 @@ package de.sofd.viskit.ui.grayscale;
 
 import java.nio.ByteBuffer;
 
-import com.sun.opengl.util.BufferUtil;
+import de.sofd.viskit.util.NioBufferUtil;
 
 
 public class GrayscaleUtil {
@@ -15,7 +15,7 @@ public class GrayscaleUtil {
     public static ByteBuffer computeGrayTo8bitRGBMappingTable(int grayBitCount, int searchWindowWidth) {
         final int nGrays = 1 << grayBitCount;
         final int maxGray = nGrays - 1;
-        ByteBuffer result = BufferUtil.newByteBuffer(3 * nGrays);
+        ByteBuffer result = NioBufferUtil.newByteBuffer(3 * nGrays);
         // simple brute-force implementation. Numerous performance optimizations would be possible (and quite straightforward) here
         for (int gray = 0; gray < nGrays; gray++) {
             double targetGray = gray * 255.0 / maxGray;

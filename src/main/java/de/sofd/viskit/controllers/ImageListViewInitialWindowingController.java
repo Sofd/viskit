@@ -4,11 +4,7 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Set;
-
-import javax.media.opengl.GL;
-import javax.media.opengl.GLAutoDrawable;
 
 import de.sofd.util.FloatRange;
 import de.sofd.viskit.model.ImageListViewModelElement;

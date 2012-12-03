@@ -19,8 +19,6 @@ import java.util.Map;
 import java.util.NavigableSet;
 import java.util.TreeSet;
 
-import javax.media.opengl.GL;
-import javax.media.opengl.GLAutoDrawable;
 import javax.swing.AbstractListModel;
 import javax.swing.ListModel;
 import javax.swing.ListSelectionModel;

@@ -21,8 +21,6 @@ import org.dcm4che2.data.UID;
 import org.dcm4che2.io.DicomOutputStream;
 import org.dcm4che2.media.FileMetaInformation;
 
-import com.sun.opengl.util.BufferUtil;
-
 import de.sofd.util.ShortRange;
 import de.sofd.viskit.model.ITransferFunction;
 
@@ -249,7 +247,7 @@ public class ImageUtil {
     }
 
     public static FloatBuffer getTranferredData(ShortBuffer dataBuf, ITransferFunction transferFunction) {
-        FloatBuffer floatbuf = BufferUtil.newFloatBuffer(dataBuf.capacity());
+        FloatBuffer floatbuf = NioBufferUtil.newFloatBuffer(dataBuf.capacity());
 
         for (int i = 0; i < dataBuf.capacity(); ++i) {
             float value = transferFunction.getY(dataBuf.get(i));

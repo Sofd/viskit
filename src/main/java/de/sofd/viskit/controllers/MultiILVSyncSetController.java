@@ -9,12 +9,11 @@ import java.util.Set;
 
 import javax.swing.ButtonModel;
 import javax.swing.JToggleButton;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 
 import de.sofd.util.IdentityHashSet;
 import de.sofd.viskit.ui.imagelist.ImageListView;
-import de.sofd.viskit.ui.imagelist.glimpl.JGLImageListView;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
 
 /**
  * Controller that holds multiple, mutable sets of {@link ImageListView}s
@@ -402,7 +401,7 @@ public class MultiILVSyncSetController {
         
         protected void disassociateControllers() {
             for (MultiImageListViewController c : syncControllersByFactoryKey.values()) {
-                c.setLists(new JGLImageListView[0]);
+                c.setLists(new ImageListView[0]);
             }
         }
 

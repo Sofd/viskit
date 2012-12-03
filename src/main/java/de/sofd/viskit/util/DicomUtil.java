@@ -1,14 +1,13 @@
 package de.sofd.viskit.util;
 
-import java.nio.*;
-import java.util.*;
+import java.nio.ShortBuffer;
+import java.util.ArrayList;
 
-import org.dcm4che2.data.*;
-
-import com.sun.opengl.util.*;
+import org.dcm4che2.data.DicomObject;
+import org.dcm4che2.data.Tag;
 
 import de.sofd.math.LinAlg;
-import de.sofd.util.*;
+import de.sofd.util.ShortRange;
 import de.sofd.viskit.model.WindowingFunction;
 
 public class DicomUtil {
@@ -25,7 +24,7 @@ public class DicomUtil {
         dim[1] = refDicom.getInt(Tag.Rows);
         dim[2] = dicomList.size();
         
-        ShortBuffer dataBuf = BufferUtil.newShortBuffer(dim[0] * dim[1] * dim[2]);
+        ShortBuffer dataBuf = NioBufferUtil.newShortBuffer(dim[0] * dim[1] * dim[2]);
 
         for (DicomObject dicomObject : dicomList)
         {
@@ -59,7 +58,7 @@ public class DicomUtil {
         dim[0] = dicomObject.getInt(Tag.Columns);
         dim[1] = dicomObject.getInt(Tag.Rows);
 
-        ShortBuffer dataBuf = BufferUtil.newShortBuffer(dim[0] * dim[1]);
+        ShortBuffer dataBuf = NioBufferUtil.newShortBuffer(dim[0] * dim[1]);
 
         dataBuf.put(dicomObject.getShorts(Tag.PixelData));
 

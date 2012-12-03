@@ -5,8 +5,6 @@ import java.awt.geom.Point2D;
 import java.util.List;
 import java.util.Map;
 
-import javax.media.opengl.GLAutoDrawable;
-
 import de.sofd.draw2d.viewer.DrawingViewer;
 import de.sofd.draw2d.viewer.gc.GC;
 import de.sofd.viskit.model.ImageListViewModelElement;

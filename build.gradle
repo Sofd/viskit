@@ -19,10 +19,6 @@ dependencies {
     compile 'dcm4che:dcm4che-imageio:2.0.24'
     compile 'dcm4che:dcm4che-imageio-rle:2.0.24'
     //compile 'org.jogamp.jogl:jogl-all:2.0-rc11' //moves stuff into org.jogamp package...
-    compile ':jogl.all'
-    compile ':nativewindow.all'
-    compile ':gluegen-rt'
-    compile ':newt.all'
     compile 'commons-lang:commons-lang:2.6'
     compile 'commons-cli:commons-cli:1.2'
     compile 'org.slf4j:slf4j-api:1.5.0'

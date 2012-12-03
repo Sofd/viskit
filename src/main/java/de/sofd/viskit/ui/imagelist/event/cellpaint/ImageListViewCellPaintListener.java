@@ -1,7 +1,5 @@
 package de.sofd.viskit.ui.imagelist.event.cellpaint;
 
-import javax.media.opengl.GLAutoDrawable;
-
 import de.sofd.viskit.ui.imagelist.ImageListView;
 
 /**

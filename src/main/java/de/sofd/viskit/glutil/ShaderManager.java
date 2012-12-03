@@ -1,8 +1,7 @@
 package de.sofd.viskit.glutil;
 
-import java.util.*;
-
-import javax.media.opengl.*;
+import java.util.HashMap;
+import java.util.Map;
 
 public class ShaderManager
 {
