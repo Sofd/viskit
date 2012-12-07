@@ -5,10 +5,6 @@ configurations {
 dependencies {
     compile project(':sofd_draw2d')
     compile project(':sofd_swing')
-    compile project(':twl')
-    compile project(':sofd_twl')
-    compile project(':sofd_twlawt')
-    compile 'net.java.jinput:jinput:2.0.5'
     compile 'dcm4che:dcm4che-core:2.0.24'
     compile 'dcm4che:dcm4che-hp:2.0.24'
     compile 'dcm4che:dcm4che-iod:2.0.24'
@@ -18,18 +14,12 @@ dependencies {
     compile 'dcm4che:dcm4che-image:2.0.24'
     compile 'dcm4che:dcm4che-imageio:2.0.24'
     compile 'dcm4che:dcm4che-imageio-rle:2.0.24'
-    //compile 'org.jogamp.jogl:jogl-all:2.0-rc11' //moves stuff into org.jogamp package...
     compile 'commons-lang:commons-lang:2.6'
     compile 'commons-cli:commons-cli:1.2'
     compile 'org.slf4j:slf4j-api:1.5.0'
     compile 'org.slf4j:slf4j-log4j12:1.6.0'
-    //compile 'log4j:log4j:1.2.15'
-    //compile 'org.jdesktop:appframework:1.0.3'
     compile 'org.swinglabs:swingx:1.6.1'
     compile 'org.jdesktop:beansbinding:1.2.1'
-    compile 'org.lwjgl.lwjgl:lwjgl:2.8.4'
-    compile 'org.lwjgl.lwjgl:lwjgl_util:2.8.4'
-    // compile ':jai_imageio'
 
     buildtoolsCompile 'org.apache.velocity:velocity:1.6.2'
 }
@@ -38,45 +28,21 @@ sourceSets {
     buildtools
 }
 
-//TODO: auto-generation of *ImageListViewBase.java files from
-//./de/sofd/viskit/ui/imagelist/ImageListViewBaseImpl.java/*.pp.properties
-// (as of now, the generated files are checked into the VCS)
-
-
-task cleanOldNatives << {
-    ant.delete(failonerror:false) {
-        fileset(dir:"src/dist") {
-            include(name:"**/*.so")
-            include(name:"**/*.dll")
-            include(name:"**/*.jnilib")
-            include(name:"**/*.dylib")
-        }
-    }
-    ant.delete(dir:"src/dist/bin/META-INF", failonerror:false)
-}
-
-task unpackNatives(dependsOn: cleanOldNatives) << {
-    configurations.compile.files.each { file ->
-        if (file.name.matches(".*native.*")) {
-            logger.debug("Unpacking " + file.name + " into src/dist...")
-            ant.unzip(src:file, dest:"src/dist/bin", overwrite:"true")
-        }
-    }
-    ant.delete(dir:"src/dist/bin/META-INF", failonerror:false)
-}
-
-task generateMixins {
-    dependsOn buildtoolsClasses
-    doLast {
-        project.javaexec {
-            setMain 'de.sofd.viskit.ui.imagelist.ILVBaseMixinPreproc'
-            classpath project.sourceSets.buildtools.runtimeClasspath
-            args 'src/main/java', 'de/sofd/viskit/ui/imagelist/ImageListViewBaseImpl.java'
-        }
+//TODO: a function isn't ideal for this, a "parameterizable" task would be better, but gradle doesn't have those
+//   could use a task rule, but it sucks and isn't type-safe...
+def runMixinPreprocOn(baseDir) {
+    buildtoolsClasses.execute()
+    project.javaexec {
+        setMain 'de.sofd.viskit.ui.imagelist.ILVBaseMixinPreproc'
+        classpath project.sourceSets.buildtools.runtimeClasspath
+        args baseDir, file('src/main/java/de/sofd/viskit/ui/imagelist/ImageListViewBaseImpl.java')
     }
 }
 
-tasks.compileJava.dependsOn(unpackNatives)
+task generateMixins << {
+    runMixinPreprocOn file('src/main/java')
+}
+
 tasks.compileJava.dependsOn(generateMixins)
 tasks.eclipse.dependsOn(generateMixins)
 
@@ -89,26 +55,6 @@ task runJ2DTestApp(dependsOn:build) {
             setMain 'de.sofd.viskit.ui.imagelist.testapp.ImageListTestApp'
             classpath project.sourceSets.test.runtimeClasspath
             jvmArgs '-Djava.library.path=../lib/jogl/linux64', '-Xmx1024m', '-Xms256m'
-        }
-    }
-}
-
-task runGLTestApp(dependsOn:build) {
-    doLast {
-        project.javaexec {
-            setMain 'de.sofd.viskit.ui.imagelist.testapp.ImageListTestApp'
-            classpath project.sourceSets.test.runtimeClasspath
-            jvmArgs '-Djava.library.path=../lib/jogl/linux64', '-Dviskit.testapp.class=de.sofd.viskit.ui.imagelist.glimpl.JGLImageListView', '-Xmx1024m', '-Xms256m'
-        }
-    }
-}
-
-task runTWLTestApp(dependsOn:build) {
-    doLast {
-        project.javaexec {
-            setMain 'de.sofd.viskit.ui.imagelist.twlimpl.testapp.TWLImageListTestApp'
-            classpath project.sourceSets.test.runtimeClasspath
-            jvmArgs '-Djava.library.path=src/dist/bin', '-Xmx1024m', '-Xms256m'
         }
     }
 }

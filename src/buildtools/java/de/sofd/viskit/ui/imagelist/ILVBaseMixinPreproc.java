@@ -5,15 +5,14 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileReader;
 import java.io.FileWriter;
-import java.io.IOException;
 import java.io.StringReader;
 import java.io.StringWriter;
 import java.io.Writer;
 import java.util.Properties;
 
-import org.apache.velocity.exception.ParseErrorException;
 import org.apache.velocity.VelocityContext;
 import org.apache.velocity.app.Velocity;
+import org.apache.velocity.exception.ParseErrorException;
 
 public class ILVBaseMixinPreproc {
 
@@ -124,7 +123,7 @@ public class ILVBaseMixinPreproc {
         File baseDir = new File(args[0]);
         File srcFile = new File(args[1]);
         ILVBaseMixinPreproc pp = new ILVBaseMixinPreproc();
-        pp.runOnDirectory(baseDir, srcFile);
+        pp.runOnDirectorySrcAbs(baseDir, srcFile);
     }
 
 }
