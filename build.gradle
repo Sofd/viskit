@@ -28,20 +28,36 @@ sourceSets {
     buildtools
 }
 
-//TODO: a function isn't ideal for this, a "parameterizable" task would be better, but gradle doesn't have those
-//   could use a task rule, but it sucks and isn't type-safe...
-def runMixinPreprocOn(baseDir) {
-    buildtoolsClasses.execute()
-    project.javaexec {
-        setMain 'de.sofd.viskit.ui.imagelist.ILVBaseMixinPreproc'
-        classpath project.sourceSets.buildtools.runtimeClasspath
-        args baseDir, file('src/main/java/de/sofd/viskit/ui/imagelist/ImageListViewBaseImpl.java')
+
+// generateMixins task: define "generic" task, parameterized with one argument (the base directory)
+// gradle doesn't really support this, so use a task rule. Ugly, but works, and can be used by dependent projects.
+// see also http://gradle.1045684.n5.nabble.com/calling-task-multiple-times-with-different-parameters-td3290970.html
+
+def mixinTemplateFile = file('src/main/java/de/sofd/viskit/ui/imagelist/ImageListViewBaseImpl.java')
+
+tasks.addRule("runMixinPreprocOn:<baseDir absolute path>") { String taskName ->
+    if (taskName.startsWith("runMixinPreprocOn:")) {
+        task(taskName) {
+            dependsOn buildtoolsClasses
+            inputs.file mixinTemplateFile
+
+            def baseDir = new File((taskName - 'runMixinPreprocOn:'))
+            if (!baseDir.exists() || !baseDir.isAbsolute()) {
+                throw new GradleException("runMixinPreprocOn: non-existant or non-absolute baseDir given: " + baseDir)
+            }
+
+            doLast {
+                project.javaexec {
+                    setMain 'de.sofd.viskit.ui.imagelist.ILVBaseMixinPreproc'
+                    classpath project.sourceSets.buildtools.runtimeClasspath
+                    args baseDir, mixinTemplateFile
+                }
+            }
+        }
     }
 }
 
-task generateMixins << {
-    runMixinPreprocOn file('src/main/java')
-}
+task generateMixins(dependsOn: tasks["runMixinPreprocOn:" + file('src/main/java').getAbsoluteFile()])
 
 tasks.compileJava.dependsOn(generateMixins)
 tasks.eclipse.dependsOn(generateMixins)
