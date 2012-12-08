@@ -59,8 +59,31 @@ tasks.addRule("runMixinPreprocOn:<baseDir absolute path>") { String taskName ->
 
 task generateMixins(dependsOn: tasks["runMixinPreprocOn:" + file('src/main/java').getAbsoluteFile()])
 
-tasks.compileJava.dependsOn(generateMixins)
-tasks.eclipse.dependsOn(generateMixins)
+
+// indexLUTs task: create index file that lists all the LUT PNG files under de/sofd/viskit/img/luts
+//  (because we can't really do that at runtime in the classpath)
+
+def lutsDir = file('src/main/resources/de/sofd/viskit/img/luts')
+def lutsIndexFile = new File(lutsDir, 'INDEX')
+
+task indexLUTs {
+    inputs.dir lutsDir
+    outputs.file lutsIndexFile
+
+    doLast {
+        lutsIndexFile.withWriter('utf-8') { indexWriter ->
+            lutsDir.eachFile { f ->
+                if (f.name.toLowerCase().endsWith('.png')) {
+                    indexWriter.write f.name
+                    indexWriter.newLine()
+                }
+            }
+        }
+    }
+}
+
+tasks.compileJava.dependsOn generateMixins, indexLUTs
+tasks.eclipse.dependsOn generateMixins, indexLUTs
 
 eclipse.classpath.plusConfigurations += configurations.buildtoolsCompile
 

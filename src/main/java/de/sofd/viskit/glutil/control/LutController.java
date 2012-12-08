@@ -1,20 +1,22 @@
 package de.sofd.viskit.glutil.control;
 
-import java.awt.image.*;
-import java.io.*;
-import java.nio.*;
-import java.util.*;
+import java.awt.image.BufferedImage;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.nio.FloatBuffer;
+import java.util.HashMap;
 
-import javax.imageio.*;
+import javax.imageio.ImageIO;
 
-import org.apache.log4j.*;
+import org.apache.log4j.Logger;
 
-import de.sofd.viskit.util.*;
+import de.sofd.viskit.util.LutFunction;
 
 public class LutController {
     protected static final Logger logger = Logger.getLogger(LutController.class);
 
-    protected static String imgPath;
+    protected static String lutsPackageName;
 
     protected static HashMap<String, LutFunction> lutMap = new HashMap<String, LutFunction>();
 
@@ -22,25 +24,25 @@ public class LutController {
         return lutMap;
     }
 
-    public static void init(String imgPath) {
-        LutController.imgPath = imgPath;
+    public static void init(String lutsPackageName) {
+        LutController.lutsPackageName = lutsPackageName;
     }
 
     public static void loadFiles() throws IOException {
-        File dir = new File(imgPath);
-
-        if (!dir.isDirectory())
-            throw new IOException("no directory : " + imgPath);
-
+        ClassLoader cl = LutController.class.getClassLoader();
+        
         HashMap<String, BufferedImage> bimgMap = new HashMap<String, BufferedImage>();
-
-        for (File file : dir.listFiles()) {
-            if (file.isDirectory() || !file.getName().endsWith(".png"))
-                continue;
-
-            BufferedImage bimg = ImageIO.read(file);
-            String lutId = file.getName().split("\\.")[0].toLowerCase().replace('_', ' ');
-            bimgMap.put(lutId, bimg);
+        
+        BufferedReader indexReader = new BufferedReader(new InputStreamReader(cl.getResourceAsStream(lutsPackageName + "/INDEX"), "utf-8"));
+        try {
+            String fileName;
+            while (null != (fileName = indexReader.readLine())) {
+                BufferedImage bimg = ImageIO.read(cl.getResourceAsStream(lutsPackageName + "/" + fileName));
+                String lutId = fileName.split("\\.")[0].toLowerCase().replace('_', ' ');
+                bimgMap.put(lutId, bimg);
+            }
+        } finally {
+            indexReader.close();
         }
 
         for (String lutId : bimgMap.keySet()) {

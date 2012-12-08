@@ -12,9 +12,7 @@ public class LookupTables {
 
     static {
         try {
-            LutController.init("img/luts/osx");
-            LutController.loadFiles();
-            LutController.init("img/luts");
+            LutController.init("de/sofd/viskit/img/luts");
             LutController.loadFiles();
         } catch (IOException e) {
             throw new RuntimeException(e);
