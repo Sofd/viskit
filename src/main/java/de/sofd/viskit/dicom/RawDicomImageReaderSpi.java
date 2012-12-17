@@ -1,4 +1,4 @@
-package de.sofd.viskit.test.windowing;
+package de.sofd.viskit.dicom;
 
 import java.util.Locale;
 import javax.imageio.ImageReader;

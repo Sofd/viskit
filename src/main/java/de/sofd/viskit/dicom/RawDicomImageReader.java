@@ -1,4 +1,4 @@
-package de.sofd.viskit.test.windowing;
+package de.sofd.viskit.dicom;
 
 import java.awt.Dimension;
 import java.awt.Point;

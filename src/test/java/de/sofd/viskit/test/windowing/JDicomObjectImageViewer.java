@@ -7,17 +7,26 @@ import java.awt.FontMetrics;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Insets;
+import java.awt.color.ColorSpace;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Point2D;
 import java.awt.image.AffineTransformOp;
 import java.awt.image.BufferedImage;
 import java.awt.image.BufferedImageOp;
+import java.awt.image.DataBuffer;
+import java.awt.image.Raster;
+import java.awt.image.RescaleOp;
 import java.awt.image.WritableRaster;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
 
 import javax.imageio.ImageIO;
@@ -28,22 +37,11 @@ import javax.swing.JPanel;
 import org.dcm4che2.data.DicomObject;
 import org.dcm4che2.data.Tag;
 import org.dcm4che2.data.UID;
-import org.dcm4che2.io.DicomOutputStream;
-
-import java.awt.color.ColorSpace;
-import java.awt.image.DataBuffer;
-import java.awt.image.Raster;
-import java.awt.image.RescaleOp;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.SortedMap;
-import java.util.SortedSet;
 import org.dcm4che2.imageio.plugins.dcm.DicomImageReadParam;
-import org.dcm4che2.imageioimpl.plugins.dcm.DicomImageReader;
+import org.dcm4che2.io.DicomOutputStream;
 import org.dcm4che2.media.FileMetaInformation;
+
+import de.sofd.viskit.dicom.RawDicomImageReader;
 
 /**
  * Swing component that displays a DICOM image contained in a dcm4che2

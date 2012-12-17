@@ -25,9 +25,9 @@ import org.dcm4che2.media.FileMetaInformation;
 import de.sofd.util.NumericPriorityMap;
 import de.sofd.util.concurrent.NumericPriorityThreadPoolExecutor;
 import de.sofd.util.concurrent.PrioritizedTask;
+import de.sofd.viskit.dicom.RawDicomImageReader;
 import de.sofd.viskit.image.ViskitDicomImageBase;
 import de.sofd.viskit.image.ViskitImage;
-import de.sofd.viskit.test.windowing.RawDicomImageReader;
 import de.sofd.viskit.util.ImageUtil;
 
 /**

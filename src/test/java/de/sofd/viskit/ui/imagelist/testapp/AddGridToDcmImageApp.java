@@ -1,6 +1,5 @@
 package de.sofd.viskit.ui.imagelist.testapp;
 
-import de.sofd.viskit.test.windowing.RawDicomImageReader;
 import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Graphics2D;
@@ -19,6 +18,8 @@ import org.dcm4che2.data.Tag;
 import org.dcm4che2.imageio.plugins.dcm.DicomImageReadParam;
 import org.dcm4che2.imageio.plugins.dcm.DicomStreamMetaData;
 import org.dcm4che2.io.DicomOutputStream;
+
+import de.sofd.viskit.dicom.RawDicomImageReader;
 
 /**
  *
