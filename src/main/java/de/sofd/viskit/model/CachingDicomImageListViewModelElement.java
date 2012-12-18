@@ -79,7 +79,13 @@ public abstract class CachingDicomImageListViewModelElement extends AbstractImag
     private static final Logger logger = Logger.getLogger(CachingDicomImageListViewModelElement.class);
 
     static {
-        RawDicomImageReader.registerWithImageIO();
+        try {
+            RawDicomImageReader.registerWithImageIO();
+        } catch (LinkageError err) {
+            //catch this so viskit can work without JAI available at runtime, as long as no compressed images are used
+            // (it is needed at compile time, though)
+            logger.warn("DICOM image reader unavailable, due to Jave Image I/O beiong absent. Won't be able to read compressed DICOM files.", err);
+        }
     }
 
     private final NumericPriorityThreadPoolExecutor imageFetchingJobsExecutor;

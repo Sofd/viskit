@@ -264,39 +264,6 @@ public class FileBasedDicomImageListViewModelElement extends CachingDicomImageLi
         }
     }
 
-    @Override
-    protected DicomObject getBackendDicomImageMetaData() {
-        checkInitialized();
-        // the backend DicomObject isn't cached yet -- read the metadata (and only the metadata) directly from the backend file,
-        // in the hope that that will be faster than reading & caching the whole backend DicomObject (which would include the pixel data)
-        // TODO: consider caching these metadata DicomObjects separately
-        Iterator it = ImageIO.getImageReadersByFormatName("RAWDICOM");
-        if (!it.hasNext()) {
-            throw new IllegalStateException("The DICOM image I/O filter (from dcm4che1) must be available to read images.");
-        }
-        ImageReader reader = (ImageReader) it.next();
-
-        try {
-            // the ImageInputStream below does NOT close the wrapped URL input stream on close(). Thus
-            // we have to keep a reference to the URL input stream and close it ourselves.
-            InputStream urlIn = url.openStream();
-            try {
-                ImageInputStream in = ImageIO.createImageInputStream(urlIn);
-                if (null == in) {
-                    throw new IllegalStateException("The DICOM image I/O filter (from dcm4che1) must be available to read images.");
-                }
-                try {
-                    reader.setInput(in);
-                    return ((DicomStreamMetaData) reader.getStreamMetadata()).getDicomObject();
-                } finally {
-                    in.close();
-                }
-            } finally {
-                urlIn.close();
-            }
-        } catch (IOException e) {
-            throw new IllegalStateException("error trying to extract image from DICOM object: " + getUrl(), e);
-        }
-    }
+    //TODO: optimized getBackendDicomImageMetaData()
 
 }
