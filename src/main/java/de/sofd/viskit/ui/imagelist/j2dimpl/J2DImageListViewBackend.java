@@ -19,6 +19,7 @@ import java.nio.ShortBuffer;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.log4j.Logger;
 import org.dcm4che2.data.DicomObject;
 import org.dcm4che2.data.Tag;
 
@@ -38,6 +39,8 @@ import de.sofd.viskit.ui.imagelist.ImageListViewCell;
 import de.sofd.viskit.ui.imagelist.event.cellpaint.ImageListViewCellPaintEvent;
 
 public class J2DImageListViewBackend extends ImageListViewBackendBase {
+
+    static final Logger logger = Logger.getLogger(J2DImageListViewBackend.class);
 
     @Override
     public void glSharedContextDataInitialization(Object gl,
@@ -202,9 +205,23 @@ public class J2DImageListViewBackend extends ImageListViewBackendBase {
             // TODO: use the model element's RawImage instead of the BufferedImage when possible
             ///*
             if (srcImg.getColorModel().getColorSpace().getType() == ColorSpace.TYPE_GRAY) {
-                windowedImage = windowMonochrome(displayedCell, srcImg, displayedCell.getWindowLocation(), displayedCell.getWindowWidth());
+                try {
+                    windowedImage = windowMonochrome(displayedCell, srcImg, displayedCell.getWindowLocation(), displayedCell.getWindowWidth());
+                } catch (IllegalArgumentException e) {
+                    //TODO: store message somehow so ILVInitStateController can render it
+                    //      either into ILVModelElt#errorInfo (in which case errorInfo would be a warning for initialized elements),
+                    //      or, probably better, into a new attribute in the cell
+                    logger.warn("couldn't window grayscale image: " + e.getLocalizedMessage()/*, e*/);
+                    return srcImg;
+                }
             } else if (srcImg.getColorModel().getColorSpace().isCS_sRGB()) {
-                windowedImage = windowRGB(srcImg, displayedCell.getWindowLocation(), displayedCell.getWindowWidth());
+                try {
+                    windowedImage = windowRGB(srcImg, displayedCell.getWindowLocation(), displayedCell.getWindowWidth());
+                } catch (IllegalArgumentException e) {
+                    //TODO: store message somehow so ILVInitStateController can render it (see windowMonochrome above)
+                    logger.warn("couldn't window RGB image: " + e.getLocalizedMessage()/*, e*/);
+                    return srcImg;
+                }
             } else {
                 throw new IllegalStateException("don't know how to window image with color space " + srcImg.getColorModel().getColorSpace());
                 // TODO: do something cleverer here? Like, create windowedImage
@@ -433,7 +450,7 @@ public class J2DImageListViewBackend extends ImageListViewBackendBase {
         }
         Raster srcRaster = srcImg.getRaster();
         if (srcRaster.getNumBands() != 1) {
-            throw new IllegalArgumentException("source image must be grayscales");
+            throw new IllegalArgumentException("grayscale source image must have one color band, but has " + srcRaster.getNumBands() + "??");
         }
         WritableRaster resultRaster = destImg.getRaster();
         for (int x = 0; x < srcImg.getWidth(); x++) {
@@ -481,7 +498,7 @@ public class J2DImageListViewBackend extends ImageListViewBackendBase {
         }
         Raster srcRaster = srcImg.getRaster();
         if (srcRaster.getNumBands() != 3) {
-            throw new IllegalArgumentException("source image must be RGB");
+            throw new IllegalArgumentException("RGB source image must have three color bands, but has " + srcRaster.getNumBands() + "??");
         }
         WritableRaster resultRaster = destImg.getRaster();
         for (int x = 0; x < srcImg.getWidth(); x++) {
