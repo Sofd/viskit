@@ -12,6 +12,7 @@ import java.util.Comparator;
 import java.util.EventListener;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
 
@@ -44,14 +45,14 @@ public abstract class ModelFactory {
     
     protected String cachePath;
     protected boolean enableRangeCaching = true;
-    protected Comparator<File> comparator;
+    protected Comparator<ImageListViewModelElement> comparator;
     protected String cacheFile;
     protected Map<String,ListModel> keyModelMap = new LinkedHashMap<String,ListModel>();
     protected Map<String,float[]> keyMinMaxMap = new HashMap<String,float[]>();
     protected Collection<ModelPixelValuesRangeChangeListener> listener = new ArrayList<ModelPixelValuesRangeChangeListener>();
     protected static final Logger logger = Logger.getLogger(ModelFactory.class);
     
-    public ModelFactory(String cachePath, Comparator<File> comparator) {
+    public ModelFactory(String cachePath, Comparator<ImageListViewModelElement> comparator) {
         this.cachePath = cachePath;
         this.comparator = comparator;
         if(cachePath == null || !enableRangeCaching) {
@@ -135,37 +136,22 @@ public abstract class ModelFactory {
     protected abstract float[] calculatePixelValueRange(ListModel model);
     
     /**
-     * abstract method to create a model element or many model elements from a file and add it to the model
+     * abstract method to create a model element from a file or other
+     * "creation context".
      * 
-     * @param model
-     * @param file
+     * @param creationContext
+     *            object to create the element from. Depends on which
+     *            createModelFrom* method was called to create the model: for
+     *            {@link #createModelFromDir(File, String)}, creationContext
+     *            will be the file to create the element for. For
+     *            {@link #createModelFromCreationContextCollection(Collection, String)}
+     *            , it will be an element of the given contextCollection.
+     * 
      * @param key
+     *            model key passed to the createModelFrom* method.
+     * @return the created element, or null for none
      */
-    protected abstract void addElementToModel(DefaultListModel model, Object file, String key);
-    
-
-    /**
-     * This method reads files from a directory and sorts the files according to
-     * the natural order or to the order the comparator defines
-     * 
-     * @param dir
-     * @return sorted files of the directory
-     */
-    protected File[] readFilesFromDir(File dir) {
-        File[] files = dir.listFiles();
-        if (files == null) {
-            throw new NullPointerException(dir.getAbsolutePath() + " does not contain any files or is not a directory");
-        }
-        // sort files
-        if (comparator == null) {
-            Arrays.sort(files);
-        }
-        // sort files using the comparator
-        else {
-            Arrays.sort(files, comparator);
-        }
-        return files;
-    }
+    protected abstract ImageListViewModelElement createModelElement(Object creationContext, String key);
     
     /**
      * create a model from a file directory. The model is identified by a unique key
@@ -203,10 +189,24 @@ public abstract class ModelFactory {
     }
 
     protected DefaultListModel createModelFromDir(File dir, String key) {
-        DefaultListModel result = new DefaultListModel();
-        File[] files = readFilesFromDir(dir);
+        File[] files = dir.listFiles();
+        if (files == null) {
+            throw new NullPointerException(dir.getAbsolutePath() + " does not contain any files or is not a directory");
+        }
+        List<ImageListViewModelElement> modelElts = new ArrayList<ImageListViewModelElement>(files.length);
         for (File f : files) {
-            addElementToModel(result, f, key);
+            ImageListViewModelElement elt = createModelElement(f, key);
+            if (elt != null) {
+                modelElts.add(elt);
+            }
+        }
+        //sort according to our comparator, then create the model
+        // must use array sorting because there's no sorted multiset class in the JDK (we want to retain duplicate elements)
+        ImageListViewModelElement[] eltsArr = modelElts.toArray(new ImageListViewModelElement[modelElts.size()]);
+        Arrays.sort(eltsArr, comparator);
+        DefaultListModel result = new DefaultListModel();
+        for (ImageListViewModelElement elt : eltsArr) {
+            appendElementToModel(elt, result, key);
         }
         return result;
     }
@@ -214,9 +214,25 @@ public abstract class ModelFactory {
     protected DefaultListModel createModelFromCreationContextCollection(Collection<?> collection,String key) {
         DefaultListModel result = new DefaultListModel();
         for (Object f : collection) {
-            addElementToModel(result, f, key);
+            appendElementToModel(createModelElement(f, key), result, key);
         }
         return result;
+    }
+    
+    /**
+     * Called to actually append an element previously created by
+     * {@link #createModelElement(Object, String)} to the list model being
+     * created.
+     * 
+     * Default impl. just appends the element to the list, subclasses may
+     * override to append more or nothing or whatever.
+     * 
+     * @param elt
+     * @param model
+     * @param key
+     */
+    protected void appendElementToModel(ImageListViewModelElement elt, DefaultListModel model, final String key) {
+        model.addElement(elt);
     }
     
     /**

@@ -4,18 +4,28 @@ import java.io.File;
 import java.util.Comparator;
 
 /**
- * Comparator that emulates the "intuitive" sorting used by windows. Code
- * adapted and derived from http://forums.sun.com/thread.jspa?threadID=5289401
+ * Comparator that assumes all elements are file-based DICOM
+ * ImageListViewModelElements, and compares the elements using file names. It
+ * emulatesthe "intuitive" sorting used by windows. Code adapted and derived
+ * from http://forums.sun.com/thread.jspa?threadID=5289401
  * 
  * @author honglinh
  * 
  */
-public class IntuitiveFileNameComparator implements Comparator<File> {
+public class IntuitiveFileNameComparator implements Comparator<ImageListViewModelElement> {
 
     private String str1, str2;
     private int pos1, pos2, len1, len2;
 
-    public int compare(File f1, File f2) {
+    public int compare(ImageListViewModelElement elt1, ImageListViewModelElement elt2) {
+        if (!(elt1 instanceof FileBasedDicomImageListViewModelElement)) {
+            throw new IllegalArgumentException("not a FileBasedDicomImageListViewModelElement: " + elt1);
+        }
+        if (!(elt2 instanceof FileBasedDicomImageListViewModelElement)) {
+            throw new IllegalArgumentException("not a FileBasedDicomImageListViewModelElement: " + elt2);
+        }
+        File f1 = ((FileBasedDicomImageListViewModelElement)elt1).getFile();
+        File f2 = ((FileBasedDicomImageListViewModelElement)elt2).getFile();
         str1 = f1.getName();
         str2 = f2.getName();
         len1 = str1.length();

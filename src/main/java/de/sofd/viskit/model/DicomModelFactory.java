@@ -3,6 +3,7 @@ package de.sofd.viskit.model;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.File;
+import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Map;
@@ -38,7 +39,7 @@ public class DicomModelFactory extends ModelFactory {
     
     protected Map<Object,DefaultListModel> elementModelMap = new HashMap<Object,DefaultListModel>();
 
-    public DicomModelFactory(String cachePath, Comparator<File> comparator) {
+    public DicomModelFactory(String cachePath, Comparator<ImageListViewModelElement> comparator) {
         super(cachePath, comparator);
     }
 
@@ -139,7 +140,7 @@ public class DicomModelFactory extends ModelFactory {
     }
 
     @Override
-    protected void addElementToModel(DefaultListModel model, Object obj, final String key) {
+    protected ImageListViewModelElement createModelElement(Object obj, final String key) {
         DicomImageListViewModelElement element = createDicomImageListViewModelElement(obj);
         final float[] currentRange = this.keyMinMaxMap.get(key);
         element.addPropertyChangeListener(new PropertyChangeListener() {
@@ -180,16 +181,23 @@ public class DicomModelFactory extends ModelFactory {
                 }
             }
         });
-        model.addElement(element);
-        if (supportMultiframes) {
+        return element;
+    }
+
+    @Override
+    protected void appendElementToModel(ImageListViewModelElement elt, DefaultListModel model, String key) {
+        super.appendElementToModel(elt, model, key);
+        if (supportMultiframes && elt instanceof FileBasedDicomImageListViewModelElement) {
+            FileBasedDicomImageListViewModelElement element = (FileBasedDicomImageListViewModelElement) elt;
             int numFrames = element.getTotalFrameNumber();
-            logger.info("DICOM object " + obj + " has " + numFrames + " frames...");
+            logger.info("DICOM object " + element.getFile() + " has " + numFrames + " frames...");
             if (numFrames > 1) {
                 for (int i = 1; i < numFrames; i++) {
-                    DicomImageListViewModelElement felt = createDicomImageListViewModelElement(obj, i);
+                    DicomImageListViewModelElement felt = createDicomImageListViewModelElement(element.getFile(), i);
                     model.addElement(felt);
                 }
             }
+
         }
     }
 
